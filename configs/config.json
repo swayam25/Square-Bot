@@ -1,0 +1,20 @@
+{
+    "owner_ids": 0,
+    "dev_ids": [],
+
+    "guild_ids": null,
+    "owner_guild_ids": [],
+
+    "system_channel_id": 0,
+    "support_server_url": null,
+
+    "discord_api_token": "",
+    "openai_api_token": "",
+
+    "lavalink": {
+        "host": "",
+        "port": 0,
+        "pass": ""
+    },
+    "datetime_format": "%A, %d %B %Y | %H:%M:%S"
+}
