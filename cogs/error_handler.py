@@ -1,9 +1,7 @@
 import discord
-import lavalink
 from utils import database as db, emoji
 from rich import print
 from discord.ext import commands
-from discord.commands import slash_command, Option
 
 class ErrorHandler(commands.Cog):
     def __init__(self, client):

@@ -1,7 +1,6 @@
 import discord
 import discord.ui
 from utils import database as db, emoji
-from rich import print
 from discord.ext import commands
 from discord.commands import slash_command, Option
 
@@ -63,7 +62,7 @@ class HelpView(discord.ui.View):
                 cmds += f"`/{command.name}`\n{emoji.bullet} {command.description}\n\n"
             help_em = discord.Embed(title=f"{select.values[0]} Commands", description=f"{cmds}", color=db.theme_color)
             await interaction.response.edit_message(embed=help_em)
- 
+
 class Help(commands.Cog):
     def __init__(self, client):
         self.client = client

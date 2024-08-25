@@ -174,7 +174,7 @@ class SpotifySource(lavalink.Source):
         }, requester=self.requester, cover=track['album']['images'][0]['url'])
 
 # Load items
-    async def load_item(self, client: lavalink.Client):
+    async def load_item(self, client):
         if "playlist" in self.url:
             pl, pl_info = await self._load_pl()
             return lavalink.LoadResult(lavalink.LoadType.PLAYLIST, pl, pl_info)
@@ -318,7 +318,7 @@ class Music(commands.Cog):
                 "us",
                 "default-node"
             )
-            lavalink.add_event_hook(self.track_hook)
+            self.client.lavalink.add_event_hook(self.track_hook)
 
 # Current voice
     def current_voice_channel(self, ctx):
@@ -348,7 +348,7 @@ class Music(commands.Cog):
             if player.current.source_name == "spotify":
                 play_em.set_thumbnail(url=player.current.extra['cover'])
             elif player.current.source_name == "youtube":
-                play_em.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/maxresdefault.jpg")
+                play_em.set_image(url=f"https://i.ytimg.com/vi/{player.current.identifier}/maxresdefault.jpg")
             music_view = MusicView(self.client, timeout=None)
             # Loop emoji
             if player.loop == player.LOOP_NONE:
@@ -486,13 +486,13 @@ class Music(commands.Cog):
             # Spotify
             if "open.spotify.com" in query:
                 results = await SpotifySource(query, ctx.author.id).load_item(self.client.lavalink)
-                if results['loadType'] == "PLAYLIST_LOADED":
+                if results['loadType'] == lavalink.LoadType.PLAYLIST:
                     tracks = results['tracks']
                     for track in tracks:
                         player.add(requester=ctx.author.id, track=track)
                     embed.title = f"{emoji.playlist} Playlist Enqueued"
                     embed.description = f"**{results['playlistInfo'].name}** with `{len(tracks)}` tracks"
-                elif results['loadType'] == "TRACK_LOADED":
+                elif results['loadType'] == lavalink.LoadType.TRACK:
                     track = results['tracks'][0]
                     player.add(requester=ctx.author.id, track=track)
                     embed.title = f"{emoji.music} Music Enqueued"
@@ -523,7 +523,7 @@ class Music(commands.Cog):
                     await ctx.respond(embed=embed)
                 elif results['tracks']:
                     track = results['tracks'][0]
-                    player.add(requester=ctx.author.id, track=track) 
+                    player.add(requester=ctx.author.id, track=track)
                     embed.title = f"{emoji.music} Music Enqueued"
                     embed.description = f"**[{track['info']['title']}]({track['info']['uri']})**"
                     await ctx.respond(embed=embed)
@@ -599,7 +599,7 @@ class Music(commands.Cog):
 
 # Stop
     @slash_command(guild_ids=db.guild_ids(), name="stop")
-    async def stop(self, ctx: commands.Context):
+    async def stop(self, ctx):
         """Destroys the player"""
         player = await self.ensure_voice(ctx)
         if player:
@@ -710,7 +710,7 @@ class Music(commands.Cog):
 # Volume
     @slash_command(guild_ids=db.guild_ids(), name="volume")
     async def volume(
-        self, ctx, 
+        self, ctx,
         volume: Option(int, "Enter your volume amount from 1 - 100")
     ):
         """Changes the player's volume 1 - 100"""
@@ -815,7 +815,7 @@ class Music(commands.Cog):
 # Remove
     @slash_command(guild_ids=db.guild_ids(), name="remove")
     async def remove(
-        self, ctx, 
+        self, ctx,
         index: Option(int, "Enter your music index")
     ):
         """Removes a music from the player's queue with the given index"""

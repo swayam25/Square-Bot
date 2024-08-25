@@ -10,11 +10,12 @@ class Tickets(commands.Cog):
 
 # Ticket create
     @slash_command(guild_ids=db.guild_ids(), name="create-ticket")
-    async def ticket_create(
+    async def create_ticket(
         self, ctx,
         reason: Option(str, "Enter your reason for creating fhe ticket", required=False)
     ):
         """Creates a ticket"""
+        await ctx.defer()
         create_ch = await ctx.guild.create_text_channel(f"ticket-{ctx.author.id}")
         await create_ch.set_permissions(ctx.author, view_channel=True, send_messages=True, read_messages=True, add_reactions=True, embed_links=True, attach_files=True, read_message_history=True, external_emojis=True)
         await create_ch.set_permissions(self.client.user, view_channel=True, send_messages=True, read_messages=True, add_reactions=True, embed_links=True, attach_files=True, read_message_history=True, external_emojis=True)
@@ -47,17 +48,17 @@ class Tickets(commands.Cog):
 
 # Ticket close
     @slash_command(guild_ids=db.guild_ids(), name="close-ticket")
-    async def ticketClose(self, ctx):
+    async def create_ticker(self, ctx):
         """Closes a created ticket"""
         if ctx.channel.name == f"ticket-{ctx.author.id}" :
             close_em = discord.Embed(
-                title=f"{emoji.restart} Closing Ticket",
+                title=f"{emoji.ticket2} Closing Ticket",
                 description=f"Closing ticket in 5 seconds.\n"
                             f"{emoji.bullet} **Author**: {ctx.author.mention}",
                 color=db.theme_color
             )
             await ctx.respond(embed=close_em)
-            await asyncio.sleep(5) 
+            await asyncio.sleep(5)
             await ctx.channel.delete()
             if db.ticket_log_channel_id(ctx.guild.id) != None:
                 logging_ch = await self.client.fetch_channel(db.ticket_log_channel_id(ctx.guild.id))

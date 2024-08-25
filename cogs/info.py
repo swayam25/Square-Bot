@@ -3,7 +3,6 @@ import platform
 import aiohttp
 import datetime, time
 from utils import database as db, emoji
-from rich import print
 from discord.ext import commands
 from discord.commands import slash_command, Option
 
@@ -35,12 +34,12 @@ class Info(commands.Cog):
         owner = await self.client.fetch_user(db.owner_ids())
         stats_em = discord.Embed(
             title=f"{self.client.user.name} Stats",
-            description=f"{emoji.bullet} **Bot's Latency**: `{round(self.client.latency * 1000)} ms`\n" 
-                        f"{emoji.bullet} **Bot's Uptime**: `{str(datetime.timedelta(seconds=int(round(time.time() - start_time))))}`\n" 
-                        f"{emoji.bullet} **Total Servers**: `{str(len(self.client.guilds))}`\n" 
-                        f"{emoji.bullet} **Total Members**: `{len(set(self.client.get_all_members()))}`\n" 
-                        f"{emoji.bullet} **Total Channels**: `{len(set(self.client.get_all_channels()))}`\n" 
-                        f"{emoji.bullet} **Python Version**: `v{platform.python_version()}`\n" 
+            description=f"{emoji.bullet} **Bot's Latency**: `{round(self.client.latency * 1000)} ms`\n"
+                        f"{emoji.bullet} **Bot's Uptime**: `{str(datetime.timedelta(seconds=int(round(time.time() - start_time))))}`\n"
+                        f"{emoji.bullet} **Total Servers**: `{str(len(self.client.guilds))}`\n"
+                        f"{emoji.bullet} **Total Members**: `{len(set(self.client.get_all_members()))}`\n"
+                        f"{emoji.bullet} **Total Channels**: `{len(set(self.client.get_all_channels()))}`\n"
+                        f"{emoji.bullet} **Python Version**: `v{platform.python_version()}`\n"
                         f"{emoji.bullet} **Pycord Version**: `v{discord.__version__}`", color=db.theme_color)
         stats_em.set_footer(text=f"Designed & Built by {owner}", icon_url=f"{owner.avatar.url}")
         await ctx.respond(embed=stats_em)
@@ -84,7 +83,7 @@ class Info(commands.Cog):
             title=f"{ctx.guild.name}'s Info",
             description=f"{emoji.bullet} **Name**: {ctx.guild.name}\n"
                         f"{emoji.bullet} **ID**: `{ctx.guild.id}`\n"
-                        f"{emoji.bullet} **Icon URL**: [Click Here]({ctx.guild.icon.url})\n"
+                        f"{emoji.bullet} **Icon URL**: {f'[Click Here]({ctx.guild.icon})' if ctx.guild.icon else 'None'}\n"
                         f"{emoji.bullet} **Owner**: {ctx.guild.owner.mention}\n"
                         f"{emoji.bullet} **Verification Level**: `{ctx.guild.verification_level}`\n"
                         f"{emoji.bullet} **Total Categorie(s)**: `{len(ctx.guild.categories)}`\n"
@@ -97,7 +96,7 @@ class Info(commands.Cog):
                         f"{emoji.bullet} **Bot(s)**: `{len([m for m in ctx.guild.members if m.bot])}`\n"
                         f"{emoji.bullet} **Role(s)**: `{len(ctx.guild.roles)}`\n"
                         f"{emoji.bullet} **Server Created**: {ctx.guild.created_at.__format__(db.datetime_format())}", color=db.theme_color)
-        server_info_em.set_thumbnail(url=f"{ctx.guild.icon.url}")
+        server_info_em.set_thumbnail(url=ctx.guild.icon if ctx.guild.icon else "")
         await ctx.respond(embed=server_info_em)
 
 # Emoji info

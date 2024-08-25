@@ -114,6 +114,7 @@ def datetime_format():
 
 # Set on guild join
 def set_on_guild_join(guild_ids):
+    os.makedirs("database", exist_ok=True)
     with open(f"database/{str(guild_ids)}.json", "w") as set_file:
         set_data = {
             "mod_log_channel_id": None,
@@ -130,6 +131,7 @@ def set_on_guild_remove(guild_ids):
 
 # Mod log channel
 def mod_log_channel_id(guild_ids, channel_id: int = None, mode: str = "get"):
+    os.makedirs("database", exist_ok=True)
     with open(f"database/{str(guild_ids)}.json", "r") as set_file:
         set_data = json.load(set_file)
         if mode == "get":
@@ -141,6 +143,7 @@ def mod_log_channel_id(guild_ids, channel_id: int = None, mode: str = "get"):
 
 # Warn log channel
 def warn_log_channel_id(guild_ids, channel_id: int = None, mode: str = "get"):
+    os.makedirs("database", exist_ok=True)
     with open(f"database/{str(guild_ids)}.json", "r") as set_file:
         set_data = json.load(set_file)
         if mode == "get":
@@ -152,6 +155,7 @@ def warn_log_channel_id(guild_ids, channel_id: int = None, mode: str = "get"):
 
 # Ticket log channel
 def ticket_log_channel_id(guild_ids, channel_id: int = None, mode: str = "get"):
+    os.makedirs("database", exist_ok=True)
     with open(f"database/{str(guild_ids)}.json", "r") as set_file:
         set_data = json.load(set_file)
         if mode == "get":
@@ -163,6 +167,7 @@ def ticket_log_channel_id(guild_ids, channel_id: int = None, mode: str = "get"):
 
 # Antilink system
 def antilink(guild_ids, status: str = None, mode: str = "get"):
+    os.makedirs("database", exist_ok=True)
     with open(f"database/{str(guild_ids)}.json", "r") as set_file:
         set_data = json.load(set_file)
         if mode == "get":
@@ -174,6 +179,7 @@ def antilink(guild_ids, status: str = None, mode: str = "get"):
 
 # Antiswear system
 def antiswear(guild_ids, status: str = None, mode: str = "get"):
+    os.makedirs("database", exist_ok=True)
     with open(f"database/{str(guild_ids)}.json", "r") as set_file:
         set_data = json.load(set_file)
         if mode == "get":

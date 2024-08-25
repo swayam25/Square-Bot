@@ -31,7 +31,7 @@ class Devs(commands.Cog):
                         f"{emoji.bullet} Total Bots: `{len([m for m in guild.members if m.bot])}`",
             color=db.theme_color)
         await join_log_ch.send(embed=join_log_em)
- 
+
 # On guild leave
     @commands.Cog.listener("on_guild_remove")
     async def when_removed_from_guild(self, guild):
@@ -98,12 +98,12 @@ class Devs(commands.Cog):
     @slash_command(guild_ids=db.owner_guild_ids(), name="restart")
     async def restart(self, ctx):
         """Restarts the bot"""
-        if check.is_dev(ctx.author.id): 
+        if check.is_dev(ctx.author.id):
             restartEm = discord.Embed(title=f"{emoji.restart} Restarting", color=db.theme_color)
             await ctx.respond(embed=restartEm)
             os.system("clear")
-            os.execv(sys.executable, ['python'] + sys.argv)
-        else: 
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+        else:
             error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
 
@@ -111,13 +111,13 @@ class Devs(commands.Cog):
     @slash_command(guild_ids=db.owner_guild_ids(), name="reload-cogs")
     async def reload_cogs(self, ctx):
         """Reloads bot's all files"""
-        if check.is_dev(ctx.author.id): 
+        if check.is_dev(ctx.author.id):
             reloadEm = discord.Embed(title=f"{emoji.restart} Reloaded Cogs",color=db.theme_color)
             await ctx.respond(embed=reloadEm)
             for filename in os.listdir("./cogs"):
                 if filename.endswith(".py"):
                     self.client.reload_extension(f"cogs.{filename[:-3]}")
-        else: 
+        else:
             error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
 
@@ -126,9 +126,11 @@ class Devs(commands.Cog):
     async def shutdown(self, ctx):
         """Shutdowns the bot"""
         if check.is_owner(ctx.author.id):
-            shutdown_em = discord.Embed(title=f"{emoji.shutdown} Shutdowned", color=db.theme_color)
+            shutdown_em = discord.Embed(title=f"{emoji.shutdown} Shutdown", color=db.theme_color)
             await ctx.respond(embed=shutdown_em)
-        else: 
+            await self.client.wait_until_ready()
+            await self.client.close()
+        else:
             error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
 
@@ -140,18 +142,18 @@ class Devs(commands.Cog):
         status: Option(str, "Enter new status of bot")
         ):
             """Sets custom bot status"""
-            if check.is_dev(ctx.author.id): 
+            if check.is_dev(ctx.author.id):
                 if type == "Game":
                     await self.client.change_presence(activity=discord.Game(name=status))
                 elif type == "Streaming":
-                    await self.client.change_presence(activity=discord.Streaming(name=status, url=db.website_url))
+                    await self.client.change_presence(activity=discord.Streaming(name=status, url=db.support_server_url()))
                 elif type == "Listening":
                     await self.client.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=status))
                 elif type == "Watching":
                     await self.client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=status))
                 status_em = discord.Embed(title=f"{emoji.console} Status Changed", description=f"Status changed to **{type}** as `{status}`", color=db.theme_color)
                 await ctx.respond(embed=status_em)
-            else: 
+            else:
                 error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
                 await ctx.respond(embed=error_em, ephemeral=True)
 
