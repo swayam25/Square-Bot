@@ -1,8 +1,11 @@
 import discord
-import openai
 from utils import database as db, emoji
 from discord.ext import commands
 from discord.commands import slash_command, Option
+from openai import OpenAI
+
+# OpenAI API
+openai = OpenAI(api_key=db.openai_api_token())
 
 class ImageView(discord.ui.View):
     def __init__(self, client, ctx, prompt, timeout):
@@ -39,7 +42,6 @@ class ImageView(discord.ui.View):
 class AI(commands.Cog):
     def __init__(self, client):
         self.client = client
-        openai.api_key = db.openai_api_token() # OpenAI API token
 
 # Image Generation
     @slash_command(guild_ids=db.guild_ids(), name="imagine")
@@ -49,16 +51,17 @@ class AI(commands.Cog):
     ):
         """Generate image from prompt"""
         await ctx.response.defer()
-        response = openai.Image.create(
+        response = openai.images.generate(
+            model="dall-e-3",
             prompt=prompt,
-            n=1,
-            size="1024x1024"
+            quality="standard",
+            n=1
         )
         image_em= discord.Embed(
             title=f"{emoji.ai} Imagine",
             description=f"{emoji.bullet} **Prompt**: {prompt}",
             color=db.theme_color
-        ).set_image(url=response['data'][0]['url'])
+        ).set_image(url=response.data[0].url)
         image_view = ImageView(self.client, ctx, prompt=prompt, timeout=60)
         await ctx.respond(embed=image_em, view=image_view)
 
