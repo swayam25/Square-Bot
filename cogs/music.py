@@ -9,7 +9,7 @@ import asyncio
 from typing import Tuple
 from utils import database as db, emoji
 from discord.ext import commands, tasks
-from discord.commands import slash_command, Option
+from discord.commands import slash_command, option
 
 # Regex
 url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
@@ -473,10 +473,8 @@ class Music(commands.Cog):
 
 # Play
     @slash_command(guild_ids=db.guild_ids(), name="play")
-    async def play(
-        self, ctx,
-        query: Option(str, "Enter your music name/link or playlist link", autocomplete=search)
-    ):
+    @option("query", description="Enter your music name/link or playlist link", autocomplete=search)
+    async def play(self, ctx, query: str):
         """Searches and plays a music from a given query"""
         player = await self.ensure_voice(ctx)
         if player:
@@ -567,10 +565,8 @@ class Music(commands.Cog):
 
 # Equalizer
     @slash_command(guild_ids=db.guild_ids(), name="equalizer")
-    async def equalizer(
-        self, ctx,
-        equalizer: Option(str, "Choose your equalizer", choices=["Reset", "Bassboost", "Jazz", "Pop", "Treble", "Nightcore", "Superbass"])
-    ):
+    @option("equalizer", description="Choose your equalizer", choices=["Reset", "Bassboost", "Jazz", "Pop", "Treble", "Nightcore", "Superbass"])
+    async def equalizer(self, ctx, equalizer: str):
         """Equalizer to change music quality"""
         player = await self.ensure_voice(ctx)
         if player:
@@ -622,10 +618,8 @@ class Music(commands.Cog):
 
 # Seek
     @slash_command(guild_ids=db.guild_ids(), name="seek")
-    async def seek(
-        self, ctx,
-        seconds: Option(int, "Enter track position in seconds")
-    ):
+    @option("seconds", description="Enter track position in seconds")
+    async def seek(self, ctx, seconds: int):
         """Seeks to a given position in a music"""
         player = await self.ensure_voice(ctx)
         if player:
@@ -709,10 +703,8 @@ class Music(commands.Cog):
 
 # Volume
     @slash_command(guild_ids=db.guild_ids(), name="volume")
-    async def volume(
-        self, ctx,
-        volume: Option(int, "Enter your volume amount from 1 - 100")
-    ):
+    @option("volume", description="Enter your volume amount from 1 - 100")
+    async def volume(self, ctx, volume: int):
         """Changes the player's volume 1 - 100"""
         player = await self.ensure_voice(ctx)
         if player:
@@ -734,10 +726,8 @@ class Music(commands.Cog):
 
 # Queue
     @slash_command(guild_ids=db.guild_ids(), name="queue")
-    async def queue(
-        self, ctx,
-        page: Option(int, "Enter queue page number", default=1, required=False)
-    ):
+    @option("page", description="Enter queue page number", default=1, required=False)
+    async def queue(self, ctx, page: int = 1):
         """Shows the player's queue"""
         player = await self.ensure_voice(ctx)
         if player:
@@ -788,10 +778,8 @@ class Music(commands.Cog):
 
 # Loop
     @slash_command(guild_ids=db.guild_ids(), name="loop")
-    async def loop(
-        self, ctx,
-        mode: Option(str, "Enter loop mode", choices=["OFF", "Queue", "Music"])
-    ):
+    @option("mode", description="Enter loop mode", choices=["OFF", "Queue", "Music"])
+    async def loop(self, ctx, mode: str):
         """Loops the current queue until the command is invoked again or until a new music is enqueued"""
         player = await self.ensure_voice(ctx)
         if player:
@@ -814,10 +802,8 @@ class Music(commands.Cog):
 
 # Remove
     @slash_command(guild_ids=db.guild_ids(), name="remove")
-    async def remove(
-        self, ctx,
-        index: Option(int, "Enter your music index")
-    ):
+    @option("index", description="Enter your music index")
+    async def remove(self, ctx, index: int):
         """Removes a music from the player's queue with the given index"""
         player = await self.ensure_voice(ctx)
         if player:

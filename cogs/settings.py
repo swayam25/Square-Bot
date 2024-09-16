@@ -1,7 +1,7 @@
 import discord
 from utils import database as db, emoji
 from discord.ext import commands
-from discord.commands import slash_command, Option
+from discord.commands import slash_command, option
 
 class Settings(commands.Cog):
     def __init__(self, client):
@@ -43,10 +43,8 @@ class Settings(commands.Cog):
 # Set mod log
     @slash_command(guild_ids=db.guild_ids(), name="set-mod-log-channel")
     @discord.default_permissions(manage_channels=True)
-    async def set_mod_log(
-        self, ctx,
-        channel: Option(discord.TextChannel, "Mention the mod log channel")
-    ):
+    @option("channel", description="Mention the mod log channel")
+    async def set_mod_log(self, ctx, channel: discord.TextChannel):
         """Sets mod log channel"""
         db.mod_log_channel_id(guild_ids=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
@@ -59,10 +57,8 @@ class Settings(commands.Cog):
 # Set warn log
     @slash_command(guild_ids=db.guild_ids(), name="set-warn-log-channel")
     @discord.default_permissions(manage_channels=True)
-    async def set_warn_log(
-        self, ctx,
-        channel: Option(discord.TextChannel, "Mention the warn log channel")
-    ):
+    @option("channel", description="Mention the warn log channel")
+    async def set_warn_log(self, ctx, channel: discord.TextChannel):
         """Sets warn log channel"""
         db.warn_log_channel_id(guild_ids=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
@@ -75,10 +71,8 @@ class Settings(commands.Cog):
 # Set ticket log
     @slash_command(guild_ids=db.guild_ids(), name="set-ticket-log-channel")
     @discord.default_permissions(manage_channels=True)
-    async def set_ticket_log(
-        self, ctx,
-        channel: Option(discord.TextChannel, "Mention the ticket log channel")
-    ):
+    @option("channel", description="Mention the ticket log channel")
+    async def set_ticket_log(self, ctx, channel: discord.TextChannel):
         """Sets ticket log channel"""
         db.ticket_log_channel_id(guild_ids=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
@@ -91,10 +85,8 @@ class Settings(commands.Cog):
 # Set antilink
     @slash_command(guild_ids=db.guild_ids(), name="set-antilink")
     @discord.default_permissions(manage_channels=True)
-    async def set_antilink(
-        self, ctx,
-        status: Option(str, "Choose the antilink status", choices=["ON", "OFF"])
-    ):
+    @option("status", description="Choose the antilink status", choices=["ON", "OFF"])
+    async def set_antilink(self, ctx, status: str):
         """Sets antilink"""
         db.antilink(guild_ids=ctx.guild.id, status=status, mode="set")
         anitlink_em = discord.Embed(
@@ -107,10 +99,8 @@ class Settings(commands.Cog):
 # Set antiswear
     @slash_command(guild_ids=db.guild_ids(), name="set-antiswear")
     @discord.default_permissions(manage_channels=True)
-    async def setAntiswear(
-        self, ctx,
-        status: Option(str, "Choose the antiswear status", choices=["ON", "OFF"])
-    ):
+    @option("status", description="Choose the antiswear status", choices=["ON", "OFF"])
+    async def setAntiswear(self, ctx, status: str):
         """Sets antiswear"""
         db.antiswear(guild_ids=ctx.guild.id, status=status, mode="set")
         antiswear_em = discord.Embed(

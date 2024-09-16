@@ -1,7 +1,7 @@
 import discord
 from utils import database as db, emoji
 from discord.ext import commands
-from discord.commands import slash_command, Option
+from discord.commands import slash_command, option
 from openai import OpenAI
 
 # OpenAI API
@@ -45,10 +45,8 @@ class AI(commands.Cog):
 
 # Image Generation
     @slash_command(guild_ids=db.guild_ids(), name="imagine")
-    async def imagine(
-        self, ctx,
-        prompt = Option(str, "Prompt to generate image")
-    ):
+    @option("prompt", description="Prompt to generate image")
+    async def imagine(self, ctx, prompt: str):
         """Generate image from prompt"""
         await ctx.response.defer()
         response = openai.images.generate(

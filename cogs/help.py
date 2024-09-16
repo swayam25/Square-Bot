@@ -2,7 +2,7 @@ import discord
 import discord.ui
 from utils import database as db, emoji
 from discord.ext import commands
-from discord.commands import slash_command, Option
+from discord.commands import slash_command
 
 # Help embed
 def help_home_em(self):

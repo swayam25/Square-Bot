@@ -4,7 +4,7 @@ import os, sys
 from utils import database as db, emoji
 from utils import check
 from discord.ext import commands
-from discord.commands import slash_command, Option
+from discord.commands import slash_command, option
 
 class Devs(commands.Cog):
     def __init__(self, client):
@@ -49,10 +49,8 @@ class Devs(commands.Cog):
 
 # Add dev
     @slash_command(guild_ids=db.owner_guild_ids(), name="add-dev")
-    async def add_dev(
-        self, ctx,
-        user: Option(discord.Member, "Mention the user whom you want to add to dev")
-    ):
+    @option("user", description="Mention the user whom you want to add to dev")
+    async def add_dev(self, ctx, user: discord.Member):
         """Adds a bot dev"""
         if check.is_owner(ctx.author.id):
             db.add_dev_ids(user.id)
@@ -64,10 +62,8 @@ class Devs(commands.Cog):
 
 # Remove dev
     @slash_command(guild_ids=db.owner_guild_ids(), name="remove-dev")
-    async def remove_dev(
-        self, ctx,
-        user: Option(discord.Member, "Mention the user whom you want to remove from dev")
-    ):
+    @option("user", description="Mention the user whom you want to remove from dev")
+    async def remove_dev(self, ctx, user: discord.Member):
         """Removes a bot dev"""
         if check.is_owner(ctx.author.id):
             db.remove_dev_ids(user.id)
@@ -136,11 +132,9 @@ class Devs(commands.Cog):
 
 # Set status
     @slash_command(guild_ids=db.owner_guild_ids(), name="set-status")
-    async def set_status(
-        self, ctx,
-        type: Option(str, "Choose bot status type", choices=["Game", "Streaming", "Listening", "Watching"]),
-        status: Option(str, "Enter new status of bot")
-        ):
+    @option("type", description="Choose bot status type", choices=["Game", "Streaming", "Listening", "Watching"])
+    @option("status", description="Enter new status of bot")
+    async def set_status(self, ctx, type: str, status: str):
             """Sets custom bot status"""
             if check.is_dev(ctx.author.id):
                 if type == "Game":

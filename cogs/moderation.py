@@ -2,19 +2,17 @@ import discord
 import datetime
 from utils import database as db, emoji
 from discord.ext import commands
-from discord.commands import slash_command, Option
+from discord.commands import slash_command, option
 
 class Moderation(commands.Cog):
     def __init__(self, client):
         self.client = client
- 
+
 # Purge
     @slash_command(guild_ids=db.guild_ids(), name="purge")
     @discord.default_permissions(manage_messages=True)
-    async def purge(
-        self, ctx,
-        amount: Option(int, "Enter an integer between 1 to 100")
-    ):
+    @option("amount", description="Enter an integer between 1 to 100")
+    async def purge(self, ctx, amount: int):
         """Purges the amount of given messages"""
         amount_condition = [
             amount < 1,
@@ -31,11 +29,9 @@ class Moderation(commands.Cog):
 # Kick
     @slash_command(guild_ids=db.guild_ids(), name="kick")
     @discord.default_permissions(kick_members=True)
-    async def kick(
-        self, ctx,
-        user: Option(discord.Member, "Mention the user whom you want to kick"),
-        reason: Option(str, "Enter the reason for kicking the user", required=False)
-    ):
+    @option("user", description="Mention the user whom you want to kick")
+    @option("reason", description="Enter the reason for kicking the user", required=False)
+    async def kick(self, ctx, user: discord.Member, reason: str = None):
         """Kicks the mentioned user"""
         if user == ctx.author:
             errorEm = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
@@ -45,7 +41,7 @@ class Moderation(commands.Cog):
             await ctx.respond(embed=errorEm, ephemeral=True)
         else:
             kich_em = discord.Embed(
-                title=f"{emoji.kick} Kicked User", 
+                title=f"{emoji.kick} Kicked User",
                 description=f"Successfully kicked **{user}** from the server.\n" +
                             f"{emoji.bullet} **Reason**: {reason}",
                 color=db.theme_color
@@ -56,11 +52,9 @@ class Moderation(commands.Cog):
 # Ban
     @slash_command(guild_ids=db.guild_ids(), name="ban")
     @discord.default_permissions(ban_members=True)
-    async def ban(
-        self, ctx,
-        user: Option(discord.Member, "Mention the user whom you want to ban"),
-        reason: Option(str, "Enter the reason for banning the user", required=False)
-    ):
+    @option("user", description="Mention the user whom you want to ban")
+    @option("reason", description="Enter the reason for banning the user", required=False)
+    async def ban(self, ctx, user: discord.Member, reason: str = None):
         """Bans the mentioned user"""
         if user == ctx.author:
             errorEm = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
@@ -81,12 +75,10 @@ class Moderation(commands.Cog):
 # Timeout user
     @slash_command(guild_ids=db.guild_ids(), name="timeout")
     @discord.default_permissions(moderate_members=True)
-    async def timeout_user(
-        self, ctx,
-        user: Option(discord.Member, "Mention the user whom you want to timeout"),
-        minutes: Option(int, "Enter the duration of timeout in minutes"),
-        reason: Option(str, "Enter the reason for user timeout", required=False)
-    ):
+    @option("user", description="Mention the user whom you want to timeout")
+    @option("minutes", description="Enter the duration of timeout in minutes")
+    @option("reason", description="Enter the reason for user timeout", required=False)
+    async def timeout_user(self, ctx, user: discord.Member, minutes: int, reason: str = None):
         """Timeouts the mentioned user"""
         if user == ctx.author:
             errorEm = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
@@ -101,7 +93,7 @@ class Moderation(commands.Cog):
                 title=f"{emoji.timer2} Timed out User",
                 description=f"Successfully timed out {user.mention}.\n" +
                             f"{emoji.bullet} **Duration**: `{duration}`\n" +
-                            f"{emoji.bullet} **Reason**: {reason}", 
+                            f"{emoji.bullet} **Reason**: {reason}",
                 color=db.theme_color
             )
             await ctx.respond(embed=timeout_em)
@@ -109,11 +101,9 @@ class Moderation(commands.Cog):
 # Untimeout user
     @slash_command(guild_ids=db.guild_ids(), name="untimeout")
     @discord.default_permissions(moderate_members=True)
-    async def untimeout_user(
-        self, ctx,
-        user: Option(discord.Member, "Mention the user whom you want to untimeout"),
-        reason: Option(str, "Enter the reason for user timeout", required=False)
-    ):
+    @option("user", description="Mention the user whom you want to untimeout")
+    @option("reason", description="Enter the reason for user timeout", required=False)
+    async def untimeout_user(self, ctx, user: discord.Member, reason: str = None):
         """Untimeouts the mentioned user"""
         if user == ctx.author:
             errorEm = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
@@ -126,7 +116,7 @@ class Moderation(commands.Cog):
             untimeout_em = discord.Embed(
                 title=f"{emoji.timer} Untimed out User",
                 description=f"Successfully untimed out {user.mention}.\n" +
-                            f"{emoji.bullet} **Reason**: {reason}", 
+                            f"{emoji.bullet} **Reason**: {reason}",
                 color=db.theme_color
             )
             await ctx.respond(embed=untimeout_em)
@@ -134,10 +124,8 @@ class Moderation(commands.Cog):
 # Lock
     @slash_command(guild_ids=db.guild_ids(), name="lock")
     @discord.default_permissions(manage_channels=True)
-    async def lock(
-        self, ctx,
-        reason: Option(str, "Enter the reason for locking the channel", required=False)
-    ):
+    @option("reason", description="Enter the reason for locking the channel", required=False)
+    async def lock(self, ctx, reason: str = None):
         """Locks the current channel"""
         lock_em = discord.Embed(
             title=f"{emoji.lock} Channel Locked",
@@ -166,11 +154,9 @@ class Moderation(commands.Cog):
 # Role add
     @slash_command(guild_ids=db.guild_ids(), name="add-role")
     @discord.default_permissions(manage_roles=True)
-    async def add_role(
-        self, ctx,
-        user: Option(discord.Member, "Mention the user whom you want to add the role"),
-        role: Option(discord.Role, "Mention the role which you will add to the user")
-    ):
+    @option("user", description="Mention the user whom you want to add the role")
+    @option("role", description="Mention the role which you will add to the user")
+    async def add_role(self, ctx, user: discord.Member, role: discord.Role):
         """Adds the mentioned role to the mentioned user"""
         add_role_em = discord.Embed(
             title=f"{emoji.plus} Role Added",
@@ -183,11 +169,9 @@ class Moderation(commands.Cog):
 # Remove role
     @slash_command(guild_ids=db.guild_ids(), name="remove-role")
     @discord.default_permissions(manage_roles=True)
-    async def remove_role(
-        self, ctx,
-        user: Option(discord.Member, "Mention the user whom you want to remove the role"),
-        role: Option(discord.Role, "Mention the role which you will remove from the user")
-    ):
+    @option("user", description="Mention the user whom you want to remove the role")
+    @option("role", description="Mention the role which you will remove from the user")
+    async def remove_role(self, ctx, user: discord.Member, role: discord.Role):
         """Removes the mentioned role from the mentioned user"""
         remove_role_em = discord.Embed(
             title=f"{emoji.minus} Role Removed",

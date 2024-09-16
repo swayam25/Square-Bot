@@ -13,7 +13,7 @@ class Logs(commands.Cog):
             join_ch = await self.client.fetch_channel(db.mod_log_channel_id(user.guild.id))
             join_em = discord.Embed(
                 title=f"{emoji.plus} Member Joined",
-                description=f"{emoji.bullet} **Name**: {user.mention}\n"
+                description=f"{emoji.bullet} **Name**: {user.mention}\n" +
                             f"{emoji.bullet} **Account Created**: {user.created_at.__format__(db.datetime_format())}", color=db.theme_color)
             join_em.set_thumbnail(url=f"{user.avatar.url}")
             await join_ch.send(embed=join_em)
@@ -25,7 +25,7 @@ class Logs(commands.Cog):
             leave_ch = await self.client.fetch_channel(db.mod_log_channel_id(user.guild.id))
             leave_em = discord.Embed(
                 title=f"{emoji.minus} Member Left",
-                description=f"{emoji.bullet} **Name**: {user.mention}\n"
+                description=f"{emoji.bullet} **Name**: {user.mention}\n" +
                             f"{emoji.bullet} **Account Created**: {user.created_at.__format__(db.datetime_format())}", color=db.theme_color)
             leave_em.set_thumbnail(url=f"{user.avatar.url}")
             await leave_ch.send(embed=leave_em)
@@ -38,7 +38,7 @@ class Logs(commands.Cog):
             ban_ch = await self.client.fetch_channel(db.mod_log_channel_id(user.guild.id))
             ban_em = discord.Embed(
                 title=f"{emoji.mod2} Member Banned",
-                description=f"{emoji.bullet} **Name**: {user.mention}\n"
+                description=f"{emoji.bullet} **Name**: {user.mention}\n" +
                             f"{emoji.bullet} **Account Created**: {user.created_at.__format__(db.datetime_format())}", color=db.theme_color)
             ban_em.set_thumbnail(url=f"{user.avatar.url}")
             await ban_ch.send(embed=ban_em)
@@ -50,7 +50,7 @@ class Logs(commands.Cog):
             unban_ch = await self.client.fetch_channel(db.mod_log_channel_id(user.guild.id))
             unban_em = discord.Embed(
                 title=f"{emoji.mod} Member Unbanned",
-                description=f"{emoji.bullet} **Name**: {user.mention}\n"
+                description=f"{emoji.bullet} **Name**: {user.mention}\n" +
                             f"{emoji.bullet} **Account Created**: {user.created_at.__format__(db.datetime_format())}", color=db.theme_color)
             unban_em.set_thumbnail(url=f"{user.avatar.url}")
             await unban_ch.send(embed=unban_em)
@@ -64,11 +64,11 @@ class Logs(commands.Cog):
             edit_ch= await self.client.fetch_channel(db.mod_log_channel_id(msg_before.guild.id))
             edit_em = discord.Embed(
                 title=f"{emoji.edit} Message Edited",
-                description=f"{emoji.bullet} **Author**: {msg_before.author.mention}\n"
-                            f"{emoji.bullet} **Original Message**: {msg_before.content}\n"
+                description=f"{emoji.bullet} **Author**: {msg_before.author.mention}\n" +
+                            f"{emoji.bullet} **Original Message**: {msg_before.content}\n" +
                             f"{emoji.bullet} **Edited Message**: {msg_after.content}", color=db.theme_color)
             await edit_ch.send(embed=edit_em)
- 
+
 # Delete
     @commands.Cog.listener()
     async def on_message_delete(self, msg):
@@ -78,7 +78,7 @@ class Logs(commands.Cog):
             del_ch = await self.client.fetch_channel(db.mod_log_channel_id(msg.guild.id))
             del_em = discord.Embed(
                 title=f"{emoji.bin} Message Deleted",
-                description=f"{emoji.bullet} **Author**: {msg.author.mention}\n"
+                description=f"{emoji.bullet} **Author**: {msg.author.mention}\n" +
                             f"{emoji.bullet} **Message**: {msg.content}", color=db.theme_color)
             await del_ch.send(embed=del_em)
 

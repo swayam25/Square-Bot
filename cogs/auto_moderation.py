@@ -24,7 +24,7 @@ class AutoModeration(commands.Cog):
                     logging_ch = await self.client.fetch_channel(db.warn_log_channel_id(msg.guild.id))
                     anti_link_log = discord.Embed(
                         title=f"{emoji.shield} Antilink",
-                        description=f"{emoji.bullet} **Author**: {msg.author}\n"
+                        description=f"{emoji.bullet} **Author**: {msg.author}\n" +
                                     f"{emoji.bullet} **Message**: {msg.content}", color=db.theme_color)
                     await logging_ch.send(embed=anti_link_log)
 
@@ -46,7 +46,7 @@ class AutoModeration(commands.Cog):
                     logging_ch = await self.client.fetch_channel(db.warn_log_channel_id(msg.guild.id))
                     anti_swear_log_em = discord.Embed(
                         title=f"{emoji.shield} Antiswear",
-                        description=f"{emoji.bullet} **Author**: {msg.author}\n"
+                        description=f"{emoji.bullet} **Author**: {msg.author}\n" +
                                     f"{emoji.bullet} **Message**: {msg.content}", color=db.theme_color)
                     await logging_ch.send(embed=anti_swear_log_em)
 
