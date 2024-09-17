@@ -56,9 +56,10 @@ Advance multipurpose discord bot for all your needs
         - Gives access to developer commands
         - *This can be managed by `/list-devs`, `/add-dev`, `/remove-dev` commands too*
 
-    - `guild_id` (`int`) [Optional]
-        - Single guild id
-        - Bot will only work in this guild
+    - `lockdown` (`bool`) [Required]
+        - Lockdown status
+        - If true, bot will not respond to any commands in any guild except owner's guilds
+        - *This can be toggled by `/lockdown` command*
 
     - `owner_guild_ids` (`List[int]`) [Required]
         - List of guild ids
