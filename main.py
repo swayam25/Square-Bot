@@ -1,6 +1,5 @@
 import discord
 import os
-import time
 from utils import database as db
 from rich import print
 from rich.progress import Progress, SpinnerColumn
