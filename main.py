@@ -41,20 +41,8 @@ async def on_connect():
 # On ready event
 @client.event
 async def on_ready():
-    guild_db_progress_bar = Progress(
-        SpinnerColumn(style="yellow", finished_text="[green bold]✓[/]"),
-        "[progress.description]{task.description} [progress.percentage]{task.percentage:>3.1f}%"
-    )
     print(f"[green][bold]✓[/] Logged in as {client.user} [ID: {client.user.id}][/]")
-    with guild_db_progress_bar as progress:
-        task = guild_db_progress_bar.add_task("Connecting to guilds database", total=len(client.guilds))
-        for guild in client.guilds:
-            if os.path.exists(f"./database/{guild.id}.json"):
-                pass
-            else:
-                db.create(guild.id)
-            progress.update(task, advance=1)
-        progress.update(task, description=f"[green]Connected to {len(client.guilds)} guild{'' if len(client.guilds) <= 1 else 's'}[/]")
+    print(f"[green][bold]✓[/] Connected to {len(client.guilds)} guild{'' if len(client.guilds) <= 1 else 's'}[/]")
 
 # Starting bot
 try:
