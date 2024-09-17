@@ -64,7 +64,7 @@ Advance multipurpose discord bot for all your needs
         - List of guild ids
         - Developer commands will only work in these guilds
 
-    - `system_channel_id` (`int`) [Required]
+    - `system_ch_id` (`int`) [Required]
         - System channel id
         - Bot will send logs in this channel
 
