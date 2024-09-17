@@ -1,6 +1,7 @@
 {
     "owner_id": 0,
     "dev_ids": [],
+    "lockdown": false,
     "owner_guild_ids": [],
     "system_ch_id": 0,
     "support_server_url": null,
