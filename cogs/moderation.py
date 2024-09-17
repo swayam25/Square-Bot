@@ -9,7 +9,7 @@ class Moderation(commands.Cog):
         self.client = client
 
 # Purge
-    @slash_command(guild_ids=db.guild_ids(), name="purge")
+    @slash_command(guild_ids=db.guild_id(), name="purge")
     @discord.default_permissions(manage_messages=True)
     @option("amount", description="Enter an integer between 1 to 100")
     async def purge(self, ctx, amount: int):
@@ -27,7 +27,7 @@ class Moderation(commands.Cog):
             await ctx.channel.purge(limit=amount)
 
 # Kick
-    @slash_command(guild_ids=db.guild_ids(), name="kick")
+    @slash_command(guild_ids=db.guild_id(), name="kick")
     @discord.default_permissions(kick_members=True)
     @option("user", description="Mention the user whom you want to kick")
     @option("reason", description="Enter the reason for kicking the user", required=False)
@@ -50,7 +50,7 @@ class Moderation(commands.Cog):
             await ctx.respond(embed=kich_em)
 
 # Ban
-    @slash_command(guild_ids=db.guild_ids(), name="ban")
+    @slash_command(guild_ids=db.guild_id(), name="ban")
     @discord.default_permissions(ban_members=True)
     @option("user", description="Mention the user whom you want to ban")
     @option("reason", description="Enter the reason for banning the user", required=False)
@@ -73,7 +73,7 @@ class Moderation(commands.Cog):
             await ctx.respond(embed=banEm)
 
 # Timeout user
-    @slash_command(guild_ids=db.guild_ids(), name="timeout")
+    @slash_command(guild_ids=db.guild_id(), name="timeout")
     @discord.default_permissions(moderate_members=True)
     @option("user", description="Mention the user whom you want to timeout")
     @option("minutes", description="Enter the duration of timeout in minutes")
@@ -99,7 +99,7 @@ class Moderation(commands.Cog):
             await ctx.respond(embed=timeout_em)
 
 # Untimeout user
-    @slash_command(guild_ids=db.guild_ids(), name="untimeout")
+    @slash_command(guild_ids=db.guild_id(), name="untimeout")
     @discord.default_permissions(moderate_members=True)
     @option("user", description="Mention the user whom you want to untimeout")
     @option("reason", description="Enter the reason for user timeout", required=False)
@@ -122,7 +122,7 @@ class Moderation(commands.Cog):
             await ctx.respond(embed=untimeout_em)
 
 # Lock
-    @slash_command(guild_ids=db.guild_ids(), name="lock")
+    @slash_command(guild_ids=db.guild_id(), name="lock")
     @discord.default_permissions(manage_channels=True)
     @option("reason", description="Enter the reason for locking the channel", required=False)
     async def lock(self, ctx, reason: str = None):
@@ -138,7 +138,7 @@ class Moderation(commands.Cog):
         await ctx.respond(embed=lock_em)
 
 # Unlock
-    @slash_command(guild_ids=db.guild_ids(), name="unlock")
+    @slash_command(guild_ids=db.guild_id(), name="unlock")
     @discord.default_permissions(manage_channels=True)
     async def unlock(self, ctx):
         """Unlocks the current channel"""
@@ -152,7 +152,7 @@ class Moderation(commands.Cog):
         await ctx.respond(embed=unlock_em)
 
 # Role add
-    @slash_command(guild_ids=db.guild_ids(), name="add-role")
+    @slash_command(guild_ids=db.guild_id(), name="add-role")
     @discord.default_permissions(manage_roles=True)
     @option("user", description="Mention the user whom you want to add the role")
     @option("role", description="Mention the role which you will add to the user")
@@ -167,7 +167,7 @@ class Moderation(commands.Cog):
         await ctx.respond(embed=add_role_em)
 
 # Remove role
-    @slash_command(guild_ids=db.guild_ids(), name="remove-role")
+    @slash_command(guild_ids=db.guild_id(), name="remove-role")
     @discord.default_permissions(manage_roles=True)
     @option("user", description="Mention the user whom you want to remove the role")
     @option("role", description="Mention the role which you will remove from the user")

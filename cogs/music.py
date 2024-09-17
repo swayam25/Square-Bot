@@ -472,7 +472,7 @@ class Music(commands.Cog):
             await member.edit(deafen=True)
 
 # Play
-    @slash_command(guild_ids=db.guild_ids(), name="play")
+    @slash_command(guild_ids=db.guild_id(), name="play")
     @option("query", description="Enter your music name/link or playlist link", autocomplete=search)
     async def play(self, ctx, query: str):
         """Searches and plays a music from a given query"""
@@ -529,7 +529,7 @@ class Music(commands.Cog):
                 await player.play()
 
 # Now playing
-    @slash_command(guild_id=db.guild_ids(), name="now-playing")
+    @slash_command(guild_ids=db.guild_id(), name="now-playing")
     async def now_playing(self, ctx):
         """Shows currently playing music"""
         player = await self.ensure_voice(ctx)
@@ -564,7 +564,7 @@ class Music(commands.Cog):
             await ctx.respond(embed=play_em)
 
 # Equalizer
-    @slash_command(guild_ids=db.guild_ids(), name="equalizer")
+    @slash_command(guild_ids=db.guild_id(), name="equalizer")
     @option("equalizer", description="Choose your equalizer", choices=["Reset", "Bassboost", "Jazz", "Pop", "Treble", "Nightcore", "Superbass"])
     async def equalizer(self, ctx, equalizer: str):
         """Equalizer to change music quality"""
@@ -594,7 +594,7 @@ class Music(commands.Cog):
             await ctx.respond(embed=eq_em)
 
 # Stop
-    @slash_command(guild_ids=db.guild_ids(), name="stop")
+    @slash_command(guild_ids=db.guild_id(), name="stop")
     async def stop(self, ctx):
         """Destroys the player"""
         player = await self.ensure_voice(ctx)
@@ -617,7 +617,7 @@ class Music(commands.Cog):
             await ctx.respond(embed=stop_embed)
 
 # Seek
-    @slash_command(guild_ids=db.guild_ids(), name="seek")
+    @slash_command(guild_ids=db.guild_id(), name="seek")
     @option("seconds", description="Enter track position in seconds")
     async def seek(self, ctx, seconds: int):
         """Seeks to a given position in a music"""
@@ -647,7 +647,7 @@ class Music(commands.Cog):
                 await ctx.respond(embed=skip_em)
 
 # Skip
-    @slash_command(guild_ids=db.guild_ids(), name="skip")
+    @slash_command(guild_ids=db.guild_id(), name="skip")
     async def skip(self, ctx):
         """Skips the current playing music"""
         player = await self.ensure_voice(ctx)
@@ -666,7 +666,7 @@ class Music(commands.Cog):
             await ctx.respond(embed=skip_em)
 
 # Pause
-    @slash_command(guild_ids=db.guild_ids(), name="pause")
+    @slash_command(guild_ids=db.guild_id(), name="pause")
     async def pause(self, ctx):
         """Pauses the player"""
         player = await self.ensure_voice(ctx)
@@ -684,7 +684,7 @@ class Music(commands.Cog):
                 await ctx.respond(embed=pause_em)
 
 # Resume
-    @slash_command(guild_ids=db.guild_ids(), name="resume")
+    @slash_command(guild_ids=db.guild_id(), name="resume")
     async def resume(self, ctx):
         """Resumes the player"""
         player = await self.ensure_voice(ctx)
@@ -702,7 +702,7 @@ class Music(commands.Cog):
                 await ctx.respond(embed=error_em, ephemeral=True)
 
 # Volume
-    @slash_command(guild_ids=db.guild_ids(), name="volume")
+    @slash_command(guild_ids=db.guild_id(), name="volume")
     @option("volume", description="Enter your volume amount from 1 - 100")
     async def volume(self, ctx, volume: int):
         """Changes the player's volume 1 - 100"""
@@ -725,7 +725,7 @@ class Music(commands.Cog):
                 await ctx.respond(embed=vol_em)
 
 # Queue
-    @slash_command(guild_ids=db.guild_ids(), name="queue")
+    @slash_command(guild_ids=db.guild_id(), name="queue")
     @option("page", description="Enter queue page number", default=1, required=False)
     async def queue(self, ctx, page: int = 1):
         """Shows the player's queue"""
@@ -759,7 +759,7 @@ class Music(commands.Cog):
                 await ctx.respond(embed=queue_em)
 
 # Shuffle
-    @slash_command(guild_ids=db.guild_ids(), name="shuffle")
+    @slash_command(guild_ids=db.guild_id(), name="shuffle")
     async def shuffle(self, ctx):
         """Shuffles the player's queue"""
         player = await self.ensure_voice(ctx)
@@ -777,7 +777,7 @@ class Music(commands.Cog):
                 await ctx.respond(embed=shuffle_em)
 
 # Loop
-    @slash_command(guild_ids=db.guild_ids(), name="loop")
+    @slash_command(guild_ids=db.guild_id(), name="loop")
     @option("mode", description="Enter loop mode", choices=["OFF", "Queue", "Music"])
     async def loop(self, ctx, mode: str):
         """Loops the current queue until the command is invoked again or until a new music is enqueued"""
@@ -801,7 +801,7 @@ class Music(commands.Cog):
             await ctx.respond(embed=loop_em)
 
 # Remove
-    @slash_command(guild_ids=db.guild_ids(), name="remove")
+    @slash_command(guild_ids=db.guild_id(), name="remove")
     @option("index", description="Enter your music index")
     async def remove(self, ctx, index: int):
         """Removes a music from the player's queue with the given index"""

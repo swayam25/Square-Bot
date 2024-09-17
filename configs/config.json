@@ -1,7 +1,7 @@
 {
-    "owner_ids": 0,
+    "owner_id": 0,
     "dev_ids": [],
-    "guild_ids": null,
+    "guild_id": null,
     "owner_guild_ids": [],
     "system_channel_id": 0,
     "support_server_url": null,

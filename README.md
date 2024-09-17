@@ -56,7 +56,7 @@ Advance multipurpose discord bot for all your needs
         - Gives access to developer commands
         - *This can be managed by `/list-devs`, `/add-dev`, `/remove-dev` commands too*
 
-    - `guild_ids` (`int`) [Optional]
+    - `guild_id` (`int`) [Optional]
         - Single guild id
         - Bot will only work in this guild
 

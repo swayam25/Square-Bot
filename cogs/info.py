@@ -14,21 +14,21 @@ class Info(commands.Cog):
         self.client = client
 
 # Ping
-    @slash_command(guild_ids=db.guild_ids(), name="ping")
+    @slash_command(guild_ids=db.guild_id(), name="ping")
     async def ping(self, ctx):
         """Shows heartbeats of the bot"""
         ping_em = discord.Embed(description=f"{emoji.bullet} **Ping**: `{round(self.client.latency * 1000)} ms`", color=db.theme_color)
         await ctx.respond(embed=ping_em)
 
 # Uptime
-    @slash_command(guild_ids=db.guild_ids(), name="uptime")
+    @slash_command(guild_ids=db.guild_id(), name="uptime")
     async def uptime(self,ctx):
         """Shows bot's uptime"""
         uptime_em = discord.Embed(description=f"{emoji.bullet} **Bot's Uptime**: `{str(datetime.timedelta(seconds=int(round(time.time() - start_time))))}`", color=db.theme_color)
         await ctx.respond(embed=uptime_em)
 
 # Stats
-    @slash_command(guild_ids=db.guild_ids(), name="stats")
+    @slash_command(guild_ids=db.guild_id(), name="stats")
     async def stats(self, ctx):
         """Shows bot stats"""
         owner = await self.client.fetch_user(db.owner_id())
@@ -45,7 +45,7 @@ class Info(commands.Cog):
         await ctx.respond(embed=stats_em)
 
 # Avatar
-    @slash_command(guild_ids=db.guild_ids(), name="avatar")
+    @slash_command(guild_ids=db.guild_id(), name="avatar")
     @option("user", description="Mention the user whom you will see avatar")
     async def avatar(self, ctx, user: discord.Member):
         """Shows the avatar of the mentioned user"""
@@ -54,7 +54,7 @@ class Info(commands.Cog):
         await ctx.respond(embed=avatar_em)
 
 # User info
-    @slash_command(guild_ids=db.guild_ids(), name="user-info")
+    @slash_command(guild_ids=db.guild_id(), name="user-info")
     @option("user", description="Mention the member whom you will see info")
     async def user_info(self, ctx, user: discord.Member):
         """Shows info of the mentioned user"""
@@ -72,7 +72,7 @@ class Info(commands.Cog):
         await ctx.respond(embed=user_info_em)
 
 # Server info
-    @slash_command(guild_ids=db.guild_ids(), name="server-info")
+    @slash_command(guild_ids=db.guild_id(), name="server-info")
     async def server_info(self, ctx):
         """Shows info of the current server"""
         server_info_em = discord.Embed(
@@ -96,7 +96,7 @@ class Info(commands.Cog):
         await ctx.respond(embed=server_info_em)
 
 # Emoji info
-    @slash_command(guild_ids=db.guild_ids(), name="emoji-info")
+    @slash_command(guild_ids=db.guild_id(), name="emoji-info")
     @option("emoji_icon", description="Enter the emoji")
     async def emoji_info(self, ctx, emoji_icon: discord.Emoji):
         """Shows info of the given emoji"""

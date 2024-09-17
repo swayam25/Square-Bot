@@ -47,11 +47,11 @@ def dev_ids():
             dev_ids.append(ids)
     return list(dev_ids)
 
-# Guild IDs
-def guild_ids():
+# Guild ID
+def guild_id():
     with open(f"{config_file_path}", "r") as config_file:
         config_data = json.load(config_file)
-        return config_data["guild_ids"]
+        return config_data["guild_id"]
 
 # Owner guild IDs
 def owner_guild_ids():
@@ -111,7 +111,7 @@ def datetime_format():
 
 # Guild configuration utility
 def guild_config(
-    guild_ids: int,
+    guild_id: int,
     key: str = "",
     value: any = None,
     mode: str = "get",
@@ -121,7 +121,7 @@ def guild_config(
     Handles guild configuration settings
 
     Args:
-        guild_ids (int): The guild ID
+        guild_id (int): The guild ID
         key (str): The configuration key
         value (any, optional): The new value for the key. Defaults to None
         mode (str, optional): The operation mode ("get" or "set"). Defaults to "get"
@@ -130,7 +130,7 @@ def guild_config(
     Returns:
         The current or updated value for the key
     """
-    file_path = f"database/{str(guild_ids)}.json"
+    file_path = f"database/{str(guild_id)}.json"
     os.makedirs("database", exist_ok=True)
     data = {}
 
@@ -161,8 +161,8 @@ def guild_config(
         return value
 
 # Create new db
-def create(guild_ids: int):
-    guild_config(guild_ids, "set", {
+def create(guild_id: int):
+    guild_config(guild_id, "set", {
         "mod_log_ch": None,
         "ticket_log_ch": None,
         "warn_log_ch": None,
@@ -171,50 +171,50 @@ def create(guild_ids: int):
     })
 
 # Delete db
-def delete(guild_ids: int):
-    os.remove(f"database/{str(guild_ids)}.json")
+def delete(guild_id: int):
+    os.remove(f"database/{str(guild_id)}.json")
 
 # Mod log channel
-def mod_log_ch(guild_ids: int, channel_id: int = None, mode: str = "get"):
-    return guild_config(guild_ids, "mod_log_ch", channel_id, mode)
+def mod_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
+    return guild_config(guild_id, "mod_log_ch", channel_id, mode)
 
 # Warn log channel
-def warn_log_ch(guild_ids: int, channel_id: int = None, mode: str = "get"):
-    return guild_config(guild_ids, "warn_log_ch", channel_id, mode)
+def warn_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
+    return guild_config(guild_id, "warn_log_ch", channel_id, mode)
 
 # Ticket log channel
-def ticket_log_ch(guild_ids: int, channel_id: int = None, mode: str = "get"):
-    return guild_config(guild_ids, "ticket_log_ch", channel_id, mode)
+def ticket_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
+    return guild_config(guild_id, "ticket_log_ch", channel_id, mode)
 
 # Antilink system
-def antilink(guild_ids: int, status: str = "OFF", mode: str = "get"):
-    return guild_config(guild_ids, "antilink", status, mode)
+def antilink(guild_id: int, status: str = "OFF", mode: str = "get"):
+    return guild_config(guild_id, "antilink", status, mode)
 
 # Antiswear system
-def antiswear(guild_ids: int, status: str = "OFF", mode: str = "get"):
-    return guild_config(guild_ids, "antiswear", status, mode)
+def antiswear(guild_id: int, status: str = "OFF", mode: str = "get"):
+    return guild_config(guild_id, "antiswear", status, mode)
 
 # -------------------- TEMP FILE --------------------
 
 # Play channel ID
-def play_ch_id(guild_ids: int, channel_id: int = None, mode: str = "get"):
+def play_ch_id(guild_id: int, channel_id: int = None, mode: str = "get"):
     if mode == "get":
-        return temp_file_path.get(f"{str(guild_ids)}-play_ch_id", None)
+        return temp_file_path.get(f"{str(guild_id)}-play_ch_id", None)
     elif mode == "set":
-        temp_file_path.update({f"{str(guild_ids)}-play_ch_id": channel_id})
+        temp_file_path.update({f"{str(guild_id)}-play_ch_id": channel_id})
 
 # Play msg ID
-def play_msg_id(guild_ids: int, msg_id: int = None, mode: str = "get"):
+def play_msg_id(guild_id: int, msg_id: int = None, mode: str = "get"):
     match mode:
         case "get":
-            return temp_file_path.get(f"{str(guild_ids)}-play_msg_id", None)
+            return temp_file_path.get(f"{str(guild_id)}-play_msg_id", None)
         case "set":
-            temp_file_path.update({f"{str(guild_ids)}-play_msg_id": msg_id})
+            temp_file_path.update({f"{str(guild_id)}-play_msg_id": msg_id})
 
 # Equalizer
-def equalizer(guild_ids: int, name: str = None, mode: str = "get"):
+def equalizer(guild_id: int, name: str = None, mode: str = "get"):
     match mode:
         case "get":
-            return temp_file_path.get(f"{str(guild_ids)}-equalizer", None)
+            return temp_file_path.get(f"{str(guild_id)}-equalizer", None)
         case "set":
-            temp_file_path.update({f"{str(guild_ids)}-equalizer": name})
+            temp_file_path.update({f"{str(guild_id)}-equalizer": name})
