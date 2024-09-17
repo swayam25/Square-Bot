@@ -90,6 +90,23 @@ class Devs(commands.Cog):
             error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
 
+# Lockdown
+    @slash_command(guild_ids=db.owner_guild_ids(), name="lockdown")
+    async def lockdown(self, ctx):
+        """Lockdowns the bot"""
+        if check.is_dev(ctx.author.id):
+            db.lockdown(not db.lockdown(status_only=True))
+            lockdownEm = discord.Embed(
+                title=f"{emoji.lock if db.lockdown(status_only=True) else emoji.unlock} Lockdown",
+                description=f"Bot is now in lockdown mode" if db.lockdown(status_only=True) else "Bot is now out of lockdown mode",
+                color=db.theme_color
+            )
+            await ctx.respond(embed=lockdownEm)
+            await self.restart(ctx)
+        else:
+            error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+
 # Restart
     @slash_command(guild_ids=db.owner_guild_ids(), name="restart")
     async def restart(self, ctx):

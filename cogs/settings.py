@@ -8,7 +8,7 @@ class Settings(commands.Cog):
         self.client = client
 
 # Settings
-    @slash_command(guild_ids=db.guild_id(), name="settings")
+    @slash_command(guild_ids=db.guild_ids(), name="settings")
     @discord.default_permissions(manage_channels=True)
     async def settings(self, ctx):
         """Shows server settings"""
@@ -31,7 +31,7 @@ class Settings(commands.Cog):
         await ctx.respond(embed=set_em)
 
 # Reset
-    @slash_command(guild_ids=db.guild_id(), name="reset-settings")
+    @slash_command(guild_ids=db.guild_ids(), name="reset-settings")
     @discord.default_permissions(manage_channels=True)
     async def reset_settings(self, ctx):
         """Resets server settings"""
@@ -44,7 +44,7 @@ class Settings(commands.Cog):
         await ctx.respond(embed=reset_em)
 
 # Set mod log
-    @slash_command(guild_ids=db.guild_id(), name="set-mod-log-channel")
+    @slash_command(guild_ids=db.guild_ids(), name="set-mod-log-channel")
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the mod log channel")
     async def set_mod_log(self, ctx, channel: discord.TextChannel):
@@ -58,7 +58,7 @@ class Settings(commands.Cog):
         await ctx.respond(embed=logging_em)
 
 # Set warn log
-    @slash_command(guild_ids=db.guild_id(), name="set-warn-log-channel")
+    @slash_command(guild_ids=db.guild_ids(), name="set-warn-log-channel")
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the warn log channel")
     async def set_warn_log(self, ctx, channel: discord.TextChannel):
@@ -72,7 +72,7 @@ class Settings(commands.Cog):
         await ctx.respond(embed=logging_em)
 
 # Set ticket log
-    @slash_command(guild_ids=db.guild_id(), name="set-ticket-log-channel")
+    @slash_command(guild_ids=db.guild_ids(), name="set-ticket-log-channel")
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the ticket log channel")
     async def set_ticket_log(self, ctx, channel: discord.TextChannel):
@@ -86,7 +86,7 @@ class Settings(commands.Cog):
         await ctx.respond(embed=logging_em)
 
 # Set antilink
-    @slash_command(guild_ids=db.guild_id(), name="set-antilink")
+    @slash_command(guild_ids=db.guild_ids(), name="set-antilink")
     @discord.default_permissions(manage_channels=True)
     @option("status", description="Choose the antilink status", choices=["ON", "OFF"])
     async def set_antilink(self, ctx, status: str):
@@ -100,7 +100,7 @@ class Settings(commands.Cog):
         await ctx.respond(embed=anitlink_em)
 
 # Set antiswear
-    @slash_command(guild_ids=db.guild_id(), name="set-antiswear")
+    @slash_command(guild_ids=db.guild_ids(), name="set-antiswear")
     @discord.default_permissions(manage_channels=True)
     @option("status", description="Choose the antiswear status", choices=["ON", "OFF"])
     async def setAntiswear(self, ctx, status: str):

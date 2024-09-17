@@ -47,11 +47,25 @@ def dev_ids():
             dev_ids.append(ids)
     return list(dev_ids)
 
-# Guild ID
-def guild_id():
+# Lockdown
+def lockdown(status: bool = True, status_only: bool = False):
     with open(f"{config_file_path}", "r") as config_file:
         config_data = json.load(config_file)
-        return config_data["guild_id"]
+    if status_only:
+        return config_data["lockdown"]
+    else:
+        config_data["lockdown"] = status
+        with open(f"{config_file_path}", "w") as config_file:
+            json.dump(config_data, config_file, indent=4)
+
+# Return owner guild ids if lockdown is enabled
+def guild_ids():
+    with open(f"{config_file_path}", "r") as config_file:
+        config_data = json.load(config_file)
+        if config_data["lockdown"]:
+            return config_data["owner_guild_ids"]
+        else:
+            return None
 
 # Owner guild IDs
 def owner_guild_ids():

@@ -44,7 +44,7 @@ class AI(commands.Cog):
         self.client = client
 
 # Image Generation
-    @slash_command(guild_ids=db.guild_id(), name="imagine")
+    @slash_command(guild_ids=db.guild_ids(), name="imagine")
     @option("prompt", description="Prompt to generate image")
     async def imagine(self, ctx, prompt: str):
         """Generate image from prompt"""

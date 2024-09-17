@@ -68,7 +68,7 @@ class Help(commands.Cog):
         self.client = client
 
 # Help
-    @slash_command(guild_ids=db.guild_id(), name="help")
+    @slash_command(guild_ids=db.guild_ids(), name="help")
     async def help(self, ctx):
         """Need bot's help? Use this!"""
         helpView = HelpView(self.client, ctx, timeout=60)

@@ -9,7 +9,7 @@ class Tickets(commands.Cog):
         self.client = client
 
 # Ticket create
-    @slash_command(guild_ids=db.guild_id(), name="create-ticket")
+    @slash_command(guild_ids=db.guild_ids(), name="create-ticket")
     @option("reason", description="Enter your reason for creating the ticket", required=False)
     async def create_ticket(self, ctx, reason: str = "No reason provided"):
         """Creates a ticket"""
@@ -48,7 +48,7 @@ class Tickets(commands.Cog):
             await logging_ch.send(embed=create_log_em)
 
 # Ticket close
-    @slash_command(guild_ids=db.guild_id(), name="close-ticket")
+    @slash_command(guild_ids=db.guild_ids(), name="close-ticket")
     async def create_ticker(self, ctx):
         """Closes a created ticket"""
         if (ctx.channel.name == f"ticket-{ctx.author.id}") or (ctx.channel.name.startswith("ticket-") and ctx.author.guild_permissions.manage_channels):
