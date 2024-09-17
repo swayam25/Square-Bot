@@ -31,7 +31,7 @@ class Info(commands.Cog):
     @slash_command(guild_ids=db.guild_ids(), name="stats")
     async def stats(self, ctx):
         """Shows bot stats"""
-        owner = await self.client.fetch_user(db.owner_ids())
+        owner = await self.client.fetch_user(db.owner_id())
         stats_em = discord.Embed(
             title=f"{self.client.user.name} Stats",
             description=f"{emoji.bullet} **Bot's Latency**: `{round(self.client.latency * 1000)} ms`\n" +

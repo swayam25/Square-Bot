@@ -11,10 +11,10 @@ error_color = discord.Color.red()
 # -------------------- CONFIG FILE --------------------
 
 # Owner IDs
-def owner_ids():
+def owner_id():
     with open(f"{config_file_path}", "r") as config_file:
         config_data = json.load(config_file)
-        return config_data["owner_ids"]
+        return config_data["owner_id"]
 
 # Add dev ID
 def add_dev_ids(user_id):

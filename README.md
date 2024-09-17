@@ -47,7 +47,7 @@ Advance multipurpose discord bot for all your needs
 
     <summary>Configuration</summary>
 
-    - `owner_ids` (`int`) [Required]
+    - `owner_id` (`int`) [Required]
         - Owner's discord id
         - Gives access to all commands
 
