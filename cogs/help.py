@@ -5,10 +5,10 @@ from discord.ext import commands
 from discord.commands import slash_command
 
 # Help embed
-def help_home_em(self):
+def help_home_em(self, ctx):
     help_em = discord.Embed(
         title=f"{self.client.user.name} Help Desk",
-        description=f"```json\n[ ] Required Argument | < > Optional Argument\n```",
+        description=f"Hello {ctx.author.mention}! I'm {self.client.user.name}, an advance multipurpose discord bot for all your needs! Use the dropdown menu below to see the commands of each category.",
         color=db.theme_color
     )
     help_em.add_field(
@@ -56,7 +56,7 @@ class HelpView(discord.ui.View):
     async def help_callback(self, select, interaction):
         cmds = ""
         if select.values[0] == "Home":
-            await interaction.response.edit_message(embed=help_home_em(self))
+            await interaction.response.edit_message(embed=help_home_em(self, self.ctx))
         else:
             for command in self.client.get_cog(select.values[0]).get_commands():
                 cmds += f"`/{command.name}`\n{emoji.bullet} {command.description}\n\n"
@@ -72,7 +72,7 @@ class Help(commands.Cog):
     async def help(self, ctx):
         """Need bot's help? Use this!"""
         helpView = HelpView(self.client, ctx, timeout=60)
-        helpView.msg = await ctx.respond(embed=help_home_em(self), view=helpView)
+        helpView.msg = await ctx.respond(embed=help_home_em(self, ctx), view=helpView)
 
 def setup(client):
     client.add_cog(Help(client))
