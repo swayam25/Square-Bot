@@ -1,6 +1,7 @@
 import discord
 import os
 import time
+import database as db
 from utils import database as db
 from rich import print
 from rich.progress import Progress, SpinnerColumn
@@ -8,8 +9,8 @@ from pyfiglet import Figlet
 from discord.ext import commands
 
 # Discord vars
-status = discord.Status.online
-activity = discord.Activity(type=discord.ActivityType.listening, name="Swayam")
+status = discord.Status.online if not db.lockdown(status_only=True) else discord.Status.dnd
+activity = discord.Activity(type=discord.ActivityType.listening, name="Discord") if not db.lockdown(status_only=True) else discord.Activity(type=discord.ActivityType.playing, name="Maintenance")
 intents = discord.Intents.all()
 client = commands.Bot(status=status, activity=activity, intents=intents, help_command=None)
 
