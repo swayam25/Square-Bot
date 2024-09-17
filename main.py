@@ -29,7 +29,6 @@ with cogs_progress_bar as progress:
         if filename.endswith(".py"):
             progress.update(task, advance=1)
             client.load_extension(f"cogs.{filename[:-3]}")
-            time.sleep(0.1)
     progress.update(task, description="[green]Loaded Cogs[/]")
 
 # On connect event
