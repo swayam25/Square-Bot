@@ -4,7 +4,7 @@
     "lockdown": false,
     "owner_guild_ids": [],
     "system_ch_id": 0,
-    "support_server_url": null,
+    "support_server_url": "https://discord.gg/xyz",
     "discord_api_token": "",
     "openai_api_token": "",
     "lavalink": {

@@ -8,7 +8,7 @@ from discord.commands import slash_command
 def help_home_em(self, ctx):
     help_em = discord.Embed(
         title=f"{self.client.user.name} Help Desk",
-        description=f"Hello {ctx.author.mention}! I'm {self.client.user.name}, an advance multipurpose discord bot for all your needs! Use the dropdown menu below to see the commands of each category.",
+        description=f"Hello {ctx.author.mention}! I'm {self.client.user.name}, use the dropdown menu below to see the commands of each category. If you need help, feel free to ask in the [support server]({db.support_server_url()}).",
         color=db.theme_color
     )
     help_em.add_field(
