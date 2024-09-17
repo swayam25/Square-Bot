@@ -14,7 +14,10 @@ class Tickets(commands.Cog):
     async def create_ticket(self, ctx, reason: str = "No reason provided"):
         """Creates a ticket"""
         await ctx.defer()
-        create_ch = await ctx.guild.create_text_channel(f"ticket-{ctx.author.id}")
+        category = discord.utils.get(ctx.guild.categories, name="Tickets")
+        if category is None:
+            category = await ctx.guild.create_category("Tickets")
+        create_ch = await category.create_text_channel(f"ticket-{ctx.author.id}")
         await create_ch.set_permissions(ctx.author, view_channel=True, send_messages=True, read_messages=True, add_reactions=True, embed_links=True, attach_files=True, read_message_history=True, external_emojis=True)
         await create_ch.set_permissions(self.client.user, view_channel=True, send_messages=True, read_messages=True, add_reactions=True, embed_links=True, attach_files=True, read_message_history=True, external_emojis=True)
         await create_ch.set_permissions(ctx.guild.default_role, view_channel=False, send_messages=False, read_messages=False)
@@ -34,8 +37,8 @@ class Tickets(commands.Cog):
         await create_ch.send(ctx.author.mention, embed=create_em)
         await ctx.respond(embed=create_done_em)
 
-        if db.ticket_log_channel_id(ctx.guild.id) != None:
-            logging_ch = await self.client.fetch_channel(db.ticket_log_channel_id(ctx.guild.id))
+        if db.ticket_log_ch(ctx.guild.id) != None:
+            logging_ch = await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id))
             create_log_em = discord.Embed(
                 title=f"{emoji.ticket} Ticket Created",
                 description=f"{emoji.bullet} **Author**: {ctx.author.mention}\n" +
@@ -58,8 +61,8 @@ class Tickets(commands.Cog):
             await ctx.respond(embed=close_em)
             await asyncio.sleep(5)
             await ctx.channel.delete()
-            if db.ticket_log_channel_id(ctx.guild.id) != None:
-                logging_ch = await self.client.fetch_channel(db.ticket_log_channel_id(ctx.guild.id))
+            if db.ticket_log_ch(ctx.guild.id) != None:
+                logging_ch = await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id))
                 close_log_em = discord.Embed(
                     title=f"{emoji.ticket2} Ticket Closed",
                     description=f"{emoji.bullet} **Author**: <@{ctx.channel.name.split("-")[1]}>\n" +

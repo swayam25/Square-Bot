@@ -334,7 +334,7 @@ class Music(commands.Cog):
     async def track_hook(self, event):
         if isinstance(event, lavalink.events.TrackStartEvent):
             player = self.client.lavalink.player_manager.get(int(event.player.guild_id))
-            channel = db.play_channel_id(event.player.guild_id)
+            channel = db.play_ch_id(event.player.guild_id)
             requester = f"<@{player.current.requester}>"
             if player.current.stream:
                 duration = "🔴 LIVE"
@@ -373,7 +373,7 @@ class Music(commands.Cog):
                 child.disabled = True
             await play_msg.edit(view=music_view)
         if isinstance(event, lavalink.events.TrackStuckEvent):
-            channel = db.play_channel_id(event.player.guild_id)
+            channel = db.play_ch_id(event.player.guild_id)
             error_em = discord.Embed(description=f"{emoji.error} Error while playing the music. Please try again later", color=db.error_color)
             play_msg = db.play_msg_id(event.player.guild_id)
             music_view = MusicView(self.client, timeout=None)
@@ -382,7 +382,7 @@ class Music(commands.Cog):
             await play_msg.edit(view=music_view)
             await channel.send(embed=error_em, delete_after=5)
         if isinstance(event, lavalink.events.TrackExceptionEvent):
-            channel = db.play_channel_id(event.player.guild_id)
+            channel = db.play_ch_id(event.player.guild_id)
             error_em = discord.Embed(description=f"{emoji.error} Error while playing the music. Please try again later", color=db.error_color)
             play_msg = db.play_msg_id(event.player.guild_id)
             music_view = MusicView(self.client, timeout=None)
@@ -410,7 +410,7 @@ class Music(commands.Cog):
                 if self.client.lavalink.node_manager.available_nodes:
                     voice_client = await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
                     player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
-                    db.play_channel_id(ctx.guild.id, ctx.channel, "set")
+                    db.play_ch_id(ctx.guild.id, ctx.channel, "set")
                 else:
                     self.client.lavalink.add_node(
                         db.lavalink(key="host"),

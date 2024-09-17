@@ -5,7 +5,7 @@ import json
 config_file_path = "./configs/config.json"
 temp_file_path = {}
 
-theme_color = 0x2b2d31
+theme_color = 0x2B2D31
 error_color = discord.Color.red()
 
 # -------------------- CONFIG FILE --------------------
@@ -60,10 +60,10 @@ def owner_guild_ids():
         return config_data["owner_guild_ids"]
 
 # System channel
-def system_channel_id():
+def system_ch_id():
     with open(f"{config_file_path}", "r") as config_file:
         config_data = json.load(config_file)
-        return config_data["system_channel_id"]
+        return config_data["system_ch_id"]
 
 # Support server
 def support_server_url():
@@ -84,10 +84,7 @@ def discord_api_token():
 def openai_api_token():
     with open(f"{config_file_path}", "r") as config_file:
         config_data = json.load(config_file)
-        try:
-            return os.environ["openai_api_token"]
-        except Exception:
-            return config_data["openai_api_token"]
+    return config_data["openai_api_token"]
 
 # Lavalink
 def lavalink(
@@ -112,102 +109,112 @@ def datetime_format():
 
 # -------------------- SETTINGS FILE --------------------
 
-# Set on guild join
-def set_on_guild_join(guild_ids):
-    os.makedirs("database", exist_ok=True)
-    with open(f"database/{str(guild_ids)}.json", "w") as set_file:
-        set_data = {
-            "mod_log_channel_id": None,
-            "ticket_log_channel_id": None,
-            "warn_log_channel_id": None,
-            "antilink": "OFF",
-            "antiswear": "OFF"
-        }
-        json.dump(set_data, set_file, indent=4)
+# Guild configuration utility
+def guild_config(
+    guild_ids: int,
+    key: str = "",
+    value: any = None,
+    mode: str = "get",
+    keys: dict = {}
+):
+    """
+    Handles guild configuration settings
 
-# Set on guild remove
-def set_on_guild_remove(guild_ids):
+    Args:
+        guild_ids (int): The guild ID
+        key (str): The configuration key
+        value (any, optional): The new value for the key. Defaults to None
+        mode (str, optional): The operation mode ("get" or "set"). Defaults to "get"
+        keys (dict, optional): The new values for the keys. Defaults to {}
+
+    Returns:
+        The current or updated value for the key
+    """
+    file_path = f"database/{str(guild_ids)}.json"
+    os.makedirs("database", exist_ok=True)
+    data = {}
+
+    try:
+        with open(file_path, "r") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        with open(file_path, "w") as f:
+            json.dump(
+                {
+                    "mod_log_ch": None,
+                    "ticket_log_ch": None,
+                    "warn_log_ch": None,
+                    "antilink": "OFF",
+                    "antiswear": "OFF"
+                }, f, indent=4
+            )
+
+    if mode == "get":
+        return data.get(key)
+    elif mode == "set":
+        if keys != {}:
+            data[key] = value
+        else:
+            data = keys
+        with open(file_path, "w") as f:
+            json.dump(data, f, indent=4)
+        return value
+
+# Create new db
+def create(guild_ids: int):
+    guild_config(guild_ids, "set", {
+        "mod_log_ch": None,
+        "ticket_log_ch": None,
+        "warn_log_ch": None,
+        "antilink": "OFF",
+        "antiswear": "OFF"
+    })
+
+# Delete db
+def delete(guild_ids: int):
     os.remove(f"database/{str(guild_ids)}.json")
 
 # Mod log channel
-def mod_log_channel_id(guild_ids, channel_id: int = None, mode: str = "get"):
-    os.makedirs("database", exist_ok=True)
-    with open(f"database/{str(guild_ids)}.json", "r") as set_file:
-        set_data = json.load(set_file)
-        if mode == "get":
-            return set_data["mod_log_channel_id"]
-        elif mode == "set":
-            set_data["mod_log_channel_id"] = channel_id
-            with open(f"database/{str(guild_ids)}.json", "w") as set_file:
-                json.dump(set_data, set_file, indent=4)
+def mod_log_ch(guild_ids: int, channel_id: int = None, mode: str = "get"):
+    return guild_config(guild_ids, "mod_log_ch", channel_id, mode)
 
 # Warn log channel
-def warn_log_channel_id(guild_ids, channel_id: int = None, mode: str = "get"):
-    os.makedirs("database", exist_ok=True)
-    with open(f"database/{str(guild_ids)}.json", "r") as set_file:
-        set_data = json.load(set_file)
-        if mode == "get":
-            return set_data["warn_log_channel_id"]
-        elif mode == "set":
-            set_data["warn_log_channel_id"] = channel_id
-            with open(f"database/{str(guild_ids)}.json", "w") as set_file:
-                json.dump(set_data, set_file, indent=4)
+def warn_log_ch(guild_ids: int, channel_id: int = None, mode: str = "get"):
+    return guild_config(guild_ids, "warn_log_ch", channel_id, mode)
 
 # Ticket log channel
-def ticket_log_channel_id(guild_ids, channel_id: int = None, mode: str = "get"):
-    os.makedirs("database", exist_ok=True)
-    with open(f"database/{str(guild_ids)}.json", "r") as set_file:
-        set_data = json.load(set_file)
-        if mode == "get":
-            return set_data["ticket_log_channel_id"]
-        elif mode == "set":
-            set_data["ticket_log_channel_id"] = channel_id
-            with open(f"database/{str(guild_ids)}.json", "w") as set_file:
-                json.dump(set_data, set_file, indent=4)
+def ticket_log_ch(guild_ids: int, channel_id: int = None, mode: str = "get"):
+    return guild_config(guild_ids, "ticket_log_ch", channel_id, mode)
 
 # Antilink system
-def antilink(guild_ids, status: str = None, mode: str = "get"):
-    os.makedirs("database", exist_ok=True)
-    with open(f"database/{str(guild_ids)}.json", "r") as set_file:
-        set_data = json.load(set_file)
-        if mode == "get":
-            return set_data["antilink"]
-        elif mode == "set":
-            set_data["antilink"] = status
-            with open(f"database/{str(guild_ids)}.json", "w") as set_file:
-                json.dump(set_data, set_file, indent=4)
+def antilink(guild_ids: int, status: str = "OFF", mode: str = "get"):
+    return guild_config(guild_ids, "antilink", status, mode)
 
 # Antiswear system
-def antiswear(guild_ids, status: str = None, mode: str = "get"):
-    os.makedirs("database", exist_ok=True)
-    with open(f"database/{str(guild_ids)}.json", "r") as set_file:
-        set_data = json.load(set_file)
-        if mode == "get":
-            return set_data["antiswear"]
-        elif mode == "set":
-            set_data["antiswear"] = status
-            with open(f"database/{str(guild_ids)}.json", "w") as set_file:
-                json.dump(set_data, set_file, indent=4)
+def antiswear(guild_ids: int, status: str = "OFF", mode: str = "get"):
+    return guild_config(guild_ids, "antiswear", status, mode)
 
 # -------------------- TEMP FILE --------------------
 
 # Play channel ID
-def play_channel_id(guild_ids, channel_id: int = None, mode: str = "get"):
+def play_ch_id(guild_ids: int, channel_id: int = None, mode: str = "get"):
     if mode == "get":
-        return temp_file_path.get(f"{str(guild_ids)}-play_channel_id", None)
+        return temp_file_path.get(f"{str(guild_ids)}-play_ch_id", None)
     elif mode == "set":
-        temp_file_path.update({f"{str(guild_ids)}-play_channel_id": channel_id})
+        temp_file_path.update({f"{str(guild_ids)}-play_ch_id": channel_id})
 
 # Play msg ID
-def play_msg_id(guild_ids, msg_id: int = None, mode: str = "get"):
-    if mode == "get":
-        return temp_file_path.get(f"{str(guild_ids)}-play_msg_id", None)
-    elif mode == "set":
-        temp_file_path.update({f"{str(guild_ids)}-play_msg_id": msg_id})
+def play_msg_id(guild_ids: int, msg_id: int = None, mode: str = "get"):
+    match mode:
+        case "get":
+            return temp_file_path.get(f"{str(guild_ids)}-play_msg_id", None)
+        case "set":
+            temp_file_path.update({f"{str(guild_ids)}-play_msg_id": msg_id})
 
 # Equalizer
-def equalizer(guild_ids, name: str = None, mode: str = "get"):
-    if mode == "get":
-        return temp_file_path.get(f"{str(guild_ids)}-equalizer", None)
-    elif mode == "set":
-        temp_file_path.update({f"{str(guild_ids)}-equalizer": name})
+def equalizer(guild_ids: int, name: str = None, mode: str = "get"):
+    match mode:
+        case "get":
+            return temp_file_path.get(f"{str(guild_ids)}-equalizer", None)
+        case "set":
+            temp_file_path.update({f"{str(guild_ids)}-equalizer": name})

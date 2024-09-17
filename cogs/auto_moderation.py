@@ -20,8 +20,8 @@ class AutoModeration(commands.Cog):
         elif db.antilink(msg.guild.id) == "ON":
             if any(links):
                 await msg.delete()
-                if db.warn_log_channel_id(msg.guild.id) != None:
-                    logging_ch = await self.client.fetch_channel(db.warn_log_channel_id(msg.guild.id))
+                if db.warn_log_ch(msg.guild.id) != None:
+                    logging_ch = await self.client.fetch_channel(db.warn_log_ch(msg.guild.id))
                     anti_link_log = discord.Embed(
                         title=f"{emoji.shield} Antilink",
                         description=f"{emoji.bullet} **Author**: {msg.author}\n" +
@@ -42,8 +42,8 @@ class AutoModeration(commands.Cog):
         elif db.antiswear(msg.guild.id) == "ON":
             if any(swear):
                 await msg.delete()
-                if db.warn_log_channel_id(msg.guild.id) != None:
-                    logging_ch = await self.client.fetch_channel(db.warn_log_channel_id(msg.guild.id))
+                if db.warn_log_ch(msg.guild.id) != None:
+                    logging_ch = await self.client.fetch_channel(db.warn_log_ch(msg.guild.id))
                     anti_swear_log_em = discord.Embed(
                         title=f"{emoji.shield} Antiswear",
                         description=f"{emoji.bullet} **Author**: {msg.author}\n" +

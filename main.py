@@ -52,7 +52,7 @@ async def on_ready():
             if os.path.exists(f"./database/{guild.id}.json"):
                 pass
             else:
-                db.set_on_guild_join(guild.id)
+                db.create(guild.id)
             progress.update(task, advance=1)
         progress.update(task, description=f"[green]Connected to {len(client.guilds)} guild{'' if len(client.guilds) <= 1 else 's'}[/]")
 

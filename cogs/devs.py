@@ -13,15 +13,15 @@ class Devs(commands.Cog):
 # On start
     @commands.Cog.listener("on_ready")
     async def when_bot_gets_ready(self):
-        start_log_ch = await self.client.fetch_channel(db.system_channel_id())
+        start_log_ch = await self.client.fetch_channel(db.system_ch_id())
         start_log_em = discord.Embed(title=f"{emoji.restart} Restarted", description=f"Logged in as **{self.client.user}** with ID `{self.client.user.id}`", color=db.theme_color)
         await start_log_ch.send(embed=start_log_em)
 
 # On guild joined
     @commands.Cog.listener("on_guild_join")
     async def when_guild_joined(self, guild):
-        db.set_on_guild_join(guild.id)
-        join_log_ch = await self.client.fetch_channel(db.system_channel_id())
+        db.create(guild.id)
+        join_log_ch = await self.client.fetch_channel(db.system_ch_id())
         join_log_em = discord.Embed(
             title=f"{emoji.plus} Someone Added Me!",
             description=f"{emoji.bullet} Name: {guild.name}/n"
@@ -35,8 +35,8 @@ class Devs(commands.Cog):
 # On guild leave
     @commands.Cog.listener("on_guild_remove")
     async def when_removed_from_guild(self, guild):
-        db.set_on_guild_remove(guild.id)
-        leave_log_ch = await self.client.fetch_channel(db.system_channel_id())
+        db.delete(guild.id)
+        leave_log_ch = await self.client.fetch_channel(db.system_ch_id())
         leave_log_em = discord.Embed(
             title=f"{emoji.minus} Someone Removed Me!",
             description=f"{emoji.bullet} Name: {guild.name}/n"
