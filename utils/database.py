@@ -110,12 +110,6 @@ def lavalink(
             with open(f"{config_file_path}", "w") as config_file:
                 json.dump(config_data, config_file, indent=4)
 
-# Datetime format
-def datetime_format():
-    with open(f"{config_file_path}", "r") as config_file:
-        config_data = json.load(config_file)
-        return config_data["datetime_format"]
-
 # -------------------- SETTINGS FILE --------------------
 
 # Guild configuration utility

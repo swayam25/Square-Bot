@@ -62,12 +62,13 @@ class Info(commands.Cog):
             title=f"{user.name}'s Info",
             description=f"{emoji.bullet} **Name**: `{user}`\n" +
                         f"{emoji.bullet} **ID**: `{user.id}`\n" +
+                        f"{emoji.bullet} **Bot?**: {user.bot}\n" +
                         f"{emoji.bullet} **Avatar URL**: [Click Here]({user.avatar.url})\n" +
                         f"{emoji.bullet} **Status**: {user.status}\n" +
                         f"{emoji.bullet} **Nickname**: {user.nick}\n" +
                         f"{emoji.bullet} **Highest Role**: {user.top_role.mention}\n" +
-                        f"{emoji.bullet} **Account Created**: {user.created_at.__format__(db.datetime_format())}\n" +
-                        f"{emoji.bullet} **Server Joined**: {user.joined_at.__format__(db.datetime_format())}", color=db.theme_color)
+                        f"{emoji.bullet} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}\n" +
+                        f"{emoji.bullet} **Server Joined**: {discord.utils.format_dt(user.joined_at, "R")}", color=db.theme_color)
         user_info_em.set_thumbnail(url=f"{user.avatar.url}")
         await ctx.respond(embed=user_info_em)
 
@@ -91,7 +92,7 @@ class Info(commands.Cog):
                         f"{emoji.bullet} **Human(s)**: `{len([m for m in ctx.guild.members if not m.bot])}`\n" +
                         f"{emoji.bullet} **Bot(s)**: `{len([m for m in ctx.guild.members if m.bot])}`\n" +
                         f"{emoji.bullet} **Role(s)**: `{len(ctx.guild.roles)}`\n" +
-                        f"{emoji.bullet} **Server Created**: {ctx.guild.created_at.__format__(db.datetime_format())}", color=db.theme_color)
+                        f"{emoji.bullet} **Server Created**: {discord.utils.format_dt(ctx.guild.created_at, "R")}", color=db.theme_color)
         server_info_em.set_thumbnail(url=ctx.guild.icon if ctx.guild.icon else "")
         await ctx.respond(embed=server_info_em)
 
@@ -106,7 +107,7 @@ class Info(commands.Cog):
                         f"{emoji.bullet} **Emoji URL**: [Click Here]({emoji_icon.url})\n" +
                         f"{emoji.bullet} **Is Animated?**: {emoji_icon.animated}\n" +
                         f"{emoji.bullet} **Usage**: `{emoji_icon}`\n" +
-                        f"{emoji.bullet} **Emoji Created**: {emoji_icon.created_at.__format__(db.datetime_format())}", color=db.theme_color)
+                        f"{emoji.bullet} **Emoji Created**: {discord.utils.format_dt(emoji_icon.created_at, "R")}", color=db.theme_color)
         emoji_info_em.set_thumbnail(url=f"{emoji_icon.url}")
         await ctx.respond(embed=emoji_info_em)
 

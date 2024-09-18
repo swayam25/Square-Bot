@@ -89,10 +89,6 @@ Advance multipurpose discord bot for all your needs
         - `pass` (`str`) [Required]
             - Lavalink password
 
-    - `datetime_format` (`str`) [Optional]
-        - Datetime format
-        - Bot will use this format to display datetime
-
     </details>
 
 4. Start the bot

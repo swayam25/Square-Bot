@@ -14,7 +14,7 @@ class Logs(commands.Cog):
             join_em = discord.Embed(
                 title=f"{emoji.plus} Member Joined",
                 description=f"{emoji.bullet} **Name**: {user.mention}\n" +
-                            f"{emoji.bullet} **Account Created**: {user.created_at.__format__(db.datetime_format())}", color=db.theme_color)
+                            f"{emoji.bullet} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}", color=db.theme_color)
             join_em.set_thumbnail(url=f"{user.avatar.url}")
             await join_ch.send(embed=join_em)
 
@@ -26,7 +26,7 @@ class Logs(commands.Cog):
             leave_em = discord.Embed(
                 title=f"{emoji.minus} Member Left",
                 description=f"{emoji.bullet} **Name**: {user.mention}\n" +
-                            f"{emoji.bullet} **Account Created**: {user.created_at.__format__(db.datetime_format())}", color=db.theme_color)
+                            f"{emoji.bullet} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}", color=db.theme_color)
             leave_em.set_thumbnail(url=f"{user.avatar.url}")
             await leave_ch.send(embed=leave_em)
 
@@ -39,7 +39,7 @@ class Logs(commands.Cog):
             ban_em = discord.Embed(
                 title=f"{emoji.mod2} Member Banned",
                 description=f"{emoji.bullet} **Name**: {user.mention}\n" +
-                            f"{emoji.bullet} **Account Created**: {user.created_at.__format__(db.datetime_format())}", color=db.theme_color)
+                            f"{emoji.bullet} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}", color=db.theme_color)
             ban_em.set_thumbnail(url=f"{user.avatar.url}")
             await ban_ch.send(embed=ban_em)
 
@@ -51,7 +51,7 @@ class Logs(commands.Cog):
             unban_em = discord.Embed(
                 title=f"{emoji.mod} Member Unbanned",
                 description=f"{emoji.bullet} **Name**: {user.mention}\n" +
-                            f"{emoji.bullet} **Account Created**: {user.created_at.__format__(db.datetime_format())}", color=db.theme_color)
+                            f"{emoji.bullet} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}", color=db.theme_color)
             unban_em.set_thumbnail(url=f"{user.avatar.url}")
             await unban_ch.send(embed=unban_em)
 

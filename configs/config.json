@@ -11,6 +11,5 @@
         "host": "",
         "port": 0,
         "pass": ""
-    },
-    "datetime_format": "%A, %d %B %Y | %H:%M:%S"
+    }
 }
