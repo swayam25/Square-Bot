@@ -578,7 +578,7 @@ class Music(commands.Cog):
                     description=f"Reseted the equalizer",
                     color=db.theme_color
                 )
-                db.equalizer(guild_ids=ctx.guild.id, name="None", mode="set")
+                db.equalizer(guild_id=ctx.guild.id, name="None", mode="set")
             else:
                 for eq_name, eq_gains in equalizer_presets.items():
                     if eq_name == _equalizer:
@@ -590,7 +590,7 @@ class Music(commands.Cog):
                             description=f"Added `{equalizer}` equalizer",
                             color=db.theme_color
                         )
-                        db.equalizer(guild_ids=ctx.guild.id, name=equalizer, mode="set")
+                        db.equalizer(guild_id=ctx.guild.id, name=equalizer, mode="set")
             await ctx.respond(embed=eq_em)
 
 # Stop

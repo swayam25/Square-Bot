@@ -49,7 +49,7 @@ class Settings(commands.Cog):
     @option("channel", description="Mention the mod log channel")
     async def set_mod_log(self, ctx, channel: discord.TextChannel):
         """Sets mod log channel"""
-        db.mod_log_ch(guild_ids=ctx.guild.id, channel_id=int(channel.id), mode="set")
+        db.mod_log_ch(guild_id=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
             title=f"{emoji.settings} Mod Log Settings",
             description=f"Successfully set mod log channel to {channel.mention}",
@@ -63,7 +63,7 @@ class Settings(commands.Cog):
     @option("channel", description="Mention the warn log channel")
     async def set_warn_log(self, ctx, channel: discord.TextChannel):
         """Sets warn log channel"""
-        db.warn_log_ch(guild_ids=ctx.guild.id, channel_id=int(channel.id), mode="set")
+        db.warn_log_ch(guild_id=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
             title=f"{emoji.settings} Warn Log Settings",
             description=f"Successfully set warn log channel to {channel.mention}",
@@ -77,7 +77,7 @@ class Settings(commands.Cog):
     @option("channel", description="Mention the ticket log channel")
     async def set_ticket_log(self, ctx, channel: discord.TextChannel):
         """Sets ticket log channel"""
-        db.ticket_log_ch(guild_ids=ctx.guild.id, channel_id=int(channel.id), mode="set")
+        db.ticket_log_ch(guild_id=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
             title=f"{emoji.settings} Ticket Log Settings",
             description=f"Successfully set ticket log channel to {channel.mention}",
@@ -91,7 +91,7 @@ class Settings(commands.Cog):
     @option("status", description="Choose the antilink status", choices=["ON", "OFF"])
     async def set_antilink(self, ctx, status: str):
         """Sets antilink"""
-        db.antilink(guild_ids=ctx.guild.id, status=status, mode="set")
+        db.antilink(guild_id=ctx.guild.id, status=status, mode="set")
         anitlink_em = discord.Embed(
             title=f"{emoji.settings} Antilink Settings",
             description=f"Successfully set antilink status to **{status}**",
@@ -105,7 +105,7 @@ class Settings(commands.Cog):
     @option("status", description="Choose the antiswear status", choices=["ON", "OFF"])
     async def setAntiswear(self, ctx, status: str):
         """Sets antiswear"""
-        db.antiswear(guild_ids=ctx.guild.id, status=status, mode="set")
+        db.antiswear(guild_id=ctx.guild.id, status=status, mode="set")
         antiswear_em = discord.Embed(
             title=f"{emoji.settings} Antiswear Settings",
             description=f"Successfully set antiswear status to **{status}**",

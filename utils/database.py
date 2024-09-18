@@ -130,11 +130,11 @@ def guild_config(
     Handles guild configuration settings
 
     Args:
-        guild_id (int): The guild ID
-        key (str): The configuration key
-        value (any, optional): The new value for the key. Defaults to None
-        mode (str, optional): The operation mode ("get" or "set"). Defaults to "get"
-        keys (dict, optional): The new values for the keys. Defaults to {}
+        guild_id (int): The guild ID.
+        key (str): The configuration key.
+        value (any, optional): The new value for the key. Defaults to None.
+        mode (str, optional): The operation mode ("get" or "set"). Defaults to "get".
+        keys (dict, optional): The new values for the keys. Defaults to {}. If this is set, the key and value will be ignored.
 
     Returns:
         The current or updated value for the key
@@ -148,30 +148,29 @@ def guild_config(
             data = json.load(f)
     except FileNotFoundError:
         with open(file_path, "w") as f:
-            json.dump(
-                {
-                    "mod_log_ch": None,
-                    "ticket_log_ch": None,
-                    "warn_log_ch": None,
-                    "antilink": "OFF",
-                    "antiswear": "OFF"
-                }, f, indent=4
-            )
+            data = {
+                "mod_log_ch": None,
+                "ticket_log_ch": None,
+                "warn_log_ch": None,
+                "antilink": "OFF",
+                "antiswear": "OFF"
+            }
+            json.dump(data, f, indent=4)
 
     if mode == "get":
         return data.get(key)
     elif mode == "set":
-        if keys != {}:
-            data[key] = value
-        else:
+        if len(keys) > 0:
             data = keys
+        else:
+            data[key] = value
         with open(file_path, "w") as f:
             json.dump(data, f, indent=4)
         return value
 
 # Create new db
 def create(guild_id: int):
-    guild_config(guild_id, "set", {
+    guild_config(guild_id=guild_id, mode="set", keys={
         "mod_log_ch": None,
         "ticket_log_ch": None,
         "warn_log_ch": None,
