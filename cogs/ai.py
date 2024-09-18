@@ -47,7 +47,7 @@ class AI(commands.Cog):
     @slash_command(guild_ids=db.guild_ids(), name="imagine")
     @option("prompt", description="Prompt to generate image")
     async def imagine(self, ctx, prompt: str):
-        """Generate image from prompt"""
+        """Generate image from prompt."""
         await ctx.response.defer()
         response = openai.images.generate(
             model="dall-e-3",

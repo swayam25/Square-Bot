@@ -51,7 +51,7 @@ class Devs(commands.Cog):
     @slash_command(guild_ids=db.owner_guild_ids(), name="add-dev")
     @option("user", description="Mention the user whom you want to add to dev")
     async def add_dev(self, ctx, user: discord.Member):
-        """Adds a bot dev"""
+        """Adds a bot dev."""
         if check.is_owner(ctx.author.id):
             db.add_dev_ids(user.id)
             done_em = discord.Embed(title=f"{emoji.plus} Added", description=f"Added {user.mention} to dev", color=db.theme_color)
@@ -64,7 +64,7 @@ class Devs(commands.Cog):
     @slash_command(guild_ids=db.owner_guild_ids(), name="remove-dev")
     @option("user", description="Mention the user whom you want to remove from dev")
     async def remove_dev(self, ctx, user: discord.Member):
-        """Removes a bot dev"""
+        """Removes a bot dev."""
         if check.is_owner(ctx.author.id):
             db.remove_dev_ids(user.id)
             done_em = discord.Embed(title=f"{emoji.bin} Removed", description=f"Removed {user.mention} from dev", color=db.theme_color)
@@ -76,7 +76,7 @@ class Devs(commands.Cog):
 # List devs
     @slash_command(guild_ids=db.owner_guild_ids(), name="list-devs")
     async def list_devs(self, ctx):
-        """Shows bot devs"""
+        """Shows bot devs."""
         if check.is_owner(ctx.author.id):
             num = 0
             devs_list = ""
@@ -94,7 +94,7 @@ class Devs(commands.Cog):
     @slash_command(guild_ids=db.owner_guild_ids(), name="lockdown")
     @option("status", description="Choose the status of lockdown", choices=["Enable", "Disable"])
     async def lockdown(self, ctx, status: str):
-        """Lockdowns the bot"""
+        """Lockdowns the bot."""
         if check.is_dev(ctx.author.id):
             db.lockdown(True) if status == "Enable" else db.lockdown(False)
             lockdownEm = discord.Embed(
@@ -111,7 +111,7 @@ class Devs(commands.Cog):
 # Restart
     @slash_command(guild_ids=db.owner_guild_ids(), name="restart")
     async def restart(self, ctx):
-        """Restarts the bot"""
+        """Restarts the bot."""
         if check.is_dev(ctx.author.id):
             restartEm = discord.Embed(title=f"{emoji.restart} Restarting", color=db.theme_color)
             await ctx.respond(embed=restartEm)
@@ -124,7 +124,7 @@ class Devs(commands.Cog):
 # Reload cogs
     @slash_command(guild_ids=db.owner_guild_ids(), name="reload-cogs")
     async def reload_cogs(self, ctx):
-        """Reloads bot's all files"""
+        """Reloads bot's all files."""
         if check.is_dev(ctx.author.id):
             reloadEm = discord.Embed(title=f"{emoji.restart} Reloaded Cogs",color=db.theme_color)
             await ctx.respond(embed=reloadEm)
@@ -138,7 +138,7 @@ class Devs(commands.Cog):
 # Shutdown
     @slash_command(guild_ids=db.owner_guild_ids(), name="shutdown")
     async def shutdown(self, ctx):
-        """Shutdowns the bot"""
+        """Shutdowns the bot."""
         if check.is_owner(ctx.author.id):
             shutdown_em = discord.Embed(title=f"{emoji.shutdown} Shutdown", color=db.theme_color)
             await ctx.respond(embed=shutdown_em)
@@ -153,7 +153,7 @@ class Devs(commands.Cog):
     @option("type", description="Choose bot status type", choices=["Game", "Streaming", "Listening", "Watching"])
     @option("status", description="Enter new status of bot")
     async def set_status(self, ctx, type: str, status: str):
-            """Sets custom bot status"""
+            """Sets custom bot status."""
             if check.is_dev(ctx.author.id):
                 if type == "Game":
                     await self.client.change_presence(activity=discord.Game(name=status))

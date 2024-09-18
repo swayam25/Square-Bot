@@ -11,7 +11,7 @@ class Settings(commands.Cog):
     @slash_command(guild_ids=db.guild_ids(), name="settings")
     @discord.default_permissions(manage_channels=True)
     async def settings(self, ctx):
-        """Shows server settings"""
+        """Shows server settings."""
 
         mod_channel = await self.client.fetch_channel(db.mod_log_ch(ctx.guild.id)) if db.mod_log_ch(ctx.guild.id) != None else "Not set"
         warn_channel = await self.client.fetch_channel(db.warn_log_ch(ctx.guild.id)) if db.warn_log_ch(ctx.guild.id) != None else "Not set"
@@ -34,7 +34,7 @@ class Settings(commands.Cog):
     @slash_command(guild_ids=db.guild_ids(), name="reset-settings")
     @discord.default_permissions(manage_channels=True)
     async def reset_settings(self, ctx):
-        """Resets server settings"""
+        """Resets server settings."""
         db.delete(ctx.guild.id)
         reset_em = discord.Embed(
             title=f"{emoji.settings} Reset Settings",
@@ -48,7 +48,7 @@ class Settings(commands.Cog):
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the mod log channel")
     async def set_mod_log(self, ctx, channel: discord.TextChannel):
-        """Sets mod log channel"""
+        """Sets mod log channel."""
         db.mod_log_ch(guild_id=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
             title=f"{emoji.settings} Mod Log Settings",
@@ -62,7 +62,7 @@ class Settings(commands.Cog):
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the warn log channel")
     async def set_warn_log(self, ctx, channel: discord.TextChannel):
-        """Sets warn log channel"""
+        """Sets warn log channel."""
         db.warn_log_ch(guild_id=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
             title=f"{emoji.settings} Warn Log Settings",
@@ -76,7 +76,7 @@ class Settings(commands.Cog):
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the ticket log channel")
     async def set_ticket_log(self, ctx, channel: discord.TextChannel):
-        """Sets ticket log channel"""
+        """Sets ticket log channel."""
         db.ticket_log_ch(guild_id=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
             title=f"{emoji.settings} Ticket Log Settings",
@@ -90,7 +90,7 @@ class Settings(commands.Cog):
     @discord.default_permissions(manage_channels=True)
     @option("status", description="Choose the antilink status", choices=["ON", "OFF"])
     async def set_antilink(self, ctx, status: str):
-        """Sets antilink"""
+        """Sets antilink."""
         db.antilink(guild_id=ctx.guild.id, status=status, mode="set")
         anitlink_em = discord.Embed(
             title=f"{emoji.settings} Antilink Settings",
@@ -104,7 +104,7 @@ class Settings(commands.Cog):
     @discord.default_permissions(manage_channels=True)
     @option("status", description="Choose the antiswear status", choices=["ON", "OFF"])
     async def setAntiswear(self, ctx, status: str):
-        """Sets antiswear"""
+        """Sets antiswear."""
         db.antiswear(guild_id=ctx.guild.id, status=status, mode="set")
         antiswear_em = discord.Embed(
             title=f"{emoji.settings} Antiswear Settings",

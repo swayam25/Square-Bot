@@ -12,7 +12,7 @@ class Tickets(commands.Cog):
     @slash_command(guild_ids=db.guild_ids(), name="create-ticket")
     @option("reason", description="Enter your reason for creating the ticket", required=False)
     async def create_ticket(self, ctx, reason: str = "No reason provided"):
-        """Creates a ticket"""
+        """Creates a ticket."""
         await ctx.defer()
         category = discord.utils.get(ctx.guild.categories, name="Tickets")
         if category is None:
@@ -50,7 +50,7 @@ class Tickets(commands.Cog):
 # Ticket close
     @slash_command(guild_ids=db.guild_ids(), name="close-ticket")
     async def create_ticker(self, ctx):
-        """Closes a created ticket"""
+        """Closes a created ticket."""
         if (ctx.channel.name == f"ticket-{ctx.author.id}") or (ctx.channel.name.startswith("ticket-") and ctx.author.guild_permissions.manage_channels):
             close_em = discord.Embed(
                 title=f"{emoji.ticket2} Closing Ticket",
