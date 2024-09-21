@@ -4,7 +4,7 @@ import os, sys
 from utils import database as db, emoji
 from utils import check
 from discord.ext import commands
-from discord.commands import slash_command, option
+from discord.commands import slash_command, option, SlashCommandGroup
 
 class Devs(commands.Cog):
     def __init__(self, client):
@@ -47,8 +47,11 @@ class Devs(commands.Cog):
             color=db.error_color)
         await leave_log_ch.send(embed=leave_log_em)
 
+# Dev slash cmd group
+    dev = SlashCommandGroup(guild_ids=db.guild_ids(), name="dev", description="Developer related commands")
+
 # Add dev
-    @slash_command(guild_ids=db.owner_guild_ids(), name="add-dev")
+    @dev.command(name="add")
     @option("user", description="Mention the user whom you want to add to dev")
     async def add_dev(self, ctx, user: discord.Member):
         """Adds a bot dev."""
@@ -61,7 +64,7 @@ class Devs(commands.Cog):
             await ctx.respond(embed=error_em, ephemeral=True)
 
 # Remove dev
-    @slash_command(guild_ids=db.owner_guild_ids(), name="remove-dev")
+    @dev.command(name="remove")
     @option("user", description="Mention the user whom you want to remove from dev")
     async def remove_dev(self, ctx, user: discord.Member):
         """Removes a bot dev."""
@@ -74,7 +77,7 @@ class Devs(commands.Cog):
             await ctx.respond(embed=error_em, ephemeral=True)
 
 # List devs
-    @slash_command(guild_ids=db.owner_guild_ids(), name="list-devs")
+    @dev.command(name="list")
     async def list_devs(self, ctx):
         """Shows bot devs."""
         if check.is_owner(ctx.author.id):
@@ -149,7 +152,7 @@ class Devs(commands.Cog):
             await ctx.respond(embed=error_em, ephemeral=True)
 
 # Set status
-    @slash_command(guild_ids=db.owner_guild_ids(), name="set-status")
+    @slash_command(guild_ids=db.owner_guild_ids(), name="status")
     @option("type", description="Choose bot status type", choices=["Game", "Streaming", "Listening", "Watching"])
     @option("status", description="Enter new status of bot")
     async def set_status(self, ctx, type: str, status: str):

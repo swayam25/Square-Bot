@@ -4,7 +4,7 @@ import aiohttp
 import datetime, time
 from utils import database as db, emoji
 from discord.ext import commands
-from discord.commands import slash_command, option
+from discord.commands import slash_command, option, SlashCommandGroup
 
 # Starting time of bot
 start_time = time.time()
@@ -53,8 +53,11 @@ class Info(commands.Cog):
         avatar_em.set_image(url=f"{user.avatar.url}")
         await ctx.respond(embed=avatar_em)
 
+# Info slash cmd group
+    info = SlashCommandGroup(guild_ids=db.guild_ids(), name="info", description="Info related commands")
+
 # User info
-    @slash_command(guild_ids=db.guild_ids(), name="user-info")
+    @info.command(name="user")
     @option("user", description="Mention the member whom you will see info")
     async def user_info(self, ctx, user: discord.Member):
         """Shows info of the mentioned user."""
@@ -73,7 +76,7 @@ class Info(commands.Cog):
         await ctx.respond(embed=user_info_em)
 
 # Server info
-    @slash_command(guild_ids=db.guild_ids(), name="server-info")
+    @info.command(name="server")
     async def server_info(self, ctx):
         """Shows info of the current server."""
         server_info_em = discord.Embed(
@@ -97,7 +100,7 @@ class Info(commands.Cog):
         await ctx.respond(embed=server_info_em)
 
 # Emoji info
-    @slash_command(guild_ids=db.guild_ids(), name="emoji-info")
+    @info.command(name="emoji")
     @option("emoji_icon", description="Enter the emoji")
     async def emoji_info(self, ctx, emoji_icon: discord.Emoji):
         """Shows info of the given emoji."""

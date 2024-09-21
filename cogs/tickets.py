@@ -2,14 +2,17 @@ import discord
 import asyncio
 from utils import database as db, emoji
 from discord.ext import commands
-from discord.commands import slash_command, option
+from discord.commands import option, SlashCommandGroup
 
 class Tickets(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+# Ticket slash cmd group
+    ticket = SlashCommandGroup(guild_ids=db.guild_ids(), name="ticket", description="Ticket related commands")
+
 # Ticket create
-    @slash_command(guild_ids=db.guild_ids(), name="create-ticket")
+    @ticket.command(name="create")
     @option("reason", description="Enter your reason for creating the ticket", required=False)
     async def create_ticket(self, ctx, reason: str = "No reason provided"):
         """Creates a ticket."""
@@ -48,7 +51,7 @@ class Tickets(commands.Cog):
             await logging_ch.send(embed=create_log_em)
 
 # Ticket close
-    @slash_command(guild_ids=db.guild_ids(), name="close-ticket")
+    @ticket.command(name="close")
     async def create_ticker(self, ctx):
         """Closes a created ticket."""
         if (ctx.channel.name == f"ticket-{ctx.author.id}") or (ctx.channel.name.startswith("ticket-") and ctx.author.guild_permissions.manage_channels):

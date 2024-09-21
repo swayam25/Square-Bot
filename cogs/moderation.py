@@ -2,7 +2,7 @@ import discord
 import datetime
 from utils import database as db, emoji
 from discord.ext import commands
-from discord.commands import slash_command, option
+from discord.commands import slash_command, option, SlashCommandGroup
 
 class Moderation(commands.Cog):
     def __init__(self, client):
@@ -151,8 +151,11 @@ class Moderation(commands.Cog):
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
         await ctx.respond(embed=unlock_em)
 
+# Role slash cmd group
+    role = SlashCommandGroup(guild_ids=db.guild_ids(), name="role", description="Role related commands")
+
 # Role add
-    @slash_command(guild_ids=db.guild_ids(), name="add-role")
+    @role.command(name="add")
     @discord.default_permissions(manage_roles=True)
     @option("user", description="Mention the user whom you want to add the role")
     @option("role", description="Mention the role which you will add to the user")
@@ -167,7 +170,7 @@ class Moderation(commands.Cog):
         await ctx.respond(embed=add_role_em)
 
 # Remove role
-    @slash_command(guild_ids=db.guild_ids(), name="remove-role")
+    @role.command(name="remove")
     @discord.default_permissions(manage_roles=True)
     @option("user", description="Mention the user whom you want to remove the role")
     @option("role", description="Mention the role which you will remove from the user")

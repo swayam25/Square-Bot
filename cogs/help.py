@@ -2,7 +2,7 @@ import discord
 import discord.ui
 from utils import database as db, emoji
 from discord.ext import commands
-from discord.commands import slash_command
+from discord.commands import slash_command, SlashCommandGroup
 
 # Help embed
 def help_home_em(self, ctx):
@@ -58,8 +58,13 @@ class HelpView(discord.ui.View):
         if select.values[0] == "Home":
             await interaction.response.edit_message(embed=help_home_em(self, self.ctx))
         else:
-            for command in self.client.get_cog(select.values[0]).get_commands():
-                cmds += f"`/{command.name}`\n{emoji.bullet} {command.description}\n\n"
+            cog = self.client.get_cog(select.values[0])
+            for command in cog.get_commands():
+                if isinstance(command, SlashCommandGroup):
+                    for subcommand in command.walk_commands():
+                        cmds += f"`/{command.name} {subcommand.name}`\n{emoji.bullet} {subcommand.description}\n\n"
+                else:
+                    cmds += f"`/{command.name}`\n{emoji.bullet} {command.description}\n\n"
             help_em = discord.Embed(title=f"{select.values[0]} Commands", description=f"{cmds}", color=db.theme_color)
             await interaction.response.edit_message(embed=help_em)
 
