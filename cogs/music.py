@@ -665,6 +665,26 @@ class Music(commands.Cog):
             await player.skip()
             await ctx.respond(embed=skip_em)
 
+# Skip to
+    @slash_command(guild_ids=db.guild_ids(), name="skip-to")
+    @option("track", description="Enter track number to skip")
+    async def skip_to(self, ctx, track: int):
+        """Skips to a given track in the queue."""
+        player = await self.ensure_voice(ctx)
+        if player:
+            if track < 1 or track > len(player.queue):
+                error_em = discord.Embed(description=f"{emoji.error} Track number must be between `1` and `{len(player.queue)}`", color=db.error_color)
+                await ctx.respond(embed=error_em, ephemeral=True)
+            else:
+                player.queue = player.queue[track - 1:]
+                await player.skip()
+                skip_em = discord.Embed(
+                    title=f"{emoji.skip} Music Skipped",
+                    description=f"Skipped to track `{track}`",
+                    color=db.theme_color
+                )
+                await ctx.respond(embed=skip_em)
+
 # Pause
     @slash_command(guild_ids=db.guild_ids(), name="pause")
     async def pause(self, ctx):
