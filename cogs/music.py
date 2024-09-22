@@ -267,7 +267,7 @@ class MusicView(discord.ui.View):
             player.set_loop(1)
             button.emoji = emoji.loop2
             mode = "Track"
-        elif player.loop == player.LOOP_SINGLE:
+        elif player.loop == player.LOOP_SINGLE and player.queue:
             player.set_loop(2)
             button.emoji = emoji.loop
             mode = "Queue"
@@ -868,8 +868,13 @@ class Music(commands.Cog):
                 player.set_loop(1)
                 _emoji = emoji.loop2
             elif mode == "Queue":
-                player.set_loop(2)
-                _emoji = emoji.loop
+                if not player.queue:
+                    error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=db.error_color)
+                    await ctx.respond(embed=error_em, ephemeral=True)
+                    return
+                else:
+                    player.set_loop(2)
+                    _emoji = emoji.loop
             loop_em = discord.Embed(
                 title=f"{_emoji} {mode if mode != 'OFF' else ''} Loop {'Enabled' if mode != 'OFF' else 'Disabled'}",
                 description=f"Successfully {'enabled' if mode != 'OFF' else 'disabled'} {mode if mode != 'OFF' else ''} Loop",
