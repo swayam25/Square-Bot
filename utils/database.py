@@ -199,19 +199,35 @@ def antiswear(guild_id: int, status: str = "OFF", mode: str = "get"):
 # -------------------- TEMP FILE --------------------
 
 # Play channel ID
-def play_ch_id(guild_id: int, channel_id: int = None, mode: str = "get"):
+def play_ch_id(guild_id: int, channel_id: any = None, mode: str = "get"):
     if mode == "get":
         return temp_file_path.get(f"{str(guild_id)}-play_ch_id", None)
     elif mode == "set":
         temp_file_path.update({f"{str(guild_id)}-play_ch_id": channel_id})
 
 # Play msg ID
-def play_msg_id(guild_id: int, msg_id: int = None, mode: str = "get"):
+def play_msg(guild_id: int, msg: any = None, mode: str = "get"):
     match mode:
         case "get":
-            return temp_file_path.get(f"{str(guild_id)}-play_msg_id", None)
+            return temp_file_path.get(f"{str(guild_id)}-play_msg", None)
         case "set":
-            temp_file_path.update({f"{str(guild_id)}-play_msg_id": msg_id})
+            temp_file_path.update({f"{str(guild_id)}-play_msg": msg})
+
+# Queue msg ID
+def queue_msg(guild_id: int, msg: any = None, mode: str = "get"):
+    match mode:
+        case "get":
+            if temp_file_path.__contains__(f"{str(guild_id)}-queue_msgs"):
+                return temp_file_path.get(f"{str(guild_id)}-queue_msgs", None)
+            else:
+                return list()
+        case "set":
+            if temp_file_path.__contains__(f"{str(guild_id)}-queue_msgs"):
+                temp_file_path[f"{str(guild_id)}-queue_msgs"].append(msg)
+            else:
+                temp_file_path.update({f"{str(guild_id)}-queue_msgs": [msg]})
+        case "clear":
+            temp_file_path.update({f"{str(guild_id)}-queue_msgs": []})
 
 # Equalizer
 def equalizer(guild_id: int, name: str = None, mode: str = "get"):
