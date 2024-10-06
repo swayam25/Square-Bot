@@ -31,7 +31,7 @@ Advance multipurpose discord bot for all your needs
 
 1. Clone this repository
     ```sh
-    git clone <repository url> square_bot
+    git clone https://github.com/swayam25/Square-Bot square_bot
     cd square_bot
     ```
 
