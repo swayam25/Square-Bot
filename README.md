@@ -91,7 +91,9 @@ Advance multipurpose discord bot for all your needs
 
     </details>
 
-4. Start the bot
+4. Set emojis in [`emoji.json`](./configs/emoji.json) file
+
+5. Start the bot
     ```sh
     source .venv/bin/activate
     python main.py
