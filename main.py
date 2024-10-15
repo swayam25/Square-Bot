@@ -13,7 +13,7 @@ intents = discord.Intents.all()
 client = commands.Bot(status=status, activity=activity, intents=intents, help_command=None)
 
 # Startup printing
-figlted_txt = Figlet(font="standard", justify="center").renderText("Square Bot")
+figlted_txt = Figlet(font="standard").renderText("Discord Bot")
 print(f"[cyan]{figlted_txt}[/]")
 
 # Loading all files
