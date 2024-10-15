@@ -91,7 +91,7 @@ Advance multipurpose discord bot for all your needs
 
     </details>
 
-4. Set emojis in [`emoji.json`](./configs/emoji.json) file
+4. Set emojis in [`emoji.json`](./configs/emoji.json) file. If you want to use default emojis, you can change the `emoji_file_path` to `./configs/default_emoji.json` in [`emoji.json`](./configs/config.json) file
 
 5. Start the bot
     ```sh
