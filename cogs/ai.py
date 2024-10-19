@@ -17,8 +17,8 @@ class ImageView(discord.ui.View):
 # Interaction check
     async def interaction_check(self, interaction):
         if interaction.user != self.ctx.author:
-            errorEm = discord.Embed(description=f"{emoji.error} You are not the author of this message", color=db.error_color)
-            await interaction.response.send_message(embed=errorEm, ephemeral=True)
+            error_em = discord.Embed(description=f"{emoji.error} You are not the author of this message", color=db.error_color)
+            await interaction.response.send_message(embed=error_em, ephemeral=True)
             return False
         else:
             return True

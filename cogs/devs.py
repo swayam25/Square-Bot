@@ -100,12 +100,12 @@ class Devs(commands.Cog):
         """Lockdowns the bot."""
         if check.is_dev(ctx.author.id):
             db.lockdown(True) if status == "Enable" else db.lockdown(False)
-            lockdownEm = discord.Embed(
+            lockdown_em = discord.Embed(
                 title=f"{emoji.lock if db.lockdown(status_only=True) else emoji.unlock} Bot Lockdown",
                 description=f"Bot is now in lockdown mode" if db.lockdown(status_only=True) else "Bot is now out of lockdown mode",
                 color=db.theme_color
             )
-            await ctx.respond(embed=lockdownEm)
+            await ctx.respond(embed=lockdown_em)
             await self.restart(ctx)
         else:
             error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
@@ -116,8 +116,8 @@ class Devs(commands.Cog):
     async def restart(self, ctx):
         """Restarts the bot."""
         if check.is_dev(ctx.author.id):
-            restartEm = discord.Embed(title=f"{emoji.restart} Restarting", color=db.theme_color)
-            await ctx.respond(embed=restartEm)
+            restart_em = discord.Embed(title=f"{emoji.restart} Restarting", color=db.theme_color)
+            await ctx.respond(embed=restart_em)
             os.system("clear")
             os.execv(sys.executable, [sys.executable] + sys.argv)
         else:
@@ -129,8 +129,8 @@ class Devs(commands.Cog):
     async def reload_cogs(self, ctx):
         """Reloads bot's all files."""
         if check.is_dev(ctx.author.id):
-            reloadEm = discord.Embed(title=f"{emoji.restart} Reloaded Cogs",color=db.theme_color)
-            await ctx.respond(embed=reloadEm)
+            reload_em = discord.Embed(title=f"{emoji.restart} Reloaded Cogs",color=db.theme_color)
+            await ctx.respond(embed=reload_em)
             for filename in os.listdir("./cogs"):
                 if filename.endswith(".py"):
                     self.client.reload_extension(f"cogs.{filename[:-3]}")
