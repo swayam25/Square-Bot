@@ -132,11 +132,9 @@ class Moderation(commands.Cog):
     @option("reason", description="Enter the reason for user timeout", required=False)
     async def mass_timeout_users(self, ctx, users: str, minutes: int, reason: str = None):
         """Timeouts mentioned users."""
+        await ctx.defer()
         users: list = users.split(",")
-        if ctx.author in users:
-            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
-            await ctx.respond(embed=error_em, ephemeral=True)
-        elif len(users) > 10:
+        if len(users) > 10:
             error_em = discord.Embed(description=f"{emoji.error} You can only mass timeout upto 10 users.", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -148,7 +146,12 @@ class Moderation(commands.Cog):
                     users.pop(users.index(user))
                     await ctx.respond(embed=error_em, ephemeral=True)
                     continue
-                if _user.top_role.position >= ctx.author.top_role.position:
+                if _user == ctx.author:
+                    error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself.", color=db.error_color)
+                    users.pop(users.index(user))
+                    await ctx.respond(embed=error_em, ephemeral=True)
+                    continue
+                elif _user.top_role.position >= ctx.author.top_role.position:
                     error_em = discord.Embed(description=f"{emoji.error} {_user.mention} has same role or higher role than you.", color=db.error_color)
                     users.pop(users.index(user))
                     await ctx.respond(embed=error_em, ephemeral=True)
@@ -171,11 +174,9 @@ class Moderation(commands.Cog):
     @option("reason", description="Enter the reason for user timeout", required=False)
     async def mass_untimeout_users(self, ctx, users: str, reason: str = None):
         """Untimeouts mentioned users."""
+        await ctx.defer()
         users: list = users.split(",")
-        if ctx.author in users:
-            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
-            await ctx.respond(embed=error_em, ephemeral=True)
-        elif len(users) > 10:
+        if len(users) > 10:
             error_em = discord.Embed(description=f"{emoji.error} You can only mass untimeout upto 10 users.", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -187,7 +188,12 @@ class Moderation(commands.Cog):
                     users.pop(users.index(user))
                     await ctx.respond(embed=error_em, ephemeral=True)
                     continue
-                if _user.top_role.position >= ctx.author.top_role.position:
+                if _user == ctx.author:
+                    error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself.", color=db.error_color)
+                    users.pop(users.index(user))
+                    await ctx.respond(embed=error_em, ephemeral=True)
+                    continue
+                elif _user.top_role.position >= ctx.author.top_role.position:
                     error_em = discord.Embed(description=f"{emoji.error} {_user.mention} has same role or higher role than you.", color=db.error_color)
                     users.pop(users.index(user))
                     await ctx.respond(embed=error_em, ephemeral=True)
