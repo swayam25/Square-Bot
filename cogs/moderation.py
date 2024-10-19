@@ -19,11 +19,11 @@ class Moderation(commands.Cog):
             amount > 100
         ]
         if any(amount_condition):
-            errorEm = discord.Embed(description=f"{emoji.error} Amount must be between 1 to 100", color=db.error_color)
-            await ctx.respond(embed=errorEm, ephemeral=True)
+            error_em = discord.Embed(description=f"{emoji.error} Amount must be between 1 to 100", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
         else:
-            purgeEm = discord.Embed(title=f"{emoji.bin} Messages Purged", description=f"Successfully purged `{amount}` message(s)", color=db.theme_color)
-            await ctx.respond(embed=purgeEm, ephemeral=True)
+            purge_em = discord.Embed(title=f"{emoji.bin} Messages Purged", description=f"Successfully purged `{amount}` message(s)", color=db.theme_color)
+            await ctx.respond(embed=purge_em, ephemeral=True)
             await ctx.channel.purge(limit=amount)
 
 # Kick
@@ -34,11 +34,11 @@ class Moderation(commands.Cog):
     async def kick(self, ctx, user: discord.Member, reason: str = None):
         """Kicks the mentioned user."""
         if user == ctx.author:
-            errorEm = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
-            await ctx.respond(embed=errorEm, ephemeral=True)
+            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
-            errorEm = discord.Embed(description=f"{emoji.error} Given user has same role or higher role than you", color=db.error_color)
-            await ctx.respond(embed=errorEm, ephemeral=True)
+            error_em = discord.Embed(description=f"{emoji.error} Given user has same role or higher role than you", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
         else:
             kich_em = discord.Embed(
                 title=f"{emoji.kick} Kicked User",
@@ -57,20 +57,20 @@ class Moderation(commands.Cog):
     async def ban(self, ctx, user: discord.Member, reason: str = None):
         """Bans the mentioned user."""
         if user == ctx.author:
-            errorEm = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
-            await ctx.respond(embed=errorEm, ephemeral=True)
+            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
-            errorEm = discord.Embed(description=f"{emoji.error} Given user has same role or higher role than you", color=db.error_color)
-            await ctx.respond(embed=errorEm, ephemeral=True)
+            error_em = discord.Embed(description=f"{emoji.error} Given user has same role or higher role than you", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
         else:
-            banEm = discord.Embed(
+            ban_em = discord.Embed(
                 title=f"{emoji.mod2} Banned User",
                 description=f"Successfully banned **{user}** from the server.\n" +
                             f"{emoji.bullet} **Reason**: {reason}",
                 color=db.theme_color
             )
             await user.ban(reason=reason)
-            await ctx.respond(embed=banEm)
+            await ctx.respond(embed=ban_em)
 
 # Timeout user
     @slash_command(guild_ids=db.guild_ids(), name="timeout")
@@ -81,11 +81,11 @@ class Moderation(commands.Cog):
     async def timeout_user(self, ctx, user: discord.Member, minutes: int, reason: str = None):
         """Timeouts the mentioned user."""
         if user == ctx.author:
-            errorEm = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
-            await ctx.respond(embed=errorEm, ephemeral=True)
+            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself.", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
-            errorEm = discord.Embed(description=f"{emoji.error} Given user has same role or higher role than you", color=db.error_color)
-            await ctx.respond(embed=errorEm, ephemeral=True)
+            error_em = discord.Embed(description=f"{emoji.error} Given user has same role or higher role than you.", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
         else:
             duration = datetime.timedelta(minutes=minutes)
             await user.timeout_for(duration, reason=reason)
@@ -106,11 +106,11 @@ class Moderation(commands.Cog):
     async def untimeout_user(self, ctx, user: discord.Member, reason: str = None):
         """Untimeouts the mentioned user."""
         if user == ctx.author:
-            errorEm = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
-            await ctx.respond(embed=errorEm, ephemeral=True)
+            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
-            errorEm = discord.Embed(description=f"{emoji.error} Given user has same role or higher role than you", color=db.error_color)
-            await ctx.respond(embed=errorEm, ephemeral=True)
+            error_em = discord.Embed(description=f"{emoji.error} Given user has same role or higher role than you", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
         else:
             await user.timeout(None, reason=reason)
             untimeout_em = discord.Embed(
@@ -120,6 +120,86 @@ class Moderation(commands.Cog):
                 color=db.theme_color
             )
             await ctx.respond(embed=untimeout_em)
+
+# Mass slash cmd group
+    mass = SlashCommandGroup(guild_ids=db.guild_ids(), name="mass", description="Mass moderation commands")
+
+# Mass timeout users
+    @mass.command(name="timeout")
+    @discord.default_permissions(moderate_members=True)
+    @option("users", description="Mention the users whom you want to timeout. Use \",\" to separate users.", required=True)
+    @option("minutes", description="Enter the duration of timeout in minutes")
+    @option("reason", description="Enter the reason for user timeout", required=False)
+    async def mass_timeout_users(self, ctx, users: str, minutes: int, reason: str = None):
+        """Timeouts mentioned users."""
+        users: list = users.split(",")
+        if ctx.author in users:
+            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+        elif len(users) > 10:
+            error_em = discord.Embed(description=f"{emoji.error} You can only mass timeout upto 10 users.", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+        else:
+            for user in users:
+                try:
+                    _user = await commands.MemberConverter().convert(ctx, user.strip())
+                except:
+                    error_em = discord.Embed(description=f"{emoji.error} User not found: {user.strip()}", color=db.error_color)
+                    users.pop(users.index(user))
+                    await ctx.respond(embed=error_em, ephemeral=True)
+                    continue
+                if _user.top_role.position >= ctx.author.top_role.position:
+                    error_em = discord.Embed(description=f"{emoji.error} {_user.mention} has same role or higher role than you.", color=db.error_color)
+                    users.pop(users.index(user))
+                    await ctx.respond(embed=error_em, ephemeral=True)
+                    continue
+                duration = datetime.timedelta(minutes=minutes)
+                await _user.timeout_for(duration, reason=reason)
+            mass_timeout_em = discord.Embed(
+                title=f"{emoji.timer2} Mass Timed out Users",
+                description=f"Successfully timed out {len(users)} users.\n" +
+                            f"{emoji.bullet} **Duration**: `{duration}`\n" +
+                            f"{emoji.bullet} **Reason**: {reason}",
+                color=db.theme_color
+            )
+            await ctx.respond(embed=mass_timeout_em)
+
+# Mass untimeout users
+    @mass.command(name="untimeout")
+    @discord.default_permissions(moderate_members=True)
+    @option("users", description="Mention the users whom you want to untimeout. Use \",\" to separate users.", required=True)
+    @option("reason", description="Enter the reason for user timeout", required=False)
+    async def mass_untimeout_users(self, ctx, users: str, reason: str = None):
+        """Untimeouts mentioned users."""
+        users: list = users.split(",")
+        if ctx.author in users:
+            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+        elif len(users) > 10:
+            error_em = discord.Embed(description=f"{emoji.error} You can only mass untimeout upto 10 users.", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+        else:
+            for user in users:
+                try:
+                    _user = await commands.MemberConverter().convert(ctx, user.strip())
+                except:
+                    error_em = discord.Embed(description=f"{emoji.error} User not found: {user.strip()}", color=db.error_color)
+                    users.pop(users.index(user))
+                    await ctx.respond(embed=error_em, ephemeral=True)
+                    continue
+                if _user.top_role.position >= ctx.author.top_role.position:
+                    error_em = discord.Embed(description=f"{emoji.error} {_user.mention} has same role or higher role than you.", color=db.error_color)
+                    users.pop(users.index(user))
+                    await ctx.respond(embed=error_em, ephemeral=True)
+                    continue
+                await _user.timeout(None, reason=reason)
+            mass_untimeout_em = discord.Embed(
+                title=f"{emoji.timer} Mass Untimed out Users",
+                description=f"Successfully untimed out {len(users)} users.\n" +
+                            f"{emoji.bullet} **Reason**: {reason}",
+                color=db.theme_color
+            )
+            await ctx.respond(embed=mass_untimeout_em)
 
 # Lock
     @slash_command(guild_ids=db.guild_ids(), name="lock")
