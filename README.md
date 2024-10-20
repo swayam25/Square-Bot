@@ -10,15 +10,15 @@ Advance multipurpose discord bot for all your needs
 
 - **Moderation System**
 
-    ![Moderation System](./assets/mod_sys.gif)
+    ![Moderation System](./assets/mod.gif)
 
 - **Music Player**
 
-    ![Music Player](./assets/music_player.gif)
+    ![Music Player](./assets/music.gif)
 
 - **Ticket System**
 
-    ![Ticket System](./assets/ticket_sys.gif)
+    ![Ticket System](./assets/ticket.gif)
 
 ## 🎯 Features
 
