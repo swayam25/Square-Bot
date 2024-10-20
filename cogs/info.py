@@ -101,17 +101,17 @@ class Info(commands.Cog):
 
 # Emoji info
     @info.command(name="emoji")
-    @option("emoji_icon", description="Enter the emoji")
-    async def emoji_info(self, ctx, emoji_icon: discord.Emoji):
+    @option("icon", description="Enter the emoji")
+    async def emoji_info(self, ctx, icon: discord.Emoji):
         """Shows info of the given emoji."""
         emoji_info_em = discord.Embed(
-            description=f"{emoji.bullet} **Name**: {emoji_icon.name}\n" +
-                        f"{emoji.bullet} **ID**: `{emoji_icon.id}`\n" +
-                        f"{emoji.bullet} **Emoji URL**: [Click Here]({emoji_icon.url})\n" +
-                        f"{emoji.bullet} **Is Animated?**: {emoji_icon.animated}\n" +
-                        f"{emoji.bullet} **Usage**: `{emoji_icon}`\n" +
-                        f"{emoji.bullet} **Emoji Created**: {discord.utils.format_dt(emoji_icon.created_at, "R")}", color=db.theme_color)
-        emoji_info_em.set_thumbnail(url=f"{emoji_icon.url}")
+            description=f"{emoji.bullet} **Name**: {icon.name}\n" +
+                        f"{emoji.bullet} **ID**: `{icon.id}`\n" +
+                        f"{emoji.bullet} **Emoji URL**: [Click Here]({icon.url})\n" +
+                        f"{emoji.bullet} **Is Animated?**: {icon.animated}\n" +
+                        f"{emoji.bullet} **Usage**: `{icon}`\n" +
+                        f"{emoji.bullet} **Emoji Created**: {discord.utils.format_dt(icon.created_at, "R")}", color=db.theme_color)
+        emoji_info_em.set_thumbnail(url=f"{icon.url}")
         await ctx.respond(embed=emoji_info_em)
 
 def setup(client):
