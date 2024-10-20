@@ -54,7 +54,7 @@ Advance multipurpose discord bot for all your needs
     - `dev_ids` (`List[int]`) [Required]
         - Developer's discord ids
         - Gives access to developer commands
-        - *This can be managed by `/list-devs`, `/add-dev`, `/remove-dev` commands too*
+        - *This can be managed by `/dev list`, `/dev add`, `/dev remove` commands too*
 
     - `lockdown` (`bool`) [Required]
         - Lockdown status
