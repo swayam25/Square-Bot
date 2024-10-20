@@ -42,7 +42,7 @@ class ErrorHandler(commands.Cog):
             error_em = discord.Embed(description=f"{emoji.error} 404 Forbidden", color=db.error_color)
 
         else:
-            error_em = discord.Embed(description=f"{emoji.error} An error occurred. Please try again later", color=db.error_color)
+            error_em = discord.Embed(description=f"{emoji.error} An error occurred. Please try again later.", color=db.error_color)
         await ctx.respond(embed=error_em, ephemeral=True)
 
 def setup(client):
