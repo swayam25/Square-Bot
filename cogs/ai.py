@@ -48,7 +48,7 @@ class AI(commands.Cog):
     @option("prompt", description="Prompt to generate image")
     async def imagine(self, ctx, prompt: str):
         """Generate image from prompt."""
-        await ctx.response.defer()
+        await ctx.defer()
         response = openai.images.generate(
             model="dall-e-3",
             prompt=prompt,
