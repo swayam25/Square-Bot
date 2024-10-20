@@ -16,16 +16,12 @@ class Settings(commands.Cog):
         mod_channel = await self.client.fetch_channel(db.mod_log_ch(ctx.guild.id)) if db.mod_log_ch(ctx.guild.id) != None else "Not set"
         mod_cmd_channel = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id)) if db.mod_cmd_log_ch(ctx.guild.id) != None else "Not set"
         ticket_channel = await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id)) if db.ticket_log_ch(ctx.guild.id) != None else "Not set"
-        antilink = db.antilink(ctx.guild.id) if db.antilink(ctx.guild.id) != None else "OFF"
-        antiswear = db.antiswear(ctx.guild.id) if db.antiswear(ctx.guild.id) != None else "OFF"
 
         set_em = discord.Embed(
             title=f"{emoji.settings} {ctx.guild.name}'s Settings",
             description=f"{emoji.bullet} **Mod Log Channel**: {mod_channel}\n" +
                         f"{emoji.bullet} **Mod Command Log Channel**: {mod_cmd_channel}\n" +
-                        f"{emoji.bullet} **Ticket Log Channel**: {ticket_channel}\n" +
-                        f"{emoji.bullet} **Antilink**: {antilink}\n" +
-                        f"{emoji.bullet} **Antiswear**: {antiswear}",
+                        f"{emoji.bullet} **Ticket Log Channel**: {ticket_channel}",
             color=db.theme_color
         )
         await ctx.respond(embed=set_em)
@@ -87,34 +83,6 @@ class Settings(commands.Cog):
             color=db.theme_color
         )
         await ctx.respond(embed=logging_em)
-
-# Set antilink
-    @setting.command(name="antilink")
-    @discord.default_permissions(manage_channels=True)
-    @option("status", description="Choose the antilink status", choices=["ON", "OFF"])
-    async def set_antilink(self, ctx, status: str):
-        """Sets antilink."""
-        db.antilink(guild_id=ctx.guild.id, status=status, mode="set")
-        anitlink_em = discord.Embed(
-            title=f"{emoji.settings} Antilink Settings",
-            description=f"Successfully set antilink status to **{status}**",
-            color=db.theme_color
-        )
-        await ctx.respond(embed=anitlink_em)
-
-# Set antiswear
-    @setting.command(name="antiswear")
-    @discord.default_permissions(manage_channels=True)
-    @option("status", description="Choose the antiswear status", choices=["ON", "OFF"])
-    async def setAntiswear(self, ctx, status: str):
-        """Sets antiswear."""
-        db.antiswear(guild_id=ctx.guild.id, status=status, mode="set")
-        antiswear_em = discord.Embed(
-            title=f"{emoji.settings} Antiswear Settings",
-            description=f"Successfully set antiswear status to **{status}**",
-            color=db.theme_color
-        )
-        await ctx.respond(embed=antiswear_em)
 
 def setup(client):
     client.add_cog(Settings(client))

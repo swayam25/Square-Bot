@@ -145,9 +145,7 @@ def guild_config(
             data = {
                 "mod_log_ch": None,
                 "mod_cmd_log_ch": None,
-                "ticket_log_ch": None,
-                "antilink": "OFF",
-                "antiswear": "OFF"
+                "ticket_log_ch": None
             }
             json.dump(data, f, indent=4)
 
@@ -167,9 +165,7 @@ def create(guild_id: int):
     guild_config(guild_id=guild_id, mode="set", keys={
         "mod_log_ch": None,
         "mod_cmd_log_ch": None,
-        "ticket_log_ch": None,
-        "antilink": "OFF",
-        "antiswear": "OFF"
+        "ticket_log_ch": None
     })
 
 # Delete db
@@ -187,14 +183,6 @@ def mod_cmd_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
 # Ticket log channel
 def ticket_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
     return guild_config(guild_id, "ticket_log_ch", channel_id, mode)
-
-# Antilink system
-def antilink(guild_id: int, status: str = "OFF", mode: str = "get"):
-    return guild_config(guild_id, "antilink", status, mode)
-
-# Antiswear system
-def antiswear(guild_id: int, status: str = "OFF", mode: str = "get"):
-    return guild_config(guild_id, "antiswear", status, mode)
 
 # -------------------- TEMP FILE --------------------
 
