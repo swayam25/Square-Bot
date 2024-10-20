@@ -14,11 +14,12 @@ def help_home_em(self, ctx):
     help_em.add_field(
         name=f"Categories",
         value=f"{emoji.mod} `:` **Moderation**\n" +
-            f"{emoji.info} `:` **Info**\n" +
-            f"{emoji.settings}  `:` **Settings**\n" +
-            f"{emoji.ai} `:` **AI**\n" +
-            f"{emoji.music} `:` **Music**\n" +
-            f"{emoji.ticket} `:` **Tickets**"
+              f"{emoji.mass_mod} `:` **Mass Moderation**\n" +
+              f"{emoji.info} `:` **Info**\n" +
+              f"{emoji.settings}  `:` **Settings**\n" +
+              f"{emoji.ai} `:` **AI**\n" +
+              f"{emoji.music} `:` **Music**\n" +
+              f"{emoji.ticket} `:` **Tickets**"
     )
     return help_em
 
@@ -44,13 +45,14 @@ class HelpView(discord.ui.View):
         max_values=1,
         custom_id="help",
         options=[
-            discord.SelectOption(label="Moderation", description="Moderate your server & keep it managed by using commands", emoji=f"{emoji.mod}"),
-            discord.SelectOption(label="Info", description="See some info about bot and others", emoji=f"{emoji.info}"),
-            discord.SelectOption(label="Settings", description="Highly customisable server settings", emoji=f"{emoji.settings}"),
-            discord.SelectOption(label="AI", description="Use the advance technology of AI", emoji=f"{emoji.ai}"),
-            discord.SelectOption(label="Music", description="Wanna chill? Just play music & enjoy", emoji=f"{emoji.music}"),
-            discord.SelectOption(label="Tickets", description="Need help? Create a ticket and ask", emoji=f"{emoji.ticket}"),
-            discord.SelectOption(label="Home", description="Go back to home", emoji=f"{emoji.previous}")
+            discord.SelectOption(label="Moderation", description="Moderate your server & keep it managed by using commands.", emoji=f"{emoji.mod}"),
+            discord.SelectOption(label="Mass Moderation", description="Moderate your server in bulk.", emoji=f"{emoji.mass_mod}"),
+            discord.SelectOption(label="Info", description="See some info about bot and others.", emoji=f"{emoji.info}"),
+            discord.SelectOption(label="Settings", description="Highly customisable server settings.", emoji=f"{emoji.settings}"),
+            discord.SelectOption(label="AI", description="Use the advance technology of AI.", emoji=f"{emoji.ai}"),
+            discord.SelectOption(label="Music", description="Wanna chill? Just play music & enjoy.", emoji=f"{emoji.music}"),
+            discord.SelectOption(label="Tickets", description="Need help? Create a ticket and ask.", emoji=f"{emoji.ticket}"),
+            discord.SelectOption(label="Home", description="Go back to home.", emoji=f"{emoji.previous}")
         ]
     )
     async def help_callback(self, select, interaction):
@@ -58,7 +60,7 @@ class HelpView(discord.ui.View):
         if select.values[0] == "Home":
             await interaction.response.edit_message(embed=help_home_em(self, self.ctx))
         else:
-            cog = self.client.get_cog(select.values[0])
+            cog = self.client.get_cog(select.values[0].replace(" ", ""))
             for command in cog.get_commands():
                 if isinstance(command, SlashCommandGroup):
                     for subcommand in command.walk_commands():
