@@ -18,13 +18,14 @@ class Moderation(commands.Cog):
             amount < 1,
             amount > 100
         ]
+        await ctx.defer(ephemeral=True)
         if any(amount_condition):
             error_em = discord.Embed(description=f"{emoji.error} Amount must be between 1 to 100", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
+            await ctx.channel.purge(limit=amount)
             purge_em = discord.Embed(title=f"{emoji.bin} Messages Purged", description=f"Successfully purged `{amount}` message(s)", color=db.theme_color)
             await ctx.respond(embed=purge_em, ephemeral=True)
-            await ctx.channel.purge(limit=amount)
 
 # Kick
     @slash_command(guild_ids=db.guild_ids(), name="kick")
