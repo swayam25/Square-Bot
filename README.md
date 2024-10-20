@@ -8,17 +8,17 @@ Advance multipurpose discord bot for all your needs
 
 ## 🎬️ Preview
 
-- **YouTube Player**
+- **Moderation System**
 
-    ![YouTube Player](./assets/ytplayer.png)
+    ![Moderation System](./assets/mod_sys.gif)
 
-- **Spotify Player**
+- **Music Player**
 
-    ![Spotify Player](./assets/spplayer.png)
+    ![Music Player](./assets/music_player.gif)
 
-- **Music Search**
+- **Ticket System**
 
-    ![Music Search](./assets/musicsearch.png)
+    ![Ticket System](./assets/ticket_sys.gif)
 
 ## 🎯 Features
 
