@@ -43,7 +43,7 @@ class MassModeration(commands.Cog):
                     continue
                 _users.append(_user.mention)
                 await _user.kick(reason=reason)
-            if len(users) > 0:
+            if len(_users) > 0:
                 mass_kick_em = discord.Embed(
                     title=f"{emoji.kick} Mass Kicked Users",
                     description=f"Successfully kicked {len(users)} users.\n" +
@@ -96,7 +96,7 @@ class MassModeration(commands.Cog):
                     continue
                 _users.append(_user.mention)
                 await _user.ban(reason=reason)
-            if len(users) > 0:
+            if len(_users) > 0:
                 mass_ban_em = discord.Embed(
                     title=f"{emoji.mod2} Mass Banned Users",
                     description=f"Successfully banned {len(users)} users.\n" +
@@ -155,7 +155,7 @@ class MassModeration(commands.Cog):
                     continue
                 _users.append(_user.mention)
                 await _user.timeout_for(duration, reason=reason)
-            if len(users) > 0:
+            if len(_users) > 0:
                 mass_timeout_em = discord.Embed(
                     title=f"{emoji.timer2} Mass Timed out Users",
                     description=f"Successfully timed out {len(users)} users.\n" +
@@ -210,7 +210,7 @@ class MassModeration(commands.Cog):
                     continue
                 _users.append(_user.mention)
                 await _user.timeout(None, reason=reason)
-            if len(users) > 0:
+            if len(_users) > 0:
                 mass_untimeout_em = discord.Embed(
                     title=f"{emoji.timer} Mass Untimed out Users",
                     description=f"Successfully untimed out {len(users)} users.\n" +
