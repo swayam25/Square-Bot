@@ -144,8 +144,8 @@ def guild_config(
         with open(file_path, "w") as f:
             data = {
                 "mod_log_ch": None,
+                "mod_cmd_log_ch": None,
                 "ticket_log_ch": None,
-                "warn_log_ch": None,
                 "antilink": "OFF",
                 "antiswear": "OFF"
             }
@@ -166,8 +166,8 @@ def guild_config(
 def create(guild_id: int):
     guild_config(guild_id=guild_id, mode="set", keys={
         "mod_log_ch": None,
+        "mod_cmd_log_ch": None,
         "ticket_log_ch": None,
-        "warn_log_ch": None,
         "antilink": "OFF",
         "antiswear": "OFF"
     })
@@ -180,9 +180,9 @@ def delete(guild_id: int):
 def mod_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
     return guild_config(guild_id, "mod_log_ch", channel_id, mode)
 
-# Warn log channel
-def warn_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
-    return guild_config(guild_id, "warn_log_ch", channel_id, mode)
+# Mod cmd log channel
+def mod_cmd_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
+    return guild_config(guild_id, "mod_cmd_log_ch", channel_id, mode)
 
 # Ticket log channel
 def ticket_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):

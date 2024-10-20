@@ -52,8 +52,8 @@ class MassModeration(commands.Cog):
                     color=db.theme_color
                 )
                 await ctx.respond(embed=mass_kick_em)
-                if db.mod_log_ch(ctx.guild.id):
-                    log_ch = await self.client.fetch_channel(db.mod_log_ch(ctx.guild.id))
+                if db.mod_cmd_log_ch(ctx.guild.id):
+                    log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
                     mass_kick_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_kick_em)
             if len(errors) > 0:
@@ -105,8 +105,8 @@ class MassModeration(commands.Cog):
                     color=db.theme_color
                 )
                 await ctx.respond(embed=mass_ban_em)
-                if db.mod_log_ch(ctx.guild.id):
-                    log_ch = await self.client.fetch_channel(db.mod_log_ch(ctx.guild.id))
+                if db.mod_cmd_log_ch(ctx.guild.id):
+                    log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
                     mass_ban_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_ban_em)
             if len(errors) > 0:
@@ -165,8 +165,8 @@ class MassModeration(commands.Cog):
                     color=db.theme_color
                 )
                 await ctx.respond(embed=mass_timeout_em)
-                if db.mod_log_ch(ctx.guild.id):
-                    log_ch = await self.client.fetch_channel(db.mod_log_ch(ctx.guild.id))
+                if db.mod_cmd_log_ch(ctx.guild.id):
+                    log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
                     mass_timeout_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_timeout_em)
             if len(errors) > 0:
@@ -219,8 +219,8 @@ class MassModeration(commands.Cog):
                     color=db.theme_color
                 )
                 await ctx.respond(embed=mass_untimeout_em)
-                if db.mod_log_ch(ctx.guild.id):
-                    log_ch = await self.client.fetch_channel(db.mod_log_ch(ctx.guild.id))
+                if db.mod_cmd_log_ch(ctx.guild.id):
+                    log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
                     mass_untimeout_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_untimeout_em)
             if len(errors) > 0:
