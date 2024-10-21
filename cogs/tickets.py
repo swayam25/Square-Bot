@@ -34,7 +34,7 @@ class Tickets(commands.Cog):
         )
         create_done_em = discord.Embed(
             title=f"{emoji.ticket} Ticket Created",
-            description=f"Successfully created the ticket. ( {create_ch.mention} )",
+            description=f"Successfully created {create_ch.mention}.",
             color=db.theme_color
         )
         await create_ch.send(ctx.author.mention, embed=create_em)
