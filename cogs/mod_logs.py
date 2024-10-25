@@ -58,10 +58,11 @@ class Logs(commands.Cog):
 # Edit
     @commands.Cog.listener()
     async def on_message_edit(self, msg_before, msg_after):
+        msg_ch = db.msg_log_ch(msg_before.guild.id)
         if msg_before.author and msg_after.author == self.client.user:
-            pass
-        elif db.mod_log_ch(msg_before.guild.id) != None:
-            edit_ch= await self.client.fetch_channel(db.mod_log_ch(msg_before.guild.id))
+            return
+        elif msg_ch != None:
+            edit_ch= await self.client.fetch_channel(msg_ch)
             edit_em = discord.Embed(
                 title=f"{emoji.edit} Message Edited",
                 description=f"{emoji.bullet} **Author**: {msg_before.author.mention}\n" +
@@ -72,10 +73,11 @@ class Logs(commands.Cog):
 # Delete
     @commands.Cog.listener()
     async def on_message_delete(self, msg):
+        msg_ch = db.msg_log_ch(msg.guild.id)
         if msg.author == self.client.user:
-            pass
-        elif db.mod_log_ch(msg.guild.id) != None:
-            del_ch = await self.client.fetch_channel(db.mod_log_ch(msg.guild.id))
+            return
+        elif msg_ch != None:
+            del_ch = await self.client.fetch_channel(msg_ch)
             del_em = discord.Embed(
                 title=f"{emoji.bin} Message Deleted",
                 description=f"{emoji.bullet} **Author**: {msg.author.mention}\n" +

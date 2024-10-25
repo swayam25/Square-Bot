@@ -111,8 +111,7 @@ def guild_config(
     guild_id: int,
     key: str = "",
     value: any = None,
-    mode: str = "get",
-    keys: dict = {}
+    mode: str = "get"
 ):
     """
     Handles guild configuration settings
@@ -122,7 +121,6 @@ def guild_config(
         key (str): The configuration key.
         value (any, optional): The new value for the key. Defaults to None.
         mode (str, optional): The operation mode ("get" or "set"). Defaults to "get".
-        keys (dict, optional): The new values for the keys. Defaults to {}. If this is set, the key and value will be ignored.
 
     Returns:
         The current or updated value for the key
@@ -139,6 +137,7 @@ def guild_config(
             data = {
                 "mod_log_ch": None,
                 "mod_cmd_log_ch": None,
+                "msg_log_ch": None,
                 "ticket_log_ch": None
             }
             json.dump(data, f, indent=4)
@@ -146,21 +145,14 @@ def guild_config(
     if mode == "get":
         return data.get(key)
     elif mode == "set":
-        if len(keys) > 0:
-            data = keys
-        else:
-            data[key] = value
+        data[key] = value
         with open(file_path, "w") as f:
             json.dump(data, f, indent=4)
         return value
 
 # Create new db
 def create(guild_id: int):
-    guild_config(guild_id=guild_id, mode="set", keys={
-        "mod_log_ch": None,
-        "mod_cmd_log_ch": None,
-        "ticket_log_ch": None
-    })
+    guild_config(guild_id=guild_id, mode="get")
 
 # Delete db
 def delete(guild_id: int):
@@ -173,6 +165,10 @@ def mod_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
 # Mod cmd log channel
 def mod_cmd_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
     return guild_config(guild_id, "mod_cmd_log_ch", channel_id, mode)
+
+# Message log channel
+def msg_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
+    return guild_config(guild_id, "msg_log_ch", channel_id, mode)
 
 # Ticket log channel
 def ticket_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):

@@ -15,12 +15,14 @@ class Settings(commands.Cog):
 
         mod_channel = (await self.client.fetch_channel(db.mod_log_ch(ctx.guild.id))).mention if db.mod_log_ch(ctx.guild.id) != None else "Not set"
         mod_cmd_channel = (await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))).mention if db.mod_cmd_log_ch(ctx.guild.id) != None else "Not set"
+        msg_channel = (await self.client.fetch_channel(db.msg_log_ch(ctx.guild.id))).mention if db.msg_log_ch(ctx.guild.id) != None else "Not set"
         ticket_channel = (await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id))).mention if db.ticket_log_ch(ctx.guild.id) != None else "Not set"
 
         set_em = discord.Embed(
             title=f"{emoji.settings} {ctx.guild.name}'s Settings",
             description=f"{emoji.bullet} **Mod Log Channel**: {mod_channel}\n" +
                         f"{emoji.bullet} **Mod Command Log Channel**: {mod_cmd_channel}\n" +
+                        f"{emoji.bullet} **Message Log Channel**: {msg_channel}\n" +
                         f"{emoji.bullet} **Ticket Log Channel**: {ticket_channel}",
             color=db.theme_color
         )
@@ -66,6 +68,20 @@ class Settings(commands.Cog):
         logging_em = discord.Embed(
             title=f"{emoji.settings} Mod Command Log Settings",
             description=f"Successfully set mod command log channel to {channel.mention}",
+            color=db.theme_color
+        )
+        await ctx.respond(embed=logging_em)
+
+# Set message log
+    @setting.command(name="message-log")
+    @discord.default_permissions(manage_channels=True)
+    @option("channel", description="Mention the message log channel")
+    async def set_msg_log(self, ctx, channel: discord.TextChannel):
+        """Sets message log channel."""
+        db.msg_log_ch(guild_id=ctx.guild.id, channel_id=int(channel.id), mode="set")
+        logging_em = discord.Embed(
+            title=f"{emoji.settings} Message Log Settings",
+            description=f"Successfully set message log channel to {channel.mention}",
             color=db.theme_color
         )
         await ctx.respond(embed=logging_em)
