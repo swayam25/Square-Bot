@@ -62,7 +62,7 @@ Advance multipurpose discord bot for all your needs
         - *This can be toggled by `/lockdown` command*
 
     - `owner_guild_ids` (`List[int]`) [Required]
-        - List of guild ids
+        - Lis t of guild ids
         - Developer commands will only work in these guilds
 
     - `system_ch_id` (`int`) [Required]
@@ -76,10 +76,6 @@ Advance multipurpose discord bot for all your needs
     - `discord_api_token` (`str`) [Required]
         - Discord api token
         - Bot will use this token to connect to discord
-
-    - `openai_api_token` (`str`) [Required]
-        - OpenAI api token
-        - Bot will use this token to connect to openai
 
     - `lavalink` (`Dict[str, Union[str, int]]`) [Required]
         - `host` (`str`) [Required]

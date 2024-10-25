@@ -17,7 +17,6 @@ def help_home_em(self, ctx):
               f"{emoji.mass_mod} `:` **Mass Moderation**\n" +
               f"{emoji.info} `:` **Info**\n" +
               f"{emoji.settings}  `:` **Settings**\n" +
-              f"{emoji.ai} `:` **AI**\n" +
               f"{emoji.music} `:` **Music**\n" +
               f"{emoji.ticket} `:` **Tickets**"
     )
@@ -49,7 +48,6 @@ class HelpView(discord.ui.View):
             discord.SelectOption(label="Mass Moderation", description="Moderate your server in bulk.", emoji=f"{emoji.mass_mod}"),
             discord.SelectOption(label="Info", description="See some info about bot and others.", emoji=f"{emoji.info}"),
             discord.SelectOption(label="Settings", description="Highly customisable server settings.", emoji=f"{emoji.settings}"),
-            discord.SelectOption(label="AI", description="Use the advance technology of AI.", emoji=f"{emoji.ai}"),
             discord.SelectOption(label="Music", description="Wanna chill? Just play music & enjoy.", emoji=f"{emoji.music}"),
             discord.SelectOption(label="Tickets", description="Need help? Create a ticket and ask.", emoji=f"{emoji.ticket}"),
             discord.SelectOption(label="Home", description="Go back to home.", emoji=f"{emoji.previous}")

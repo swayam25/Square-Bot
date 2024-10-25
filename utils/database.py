@@ -89,12 +89,6 @@ def discord_api_token():
         except Exception:
             return config_data["discord_api_token"]
 
-# OpenAI API token
-def openai_api_token():
-    with open(f"{config_file_path}", "r") as config_file:
-        config_data = json.load(config_file)
-    return config_data["openai_api_token"]
-
 # Lavalink
 def lavalink(
     key: str = None,
