@@ -34,12 +34,24 @@ class Settings(commands.Cog):
 # Reset
     @setting.command(name="reset")
     @discord.default_permissions(manage_channels=True)
-    async def reset_settings(self, ctx):
+    @option("setting", description="Setting to reset", choices=["All", "Mod Log", "Mod Command Log", "Message Log", "Ticket Log"])
+    async def reset_settings(self, ctx, setting: str):
         """Resets server settings."""
-        db.delete(ctx.guild.id)
+        if setting.lower() == "all":
+            db.delete(ctx.guild.id)
+        else:
+            match setting.lower():
+                case "mod log":
+                    db.mod_log_ch(guild_id=ctx.guild.id, mode="set", channel_id=None)
+                case "mod command log":
+                    db.mod_cmd_log_ch(guild_id=ctx.guild.id, mode="set", channel_id=None)
+                case "message log":
+                    db.msg_log_ch(guild_id=ctx.guild.id, mode="set", channel_id=None)
+                case "ticket log":
+                    db.ticket_log_ch(guild_id=ctx.guild.id, mode="set", channel_id=None)
         reset_em = discord.Embed(
             title=f"{emoji.settings} Reset Settings",
-            description=f"Successfully reset the server settings",
+            description=f"Successfully reset the {setting.lower()} settings",
             color=db.theme_color
         )
         await ctx.respond(embed=reset_em)
