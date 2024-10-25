@@ -61,13 +61,20 @@ class Logs(commands.Cog):
         msg_ch = db.msg_log_ch(msg_before.guild.id)
         if msg_before.author and msg_after.author == self.client.user:
             return
+        elif msg_before.author.bot:
+            return
         elif msg_ch != None:
             edit_ch= await self.client.fetch_channel(msg_ch)
             edit_em = discord.Embed(
                 title=f"{emoji.edit} Message Edited",
                 description=f"{emoji.bullet} **Author**: {msg_before.author.mention}\n" +
+                            f"{emoji.bullet} **Channel**: {msg_before.channel.mention}\n" +
                             f"{emoji.bullet} **Original Message**: {msg_before.content}\n" +
-                            f"{emoji.bullet} **Edited Message**: {msg_after.content}", color=db.theme_color)
+                            f"{emoji.bullet} **Edited Message**: {msg_after.content}",
+                color=db.theme_color)
+            if msg_before.attachments:
+                edit_em.description += f"\n{emoji.bullet} **Removed Attachment**: [Click Here]({msg_before.attachments[0].url})"
+                edit_em.set_image(url=msg_before.attachments[0].url)
             await edit_ch.send(embed=edit_em)
 
 # Delete
@@ -76,13 +83,32 @@ class Logs(commands.Cog):
         msg_ch = db.msg_log_ch(msg.guild.id)
         if msg.author == self.client.user:
             return
+        elif msg.author.bot:
+            return
         elif msg_ch != None:
             del_ch = await self.client.fetch_channel(msg_ch)
             del_em = discord.Embed(
                 title=f"{emoji.bin} Message Deleted",
                 description=f"{emoji.bullet} **Author**: {msg.author.mention}\n" +
-                            f"{emoji.bullet} **Message**: {msg.content}", color=db.theme_color)
+                            f"{emoji.bullet} **Channel**: {msg.channel.mention}\n" +
+                            f"{emoji.bullet} **Message**: {msg.content}",
+                color=db.theme_color)
+            if msg.attachments:
+                del_em.description += f"\n{emoji.bullet} **Attachment(s)**: {', '.join([f'[Click Here]({attachment.url})' for attachment in msg.attachments])}"
             await del_ch.send(embed=del_em)
+            # Deleted Attachments
+            if msg.attachments:
+                del_list: list = []
+                for attachment in msg.attachments:
+                    del_em = discord.Embed(
+                        title=f"{emoji.bin} Attachment Deleted",
+                        description=f"{emoji.bullet} **Author**: {msg.author.mention}\n" +
+                                    f"{emoji.bullet} **Channel**: {msg.channel.mention}\n" +
+                                    f"{emoji.bullet} **Attachment**: [Click Here]({attachment.url})",
+                        color=db.theme_color)
+                    del_em.set_image(url=attachment.url)
+                    del_list.append(del_em)
+                await del_ch.send(embeds=del_list) # Limited to send 10 embeds because of discord limitations, users are also limited to 10 attachments per message so this will work fine.
 
 def setup(client):
     client.add_cog(Logs(client))
