@@ -2,7 +2,7 @@
 
 ![Square Bot](./assets/square.png)
 
-Advance multipurpose discord bot for all your needs
+Advanced multipurpose discord bot for all your needs
 
 </div>
 
@@ -22,9 +22,9 @@ Advance multipurpose discord bot for all your needs
 
 ## 🎯 Features
 
-- Advance moderation system
+- Advanced moderation system
 - Lots of utility & fun commands
-- Advance music system with control system
+- Advanced music system with control system
 - Clean & informative help menu
 
 ## 🚀 Installation
