@@ -11,12 +11,12 @@ class Moderation(commands.Cog):
 # Purge
     @slash_command(guild_ids=db.guild_ids(), name="purge")
     @discord.default_permissions(manage_messages=True)
-    @option("amount", description="Enter an integer between 1 to 100")
+    @option("amount", description="Enter an integer between 1 to 1000")
     async def purge(self, ctx, amount: int):
         """Purges the amount of given messages."""
         amount_condition = [
             amount < 1,
-            amount > 100
+            amount > 1000
         ]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
