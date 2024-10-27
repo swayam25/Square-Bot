@@ -29,7 +29,7 @@ class Settings(commands.Cog):
         await ctx.respond(embed=set_em)
 
 # Settings slash cmd group
-    setting = SlashCommandGroup(guild_ids=db.guild_ids(), name="setting", description="Server settings commands")
+    setting = SlashCommandGroup(guild_ids=db.guild_ids(), name="setting", description="Server settings commands.")
 
 # Reset
     @setting.command(name="reset")

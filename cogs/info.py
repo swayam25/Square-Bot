@@ -54,7 +54,7 @@ class Info(commands.Cog):
         await ctx.respond(embed=avatar_em)
 
 # Info slash cmd group
-    info = SlashCommandGroup(guild_ids=db.guild_ids(), name="info", description="Info related commands")
+    info = SlashCommandGroup(guild_ids=db.guild_ids(), name="info", description="Info related commands.")
 
 # User info
     @info.command(name="user")

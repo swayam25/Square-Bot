@@ -8,6 +8,9 @@ class Moderation(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+# Purge slash cmd group
+    purge = SlashCommandGroup(guild_ids=db.guild_ids(), name="purge", description="Purge related commands")
+
 # Purge
     @slash_command(guild_ids=db.guild_ids(), name="purge")
     @discord.default_permissions(manage_messages=True)
@@ -153,7 +156,7 @@ class Moderation(commands.Cog):
         await ctx.respond(embed=unlock_em)
 
 # Role slash cmd group
-    role = SlashCommandGroup(guild_ids=db.guild_ids(), name="role", description="Role related commands")
+    role = SlashCommandGroup(guild_ids=db.guild_ids(), name="role", description="Role related commands.")
 
 # Role add
     @role.command(name="add")

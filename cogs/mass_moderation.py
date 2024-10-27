@@ -9,7 +9,7 @@ class MassModeration(commands.Cog):
         self.client = client
 
 # Mass slash cmd group
-    mass = SlashCommandGroup(guild_ids=db.guild_ids(), name="mass", description="Mass moderation commands")
+    mass = SlashCommandGroup(guild_ids=db.guild_ids(), name="mass", description="Mass moderation commands.")
 
 # Mass kick
     @mass.command(name="kick")

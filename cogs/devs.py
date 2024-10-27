@@ -48,7 +48,7 @@ class Devs(commands.Cog):
         await leave_log_ch.send(embed=leave_log_em)
 
 # Dev slash cmd group
-    dev = SlashCommandGroup(guild_ids=db.guild_ids(), name="dev", description="Developer related commands")
+    dev = SlashCommandGroup(guild_ids=db.guild_ids(), name="dev", description="Developer related commands.")
 
 # Add dev
     @dev.command(name="add")

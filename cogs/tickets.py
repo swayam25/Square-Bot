@@ -9,7 +9,7 @@ class Tickets(commands.Cog):
         self.client = client
 
 # Ticket slash cmd group
-    ticket = SlashCommandGroup(guild_ids=db.guild_ids(), name="ticket", description="Ticket related commands")
+    ticket = SlashCommandGroup(guild_ids=db.guild_ids(), name="ticket", description="Ticket related commands.")
 
 # Ticket create
     @ticket.command(name="create")
