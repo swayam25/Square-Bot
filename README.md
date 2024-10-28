@@ -62,7 +62,7 @@ Advanced multipurpose discord bot for all your needs
         - *This can be toggled by `/lockdown` command*
 
     - `owner_guild_ids` (`List[int]`) [Required]
-        - Lis t of guild ids
+        - List of guild ids
         - Developer commands will only work in these guilds
 
     - `system_ch_id` (`int`) [Required]
