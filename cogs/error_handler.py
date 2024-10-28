@@ -16,6 +16,9 @@ class ErrorHandler(commands.Cog):
         if isinstance(error, commands.CommandNotFound):
             pass
 
+        elif isinstance(error, commands.CommandOnCooldown):
+            error_em = discord.Embed(description=f"{emoji.error} You're on cooldown. Try again in {error.retry_after:.0f} seconds.", color=db.error_color)
+
         elif isinstance(error, commands.BotMissingPermissions):
             missing = [
                 perm.replace("_", " ").replace("guild", "server").title()
