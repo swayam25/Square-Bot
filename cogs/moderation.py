@@ -8,11 +8,14 @@ class Moderation(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-# Purge
-    @slash_command(guild_ids=db.guild_ids(), name="purge")
+# Purge slash cmd group
+    purge = SlashCommandGroup(guild_ids=db.guild_ids(), name="purge", description="Purge related commands.")
+
+# Purge any
+    @purge.command(name="any")
     @discord.default_permissions(manage_messages=True)
     @option("amount", description="Enter an integer between 1 to 1000.")
-    async def purge(self, ctx, amount: int):
+    async def purge_any(self, ctx, amount: int):
         """Purges the amount of given messages."""
         amount_condition = [
             amount < 1,
@@ -20,11 +23,89 @@ class Moderation(commands.Cog):
         ]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            error_em = discord.Embed(description=f"{emoji.error} Amount must be between 1 to 100", color=db.error_color)
+            error_em = discord.Embed(description=f"{emoji.error} Amount must be between 1 to 1000.", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount)
             purge_em = discord.Embed(title=f"{emoji.bin} Messages Purged", description=f"Successfully purged `{amount}` message(s)", color=db.theme_color)
+            await ctx.respond(embed=purge_em, ephemeral=True)
+
+# Purge humans
+    @purge.command(name="humans")
+    @discord.default_permissions(manage_messages=True)
+    @option("amount", description="Enter an integer between 1 to 1000.")
+    async def purge_humans(self, ctx, amount: int):
+        """Purges the amount of given messages sent by humans."""
+        amount_condition = [
+            amount < 1,
+            amount > 1000
+        ]
+        await ctx.defer(ephemeral=True)
+        if any(amount_condition):
+            error_em = discord.Embed(description=f"{emoji.error} Amount must be between 1 to 1000.", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+        else:
+            await ctx.channel.purge(limit=amount, check=lambda m: not m.author.bot)
+            purge_em = discord.Embed(title=f"{emoji.bin} Messages Purged", description=f"Successfully purged `{amount}` message(s) sent by humans", color=db.theme_color)
+            await ctx.respond(embed=purge_em, ephemeral=True)
+
+# Purge bots
+    @purge.command(name="bots")
+    @discord.default_permissions(manage_messages=True)
+    @option("amount", description="Enter an integer between 1 to 1000.")
+    async def purge_bots(self, ctx, amount: int):
+        """Purges the amount of given messages sent by bots."""
+        amount_condition = [
+            amount < 1,
+            amount > 1000
+        ]
+        await ctx.defer(ephemeral=True)
+        if any(amount_condition):
+            error_em = discord.Embed(description=f"{emoji.error} Amount must be between 1 to 1000.", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+        else:
+            await ctx.channel.purge(limit=amount, check=lambda m: m.author.bot)
+            purge_em = discord.Embed(title=f"{emoji.bin} Messages Purged", description=f"Successfully purged `{amount}` message(s) sent by bots", color=db.theme_color)
+            await ctx.respond(embed=purge_em, ephemeral=True)
+
+# Purge user
+    @purge.command(name="user")
+    @discord.default_permissions(manage_messages=True)
+    @option("amount", description="Enter an integer between 1 to 1000.")
+    @option("user", description="Mention the user whose messages you want to purge.")
+    async def purge_user(self, ctx, amount: int, user: discord.Member):
+        """Purges the amount of given messages sent by the mentioned user."""
+        amount_condition = [
+            amount < 1,
+            amount > 1000
+        ]
+        await ctx.defer(ephemeral=True)
+        if any(amount_condition):
+            error_em = discord.Embed(description=f"{emoji.error} Amount must be between 1 to 1000.", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+        else:
+            await ctx.channel.purge(limit=amount, check=lambda m: m.author.id == user.id)
+            purge_em = discord.Embed(title=f"{emoji.bin} Messages Purged", description=f"Successfully purged `{amount}` message(s) sent by {user.mention}", color=db.theme_color)
+            await ctx.respond(embed=purge_em, ephemeral=True)
+
+# Purge containing phrase
+    @purge.command(name="contains")
+    @discord.default_permissions(manage_messages=True)
+    @option("amount", description="Enter an integer between 1 to 1000.")
+    @option("phrase", description="Enter the phrase to purge messages containing it.")
+    async def purge_contains(self, ctx, amount: int, phrase: str):
+        """Purges the amount of given messages containing the given phrase."""
+        amount_condition = [
+            amount < 1,
+            amount > 1000
+        ]
+        await ctx.defer(ephemeral=True)
+        if any(amount_condition):
+            error_em = discord.Embed(description=f"{emoji.error} Amount must be between 1 to 1000.", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+        else:
+            await ctx.channel.purge(limit=amount, check=lambda m: phrase.lower() in m.content.lower())
+            purge_em = discord.Embed(title=f"{emoji.bin} Messages Purged", description=f"Successfully purged `{amount}` message(s) containing `{phrase}`", color=db.theme_color)
             await ctx.respond(embed=purge_em, ephemeral=True)
 
 # Kick

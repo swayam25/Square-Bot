@@ -110,5 +110,23 @@ class Logs(commands.Cog):
                     del_list.append(del_em)
                 await del_ch.send(embeds=del_list) # Limited to send 10 embeds because of discord limitations, users are also limited to 10 attachments per message so this will work fine.
 
+# Bulk delete
+    @commands.Cog.listener()
+    async def on_bulk_message_delete(self, msgs):
+        msg_ch = db.msg_log_ch(msgs[0].guild.id)
+        if msgs[0].author == self.client.user:
+            return
+        elif msgs[0].author.bot:
+            return
+        elif msg_ch != None:
+            bulk_ch = await self.client.fetch_channel(msg_ch)
+            bulk_em = discord.Embed(
+                title=f"{emoji.bin} Bulk Message Deleted",
+                description=f"{emoji.bullet} **Author**: {msgs[0].author.mention}\n" +
+                            f"{emoji.bullet} **Channel**: {msgs[0].channel.mention}\n" +
+                            f"{emoji.bullet} **Messages Deleted**: {len(msgs)}",
+                color=db.theme_color)
+            await bulk_ch.send(embed=bulk_em)
+
 def setup(client):
     client.add_cog(Logs(client))
