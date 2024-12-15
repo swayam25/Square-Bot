@@ -35,14 +35,7 @@ Advanced multipurpose discord bot for all your needs
     cd square_bot
     ```
 
-2. Install dependencies
-    ```sh
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
-    ```
-
-3. Configure the [`config.json`](./configs/config.json) file
+2. Configure the [`config.json`](./configs/config.json) file
     <details>
 
     <summary>Configuration</summary>
@@ -62,7 +55,7 @@ Advanced multipurpose discord bot for all your needs
         - *This can be toggled by `/lockdown` command*
 
     - `owner_guild_ids` (`List[int]`) [Required]
-        - Lis t of guild ids
+        - List of guild ids
         - Developer commands will only work in these guilds
 
     - `system_ch_id` (`int`) [Required]
@@ -87,10 +80,17 @@ Advanced multipurpose discord bot for all your needs
 
     </details>
 
-4. Set emojis in [`emoji.json`](./configs/emoji.json) file. If you want to use default emojis, you can change the `emoji_file_path` to `./configs/default_emoji.json` in [`emoji.py`](./utils/emoji.py) file
+3. Set emojis in [`emoji.json`](./configs/emoji.json) file. If you want to use default emojis, you can change the `emoji_file_path` to `./configs/default_emoji.json` in [`emoji.py`](./utils/emoji.py) file
+
+
+4. Install dependencies
+    ```sh
+    python -m venv .venv
+    source .venv/bin/activate
+    pip install -r requirements.txt
+    ```
 
 5. Start the bot
     ```sh
-    source .venv/bin/activate
     python main.py
     ```
