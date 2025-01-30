@@ -25,8 +25,9 @@ class Logs(commands.Cog):
             leave_ch = await self.client.fetch_channel(db.mod_log_ch(user.guild.id))
             leave_em = discord.Embed(
                 title=f"{emoji.minus} Member Left",
-                description=f"{emoji.bullet} **Name**: {user.mention}\n" +
-                            f"{emoji.bullet} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}", color=db.theme_color)
+                description=f"{emoji.bullet2} **Name**: {user.mention}\n" +
+                            f"{emoji.bullet2} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}",
+                color=db.error_color)
             leave_em.set_thumbnail(url=f"{user.avatar.url}")
             await leave_ch.send(embed=leave_em)
 
@@ -38,8 +39,9 @@ class Logs(commands.Cog):
             ban_ch = await self.client.fetch_channel(db.mod_log_ch(user.guild.id))
             ban_em = discord.Embed(
                 title=f"{emoji.mod2} Member Banned",
-                description=f"{emoji.bullet} **Name**: {user.mention}\n" +
-                            f"{emoji.bullet} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}", color=db.theme_color)
+                description=f"{emoji.bullet2} **Name**: {user.mention}\n" +
+                            f"{emoji.bullet2} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}",
+                color=db.error_color)
             ban_em.set_thumbnail(url=f"{user.avatar.url}")
             await ban_ch.send(embed=ban_em)
 
@@ -69,7 +71,7 @@ class Logs(commands.Cog):
                 title=f"{emoji.edit} Message Edited",
                 description=f"{emoji.bullet} **Author**: {msg_before.author.mention}\n" +
                             f"{emoji.bullet} **Channel**: {msg_before.channel.mention}\n" +
-                            f"{emoji.bullet} **Original Message**: {msg_before.content}\n" +
+                            f"{emoji.bullet2} **Original Message**: {msg_before.content}\n" +
                             f"{emoji.bullet} **Edited Message**: {msg_after.content}",
                 color=db.theme_color)
             if msg_before.attachments:
@@ -89,10 +91,10 @@ class Logs(commands.Cog):
             del_ch = await self.client.fetch_channel(msg_ch)
             del_em = discord.Embed(
                 title=f"{emoji.bin} Message Deleted",
-                description=f"{emoji.bullet} **Author**: {msg.author.mention}\n" +
-                            f"{emoji.bullet} **Channel**: {msg.channel.mention}\n" +
-                            f"{emoji.bullet} **Message**: {msg.content}",
-                color=db.theme_color)
+                description=f"{emoji.bullet2} **Author**: {msg.author.mention}\n" +
+                            f"{emoji.bullet2} **Channel**: {msg.channel.mention}\n" +
+                            f"{emoji.bullet2} **Message**: {msg.content}",
+                color=db.error_color)
             if msg.attachments:
                 del_em.description += f"\n{emoji.bullet} **Attachment(s)**: {', '.join([f'[Click Here]({attachment.url})' for attachment in msg.attachments])}"
             await del_ch.send(embed=del_em)
@@ -102,10 +104,10 @@ class Logs(commands.Cog):
                 for attachment in msg.attachments:
                     del_em = discord.Embed(
                         title=f"{emoji.bin} Attachment Deleted",
-                        description=f"{emoji.bullet} **Author**: {msg.author.mention}\n" +
-                                    f"{emoji.bullet} **Channel**: {msg.channel.mention}\n" +
-                                    f"{emoji.bullet} **Attachment**: [Click Here]({attachment.url})",
-                        color=db.theme_color)
+                        description=f"{emoji.bullet2} **Author**: {msg.author.mention}\n" +
+                                    f"{emoji.bullet2} **Channel**: {msg.channel.mention}\n" +
+                                    f"{emoji.bullet2} **Attachment**: [Click Here]({attachment.url})",
+                        color=db.error_color)
                     del_em.set_image(url=attachment.url)
                     del_list.append(del_em)
                 await del_ch.send(embeds=del_list) # Limited to send 10 embeds because of discord limitations, user: discord.Members are also limited to 10 attachments per message so this will work fine.
@@ -122,10 +124,10 @@ class Logs(commands.Cog):
             bulk_ch = await self.client.fetch_channel(msg_ch)
             bulk_em = discord.Embed(
                 title=f"{emoji.bin} Bulk Message Deleted",
-                description=f"{emoji.bullet} **Author**: {msgs[0].author.mention}\n" +
-                            f"{emoji.bullet} **Channel**: {msgs[0].channel.mention}\n" +
-                            f"{emoji.bullet} **Messages Deleted**: {len(msgs)}",
-                color=db.theme_color)
+                description=f"{emoji.bullet2} **Author**: {msgs[0].author.mention}\n" +
+                            f"{emoji.bullet2} **Channel**: {msgs[0].channel.mention}\n" +
+                            f"{emoji.bullet2} **Messages Deleted**: {len(msgs)}",
+                color=db.error_color)
             await bulk_ch.send(embed=bulk_em)
 
 def setup(client: discord.Client):

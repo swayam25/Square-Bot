@@ -125,8 +125,8 @@ class Moderation(commands.Cog):
             kich_em = discord.Embed(
                 title=f"{emoji.kick} Kicked User",
                 description=f"Successfully kicked **{user}** from the server.\n" +
-                            f"{emoji.bullet} **Reason**: {reason}",
-                color=db.theme_color
+                            f"{emoji.bullet2} **Reason**: {reason}",
+                color=db.error_color
             )
             await user.kick(reason=reason)
             await ctx.respond(embed=kich_em)
@@ -148,8 +148,8 @@ class Moderation(commands.Cog):
             ban_em = discord.Embed(
                 title=f"{emoji.mod2} Banned User",
                 description=f"Successfully banned **{user}** from the server.\n" +
-                            f"{emoji.bullet} **Reason**: {reason}",
-                color=db.theme_color
+                            f"{emoji.bullet2} **Reason**: {reason}",
+                color=db.error_color
             )
             await user.ban(reason=reason)
             await ctx.respond(embed=ban_em)
@@ -174,9 +174,9 @@ class Moderation(commands.Cog):
             timeout_em = discord.Embed(
                 title=f"{emoji.timer2} Timed out User",
                 description=f"Successfully timed out {user.mention}.\n" +
-                            f"{emoji.bullet} **Duration**: `{duration}`\n" +
-                            f"{emoji.bullet} **Reason**: {reason}",
-                color=db.theme_color
+                            f"{emoji.bullet2} **Duration**: `{duration}`\n" +
+                            f"{emoji.bullet2} **Reason**: {reason}",
+                color=db.error_color
             )
             await ctx.respond(embed=timeout_em)
 

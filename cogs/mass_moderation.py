@@ -45,19 +45,19 @@ class MassModeration(commands.Cog):
                 mass_kick_em = discord.Embed(
                     title=f"{emoji.kick} Mass Kicked Users",
                     description=f"Successfully kicked {len(_users)} users.\n" +
-                                f"{emoji.bullet} **Reason**: {reason}\n" +
-                                f"{emoji.bullet} **Users**: {", ".join(_users)}",
-                    color=db.theme_color
+                                f"{emoji.bullet2} **Reason**: {reason}\n" +
+                                f"{emoji.bullet2} **Users**: {", ".join(_users)}",
+                    color=db.error_color
                 )
                 await ctx.respond(embed=mass_kick_em)
                 if db.mod_cmd_log_ch(ctx.guild.id):
                     log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
-                    mass_kick_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
+                    mass_kick_em.description += f"\n{emoji.bullet2} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_kick_em)
             if len(errors) > 0:
                 error_em = discord.Embed(
                     title=f"{emoji.error} Can't kick users",
-                    description="\n".join([f"{emoji.bullet} **{user}**: {reason}" for user, reason in errors]),
+                    description="\n".join([f"{emoji.bullet2} **{user}**: {reason}" for user, reason in errors]),
                     color=db.error_color
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
@@ -95,19 +95,19 @@ class MassModeration(commands.Cog):
                 mass_ban_em = discord.Embed(
                     title=f"{emoji.mod2} Mass Banned Users",
                     description=f"Successfully banned {len(_users)} users.\n" +
-                                f"{emoji.bullet} **Reason**: {reason}\n" +
-                                f"{emoji.bullet} **Users**: {", ".join(_users)}",
-                    color=db.theme_color
+                                f"{emoji.bullet2} **Reason**: {reason}\n" +
+                                f"{emoji.bullet2} **Users**: {", ".join(_users)}",
+                    color=db.error_color
                 )
                 await ctx.respond(embed=mass_ban_em)
                 if db.mod_cmd_log_ch(ctx.guild.id):
                     log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
-                    mass_ban_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
+                    mass_ban_em.description += f"\n{emoji.bullet2} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_ban_em)
             if len(errors) > 0:
                 error_em = discord.Embed(
                     title=f"{emoji.error} Can't ban users",
-                    description="\n".join([f"{emoji.bullet} **{user}**: {reason}" for user, reason in errors]),
+                    description="\n".join([f"{emoji.bullet2} **{user}**: {reason}" for user, reason in errors]),
                     color=db.error_color
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
@@ -151,10 +151,10 @@ class MassModeration(commands.Cog):
                 mass_timeout_em = discord.Embed(
                     title=f"{emoji.timer2} Mass Timed out Users",
                     description=f"Successfully timed out {len(_users)} users.\n" +
-                                f"{emoji.bullet} **Duration**: `{duration}`\n" +
-                                f"{emoji.bullet} **Reason**: {reason}\n" +
-                                f"{emoji.bullet} **Users**: {", ".join(_users)}",
-                    color=db.theme_color
+                                f"{emoji.bullet2} **Duration**: `{duration}`\n" +
+                                f"{emoji.bullet2} **Reason**: {reason}\n" +
+                                f"{emoji.bullet2} **Users**: {", ".join(_users)}",
+                    color=db.error_color
                 )
                 await ctx.respond(embed=mass_timeout_em)
                 if db.mod_cmd_log_ch(ctx.guild.id):
@@ -164,7 +164,7 @@ class MassModeration(commands.Cog):
             if len(errors) > 0:
                 error_em = discord.Embed(
                     title=f"{emoji.error} Can't timeout users",
-                    description="\n".join([f"{emoji.bullet} **{user}**: {reason}" for user, reason in errors]),
+                    description="\n".join([f"{emoji.bullet2} **{user}**: {reason}" for user, reason in errors]),
                     color=db.error_color
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
