@@ -1,0 +1,14 @@
+{
+    "owner_id": 0,
+    "dev_ids": [],
+    "lockdown": false,
+    "owner_guild_ids": [],
+    "system_ch_id": 0,
+    "suppWort_server_url": "https://discord.gg",
+    "discord_api_token": "",
+    "lavalink": {
+        "host": "",
+        "port": 0,
+        "pass": ""
+    }
+}
