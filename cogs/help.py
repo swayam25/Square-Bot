@@ -5,7 +5,7 @@ from discord.ext import commands
 from discord.commands import slash_command, SlashCommandGroup
 
 # Help embed
-def help_home_em(self, ctx):
+def help_home_em(self, ctx: discord.ApplicationContext):
     help_em = discord.Embed(
         title=f"{self.client.user.name} Help Desk",
         description=f"Hello {ctx.author.mention}! I'm {self.client.user.name}, use the dropdown menu below to see the commands of each category. If you need help, feel free to ask in the [support server]({db.support_server_url()}).",
@@ -23,13 +23,13 @@ def help_home_em(self, ctx):
     return help_em
 
 class HelpView(discord.ui.View):
-    def __init__(self, client, ctx, timeout):
+    def __init__(self, client: discord.Client, ctx: discord.ApplicationContext, timeout: int):
         super().__init__(timeout=timeout, disable_on_timeout=True)
         self.client = client
         self.ctx = ctx
 
 # Interaction check
-    async def interaction_check(self, interaction):
+    async def interaction_check(self, interaction: discord.Interaction):
         if interaction.user != self.ctx.author:
             help_check_em = discord.Embed(description=f"{emoji.error} You are not the author of this message", color=db.error_color)
             await interaction.response.send_message(embed=help_check_em, ephemeral=True)
@@ -53,7 +53,7 @@ class HelpView(discord.ui.View):
             discord.SelectOption(label="Home", description="Go back to home.", emoji=f"{emoji.previous}")
         ]
     )
-    async def help_callback(self, select, interaction):
+    async def help_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
         cmds = ""
         if select.values[0] == "Home":
             await interaction.response.edit_message(embed=help_home_em(self, self.ctx))
@@ -74,10 +74,10 @@ class Help(commands.Cog):
 
 # Help
     @slash_command(guild_ids=db.guild_ids(), name="help")
-    async def help(self, ctx):
+    async def help(self, ctx: discord.ApplicationContext):
         """Need bot's help? Use this!"""
         helpView = HelpView(self.client, ctx, timeout=60)
         helpView.msg = await ctx.respond(embed=help_home_em(self, ctx), view=helpView)
 
-def setup(client):
+def setup(client: discord.Client):
     client.add_cog(Help(client))

@@ -10,7 +10,7 @@ class Settings(commands.Cog):
 # Settings
     @slash_command(guild_ids=db.guild_ids(), name="settings")
     @discord.default_permissions(manage_channels=True)
-    async def settings(self, ctx):
+    async def settings(self, ctx: discord.ApplicationContext):
         """Shows server settings."""
 
         mod_channel = (await self.client.fetch_channel(db.mod_log_ch(ctx.guild.id))).mention if db.mod_log_ch(ctx.guild.id) != None else "Not set"
@@ -35,7 +35,7 @@ class Settings(commands.Cog):
     @setting.command(name="reset")
     @discord.default_permissions(manage_channels=True)
     @option("setting", description="Setting to reset", choices=["All", "Mod Log", "Mod Command Log", "Message Log", "Ticket Log"])
-    async def reset_settings(self, ctx, setting: str):
+    async def reset_settings(self, ctx: discord.ApplicationContext, setting: str):
         """Resets server settings."""
         if setting.lower() == "all":
             db.delete(ctx.guild.id)
@@ -60,7 +60,7 @@ class Settings(commands.Cog):
     @setting.command(name="mod-log")
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the mod log channel")
-    async def set_mod_log(self, ctx, channel: discord.TextChannel):
+    async def set_mod_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets mod log channel."""
         db.mod_log_ch(guild_id=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
@@ -74,7 +74,7 @@ class Settings(commands.Cog):
     @setting.command(name="mod-command-log")
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the mod command log channel")
-    async def set_mod_cmd_log(self, ctx, channel: discord.TextChannel):
+    async def set_mod_cmd_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets mod command log channel."""
         db.mod_cmd_log_ch(guild_id=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
@@ -88,7 +88,7 @@ class Settings(commands.Cog):
     @setting.command(name="message-log")
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the message log channel")
-    async def set_msg_log(self, ctx, channel: discord.TextChannel):
+    async def set_msg_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets message log channel."""
         db.msg_log_ch(guild_id=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
@@ -102,7 +102,7 @@ class Settings(commands.Cog):
     @setting.command(name="ticket-log")
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the ticket log channel")
-    async def set_ticket_log(self, ctx, channel: discord.TextChannel):
+    async def set_ticket_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets ticket log channel."""
         db.ticket_log_ch(guild_id=ctx.guild.id, channel_id=int(channel.id), mode="set")
         logging_em = discord.Embed(
@@ -112,5 +112,5 @@ class Settings(commands.Cog):
         )
         await ctx.respond(embed=logging_em)
 
-def setup(client):
+def setup(client: discord.Client):
     client.add_cog(Settings(client))

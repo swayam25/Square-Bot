@@ -16,7 +16,7 @@ class MassModeration(commands.Cog):
     @discord.default_permissions(kick_members=True)
     @option("users", description="Mention the users whom you want to kick. Use \",\" to separate users.", required=True)
     @option("reason", description="Enter the reason for kicking the user", required=False)
-    async def mass_kick_users(self, ctx, users: str, reason: str = None):
+    async def mass_kick_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
         """Kicks mentioned users."""
         await ctx.defer()
         users: list = users.split(",")
@@ -67,7 +67,7 @@ class MassModeration(commands.Cog):
     @discord.default_permissions(ban_members=True)
     @option("users", description="Mention the users whom you want to ban. Use \",\" to separate users.", required=True)
     @option("reason", description="Enter the reason for banning the user", required=False)
-    async def mass_ban_users(self, ctx, users: str, reason: str = None):
+    async def mass_ban_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
         """Bans mentioned users."""
         await ctx.defer()
         users: list = users.split(",")
@@ -118,7 +118,7 @@ class MassModeration(commands.Cog):
     @option("users", description="Mention the users whom you want to timeout. Use \",\" to separate users.", required=True)
     @option("minutes", description="Enter the duration of timeout in minutes")
     @option("reason", description="Enter the reason for user timeout", required=False)
-    async def mass_timeout_users(self, ctx, users: str, minutes: int, reason: str = None):
+    async def mass_timeout_users(self, ctx: discord.ApplicationContext, users: str, minutes: int, reason: str = None):
         """Timeouts mentioned users."""
         await ctx.defer()
         users: list = users.split(",")
@@ -175,7 +175,7 @@ class MassModeration(commands.Cog):
     @discord.default_permissions(moderate_members=True)
     @option("users", description="Mention the users whom you want to untimeout. Use \",\" to separate users.", required=True)
     @option("reason", description="Enter the reason for user timeout", required=False)
-    async def mass_untimeout_users(self, ctx, users: str, reason: str = None):
+    async def mass_untimeout_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
         """Untimeouts mentioned users."""
         await ctx.defer()
         users: list = users.split(",")
@@ -226,7 +226,7 @@ class MassModeration(commands.Cog):
     @discord.default_permissions(manage_roles=True)
     @option("users", description="Mention the users whom you want to add the role. Use \",\" to separate users.", required=True)
     @option("roles", description="Mention the roles which you will add to the users. Use \",\" to separate roles.", required=True)
-    async def mass_role_add(self, ctx, users: str, roles: str):
+    async def mass_role_add(self, ctx: discord.ApplicationContext, users: str, roles: str):
         """Adds mentioned roles to mentioned users."""
         await ctx.defer()
         users: list = users.split(",")
@@ -289,7 +289,7 @@ class MassModeration(commands.Cog):
     @discord.default_permissions(manage_roles=True)
     @option("users", description="Mention the users whom you want to remove the role. Use \",\" to separate users.", required=True)
     @option("roles", description="Mention the roles which you will remove from the users. Use \",\" to separate roles.", required=True)
-    async def mass_role_remove(self, ctx, users: str, roles: str):
+    async def mass_role_remove(self, ctx: discord.ApplicationContext, users: str, roles: str):
         """Removes mentioned roles from mentioned users."""
         await ctx.defer()
         users: list = users.split(",")
@@ -347,5 +347,5 @@ class MassModeration(commands.Cog):
                     color=db.error_color)
                 await ctx.respond(embed=error_em, ephemeral=True)
 
-def setup(client):
+def setup(client: discord.Client):
     client.add_cog(MassModeration(client))

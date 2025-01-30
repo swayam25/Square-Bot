@@ -26,7 +26,7 @@ class TicketView(discord.ui.View):
         super().__init__(timeout=None)
 
 # Interaction check
-    async def interaction_check(self, interaction):
+    async def interaction_check(self, interaction: discord.Interaction):
         if interaction.user.guild_permissions.manage_channels:
             return True
         else:
@@ -36,7 +36,7 @@ class TicketView(discord.ui.View):
 
 # Ticket close button
     @discord.ui.button(label="Close", emoji=emoji.lock, style=discord.ButtonStyle.grey, custom_id="close_ticket")
-    async def close_ticket(self, button, interaction):
+    async def close_ticket(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.disable_all_items()
         await interaction.response.edit_message(view=self)
         close_em = discord.Embed(
@@ -61,7 +61,7 @@ class TicketView(discord.ui.View):
 
 # Ticket summary
     @discord.ui.button(label="Transcript", emoji=emoji.embed, style=discord.ButtonStyle.grey, custom_id="ticket_summary")
-    async def ticket_summary(self, button, interaction):
+    async def ticket_summary(self, button: discord.ui.Button, interaction: discord.Interaction):
         button.disabled = True
         await interaction.response.edit_message(view=self)
         await interaction.channel.trigger_typing()
@@ -81,7 +81,7 @@ class Tickets(commands.Cog):
 # Ticket create
     @ticket.command(name="create")
     @option("reason", description="Enter your reason for creating the ticket", required=False)
-    async def create_ticket(self, ctx, reason: str = "No reason provided"):
+    async def create_ticket(self, ctx: discord.ApplicationContext, reason: str = "No reason provided"):
         """Creates a ticket."""
         await ctx.defer()
         category = discord.utils.get(ctx.guild.categories, name="Tickets")
@@ -121,7 +121,7 @@ class Tickets(commands.Cog):
 
 # Ticket close
     @ticket.command(name="close")
-    async def close_ticket(self, ctx):
+    async def close_ticket(self, ctx: discord.ApplicationContext):
         """Closes a created ticket."""
         if (ctx.channel.name == f"ticket-{ctx.author.id}") or (ctx.channel.name.startswith("ticket-") and ctx.author.guild_permissions.manage_channels):
             close_em = discord.Embed(
@@ -149,7 +149,7 @@ class Tickets(commands.Cog):
 # Ticket transcript
     @ticket.command(name="transcript")
     @commands.cooldown(1, 10.0, commands.BucketType.user)
-    async def transcript_ticket(self, ctx):
+    async def transcript_ticket(self, ctx: discord.ApplicationContext):
         """Transcript an opened ticket."""
         if (ctx.channel.name == f"ticket-{ctx.author.id}") or (ctx.channel.name.startswith("ticket-") and ctx.author.guild_permissions.manage_channels):
             await ctx.defer()
@@ -164,5 +164,5 @@ class Tickets(commands.Cog):
     async def on_ready(self):
         self.client.add_view(TicketView())
 
-def setup(client):
+def setup(client: discord.Client):
     client.add_cog(Tickets(client))

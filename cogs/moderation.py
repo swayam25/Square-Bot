@@ -15,7 +15,7 @@ class Moderation(commands.Cog):
     @purge.command(name="any")
     @discord.default_permissions(manage_messages=True)
     @option("amount", description="Enter an integer between 1 to 1000.")
-    async def purge_any(self, ctx, amount: int):
+    async def purge_any(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages."""
         amount_condition = [
             amount < 1,
@@ -34,7 +34,7 @@ class Moderation(commands.Cog):
     @purge.command(name="humans")
     @discord.default_permissions(manage_messages=True)
     @option("amount", description="Enter an integer between 1 to 1000.")
-    async def purge_humans(self, ctx, amount: int):
+    async def purge_humans(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages sent by humans."""
         amount_condition = [
             amount < 1,
@@ -53,7 +53,7 @@ class Moderation(commands.Cog):
     @purge.command(name="bots")
     @discord.default_permissions(manage_messages=True)
     @option("amount", description="Enter an integer between 1 to 1000.")
-    async def purge_bots(self, ctx, amount: int):
+    async def purge_bots(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages sent by bots."""
         amount_condition = [
             amount < 1,
@@ -73,7 +73,7 @@ class Moderation(commands.Cog):
     @discord.default_permissions(manage_messages=True)
     @option("amount", description="Enter an integer between 1 to 1000.")
     @option("user", description="Mention the user whose messages you want to purge.")
-    async def purge_user(self, ctx, amount: int, user: discord.Member):
+    async def purge_user(self, ctx: discord.ApplicationContext, amount: int, user: discord.Member):
         """Purges the amount of given messages sent by the mentioned user."""
         amount_condition = [
             amount < 1,
@@ -93,7 +93,7 @@ class Moderation(commands.Cog):
     @discord.default_permissions(manage_messages=True)
     @option("amount", description="Enter an integer between 1 to 1000.")
     @option("phrase", description="Enter the phrase to purge messages containing it.")
-    async def purge_contains(self, ctx, amount: int, phrase: str):
+    async def purge_contains(self, ctx: discord.ApplicationContext, amount: int, phrase: str):
         """Purges the amount of given messages containing the given phrase."""
         amount_condition = [
             amount < 1,
@@ -113,7 +113,7 @@ class Moderation(commands.Cog):
     @discord.default_permissions(kick_members=True)
     @option("user", description="Mention the user whom you want to kick")
     @option("reason", description="Enter the reason for kicking the user", required=False)
-    async def kick(self, ctx, user: discord.Member, reason: str = None):
+    async def kick(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Kicks the mentioned user."""
         if user == ctx.author:
             error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
@@ -136,7 +136,7 @@ class Moderation(commands.Cog):
     @discord.default_permissions(ban_members=True)
     @option("user", description="Mention the user whom you want to ban")
     @option("reason", description="Enter the reason for banning the user", required=False)
-    async def ban(self, ctx, user: discord.Member, reason: str = None):
+    async def ban(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Bans the mentioned user."""
         if user == ctx.author:
             error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
@@ -160,7 +160,7 @@ class Moderation(commands.Cog):
     @option("user", description="Mention the user whom you want to timeout")
     @option("minutes", description="Enter the duration of timeout in minutes")
     @option("reason", description="Enter the reason for user timeout", required=False)
-    async def timeout_user(self, ctx, user: discord.Member, minutes: int, reason: str = None):
+    async def timeout_user(self, ctx: discord.ApplicationContext, user: discord.Member, minutes: int, reason: str = None):
         """Timeouts the mentioned user."""
         if user == ctx.author:
             error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself.", color=db.error_color)
@@ -185,7 +185,7 @@ class Moderation(commands.Cog):
     @discord.default_permissions(moderate_members=True)
     @option("user", description="Mention the user whom you want to untimeout")
     @option("reason", description="Enter the reason for user timeout", required=False)
-    async def untimeout_user(self, ctx, user: discord.Member, reason: str = None):
+    async def untimeout_user(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Untimeouts the mentioned user."""
         if user == ctx.author:
             error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=db.error_color)
@@ -207,7 +207,7 @@ class Moderation(commands.Cog):
     @slash_command(guild_ids=db.guild_ids(), name="lock")
     @discord.default_permissions(manage_channels=True)
     @option("reason", description="Enter the reason for locking the channel", required=False)
-    async def lock(self, ctx, reason: str = None):
+    async def lock(self, ctx: discord.ApplicationContext, reason: str = None):
         """Locks the current channel."""
         lock_em = discord.Embed(
             title=f"{emoji.lock} Channel Locked",
@@ -222,7 +222,7 @@ class Moderation(commands.Cog):
 # Unlock
     @slash_command(guild_ids=db.guild_ids(), name="unlock")
     @discord.default_permissions(manage_channels=True)
-    async def unlock(self, ctx):
+    async def unlock(self, ctx: discord.ApplicationContext):
         """Unlocks the current channel."""
         unlock_em = discord.Embed(
             title=f"{emoji.unlock} Channel Unlocked",
@@ -241,7 +241,7 @@ class Moderation(commands.Cog):
     @discord.default_permissions(manage_roles=True)
     @option("user", description="Mention the user whom you want to add the role")
     @option("role", description="Mention the role which you will add to the user")
-    async def add_role(self, ctx, user: discord.Member, role: discord.Role):
+    async def add_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Adds the mentioned role to the mentioned user."""
         add_role_em = discord.Embed(
             title=f"{emoji.plus} Role Added",
@@ -256,7 +256,7 @@ class Moderation(commands.Cog):
     @discord.default_permissions(manage_roles=True)
     @option("user", description="Mention the user whom you want to remove the role")
     @option("role", description="Mention the role which you will remove from the user")
-    async def remove_role(self, ctx, user: discord.Member, role: discord.Role):
+    async def remove_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Removes the mentioned role from the mentioned user."""
         remove_role_em = discord.Embed(
             title=f"{emoji.minus} Role Removed",
@@ -266,5 +266,5 @@ class Moderation(commands.Cog):
         await user.remove_roles(role)
         await ctx.respond(embed=remove_role_em)
 
-def setup(client):
+def setup(client: discord.Client):
     client.add_cog(Moderation(client))

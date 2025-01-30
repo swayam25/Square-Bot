@@ -25,7 +25,7 @@ equalizer_presets = {
 }
 
 class LavalinkVoiceClient(discord.VoiceProtocol):
-    def __init__(self, client, channel: discord.abc.Connectable):
+    def __init__(self, client: discord.Client, channel: discord.abc.Connectable):
         self.client = client
         self.channel = channel
         self.connect_event = asyncio.Event()
@@ -61,14 +61,14 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
 # Disconnect
     async def disconnect(self, *, force: bool) -> None:
         await self.channel.guild.change_voice_state(channel=None)
-        player = self.lavalink.player_manager.get(self.channel.guild.id)
+        player: lavalink.DefaultPlayer = self.lavalink.player_manager.get(self.channel.guild.id)
         if player:
             player.channel_id = False
             await player.stop()
         self.cleanup()
 
 class SpotifyAudioTrack(lavalink.DeferredAudioTrack):
-    async def load(self, client):
+    async def load(self, client: discord.Client):
         result: lavalink.LoadResult = await client.get_tracks(
             f"ytsearch:{self.title} {self.author}"
         )
@@ -174,7 +174,7 @@ class SpotifySource(lavalink.Source):
         }, requester=self.requester, cover=track['album']['images'][0]['url'])
 
 # Load items
-    async def load_item(self, client):
+    async def load_item(self, client: discord.Client):
         if "playlist" in self.url:
             pl, pl_info = await self._load_pl()
             return lavalink.LoadResult(lavalink.LoadType.PLAYLIST, pl, pl_info)
@@ -186,12 +186,12 @@ class SpotifySource(lavalink.Source):
             return lavalink.LoadResult(lavalink.LoadType.TRACK, [track], lavalink.PlaylistInfo.none())
 
 class MusicView(discord.ui.View):
-    def __init__(self, client, timeout):
+    def __init__(self, client: discord.Client, timeout: int):
         super().__init__(timeout=timeout, disable_on_timeout=True)
         self.client = client
 
-    async def interaction_check(self, interaction):
-        player = self.client.lavalink.player_manager.get(interaction.guild_id)
+    async def interaction_check(self, interaction: discord.Interaction):
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
         if not player.current:
             error_em = discord.Embed(description=f"{emoji.error} Nothing is being played at the current moment", color=db.error_color)
             await interaction.response.send_message(embed=error_em, ephemeral=True)
@@ -208,8 +208,8 @@ class MusicView(discord.ui.View):
 
 # Pause / Resume
     @discord.ui.button(emoji=f"{emoji.pause2}", custom_id="pause", style=discord.ButtonStyle.grey)
-    async def pause_callback(self, button, interaction):
-        player = self.client.lavalink.player_manager.get(interaction.guild_id)
+    async def pause_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
         if not player.paused:
             await player.set_pause(True)
         elif player.paused:
@@ -225,9 +225,9 @@ class MusicView(discord.ui.View):
 
 # Stop
     @discord.ui.button(emoji=f"{emoji.stop2}", custom_id="stop", style=discord.ButtonStyle.grey)
-    async def stop_callback(self, button, interaction):
+    async def stop_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         guild: discord.Guild = self.client.get_guild(int(interaction.guild_id))
-        player = self.client.lavalink.player_manager.get(int(interaction.guild_id))
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(interaction.guild_id))
         if player:
             player.channel_id = False
             await player.stop()
@@ -246,8 +246,8 @@ class MusicView(discord.ui.View):
 
 # Skip
     @discord.ui.button(emoji=f"{emoji.skip2}", custom_id="skip", style=discord.ButtonStyle.grey)
-    async def skip_callback(self, button, interaction):
-        player = self.client.lavalink.player_manager.get(interaction.guild_id)
+    async def skip_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
         await player.skip()
         skip_em = discord.Embed(
             title=f"{emoji.skip} Track Skipped",
@@ -261,8 +261,8 @@ class MusicView(discord.ui.View):
 
 # Loop
     @discord.ui.button(emoji=f"{emoji.loop3}", custom_id="loop", style=discord.ButtonStyle.grey)
-    async def loop_callback(self, button, interaction):
-        player = self.client.lavalink.player_manager.get(interaction.guild_id)
+    async def loop_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
         if player.loop == player.LOOP_NONE:
             player.set_loop(1)
             button.emoji = emoji.loop2
@@ -285,8 +285,8 @@ class MusicView(discord.ui.View):
 
 # Shuffle
     @discord.ui.button(emoji=f"{emoji.shuffle2}", custom_id="shuffle", style=discord.ButtonStyle.grey)
-    async def shuffle_callback(self, button, interaction):
-        player = self.client.lavalink.player_manager.get(interaction.guild_id)
+    async def shuffle_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
         if not player.queue:
             error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=db.error_color)
             await interaction.response.send_message(embed=error_em, ephemeral=True)
@@ -302,14 +302,14 @@ class MusicView(discord.ui.View):
             await interaction.followup.send(embed=shuffle_em, delete_after=5)
 
 class QueueView(discord.ui.View):
-    def __init__(self, client, page, timeout):
+    def __init__(self, client: discord.Client, page: int, timeout: int):
         super().__init__(timeout=timeout, disable_on_timeout=True)
         self.client = client
         self.page = page
         self.items_per_page = 5
 
-    async def interaction_check(self, interaction):
-        player = self.client.lavalink.player_manager.get(interaction.guild_id)
+    async def interaction_check(self, interaction: discord.Interaction):
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
         if not player.queue:
             error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=db.error_color)
             await interaction.response.send_message(embed=error_em, ephemeral=True)
@@ -318,8 +318,8 @@ class QueueView(discord.ui.View):
 
     # Previous
     @discord.ui.button(emoji=f"{emoji.previous}", custom_id="previous", style=discord.ButtonStyle.grey)
-    async def previous_callback(self, button, interaction):
-        player = self.client.lavalink.player_manager.get(interaction.guild_id)
+    async def previous_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
         pages = math.ceil(len(player.queue) / self.items_per_page)
         if self.page <= 1:
             self.page = pages
@@ -330,8 +330,8 @@ class QueueView(discord.ui.View):
 
     # Next
     @discord.ui.button(emoji=f"{emoji.next}", custom_id="next", style=discord.ButtonStyle.grey)
-    async def next_callback(self, button, interaction):
-        player = self.client.lavalink.player_manager.get(interaction.guild_id)
+    async def next_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
         pages = math.ceil(len(player.queue) / self.items_per_page)
         if self.page >= pages:
             self.page = 1
@@ -341,13 +341,13 @@ class QueueView(discord.ui.View):
         await interaction.response.edit_message(embed=queue_embed, view=self)
 
 class QueueEmbed:
-    def __init__(self, client, ctx, page):
+    def __init__(self, client: discord.Client, ctx: discord.ApplicationContext, page: int):
         self.client = client
         self.ctx = ctx
         self.page = page
 
     async def get_embed(self) -> discord.Embed:
-        player = self.client.lavalink.player_manager.get(self.ctx.guild_id)
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(self.ctx.guild_id)
         items_per_page = 5
         pages = math.ceil(len(player.queue) / items_per_page)
         start = (self.page - 1) * items_per_page
@@ -369,7 +369,7 @@ class QueueEmbed:
         return queue_em
 
 class Disable:
-    def __init__(self, client, guild_id):
+    def __init__(self, client: discord.Client, guild_id: int):
         self.client = client
         self.guild_id = guild_id
 
@@ -395,7 +395,7 @@ class Disable:
         await play_msg.edit(view=music_view)
 
 class Music(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: discord.Client):
         self.client = client
         self.music.start()
 
@@ -415,7 +415,7 @@ class Music(commands.Cog):
             self.client.lavalink.add_event_hook(self.track_hook)
 
 # Current voice
-    def current_voice_channel(self, ctx):
+    def current_voice_channel(self, ctx: discord.ApplicationContext):
         if ctx.guild and ctx.guild.me.voice:
             return ctx.guild.me.voice.channel
         return None
@@ -425,9 +425,9 @@ class Music(commands.Cog):
         self.client.lavalink._event_hooks.clear()
 
 # Lavalink track hook event
-    async def track_hook(self, event):
+    async def track_hook(self, event: lavalink.Event):
         if isinstance(event, lavalink.events.TrackStartEvent):
-            player = self.client.lavalink.player_manager.get(int(event.player.guild_id))
+            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
             channel = db.play_ch_id(event.player.guild_id)
             requester = f"<@{player.current.requester}>"
             if player.current.stream:
@@ -472,21 +472,21 @@ class Music(commands.Cog):
             await Disable(self.client, event.player.guild_id).play_msg()
             await channel.send(embed=error_em, delete_after=5)
         if isinstance(event, lavalink.events.QueueEndEvent):
-            player = self.client.lavalink.player_manager.get(int(event.player.guild_id))
+            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
             guild: discord.Guild = self.client.get_guild(int(event.player.guild_id))
             await player.clear_filters()
             await guild.voice_client.disconnect(force=True)
             await Disable(self.client, event.player.guild_id).queue_msg()
 
 # Ensures voice parameters
-    async def ensure_voice(self, ctx):
+    async def ensure_voice(self, ctx: discord.ApplicationContext):
         """Checks all the voice parameters."""
-        player = None
+        player: lavalink.DefaultPlayer = None
         if not ctx.author.voice or not ctx.author.voice.channel:
             error_em = discord.Embed(description=f"{emoji.error} Join a voice channel first", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
-            player = self.client.lavalink.player_manager.create(ctx.guild.id)
+            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
             permissions = ctx.author.voice.channel.permissions_for(ctx.me)
             if ctx.command.name in ("play") and self.current_voice_channel(ctx) is None:
                 if self.client.lavalink.node_manager.available_nodes:
@@ -508,24 +508,24 @@ class Music(commands.Cog):
                     "us",
                     "default-node")
             elif not permissions.connect or not permissions.speak:
-                player = None
+                player: lavalink.DefaultPlayer = None
                 error_em = discord.Embed(description=f"{emoji.error} I need the `Connect` and `Speak` permissions", color=db.error_color)
                 await ctx.respond(embed=error_em, ephemeral=True)
             elif not ctx.command.name in ("play"):
                 if not player.current:
-                    player = None
+                    player: lavalink.DefaultPlayer = None
                     error_em = discord.Embed(description=f"{emoji.error} Nothing is being played at the current moment", color=db.error_color)
                     await ctx.respond(embed=error_em, ephemeral=True)
                 elif ctx.author.voice.channel.id != int(player.channel_id):
-                    player = None
+                    player: lavalink.DefaultPlayer = None
                     error_em = discord.Embed(description=f"{emoji.error} You are not in my voice channel", color=db.error_color)
                     await ctx.respond(embed=error_em, ephemeral=True)
         return player
 
 # Search autocomplete
-    async def search(self, ctx):
+    async def search(self, ctx: discord.ApplicationContext):
         """Searches a track from a given query."""
-        player = self.client.lavalink.player_manager.create(ctx.interaction.guild_id)
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.interaction.guild_id)
         if ctx.value != "":
             result = await player.node.get_tracks(f"ytsearch:{ctx.value}")
             tracks = []
@@ -542,7 +542,7 @@ class Music(commands.Cog):
 
 # Voice state update event
     @commands.Cog.listener()
-    async def on_voice_state_update(self, member, before, after):
+    async def on_voice_state_update(self, member: discord.Member, before, after):
         """Deafen yourself when joining a voice channel."""
         if member.id == member.guild.me.id and after.channel is None:
             if member.guild.voice_client:
@@ -556,9 +556,9 @@ class Music(commands.Cog):
 # Play
     @slash_command(guild_ids=db.guild_ids(), name="play")
     @option("query", description="Enter your track name/link or playlist link", autocomplete=search)
-    async def play(self, ctx, query: str):
+    async def play(self, ctx: discord.ApplicationContext, query: str):
         """Searches and plays a track from a given query."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             await ctx.defer()
             query = query.strip("<>")
@@ -612,9 +612,9 @@ class Music(commands.Cog):
 
 # Now playing
     @slash_command(guild_ids=db.guild_ids(), name="now-playing")
-    async def now_playing(self, ctx):
+    async def now_playing(self, ctx: discord.ApplicationContext):
         """Shows currently playing track."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             requester = ctx.guild.get_member(player.current.requester)
             if player.current.stream:
@@ -648,9 +648,9 @@ class Music(commands.Cog):
 # Equalizer
     @slash_command(guild_ids=db.guild_ids(), name="equalizer")
     @option("equalizer", description="Choose your equalizer", choices=["Reset", "Bassboost", "Jazz", "Pop", "Treble", "Nightcore", "Superbass"])
-    async def equalizer(self, ctx, equalizer: str):
+    async def equalizer(self, ctx: discord.ApplicationContext, equalizer: str):
         """Equalizer to change track quality."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             _equalizer = equalizer.lower()
             if _equalizer == "reset":
@@ -677,9 +677,9 @@ class Music(commands.Cog):
 
 # Stop
     @slash_command(guild_ids=db.guild_ids(), name="stop")
-    async def stop(self, ctx):
+    async def stop(self, ctx: discord.ApplicationContext):
         """Destroys the player."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             try:
                 player.queue.clear()
@@ -699,9 +699,9 @@ class Music(commands.Cog):
 # Seek
     @slash_command(guild_ids=db.guild_ids(), name="seek")
     @option("seconds", description="Enter track position in seconds")
-    async def seek(self, ctx, seconds: int):
+    async def seek(self, ctx: discord.ApplicationContext, seconds: int):
         """Seeks to a given position in a track."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             track_time = player.position + (seconds * 1000)
             if lavalink.utils.format_time(player.current.duration) > lavalink.utils.format_time(track_time):
@@ -717,9 +717,9 @@ class Music(commands.Cog):
 
 # Skip
     @slash_command(guild_ids=db.guild_ids(), name="skip")
-    async def skip(self, ctx):
+    async def skip(self, ctx: discord.ApplicationContext):
         """Skips the current playing track."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             skip_em = discord.Embed(
                 title=f"{emoji.skip} Track Skipped",
@@ -733,9 +733,9 @@ class Music(commands.Cog):
 # Skip to
     @slash_command(guild_ids=db.guild_ids(), name="skip-to")
     @option("track", description="Enter your track index number to skip")
-    async def skip_to(self, ctx, track: int):
+    async def skip_to(self, ctx: discord.ApplicationContext, track: int):
         """Skips to a given track in the queue."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             await ctx.defer()
             if track < 1 or track > len(player.queue):
@@ -753,9 +753,9 @@ class Music(commands.Cog):
 
 # Pause
     @slash_command(guild_ids=db.guild_ids(), name="pause")
-    async def pause(self, ctx):
+    async def pause(self, ctx: discord.ApplicationContext):
         """Pauses the player."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if player.paused:
                 error_em = discord.Embed(description=f"{emoji.error} Player is already paused", color=db.error_color)
@@ -771,9 +771,9 @@ class Music(commands.Cog):
 
 # Resume
     @slash_command(guild_ids=db.guild_ids(), name="resume")
-    async def resume(self, ctx):
+    async def resume(self, ctx: discord.ApplicationContext):
         """Resumes the player."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if player.paused:
                 await player.set_pause(False)
@@ -790,9 +790,9 @@ class Music(commands.Cog):
 # Volume
     @slash_command(guild_ids=db.guild_ids(), name="volume")
     @option("volume", description="Enter your volume amount from 1 - 100")
-    async def volume(self, ctx, volume: int):
+    async def volume(self, ctx: discord.ApplicationContext, volume: int):
         """Changes the player's volume 1 - 100."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             volume_condition = [
                 volume < 1,
@@ -813,9 +813,9 @@ class Music(commands.Cog):
 # Queue
     @slash_command(guild_ids=db.guild_ids(), name="queue")
     @option("page", description="Enter queue page number", default=1, required=False)
-    async def queue(self, ctx, page: int = 1):
+    async def queue(self, ctx: discord.ApplicationContext, page: int = 1):
         """Shows the player's queue."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             items_per_page = 5
             pages = math.ceil(len(player.queue) / items_per_page)
@@ -837,9 +837,9 @@ class Music(commands.Cog):
 
 # Shuffle
     @slash_command(guild_ids=db.guild_ids(), name="shuffle")
-    async def shuffle(self, ctx):
+    async def shuffle(self, ctx: discord.ApplicationContext):
         """Shuffles the player's queue."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if not player.queue:
                 error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=db.error_color)
@@ -856,9 +856,9 @@ class Music(commands.Cog):
 # Loop
     @slash_command(guild_ids=db.guild_ids(), name="loop")
     @option("mode", description="Enter loop mode", choices=["OFF", "Queue", "Track"])
-    async def loop(self, ctx, mode: str):
+    async def loop(self, ctx: discord.ApplicationContext, mode: str):
         """Loops the current queue until the command is invoked again or until a new track is enqueued."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             _emoji = ""
             if mode == "OFF":
@@ -885,9 +885,9 @@ class Music(commands.Cog):
 # Remove
     @slash_command(guild_ids=db.guild_ids(), name="remove")
     @option("index", description="Enter your track index number")
-    async def remove(self, ctx, index: int):
+    async def remove(self, ctx: discord.ApplicationContext, index: int):
         """Removes a track from the player's queue with the given index."""
-        player = await self.ensure_voice(ctx)
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if ctx.author.id == player.queue[index-1].requester:
                 if not player.queue:
@@ -908,5 +908,5 @@ class Music(commands.Cog):
                 error_em = discord.Embed(description=f"{emoji.error} Only requester can remove from the list", color=db.error_color)
                 await ctx.respond(embed=error_em, ephemeral=True)
 
-def setup(client):
+def setup(client: discord.Client):
     client.add_cog(Music(client))

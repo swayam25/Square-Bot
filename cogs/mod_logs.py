@@ -8,7 +8,7 @@ class Logs(commands.Cog):
 
 # Join
     @commands.Cog.listener()
-    async def on_member_join(self, user):
+    async def on_member_join(self, user: discord.Member):
         if db.mod_log_ch(user.guild.id) != None:
             join_ch = await self.client.fetch_channel(db.mod_log_ch(user.guild.id))
             join_em = discord.Embed(
@@ -20,7 +20,7 @@ class Logs(commands.Cog):
 
 # Leave
     @commands.Cog.listener()
-    async def on_member_remove(self, user):
+    async def on_member_remove(self, user: discord.Member):
         if db.mod_log_ch(user.guild.id) != None:
             leave_ch = await self.client.fetch_channel(db.mod_log_ch(user.guild.id))
             leave_em = discord.Embed(
@@ -33,7 +33,7 @@ class Logs(commands.Cog):
 
 # Ban
     @commands.Cog.listener()
-    async def on_member_ban(self, user):
+    async def on_member_ban(self, user: discord.Member):
         if db.mod_log_ch(user.guild.id) != None:
             ban_ch = await self.client.fetch_channel(db.mod_log_ch(user.guild.id))
             ban_em = discord.Embed(
@@ -45,7 +45,7 @@ class Logs(commands.Cog):
 
 # Unban
     @commands.Cog.listener()
-    async def on_member_unban(self, user):
+    async def on_member_unban(self, user: discord.Member):
         if db.mod_log_ch(user.guild.id) != None:
             unban_ch = await self.client.fetch_channel(db.mod_log_ch(user.guild.id))
             unban_em = discord.Embed(
@@ -57,7 +57,7 @@ class Logs(commands.Cog):
 
 # Edit
     @commands.Cog.listener()
-    async def on_message_edit(self, msg_before, msg_after):
+    async def on_message_edit(self, msg_before: discord.Message, msg_after: discord.Message):
         msg_ch = db.msg_log_ch(msg_before.guild.id)
         if msg_before.author and msg_after.author == self.client.user:
             return
@@ -79,7 +79,7 @@ class Logs(commands.Cog):
 
 # Delete
     @commands.Cog.listener()
-    async def on_message_delete(self, msg):
+    async def on_message_delete(self, msg: discord.Message):
         msg_ch = db.msg_log_ch(msg.guild.id)
         if msg.author == self.client.user:
             return
@@ -108,11 +108,11 @@ class Logs(commands.Cog):
                         color=db.theme_color)
                     del_em.set_image(url=attachment.url)
                     del_list.append(del_em)
-                await del_ch.send(embeds=del_list) # Limited to send 10 embeds because of discord limitations, users are also limited to 10 attachments per message so this will work fine.
+                await del_ch.send(embeds=del_list) # Limited to send 10 embeds because of discord limitations, user: discord.Members are also limited to 10 attachments per message so this will work fine.
 
 # Bulk delete
     @commands.Cog.listener()
-    async def on_bulk_message_delete(self, msgs):
+    async def on_bulk_message_delete(self, msgs: list[discord.Message]):
         msg_ch = db.msg_log_ch(msgs[0].guild.id)
         if msgs[0].author == self.client.user:
             return
@@ -128,5 +128,5 @@ class Logs(commands.Cog):
                 color=db.theme_color)
             await bulk_ch.send(embed=bulk_em)
 
-def setup(client):
+def setup(client: discord.Client):
     client.add_cog(Logs(client))

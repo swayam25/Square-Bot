@@ -9,7 +9,7 @@ class ErrorHandler(commands.Cog):
 
 # Slash cmd Error Handler
     @commands.Cog.listener()
-    async def on_application_command_error(self, ctx, error):
+    async def on_application_command_error(self, ctx: discord.ApplicationContext, error):
         print(f"[red][bold]✗[/] Error Raised: {error}[/]")
         error_em = discord.Embed()
 
@@ -48,5 +48,5 @@ class ErrorHandler(commands.Cog):
             error_em = discord.Embed(description=f"{emoji.error} An error occurred. Please try again later.", color=db.error_color)
         await ctx.respond(embed=error_em, ephemeral=True)
 
-def setup(client):
+def setup(client: discord.Client):
     client.add_cog(ErrorHandler(client))

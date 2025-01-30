@@ -17,7 +17,7 @@ def owner_id():
         return config_data["owner_id"]
 
 # Add dev ID
-def add_dev_ids(user_id):
+def add_dev_ids(user_id: int):
     with open(f"{config_file_path}", "r") as config_file:
         config_data = json.load(config_file)
     if user_id not in list(config_data["dev_ids"]):
@@ -28,7 +28,7 @@ def add_dev_ids(user_id):
         pass
 
 # Remove dev
-def remove_dev_ids(user_id):
+def remove_dev_ids(user_id: int):
     with open(f"{config_file_path}", "r") as config_file:
         config_data = json.load(config_file)
     if user_id in list(config_data["dev_ids"]):

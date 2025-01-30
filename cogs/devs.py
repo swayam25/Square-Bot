@@ -7,7 +7,7 @@ from discord.ext import commands
 from discord.commands import slash_command, option, SlashCommandGroup
 
 class Devs(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: discord.Client):
         self.client = client
 
 # On start
@@ -19,7 +19,7 @@ class Devs(commands.Cog):
 
 # On guild joined
     @commands.Cog.listener("on_guild_join")
-    async def when_guild_joined(self, guild):
+    async def when_guild_joined(self, guild: discord.Guild):
         db.create(guild.id)
         join_log_ch = await self.client.fetch_channel(db.system_ch_id())
         join_log_em = discord.Embed(
@@ -34,7 +34,7 @@ class Devs(commands.Cog):
 
 # On guild leave
     @commands.Cog.listener("on_guild_remove")
-    async def when_removed_from_guild(self, guild):
+    async def when_removed_from_guild(self, guild: discord.Guild):
         db.delete(guild.id)
         leave_log_ch = await self.client.fetch_channel(db.system_ch_id())
         leave_log_em = discord.Embed(
@@ -53,7 +53,7 @@ class Devs(commands.Cog):
 # Add dev
     @dev.command(name="add")
     @option("user", description="Mention the user whom you want to add to dev")
-    async def add_dev(self, ctx, user: discord.Member):
+    async def add_dev(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Adds a bot dev."""
         if check.is_owner(ctx.author.id):
             db.add_dev_ids(user.id)
@@ -66,7 +66,7 @@ class Devs(commands.Cog):
 # Remove dev
     @dev.command(name="remove")
     @option("user", description="Mention the user whom you want to remove from dev")
-    async def remove_dev(self, ctx, user: discord.Member):
+    async def remove_dev(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Removes a bot dev."""
         if check.is_owner(ctx.author.id):
             db.remove_dev_ids(user.id)
@@ -78,7 +78,7 @@ class Devs(commands.Cog):
 
 # List devs
     @dev.command(name="list")
-    async def list_devs(self, ctx):
+    async def list_devs(self, ctx: discord.ApplicationContext):
         """Shows bot devs."""
         if check.is_owner(ctx.author.id):
             num = 0
@@ -96,7 +96,7 @@ class Devs(commands.Cog):
 # Lockdown
     @slash_command(guild_ids=db.owner_guild_ids(), name="lockdown")
     @option("status", description="Choose the status of lockdown", choices=["Enable", "Disable"])
-    async def lockdown(self, ctx, status: str):
+    async def lockdown(self, ctx: discord.ApplicationContext, status: str):
         """Lockdowns the bot."""
         if check.is_dev(ctx.author.id):
             db.lockdown(True) if status == "Enable" else db.lockdown(False)
@@ -113,7 +113,7 @@ class Devs(commands.Cog):
 
 # Restart
     @slash_command(guild_ids=db.owner_guild_ids(), name="restart")
-    async def restart(self, ctx):
+    async def restart(self, ctx: discord.ApplicationContext):
         """Restarts the bot."""
         if check.is_dev(ctx.author.id):
             restart_em = discord.Embed(title=f"{emoji.restart} Restarting", color=db.theme_color)
@@ -126,7 +126,7 @@ class Devs(commands.Cog):
 
 # Reload cogs
     @slash_command(guild_ids=db.owner_guild_ids(), name="reload-cogs")
-    async def reload_cogs(self, ctx):
+    async def reload_cogs(self, ctx: discord.ApplicationContext):
         """Reloads bot's all files."""
         if check.is_dev(ctx.author.id):
             reload_em = discord.Embed(title=f"{emoji.restart} Reloaded Cogs",color=db.theme_color)
@@ -140,7 +140,7 @@ class Devs(commands.Cog):
 
 # Shutdown
     @slash_command(guild_ids=db.owner_guild_ids(), name="shutdown")
-    async def shutdown(self, ctx):
+    async def shutdown(self, ctx: discord.ApplicationContext):
         """Shutdowns the bot."""
         if check.is_owner(ctx.author.id):
             shutdown_em = discord.Embed(title=f"{emoji.shutdown} Shutdown", color=db.theme_color)
@@ -155,7 +155,7 @@ class Devs(commands.Cog):
     @slash_command(guild_ids=db.owner_guild_ids(), name="status")
     @option("type", description="Choose bot status type", choices=["Game", "Streaming", "Listening", "Watching"])
     @option("status", description="Enter new status of bot")
-    async def set_status(self, ctx, type: str, status: str):
+    async def set_status(self, ctx: discord.ApplicationContext, type: str, status: str):
             """Sets custom bot status."""
             if check.is_dev(ctx.author.id):
                 if type == "Game":
@@ -172,5 +172,5 @@ class Devs(commands.Cog):
                 error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
                 await ctx.respond(embed=error_em, ephemeral=True)
 
-def setup(client):
+def setup(client: discord.Client):
     client.add_cog(Devs(client))
