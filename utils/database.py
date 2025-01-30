@@ -138,6 +138,7 @@ def guild_config(
                 "mod_log_ch": None,
                 "mod_cmd_log_ch": None,
                 "msg_log_ch": None,
+                "ticket_cmds": True,
                 "ticket_log_ch": None
             }
             json.dump(data, f, indent=4)
@@ -169,6 +170,10 @@ def mod_cmd_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
 # Message log channel
 def msg_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):
     return guild_config(guild_id, "msg_log_ch", channel_id, mode)
+
+# Ticket cmds
+def ticket_cmds(guild_id: int, status: bool = True, mode: str = "get"):
+    return guild_config(guild_id, "ticket_cmds", status, mode)
 
 # Ticket log channel
 def ticket_log_ch(guild_id: int, channel_id: int = None, mode: str = "get"):

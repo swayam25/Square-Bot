@@ -83,68 +83,76 @@ class Tickets(commands.Cog):
     @option("reason", description="Enter your reason for creating the ticket", required=False)
     async def create_ticket(self, ctx: discord.ApplicationContext, reason: str = "No reason provided"):
         """Creates a ticket."""
-        await ctx.defer()
-        category = discord.utils.get(ctx.guild.categories, name="Tickets")
-        if category is None:
-            category = await ctx.guild.create_category("Tickets")
-            await category.set_permissions(ctx.guild.default_role, view_channel=False)
-            await category.set_permissions(ctx.guild.me, view_channel=True)
-        create_ch = await category.create_text_channel(f"ticket-{ctx.author.id}")
-        await create_ch.set_permissions(ctx.author, view_channel=True, send_messages=True, read_messages=True, add_reactions=True, embed_links=True, attach_files=True, read_message_history=True, external_emojis=True)
-        await create_ch.set_permissions(ctx.guild.me, view_channel=True, send_messages=True, read_messages=True, add_reactions=True, embed_links=True, attach_files=True, read_message_history=True, external_emojis=True)
-        await create_ch.set_permissions(ctx.guild.default_role, view_channel=False, send_messages=False, read_messages=False)
+        if db.ticket_cmds(ctx.guild.id) == False:
+            error_em = discord.Embed(description=f"{emoji.error} Ticket commands are disabled", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+        else:
+            await ctx.defer()
+            category = discord.utils.get(ctx.guild.categories, name="Tickets")
+            if category is None:
+                category = await ctx.guild.create_category("Tickets")
+                await category.set_permissions(ctx.guild.default_role, view_channel=False)
+                await category.set_permissions(ctx.guild.me, view_channel=True)
+            create_ch = await category.create_text_channel(f"ticket-{ctx.author.id}")
+            await create_ch.set_permissions(ctx.author, view_channel=True, send_messages=True, read_messages=True, add_reactions=True, embed_links=True, attach_files=True, read_message_history=True, external_emojis=True)
+            await create_ch.set_permissions(ctx.guild.me, view_channel=True, send_messages=True, read_messages=True, add_reactions=True, embed_links=True, attach_files=True, read_message_history=True, external_emojis=True)
+            await create_ch.set_permissions(ctx.guild.default_role, view_channel=False, send_messages=False, read_messages=False)
 
-        create_em = discord.Embed(
-            title=f"{emoji.ticket} Ticket Created",
-            description=f"Thank you for creating the ticket. Your problem will be solved soon! Stay tuned!\n" +
-                        f"{emoji.bullet} **Author**: {ctx.author.mention}\n" +
-                        f"{emoji.bullet} **Reason**: {reason}",
-            color=db.theme_color
-        )
-        await create_ch.send(ctx.author.mention, embed=create_em, view=TicketView())
-        create_done_em = discord.Embed(
-            title=f"{emoji.ticket} Ticket Created",
-            description=f"Successfully created {create_ch.mention}.",
-            color=db.theme_color
-        )
-        await ctx.respond(embed=create_done_em)
-
-        if db.ticket_log_ch(ctx.guild.id) != None:
-            logging_ch = await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id))
-            create_log_em = discord.Embed(
+            create_em = discord.Embed(
                 title=f"{emoji.ticket} Ticket Created",
-                description=f"{emoji.bullet} **Author**: {ctx.author.mention}\n" +
+                description=f"Thank you for creating the ticket. Your problem will be solved soon! Stay tuned!\n" +
+                            f"{emoji.bullet} **Author**: {ctx.author.mention}\n" +
                             f"{emoji.bullet} **Reason**: {reason}",
                 color=db.theme_color
             )
-            await logging_ch.send(embed=create_log_em)
+            await create_ch.send(ctx.author.mention, embed=create_em, view=TicketView())
+            create_done_em = discord.Embed(
+                title=f"{emoji.ticket} Ticket Created",
+                description=f"Successfully created {create_ch.mention}.",
+                color=db.theme_color
+            )
+            await ctx.respond(embed=create_done_em)
+
+            if db.ticket_log_ch(ctx.guild.id) != None:
+                logging_ch = await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id))
+                create_log_em = discord.Embed(
+                    title=f"{emoji.ticket} Ticket Created",
+                    description=f"{emoji.bullet} **Author**: {ctx.author.mention}\n" +
+                                f"{emoji.bullet} **Reason**: {reason}",
+                    color=db.theme_color
+                )
+                await logging_ch.send(embed=create_log_em)
 
 # Ticket close
     @ticket.command(name="close")
     async def close_ticket(self, ctx: discord.ApplicationContext):
         """Closes a created ticket."""
-        if (ctx.channel.name == f"ticket-{ctx.author.id}") or (ctx.channel.name.startswith("ticket-") and ctx.author.guild_permissions.manage_channels):
-            close_em = discord.Embed(
-                title=f"{emoji.ticket2} Closing Ticket",
-                description=f"Closing ticket in 5 seconds.\n" +
-                            f"{emoji.bullet} **Author**: {ctx.author.mention}",
-                color=db.theme_color
-            )
-            await ctx.respond(embed=close_em)
-            await asyncio.sleep(5)
-            await ctx.channel.delete()
-            if db.ticket_log_ch(ctx.guild.id) != None:
-                logging_ch = await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id))
-                close_log_em = discord.Embed(
-                    title=f"{emoji.ticket2} Ticket Closed",
-                    description=f"{emoji.bullet} **Author**: <@{ctx.channel.name.split("-")[1]}>\n" +
-                                f"{emoji.bullet} **Closed By**: {ctx.author.mention}",
+        if db.ticket_cmds(ctx.guild.id) == False:
+            error_em = discord.Embed(description=f"{emoji.error} Ticket commands are disabled", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+        else:
+            if (ctx.channel.name == f"ticket-{ctx.author.id}") or (ctx.channel.name.startswith("ticket-") and ctx.author.guild_permissions.manage_channels):
+                close_em = discord.Embed(
+                    title=f"{emoji.ticket2} Closing Ticket",
+                    description=f"Closing ticket in 5 seconds.\n" +
+                                f"{emoji.bullet} **Author**: {ctx.author.mention}",
                     color=db.theme_color
                 )
-                await logging_ch.send(embed=close_log_em)
-        else:
-            error_em = discord.Embed(description=f"{emoji.error} This is not a ticket channel", color=db.error_color)
-            await ctx.respond(embed=error_em, ephemeral=True)
+                await ctx.respond(embed=close_em)
+                await asyncio.sleep(5)
+                await ctx.channel.delete()
+                if db.ticket_log_ch(ctx.guild.id) != None:
+                    logging_ch = await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id))
+                    close_log_em = discord.Embed(
+                        title=f"{emoji.ticket2} Ticket Closed",
+                        description=f"{emoji.bullet} **Author**: <@{ctx.channel.name.split("-")[1]}>\n" +
+                                    f"{emoji.bullet} **Closed By**: {ctx.author.mention}",
+                        color=db.theme_color
+                    )
+                    await logging_ch.send(embed=close_log_em)
+            else:
+                error_em = discord.Embed(description=f"{emoji.error} This is not a ticket channel", color=db.error_color)
+                await ctx.respond(embed=error_em, ephemeral=True)
 
 # Ticket transcript
     @ticket.command(name="transcript")

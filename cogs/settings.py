@@ -23,6 +23,7 @@ class Settings(commands.Cog):
             description=f"{emoji.bullet} **Mod Log Channel**: {mod_channel}\n" +
                         f"{emoji.bullet} **Mod Command Log Channel**: {mod_cmd_channel}\n" +
                         f"{emoji.bullet} **Message Log Channel**: {msg_channel}\n" +
+                        f"{emoji.bullet} **Ticket Commands**: {'Enabled' if db.ticket_cmds(ctx.guild.id) else 'Disabled'}\n" +
                         f"{emoji.bullet} **Ticket Log Channel**: {ticket_channel}",
             color=db.theme_color
         )
@@ -34,7 +35,7 @@ class Settings(commands.Cog):
 # Reset
     @setting.command(name="reset")
     @discord.default_permissions(manage_channels=True)
-    @option("setting", description="Setting to reset", choices=["All", "Mod Log", "Mod Command Log", "Message Log", "Ticket Log"])
+    @option("setting", description="Setting to reset", choices=["All", "Mod Log", "Mod Command Log", "Message Log", "Ticket Commands", "Ticket Log"])
     async def reset_settings(self, ctx: discord.ApplicationContext, setting: str):
         """Resets server settings."""
         if setting.lower() == "all":
@@ -47,6 +48,8 @@ class Settings(commands.Cog):
                     db.mod_cmd_log_ch(guild_id=ctx.guild.id, mode="set", channel_id=None)
                 case "message log":
                     db.msg_log_ch(guild_id=ctx.guild.id, mode="set", channel_id=None)
+                case "ticket commands":
+                    db.ticket_cmds(guild_id=ctx.guild.id, mode="set", status=True)
                 case "ticket log":
                     db.ticket_log_ch(guild_id=ctx.guild.id, mode="set", channel_id=None)
         reset_em = discord.Embed(
@@ -97,6 +100,24 @@ class Settings(commands.Cog):
             color=db.theme_color
         )
         await ctx.respond(embed=logging_em)
+
+# Set ticket cmds
+    @setting.command(name="ticket-commands")
+    @discord.default_permissions(manage_channels=True)
+    @option("status", description="Enable or disable ticket commands", choices=["Enable", "Disable"])
+    async def set_ticket_cmds(self, ctx: discord.ApplicationContext, status: str):
+        """Enables or disables ticket commands."""
+        match status.lower():
+            case "enable":
+                db.ticket_cmds(guild_id=ctx.guild.id, mode="set", status=True)
+            case "disable":
+                db.ticket_cmds(guild_id=ctx.guild.id, mode="set", status=False)
+        ticket_cmds_em = discord.Embed(
+            title=f"{emoji.settings} Ticket Commands Settings",
+            description=f"Successfully {status.lower()}d ticket commands.",
+            color=db.theme_color
+        )
+        await ctx.respond(embed=ticket_cmds_em)
 
 # Set ticket log
     @setting.command(name="ticket-log")
