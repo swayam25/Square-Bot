@@ -316,6 +316,13 @@ class QueueView(discord.ui.View):
         else:
             return True
 
+    # Start
+    @discord.ui.button(emoji=f"{emoji.start}", custom_id="start", style=discord.ButtonStyle.grey)
+    async def start_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.page = 1
+        queue_embed = await QueueEmbed(self.client, interaction, self.page).get_embed()
+        await interaction.response.edit_message(embed=queue_embed, view=self)
+
     # Previous
     @discord.ui.button(emoji=f"{emoji.previous}", custom_id="previous", style=discord.ButtonStyle.grey)
     async def previous_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
@@ -337,6 +344,15 @@ class QueueView(discord.ui.View):
             self.page = 1
         else:
             self.page += 1
+        queue_embed = await QueueEmbed(self.client, interaction, self.page).get_embed()
+        await interaction.response.edit_message(embed=queue_embed, view=self)
+
+    # End
+    @discord.ui.button(emoji=f"{emoji.end}", custom_id="end", style=discord.ButtonStyle.grey)
+    async def end_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
+        pages = math.ceil(len(player.queue) / self.items_per_page)
+        self.page = pages
         queue_embed = await QueueEmbed(self.client, interaction, self.page).get_embed()
         await interaction.response.edit_message(embed=queue_embed, view=self)
 
