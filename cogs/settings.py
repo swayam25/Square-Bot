@@ -13,17 +13,18 @@ class Settings(commands.Cog):
     async def settings(self, ctx: discord.ApplicationContext):
         """Shows server settings."""
 
-        mod_channel = (await self.client.fetch_channel(db.mod_log_ch(ctx.guild.id))).mention if db.mod_log_ch(ctx.guild.id) != None else "Not set"
-        mod_cmd_channel = (await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))).mention if db.mod_cmd_log_ch(ctx.guild.id) != None else "Not set"
-        msg_channel = (await self.client.fetch_channel(db.msg_log_ch(ctx.guild.id))).mention if db.msg_log_ch(ctx.guild.id) != None else "Not set"
-        ticket_channel = (await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id))).mention if db.ticket_log_ch(ctx.guild.id) != None else "Not set"
+        mod_channel = (await self.client.fetch_channel(db.mod_log_ch(ctx.guild.id))).mention if db.mod_log_ch(ctx.guild.id) != None else emoji.off
+        mod_cmd_channel = (await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))).mention if db.mod_cmd_log_ch(ctx.guild.id) != None else emoji.off
+        msg_channel = (await self.client.fetch_channel(db.msg_log_ch(ctx.guild.id))).mention if db.msg_log_ch(ctx.guild.id) != None else emoji.off
+        ticket_cmds = emoji.on if db.ticket_cmds(ctx.guild.id) else emoji.off
+        ticket_channel = (await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id))).mention if db.ticket_log_ch(ctx.guild.id) != None else emoji.off
 
         set_em = discord.Embed(
             title=f"{emoji.settings} {ctx.guild.name}'s Settings",
             description=f"{emoji.bullet} **Mod Log Channel**: {mod_channel}\n" +
                         f"{emoji.bullet} **Mod Command Log Channel**: {mod_cmd_channel}\n" +
                         f"{emoji.bullet} **Message Log Channel**: {msg_channel}\n" +
-                        f"{emoji.bullet} **Ticket Commands**: {'Enabled' if db.ticket_cmds(ctx.guild.id) else 'Disabled'}\n" +
+                        f"{emoji.bullet} **Ticket Commands**: {ticket_cmds}\n" +
                         f"{emoji.bullet} **Ticket Log Channel**: {ticket_channel}",
             color=db.theme_color
         )
