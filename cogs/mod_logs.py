@@ -60,7 +60,7 @@ class Logs(commands.Cog):
 # Edit
     @commands.Cog.listener()
     async def on_message_edit(self, msg_before: discord.Message, msg_after: discord.Message):
-        msg_ch = db.msg_log_ch(msg_before.guild.id)
+        msg_ch = db.msg_log_ch(msg_before.guild.id) if msg_before.guild else None
         if msg_before.author and msg_after.author == self.client.user:
             return
         elif msg_before.author.bot:
@@ -82,7 +82,7 @@ class Logs(commands.Cog):
 # Delete
     @commands.Cog.listener()
     async def on_message_delete(self, msg: discord.Message):
-        msg_ch = db.msg_log_ch(msg.guild.id)
+        msg_ch = db.msg_log_ch(msg.guild.id) if msg.guild else None
         if msg.author == self.client.user:
             return
         elif msg.author.bot:
