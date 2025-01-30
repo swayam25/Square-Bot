@@ -67,7 +67,7 @@ class TicketView(discord.ui.View):
         await interaction.channel.trigger_typing()
         file = await TicketTranscript(interaction.channel).create()
         await interaction.followup.send(embed=discord.Embed(description=f"**Requested by**: {interaction.user.mention}", color=db.theme_color), file=file)
-        await asyncio.sleep(10)
+        await asyncio.sleep(2)
         button.disabled = False
         await interaction.message.edit(view=self)
 
