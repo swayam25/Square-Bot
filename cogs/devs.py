@@ -24,11 +24,11 @@ class Devs(commands.Cog):
         join_log_ch = await self.client.fetch_channel(db.system_ch_id())
         join_log_em = discord.Embed(
             title=f"{emoji.plus} Someone Added Me!",
-            description=f"{emoji.bullet} Name: {guild.name}\n"
-                        f"{emoji.bullet} ID: `{guild.id}`\n"
-                        f"{emoji.bullet} Total Members: `{guild.member_count}`\n"
-                        f"{emoji.bullet} Total Humans: `{len([m for m in guild.members if not m.bot])}`\n"
-                        f"{emoji.bullet} Total Bots: `{len([m for m in guild.members if m.bot])}`",
+            description=f"{emoji.bullet} **Name**: {guild.name}\n"
+                        f"{emoji.bullet} **ID**: `{guild.id}`\n"
+                        f"{emoji.bullet} **Total Members**: `{guild.member_count}`\n"
+                        f"{emoji.bullet} **Total Humans**: `{len([m for m in guild.members if not m.bot])}`\n"
+                        f"{emoji.bullet} **Total Bots**: `{len([m for m in guild.members if m.bot])}`",
             color=db.theme_color)
         await join_log_ch.send(embed=join_log_em)
 
@@ -39,11 +39,11 @@ class Devs(commands.Cog):
         leave_log_ch = await self.client.fetch_channel(db.system_ch_id())
         leave_log_em = discord.Embed(
             title=f"{emoji.minus} Someone Removed Me!",
-            description=f"{emoji.bullet} Name: {guild.name}\n"
-                        f"{emoji.bullet} ID: `{guild.id}`\n"
-                        f"{emoji.bullet} Total Members: `{guild.member_count}`\n"
-                        f"{emoji.bullet} Total Humans: `{len([m for m in guild.members if not m.bot])}`\n"
-                        f"{emoji.bullet} Total Bots: `{len([m for m in guild.members if m.bot])}`",
+            description=f"{emoji.bullet} **Name**: {guild.name}\n"
+                        f"{emoji.bullet} **ID**: `{guild.id}`\n"
+                        f"{emoji.bullet} **Total Members**: `{guild.member_count}`\n"
+                        f"{emoji.bullet} **Total Humans**: `{len([m for m in guild.members if not m.bot])}`\n"
+                        f"{emoji.bullet} **Total Bots**: `{len([m for m in guild.members if m.bot])}`",
             color=db.error_color)
         await leave_log_ch.send(embed=leave_log_em)
 
