@@ -35,7 +35,9 @@ Advanced multipurpose discord bot for all your needs
     cd square_bot
     ```
 
-2. Configure the [`config.json`](./configs/config.json) file
+2. Rename the [`config.json.example`](./configs/config.json.example) file to `config.json`.
+
+3. Configure the `config.json` file
     <details>
 
     <summary>Configuration</summary>
@@ -80,7 +82,7 @@ Advanced multipurpose discord bot for all your needs
 
     </details>
 
-3. Set emojis in [`emoji.json`](./configs/emoji.json) file. If you want to use default emojis, you can change the `emoji_file_path` to `./configs/default_emoji.json` in [`emoji.py`](./utils/emoji.py) file
+4. Set emojis in [`emoji.json`](./configs/emoji.json) file. If you want to use default emojis, you can change the `emoji_file_path` to `./configs/default_emoji.json` in [`emoji.py`](./utils/emoji.py) file
 
 
 4. Install dependencies
