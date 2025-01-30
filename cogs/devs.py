@@ -129,8 +129,8 @@ class Devs(commands.Cog):
     async def reload_cogs(self, ctx: discord.ApplicationContext):
         """Reloads bot's all files."""
         if check.is_dev(ctx.author.id):
-            reload_em = discord.Embed(title=f"{emoji.restart} Reloaded Cogs",color=db.theme_color)
-            await ctx.respond(embed=reload_em)
+            reload_em = discord.Embed(title=f"{emoji.restart} Reloaded Cogs", color=db.theme_color)
+            await ctx.respond(embed=reload_em, ephemeral=True, delete_after=2)
             for filename in os.listdir("./cogs"):
                 if filename.endswith(".py"):
                     self.client.reload_extension(f"cogs.{filename[:-3]}")
