@@ -49,7 +49,7 @@ Advanced multipurpose discord bot for all your needs
     - `dev_ids` (`List[int]`) [Required]
         - Developer's discord ids
         - Gives access to developer commands
-        - *This can be managed by `/dev list`, `/dev add`, `/dev remove` commands too*
+        - *This can be managed by `/dev list`, `/dev add` & `/dev remove` commands too*
 
     - `lockdown` (`bool`) [Required]
         - Lockdown status
@@ -85,14 +85,27 @@ Advanced multipurpose discord bot for all your needs
 4. Set emojis in [`emoji.json`](./configs/emoji.json) file. If you want to use default emojis, you can change the `emoji_file_path` to `./configs/default_emoji.json` in [`emoji.py`](./utils/emoji.py) file
 
 
-4. Install dependencies
+5. Install dependencies
     ```sh
     python -m venv .venv
     source .venv/bin/activate
     pip install -r requirements.txt
     ```
 
-5. Start the bot
+6. Start the bot
     ```sh
     python main.py
+    ```
+## 🌐 Production
+
+1. Follow steps 1-4 from the [installation guide](#-installation). *Ignore if already done.*
+
+2. Build docker image
+    ```sh
+    docker build -t square .
+    ```
+
+3. Run docker container
+    ```sh
+    docker run --name square -d square
     ```
