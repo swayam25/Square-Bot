@@ -6,4 +6,4 @@ COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["/bin/bash", "-c", ". .venv/bin/activate && python main.py"]
+CMD ["python", "main.py"]
