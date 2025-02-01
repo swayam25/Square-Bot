@@ -71,6 +71,7 @@ class Logs(commands.Cog):
                 title=f"{emoji.edit} Message Edited",
                 description=f"{emoji.bullet} **Author**: {msg_before.author.mention}\n" +
                             f"{emoji.bullet} **Channel**: {msg_before.channel.mention}\n" +
+                            f"{emoji.bullet} **Message:** [Jump to Message]({msg_before.jump_url})\n" +
                             f"{emoji.bullet2} **Original Message**: {msg_before.content}\n" +
                             f"{emoji.bullet} **Edited Message**: {msg_after.content}",
                 color=db.theme_color)
