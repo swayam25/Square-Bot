@@ -26,8 +26,8 @@ class Logs(commands.Cog):
             leave_em = discord.Embed(
                 title=f"{emoji.minus} Member Left",
                 description=f"{emoji.bullet2} **Name**: {user.mention}\n" +
-                            f"{emoji.bullet2} **Server Joined**: {discord.utils.format_dt(user.joined_at, "R")}" +
-                            f"{emoji.bullet2} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}",
+                            f"{emoji.bullet2} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}" +
+                            f"{emoji.bullet2} **Server Joined**: {discord.utils.format_dt(user.joined_at, "R")}",
                 color=db.error_color)
             leave_em.set_thumbnail(url=f"{user.avatar.url}")
             await leave_ch.send(embed=leave_em)
@@ -41,8 +41,8 @@ class Logs(commands.Cog):
             ban_em = discord.Embed(
                 title=f"{emoji.mod2} Member Banned",
                 description=f"{emoji.bullet2} **Name**: {user.mention}\n" +
-                            f"{emoji.bullet2} **Server Joined**: {discord.utils.format_dt(user.joined_at, "R")}" +
-                            f"{emoji.bullet2} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}",
+                            f"{emoji.bullet2} **Account Created**: {discord.utils.format_dt(user.created_at, "R")}" +
+                            f"{emoji.bullet2} **Server Joined**: {discord.utils.format_dt(user.joined_at, "R")}",
                 color=db.error_color)
             ban_em.set_thumbnail(url=f"{user.avatar.url}")
             await ban_ch.send(embed=ban_em)
