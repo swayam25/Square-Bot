@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord.commands import option, SlashCommandGroup
 
 class TicketTranscript:
-    def __init__(self, channel):
+    def __init__(self, channel: discord.TextChannel):
         self.channel = channel
 
     async def create(self):

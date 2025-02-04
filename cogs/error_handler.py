@@ -9,7 +9,7 @@ class ErrorHandler(commands.Cog):
 
 # Slash cmd Error Handler
     @commands.Cog.listener()
-    async def on_application_command_error(self, ctx: discord.ApplicationContext, error):
+    async def on_application_command_error(self, ctx: discord.ApplicationContext, error: Exception):
         print(f"[red][bold]✗[/] Error Raised: {error}[/]")
         error_em = discord.Embed()
 

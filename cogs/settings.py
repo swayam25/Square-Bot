@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord.commands import slash_command, option, SlashCommandGroup
 
 class Settings(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: discord.Client):
         self.client = client
 
 # Settings
