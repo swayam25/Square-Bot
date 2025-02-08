@@ -1,10 +1,91 @@
 import discord
 import discord.ui
 import os, sys
+import math
 from utils import database as db, emoji
 from utils import check
 from discord.ext import commands
 from discord.commands import slash_command, option, SlashCommandGroup
+
+class GuildListView(discord.ui.View):
+    def __init__(self, client: discord.Client, ctx: discord.ApplicationContext, page: int, timeout: int):
+        super().__init__(timeout=timeout, disable_on_timeout=True)
+        self.client = client
+        self.ctx = ctx
+        self.page = page
+        self.items_per_page = 10
+
+    async def interaction_check(self, interaction: discord.Interaction):
+        if interaction.user != self.ctx.author:
+            help_check_em = discord.Embed(description=f"{emoji.error} You are not the author of this message", color=db.error_color)
+            await interaction.response.send_message(embed=help_check_em, ephemeral=True)
+            return False
+        else:
+            return True
+
+    # Start
+    @discord.ui.button(emoji=f"{emoji.start}", custom_id="start", style=discord.ButtonStyle.grey)
+    async def start_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.page = 1
+        em = GuildListEmbed(self.client, self.page).get_embed()
+        await interaction.response.edit_message(embed=em, view=self)
+
+    # Previous
+    @discord.ui.button(emoji=f"{emoji.previous}", custom_id="previous", style=discord.ButtonStyle.grey)
+    async def previous_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        pages = math.ceil(len(self.client.guilds) / self.items_per_page)
+        if self.page <= 1:
+            self.page = pages
+        else:
+            self.page -= 1
+        em = GuildListEmbed(self.client, self.page).get_embed()
+        await interaction.response.edit_message(embed=em, view=self)
+
+    # Next
+    @discord.ui.button(emoji=f"{emoji.next}", custom_id="next", style=discord.ButtonStyle.grey)
+    async def next_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        pages = math.ceil(len(self.client.guilds) / self.items_per_page)
+        if self.page >= pages:
+            self.page = 1
+        else:
+            self.page += 1
+        em = GuildListEmbed(self.client, self.page).get_embed()
+        await interaction.response.edit_message(embed=em, view=self)
+
+    # End
+    @discord.ui.button(emoji=f"{emoji.end}", custom_id="end", style=discord.ButtonStyle.grey)
+    async def end_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.page = math.ceil(len(self.client.guilds) / self.items_per_page)
+        em = GuildListEmbed(self.client, self.page).get_embed()
+        await interaction.response.edit_message(embed=em, view=self)
+
+class GuildListEmbed(discord.Embed):
+    def __init__(self, client: discord.Client, page: int):
+        super().__init__(title=f"{emoji.embed} Guilds List", color=db.theme_color)
+        self.client = client
+        self.page = page
+        self.items_per_page = 10
+
+    def get_guilds(self):
+        guilds = self.client.guilds
+        start = (self.page - 1) * self.items_per_page
+        end = start + self.items_per_page
+        return guilds[start:end]
+
+    def get_guilds_list(self):
+        guilds_list = ""
+        for num, guild in enumerate(self.get_guilds(), start=self.items_per_page * (self.page - 1) + 1):
+            guilds_list += f"`{num}.` **{guild.name}** - `{guild.id}`\n"
+        return guilds_list
+
+    def get_footer(self):
+        total_pages = math.ceil(len(self.client.guilds) / self.items_per_page)
+        return f"Page {self.page}/{total_pages}"
+
+    def get_embed(self):
+        self.description = self.get_guilds_list()
+        self.set_footer(text=self.get_footer())
+        return self
 
 class Devs(commands.Cog):
     def __init__(self, client: discord.Client):
@@ -39,11 +120,11 @@ class Devs(commands.Cog):
         leave_log_ch = await self.client.fetch_channel(db.system_ch_id())
         leave_log_em = discord.Embed(
             title=f"{emoji.minus} Someone Removed Me!",
-            description=f"{emoji.bullet} **Name**: {guild.name}\n"
-                        f"{emoji.bullet} **ID**: `{guild.id}`\n"
-                        f"{emoji.bullet} **Total Members**: `{guild.member_count}`\n"
-                        f"{emoji.bullet} **Total Humans**: `{len([m for m in guild.members if not m.bot])}`\n"
-                        f"{emoji.bullet} **Total Bots**: `{len([m for m in guild.members if m.bot])}`",
+            description=f"{emoji.bullet2} **Name**: {guild.name}\n"
+                        f"{emoji.bullet2} **ID**: `{guild.id}`\n"
+                        f"{emoji.bullet2} **Total Members**: `{guild.member_count}`\n"
+                        f"{emoji.bullet2} **Total Humans**: `{len([m for m in guild.members if not m.bot])}`\n"
+                        f"{emoji.bullet2} **Total Bots**: `{len([m for m in guild.members if m.bot])}`",
             color=db.error_color)
         await leave_log_ch.send(embed=leave_log_em)
 
@@ -171,6 +252,40 @@ class Devs(commands.Cog):
             else:
                 error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
                 await ctx.respond(embed=error_em, ephemeral=True)
+
+    # Guild slash cmd group
+    guild = SlashCommandGroup(guild_ids=db.owner_guild_ids(), name="guild", description="Guild related commands.")
+
+    # List guild
+    @guild.command(name="list")
+    async def list_guilds(self, ctx: discord.ApplicationContext):
+        """Shows all guilds."""
+        if check.is_owner(ctx.author.id):
+            guild_list_em = GuildListEmbed(self.client, 1).get_embed()
+            guild_list_view = None
+            if len(self.client.guilds) > 10:
+                guild_list_view = GuildListView(self.client, ctx, 1, timeout=60)
+            await ctx.respond(embed=guild_list_em, view=guild_list_view)
+        else:
+            error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+
+    # Leave guild
+    @guild.command(name="leave")
+    @option("guild", description="Enter the guild ID")
+    async def leave_guild(self, ctx: discord.ApplicationContext, guild: discord.Guild):
+        """Leaves a guild."""
+        if check.is_owner(ctx.author.id):
+            if any(guild.id == g for g in db.owner_guild_ids()):
+                error_em = discord.Embed(description=f"{emoji.error} I can't leave the owner guild", color=db.error_color)
+                await ctx.respond(embed=error_em, ephemeral=True)
+            else:
+                await guild.leave()
+                leave_em = discord.Embed(title=f"{emoji.minus} Left Guild", description=f"Left **{guild.name}**", color=db.error_color)
+                await ctx.respond(embed=leave_em)
+        else:
+            error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
 
 def setup(client: discord.Client):
     client.add_cog(Devs(client))
