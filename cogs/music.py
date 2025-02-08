@@ -361,13 +361,13 @@ class QueueEmbed:
         self.client = client
         self.ctx = ctx
         self.page = page
+        self.items_per_page = 5
 
     async def get_embed(self) -> discord.Embed:
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(self.ctx.guild_id)
-        items_per_page = 5
-        pages = math.ceil(len(player.queue) / items_per_page)
-        start = (self.page - 1) * items_per_page
-        end = start + items_per_page
+        pages = math.ceil(len(player.queue) / self.items_per_page)
+        start = (self.page - 1) * self.items_per_page
+        end = start + self.items_per_page
         current_requester = self.ctx.guild.get_member(player.current.requester)
         queue_list = ""
         for index, track in enumerate(player.queue[start:end], start=start):

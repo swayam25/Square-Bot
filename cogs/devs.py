@@ -80,7 +80,7 @@ class GuildListEmbed(discord.Embed):
 
     def get_footer(self):
         total_pages = math.ceil(len(self.client.guilds) / self.items_per_page)
-        return f"Page {self.page}/{total_pages}"
+        return f"Viewing Page {self.page}/{total_pages}"
 
     def get_embed(self):
         self.description = self.get_guilds_list()
