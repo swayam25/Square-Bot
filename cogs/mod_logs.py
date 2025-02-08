@@ -99,7 +99,7 @@ class Logs(commands.Cog):
                             f"{emoji.bullet2} **Message**: {msg.content}",
                 color=db.error_color)
             if msg.attachments:
-                del_em.description += f"\n{emoji.bullet} **Attachment(s)**: {', '.join([f'[Click Here]({attachment.url})' for attachment in msg.attachments])}"
+                del_em.description += f"\n{emoji.bullet2} **Attachment(s)**: {', '.join([f'[Click Here]({attachment.url})' for attachment in msg.attachments])}"
             await del_ch.send(embed=del_em)
             # Deleted Attachments
             if msg.attachments:
