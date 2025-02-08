@@ -10,7 +10,6 @@ class ErrorHandler(commands.Cog):
 # Slash cmd Error Handler
     @commands.Cog.listener()
     async def on_application_command_error(self, ctx: discord.ApplicationContext, error: Exception):
-        print(f"[red][bold]✗[/] Error Raised: {error}[/]")
         error_em = discord.Embed()
 
         if isinstance(error, commands.CommandNotFound):
@@ -45,7 +44,7 @@ class ErrorHandler(commands.Cog):
             error_em = discord.Embed(description=f"{emoji.error} 404 Forbidden", color=db.error_color)
 
         else:
-            error_em = discord.Embed(description=f"{emoji.error} An error occurred. Please try again later.", color=db.error_color)
+            error_em = discord.Embed(description=f"{emoji.error} {error}", color=db.error_color)
         await ctx.respond(embed=error_em, ephemeral=True)
 
 def setup(client: discord.Client):

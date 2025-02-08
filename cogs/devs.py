@@ -272,7 +272,7 @@ class Devs(commands.Cog):
 
     # Leave guild
     @guild.command(name="leave")
-    @option("guild", description="Enter the guild ID")
+    @option("guild", description="Enter the guild name", autocomplete=lambda self, ctx: [guild.name for guild in self.client.guilds if not any(guild.id == g for g in db.owner_guild_ids())])
     async def leave_guild(self, ctx: discord.ApplicationContext, guild: discord.Guild):
         """Leaves a guild."""
         if check.is_owner(ctx.author.id):

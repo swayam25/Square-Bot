@@ -539,7 +539,7 @@ class Music(commands.Cog):
         return player
 
 # Search autocomplete
-    async def search(self, ctx: discord.ApplicationContext):
+    async def search(self, ctx: discord.AutocompleteContext):
         """Searches a track from a given query."""
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.interaction.guild_id)
         if ctx.value != "":
