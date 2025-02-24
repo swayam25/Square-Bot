@@ -1,3 +1,4 @@
+import datetime
 import aiohttp
 import discord
 import asyncio
@@ -10,6 +11,7 @@ from typing import Tuple
 from utils import database as db, emoji
 from discord.ext import commands, tasks
 from discord.commands import slash_command, option
+from babel.dates import format_timedelta
 
 # Regex
 url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
@@ -449,7 +451,8 @@ class Music(commands.Cog):
             if player.current.stream:
                 duration = "🔴 LIVE"
             else:
-                duration = lavalink.utils.format_time(player.current.duration)
+                duration = datetime.timedelta(milliseconds=player.current.duration)
+                duration = format_timedelta(duration, locale="en_IN")
             play_em = discord.Embed(
                 title=f"{player.current.title}", url=f"{player.current.uri}",
                 description=f"{emoji.bullet} **Requested By**: {requester if requester else 'Unknown'}\n" +
@@ -479,12 +482,12 @@ class Music(commands.Cog):
             await Disable(self.client, event.player.guild_id).play_msg()
         if isinstance(event, lavalink.events.TrackStuckEvent):
             channel = db.play_ch_id(event.player.guild_id)
-            error_em = discord.Embed(description=f"{emoji.error} Error while playing the track. Please try again later", color=db.error_color)
+            error_em = discord.Embed(description=f"{emoji.error} Error while playing the track. Please try again later.", color=db.error_color)
             await Disable(self.client, event.player.guild_id).play_msg()
             await channel.send(embed=error_em, delete_after=5)
         if isinstance(event, lavalink.events.TrackExceptionEvent):
             channel = db.play_ch_id(event.player.guild_id)
-            error_em = discord.Embed(description=f"{emoji.error} Error while playing the track. Please try again later", color=db.error_color)
+            error_em = discord.Embed(description=f"{emoji.error} Error while playing the track. Please try again later.", color=db.error_color)
             await Disable(self.client, event.player.guild_id).play_msg()
             await channel.send(embed=error_em, delete_after=5)
         if isinstance(event, lavalink.events.QueueEndEvent):
