@@ -3,6 +3,8 @@ import datetime
 from utils import database as db, emoji
 from discord.ext import commands
 from discord.commands import slash_command, option, SlashCommandGroup
+from utils.utils import parse_duration
+from babel.dates import format_timedelta
 
 class Moderation(commands.Cog):
     def __init__(self, client):
@@ -158,9 +160,9 @@ class Moderation(commands.Cog):
     @slash_command(guild_ids=db.guild_ids(), name="timeout")
     @discord.default_permissions(moderate_members=True)
     @option("user", description="Mention the user whom you want to timeout")
-    @option("minutes", description="Enter the duration of timeout in minutes")
+    @option("duration", description="Enter the duration of timeout. Ex: 1d, 2w etc...")
     @option("reason", description="Enter the reason for user timeout", required=False)
-    async def timeout_user(self, ctx: discord.ApplicationContext, user: discord.Member, minutes: int, reason: str = None):
+    async def timeout_user(self, ctx: discord.ApplicationContext, user: discord.Member, duration: str, reason: str = None):
         """Timeouts the mentioned user."""
         if user == ctx.author:
             error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself.", color=db.error_color)
@@ -169,12 +171,17 @@ class Moderation(commands.Cog):
             error_em = discord.Embed(description=f"{emoji.error} Given user has same role or higher role than you.", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
-            duration = datetime.timedelta(minutes=minutes)
-            await user.timeout_for(duration, reason=reason)
+            try:
+                dur: datetime.timedelta = parse_duration(duration)
+            except ValueError as e:
+                error_em = discord.Embed(description=f"{emoji.error} {e}", color=db.error_color)
+                await ctx.respond(embed=error_em, ephemeral=True)
+                return
+            await user.timeout_for(dur, reason=reason)
             timeout_em = discord.Embed(
                 title=f"{emoji.timer2} Timed out User",
                 description=f"Successfully timed out {user.mention}.\n" +
-                            f"{emoji.bullet2} **Duration**: `{duration}`\n" +
+                            f"{emoji.bullet2} **Duration**: `{format_timedelta(dur, locale="en_IN")}`\n" +
                             f"{emoji.bullet2} **Reason**: {reason}",
                 color=db.error_color
             )

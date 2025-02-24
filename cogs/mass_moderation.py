@@ -3,6 +3,8 @@ import datetime
 from utils import database as db, emoji
 from discord.ext import commands
 from discord.commands import option, SlashCommandGroup
+from utils.utils import parse_duration
+from babel.dates import format_timedelta
 
 class MassModeration(commands.Cog):
     def __init__(self, client):
@@ -116,14 +118,19 @@ class MassModeration(commands.Cog):
     @mass.command(name="timeout")
     @discord.default_permissions(moderate_members=True)
     @option("users", description="Mention the users whom you want to timeout. Use \",\" to separate users.", required=True)
-    @option("minutes", description="Enter the duration of timeout in minutes")
+    @option("duration", description="Enter the duration of timeout. Ex: 1d, 2w etc...")
     @option("reason", description="Enter the reason for user timeout", required=False)
-    async def mass_timeout_users(self, ctx: discord.ApplicationContext, users: str, minutes: int, reason: str = None):
+    async def mass_timeout_users(self, ctx: discord.ApplicationContext, users: str, duration: str, reason: str = None):
         """Timeouts mentioned users."""
         await ctx.defer()
         users: list = users.split(",")
         _users: list = []
-        duration = datetime.timedelta(minutes=minutes)
+        try:
+            dur: datetime.timedelta = parse_duration(duration)
+        except ValueError as e:
+            error_em = discord.Embed(description=f"{emoji.error} {e}", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+            return
         errors: list[tuple] = []
         if len(users) > 10:
             error_em = discord.Embed(description=f"{emoji.error} You can only mass timeout upto 10 users.", color=db.error_color)
@@ -146,12 +153,12 @@ class MassModeration(commands.Cog):
                     continue
                 else:
                     _users.append(_user.mention)
-                await _user.timeout_for(duration, reason=reason)
+                await _user.timeout_for(dur, reason=reason)
             if len(_users) > 0:
                 mass_timeout_em = discord.Embed(
                     title=f"{emoji.timer2} Mass Timed out Users",
                     description=f"Successfully timed out {len(_users)} users.\n" +
-                                f"{emoji.bullet2} **Duration**: `{duration}`\n" +
+                                f"{emoji.bullet2} **Duration**: `{format_timedelta(dur, locale="en_IN")}`\n" +
                                 f"{emoji.bullet2} **Reason**: {reason}\n" +
                                 f"{emoji.bullet2} **Users**: {", ".join(_users)}",
                     color=db.error_color
