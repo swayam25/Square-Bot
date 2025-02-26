@@ -54,11 +54,12 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
         except AttributeError:
             self.client.lavalink = self.lavalink = lavalink.Client(self.client.user.id)
             self.client.lavalink.add_node(
-                    db.lavalink(key="host"),
-                    db.lavalink(key="port"),
-                    db.lavalink(key="pass"),
-                    "us",
-                    "default-node")
+                host=db.lavalink(key="host"),
+                port=db.lavalink(key="port"),
+                password=db.lavalink(key="pass"),
+                name="default-node",
+                ssl=db.lavalink(key="secure")
+            )
 
 # Disconnect
     async def disconnect(self, *, force: bool) -> None:

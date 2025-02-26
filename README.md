@@ -79,6 +79,8 @@ Advanced multipurpose discord bot for all your needs
             - Lavalink port
         - `pass` (`str`) [Required]
             - Lavalink password
+        - `secure` (`bool`) [Required]
+            - Lavalink secure status
 
     </details>
 
