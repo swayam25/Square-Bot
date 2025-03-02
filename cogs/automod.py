@@ -16,3 +16,6 @@ class AutoMod(commands.Cog):
                 await user.add_roles(role)
             else:
                 db.autorole(user.guild.id, None, "set")
+
+def setup(client: discord.Client):
+    client.add_cog(AutoMod(client))
