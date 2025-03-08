@@ -42,44 +42,44 @@ Advanced multipurpose discord bot for all your needs
 
     <summary>Configuration</summary>
 
-    - `owner_id` (`int`) [Required]
+    - `owner_id` (`int`)
         - Owner's discord id
         - Gives access to all commands
 
-    - `dev_ids` (`List[int]`) [Required]
+    - `dev_ids` (`list[int]`)
         - Developer's discord ids
         - Gives access to developer commands
         - *This can be managed by `/dev list`, `/dev add` & `/dev remove` commands too*
 
-    - `lockdown` (`bool`) [Required]
+    - `lockdown` (`bool`)
         - Lockdown status
         - If true, bot will not respond to any commands in any guild except owner's guilds
         - *This can be toggled by `/lockdown` command*
 
-    - `owner_guild_ids` (`List[int]`) [Required]
+    - `owner_guild_ids` (`list[int]`)
         - List of guild ids
         - Developer commands will only work in these guilds
 
-    - `system_ch_id` (`int`) [Required]
+    - `system_ch_id` (`int`)
         - System channel id
         - Bot will send logs in this channel
 
-    - `support_server_url` (`str`) [Required]
+    - `support_server_url` (`str`)
         - Support server url
         - Bot will use this url for support server
 
-    - `discord_api_token` (`str`) [Required]
+    - `discord_api_token` (`str`)
         - Discord api token
         - Bot will use this token to connect to discord
 
-    - `lavalink` (`Dict[str, Union[str, int]]`) [Required]
-        - `host` (`str`) [Required]
+    - `lavalink` (`Dict[str, Union[str, int]]`)
+        - `host` (`str`)
             - Lavalink host
-        - `port` (`int`) [Required]
+        - `port` (`int`)
             - Lavalink port
-        - `pass` (`str`) [Required]
+        - `pass` (`str`)
             - Lavalink password
-        - `secure` (`bool`) [Required]
+        - `secure` (`bool`)
             - Lavalink secure status
 
     </details>
