@@ -5,7 +5,7 @@ import json
 config_file_path = "./configs/config.json"
 temp_file_path = {}
 
-theme_color = int("2B2D31", 16)
+theme_color = int("22CEEC", 16)
 error_color = discord.Color.red()
 
 # -------------------- CONFIG FILE --------------------
