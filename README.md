@@ -109,5 +109,5 @@ Advanced multipurpose discord bot for all your needs
 
 3. Run docker container
     ```sh
-    docker run --name square -v ./database/:/square/database:rw -d square
+    docker run --name square -d -v ./database/:/square/database:rw square
     ```
