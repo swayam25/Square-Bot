@@ -184,7 +184,7 @@ class Devs(commands.Cog):
             lockdown_em = discord.Embed(
                 title=f"{emoji.lock if db.lockdown(status_only=True) else emoji.unlock} Bot Lockdown",
                 description=f"Bot is now in lockdown mode" if db.lockdown(status_only=True) else "Bot is now out of lockdown mode",
-                color=db.theme_color
+                color=db.error_color if db.lockdown(status_only=True) else db.theme_color
             )
             await ctx.respond(embed=lockdown_em)
             await self.restart(ctx)
