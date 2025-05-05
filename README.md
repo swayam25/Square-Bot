@@ -102,12 +102,7 @@ Advanced multipurpose discord bot for all your needs
 
 1. Follow steps 1-4 from the [installation guide](#-installation). *Ignore if already done.*
 
-2. Build docker image
+2. Run docker container (*via `docker compose`*)
     ```sh
-    docker build -t square .
-    ```
-
-3. Run docker container
-    ```sh
-    docker run --name square -d -v ./database/:/square/database:rw square
+    docker compose up -d
     ```
