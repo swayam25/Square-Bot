@@ -1,11 +1,14 @@
+import shutil
 import discord
 import discord.ui
 import os, sys
 import math
+import zipfile
 from utils import database as db, emoji
 from utils import check
 from discord.ext import commands
 from discord.commands import slash_command, option, SlashCommandGroup
+from io import BytesIO
 
 class GuildListView(discord.ui.View):
     def __init__(self, client: discord.Client, ctx: discord.ApplicationContext, page: int, timeout: int):
@@ -253,10 +256,10 @@ class Devs(commands.Cog):
                 error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
                 await ctx.respond(embed=error_em, ephemeral=True)
 
-    # Guild slash cmd group
+# Guild slash cmd group
     guild = SlashCommandGroup(guild_ids=db.owner_guild_ids(), name="guild", description="Guild related commands.")
 
-    # List guild
+# List guild
     @guild.command(name="list")
     async def list_guilds(self, ctx: discord.ApplicationContext):
         """Shows all guilds."""
@@ -270,7 +273,7 @@ class Devs(commands.Cog):
             error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
 
-    # Leave guild
+# Leave guild
     @guild.command(name="leave")
     @option("guild", description="Enter the guild name", autocomplete=lambda self, ctx: [guild.name for guild in self.client.guilds if not any(guild.id == g for g in db.owner_guild_ids())])
     async def leave_guild(self, ctx: discord.ApplicationContext, guild: discord.Guild):
@@ -283,6 +286,70 @@ class Devs(commands.Cog):
                 await guild.leave()
                 leave_em = discord.Embed(title=f"{emoji.minus} Left Guild", description=f"Left **{guild.name}**", color=db.error_color)
                 await ctx.respond(embed=leave_em)
+        else:
+            error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+
+# Emoji slash cmd group
+    emoji = SlashCommandGroup(guild_ids=db.owner_guild_ids(), name="emoji", description="Emoji related commands.")
+
+# Download app emojis
+    @emoji.command(name="download")
+    async def download_app_emojis(self, ctx: discord.ApplicationContext):
+        """Downloads all emojis from the app."""
+        await ctx.defer()
+        if check.is_owner(ctx.author.id) or check.is_dev(ctx.author.id):
+            emojis: list[discord.AppEmoji] = await self.client.fetch_emojis()
+            if not emojis:
+                no_emojis_em = discord.Embed(description=f"{emoji.error} No emojis found in the app.", color=db.error_color)
+                await ctx.respond(embed=no_emojis_em, ephemeral=True)
+                return
+
+            zip_buffer = BytesIO()
+            with zipfile.ZipFile(zip_buffer, "w") as zip_file:
+                for app_emoji in emojis:
+                    async with self.client.http._HTTPClient__session.get(app_emoji.url) as response:
+                        if response.status == 200:
+                            zip_file.writestr(f"{app_emoji.name}.png", await response.read())
+
+            zip_buffer.seek(0)
+            await ctx.respond(file=discord.File(fp=zip_buffer, filename="emojis.zip"))
+        else:
+            error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+
+# Upload app emojis
+    @emoji.command(name="upload")
+    @option("file", description="Upload emojis zip file", type=discord.Attachment)
+    async def upload_app_emojis(self, ctx: discord.ApplicationContext, file: discord.Attachment):
+        """Uploads all emojis to the app. (Only supports .zip files with .png emojis)"""
+        await ctx.defer()
+        if check.is_owner(ctx.author.id) or check.is_dev(ctx.author.id):
+            if not file.filename.endswith(".zip"):
+                error_em = discord.Embed(description=f"{emoji.error} Please upload a valid zip file.", color=db.error_color)
+                await ctx.respond(embed=error_em, ephemeral=True)
+                return
+            zip_buffer = BytesIO()
+            await file.save(zip_buffer)
+            zip_buffer.seek(0)
+            with zipfile.ZipFile(zip_buffer, "r") as zip_file:
+                emojis = [discord.PartialEmoji(name=name, id=None) for name in zip_file.namelist()]
+                for _emoji in emojis:
+                    if _emoji.name.endswith(".png"):
+                        _emoji.name = _emoji.name[:-4]
+                    if len(_emoji.name) > 32:
+                        error_em = discord.Embed(description=f"{_emoji.error} Emoji name `{_emoji.name}` is too long (max 32 characters).", color=db.error_color)
+                        await ctx.respond(embed=error_em, ephemeral=True)
+                        return
+                    try:
+                        await self.client.create_emoji(name=_emoji.name, image=zip_file.read(f"{_emoji.name}.png"))
+                    except:
+                        await self.client.delete_emoji([emoji for emoji in await self.client.fetch_emojis() if emoji.name == _emoji.name][0])
+                    finally:
+                        await self.client.create_emoji(name=_emoji.name, image=zip_file.read(f"{_emoji.name}.png"))
+            zip_buffer.close()
+            upload_em = discord.Embed(title=f"{emoji.upload} Uploaded Emoji(s)", description=f"Uploaded {len(emojis)} emojis.", color=db.theme_color)
+            await ctx.respond(embed=upload_em)
         else:
             error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)

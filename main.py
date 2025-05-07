@@ -4,13 +4,18 @@ from utils import database as db
 from rich import print
 from rich.progress import Progress, SpinnerColumn
 from pyfiglet import Figlet
-from discord.ext import commands
 
 # Discord vars
 status = discord.Status.online if not db.lockdown(status_only=True) else discord.Status.dnd
 activity = discord.Activity(type=discord.ActivityType.listening, name="Discord") if not db.lockdown(status_only=True) else discord.Activity(type=discord.ActivityType.playing, name="Maintenance")
 intents = discord.Intents.all()
-client = commands.Bot(status=status, activity=activity, intents=intents, help_command=None)
+client = discord.Bot(
+    status=status,
+    activity=activity,
+    intents=intents,
+    help_command=None,
+    auto_sync_commands=True
+)
 
 # Startup printing
 figlted_txt = Figlet(font="standard", justify="center").renderText("Discord Bot")
@@ -29,12 +34,6 @@ with cogs_progress_bar as progress:
             progress.update(task, advance=1)
             client.load_extension(f"cogs.{filename[:-3]}")
     progress.update(task, description="[green]Loaded Cogs[/]")
-
-# On connect event
-@client.event
-async def on_connect():
-    if client.auto_sync_commands:
-        await client.sync_commands()
 
 # On ready event
 @client.event

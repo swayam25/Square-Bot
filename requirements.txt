@@ -1,6 +1,6 @@
 requests >= 2.32.3
 aiohttp >= 3.10.0
-py-cord[speed] >= 2.6.0
+git+https://github.com/Pycord-Development/pycord
 babel >= 2.17.0
 lavalink >= 4.0.6
 spotipy >= 2.25.1
