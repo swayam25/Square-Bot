@@ -11,5 +11,9 @@
         "port": 0,
         "pass": "",
         "secure": true
+    },
+    "spotify": {
+        "client_id": "",
+        "client_secret": ""
     }
 }

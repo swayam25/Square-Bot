@@ -72,7 +72,7 @@ Advanced multipurpose discord bot for all your needs
         - Discord api token
         - Bot will use this token to connect to discord
 
-    - `lavalink` (`Dict[str, Union[str, int]]`)
+    - `lavalink` (`dict[str, Union[str, int, bool]]`)
         - `host` (`str`)
             - Lavalink host
         - `port` (`int`)
@@ -82,9 +82,22 @@ Advanced multipurpose discord bot for all your needs
         - `secure` (`bool`)
             - Lavalink secure status
 
+    - `spotify` (`dict[str, str]`)
+        - `client_id` (`str`)
+            - Spotify client id
+        - `client_secret` (`str`)
+            - Spotify client secret
+
     </details>
 
-4. Set emojis in [`emoji.json`](./configs/emoji.json) file. If you want to use default emojis, you can change the `emoji_file_path` to `./configs/default_emoji.json` in [`emoji.py`](./utils/emoji.py) file
+4. Set spotify credentials in [`config.json`](./configs/config.json) file.
+    - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+    - Create a new application (*visit [Spotify Developer Docs](https://developer.spotify.com/documentation/web-api/tutorials/getting-started) for more details*).
+    - Get the `client_id` and `client_secret` from the application settings.
+    - Set the `client_id` and `client_secret` in the `config.json` file.
+
+
+5. Set emojis in [`emoji.json`](./configs/emoji.json) file. If you want to use default emojis, you can change the `emoji_file_path` to `./configs/default_emoji.json` in [`emoji.py`](./utils/emoji.py) file.
 
 
 5. Install dependencies

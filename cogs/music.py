@@ -7,6 +7,8 @@ import re
 import lavalink
 import discord.ui
 import asyncio
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 from typing import Tuple
 from utils import database as db, emoji
 from discord.ext import commands, tasks
@@ -25,6 +27,13 @@ equalizer_presets = {
     "nightcore": [(0, 0.30), (1, 0.30), (2, 0.30), (3, 0.30), (4, 0.30), (5, 0.30), (6, 0.30), (7, 0.30)],
     "superbass": [(0, 0.20), (1, 0.30), (2, 0.40), (3, 0.50), (4, 0.60), (5, 0.70), (6, 0.80), (7, 0.90)]
 }
+
+# Spotify
+spotify = db.spotify()
+sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
+    client_id=spotify['client_id'],
+    client_secret=spotify['client_secret']
+))
 
 class LavalinkVoiceClient(discord.VoiceProtocol):
     def __init__(self, client: discord.Client, channel: discord.abc.Connectable):
@@ -90,29 +99,11 @@ class SpotifySource(lavalink.Source):
 
 # Spotify source
     async def get(self):
-        token = ""
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://open.spotify.com/get_access_token?reason=transport&productType=web_player") as resp:
-                res = await resp.json()
-                token = res['accessToken']
-        if "playlist" in self.url:
-            pl_id = self.url.split("/playlist/")[1]
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f"https://api.spotify.com/v1/playlists/{pl_id}", headers={"Authorization": f"Bearer {token}"}) as resp:
-                    res = await resp.json()
-                    return res
-        elif "album" in self.url:
-            al_id = self.url.split("/album/")[1]
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f"https://api.spotify.com/v1/albums/{al_id}", headers={"Authorization": f"Bearer {token}"}) as resp:
-                    res = await resp.json()
-                    return res
-        elif "track" in self.url:
-            track_id = self.url.split("/track/")[1]
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f"https://api.spotify.com/v1/tracks/{track_id}", headers={"Authorization": f"Bearer {token}"}) as resp:
-                    res = await resp.json()
-                    return res
+        return {
+            "playlist": sp.playlist,
+            "album": sp.album,
+            "track": sp.track
+        }.get(self.url.split("/")[-2], lambda _: None)(self.url)
 
 # Load playlist
     async def _load_pl(self) -> Tuple[list[SpotifyAudioTrack], lavalink.PlaylistInfo]:

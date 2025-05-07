@@ -3,5 +3,6 @@ aiohttp >= 3.10.0
 py-cord[speed] >= 2.6.0
 babel >= 2.17.0
 lavalink >= 4.0.6
+spotipy >= 2.25.1
 rich >= 13.7.1
 pyfiglet >= 1.0.2
