@@ -4,7 +4,8 @@ import discord.ui
 import os, sys
 import math
 import zipfile
-from utils import database as db, emoji
+from utils import database as db
+from utils.emoji import Emoji, emoji
 from utils import check
 from discord.ext import commands
 from discord.commands import slash_command, option, SlashCommandGroup
@@ -350,6 +351,41 @@ class Devs(commands.Cog):
             zip_buffer.close()
             upload_em = discord.Embed(title=f"{emoji.upload} Uploaded Emoji(s)", description=f"Uploaded {len(emojis)} emojis.", color=db.theme_color)
             await ctx.respond(embed=upload_em)
+        else:
+            error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+
+# Sync app emojis
+    @emoji.command(name="sync")
+    async def sync_app_emojis(self, ctx: discord.ApplicationContext):
+        """Syncs all emojis from the app."""
+        await ctx.defer()
+        if check.is_owner(ctx.author.id) or check.is_dev(ctx.author.id):
+            emojis: list[discord.AppEmoji] = await self.client.fetch_emojis()
+            emoji_dict: dict = {}
+            if not emojis:
+                no_emojis_em = discord.Embed(description=f"{emoji.error} No emojis found in the app.", color=db.error_color)
+                await ctx.respond(embed=no_emojis_em, ephemeral=True)
+                return
+
+            for app_emoji in emojis:
+                if app_emoji.animated:
+                    emoji_dict[app_emoji.name] = f"<a:{app_emoji.name}:{app_emoji.id}>"
+                else:
+                    emoji_dict[app_emoji.name] = f"<:{app_emoji.name}:{app_emoji.id}>"
+
+            resp: dict = Emoji.create_custom_emoji_config(emoji_dict)
+            if resp["status"] == "error":
+                error_em = discord.Embed(description=f"{emoji.error} Missing emojis:\n{"\n".join([f"{emoji.bullet} `{i}`" for i in resp['missing_keys']])}", color=db.error_color)
+                await ctx.respond(embed=error_em, ephemeral=True)
+            else:
+                sync_em = discord.Embed(title=f"{emoji.restart} Synced Emoji(s)", description=f"Synced {len(emojis)} emoji(s).", color=db.theme_color)
+                if resp.get("extra_keys"):
+                    sync_em.add_field(
+                        name=f"{emoji.error} Extra emoji(s)",
+                        value="\n".join([f"{emoji.bullet} `{i}`: {i}" for i in resp['extra_keys']]),
+                    )
+                await ctx.respond(embed=sync_em)
         else:
             error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)

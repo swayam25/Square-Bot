@@ -133,3 +133,6 @@ dmypy.json
 
 # Database
 database/
+
+# Custom emoji file
+emoji.json

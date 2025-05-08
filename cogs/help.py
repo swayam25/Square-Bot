@@ -1,6 +1,7 @@
 import discord
 import discord.ui
-from utils import database as db, emoji
+from utils import database as db
+from utils.emoji import emoji
 from discord.ext import commands
 from discord.commands import slash_command, SlashCommandGroup
 

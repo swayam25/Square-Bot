@@ -1,5 +1,6 @@
 import discord
-from utils import database as db, emoji
+from utils import database as db
+from utils.emoji import emoji
 from rich import print
 from discord.ext import commands
 

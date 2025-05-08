@@ -72,6 +72,12 @@ Advanced multipurpose discord bot for all your needs
         - Discord api token
         - Bot will use this token to connect to discord
 
+    - `emoji` (`default` or `custom`)
+        - Default refers to `./configs/default_emoji.json` file.
+        - For `custom` emojis, upload emojis to the bot using `/emoji upload` command (*make sure emoji names are same as keys in `default_emoji.json` file*).
+        - Then use `/emoji sync` to generate `./configs/emojis.json` file from the uploaded emojis.
+        - Then set the `emoji` to `custom` in the `config.json` file.
+
     - `lavalink` (`dict[str, Union[str, int, bool]]`)
         - `host` (`str`)
             - Lavalink host

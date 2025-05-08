@@ -10,7 +10,8 @@ import asyncio
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from typing import Tuple
-from utils import database as db, emoji
+from utils import database as db
+from utils.emoji import emoji
 from discord.ext import commands, tasks
 from discord.commands import slash_command, option
 from babel.dates import format_timedelta
