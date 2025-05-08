@@ -102,10 +102,6 @@ Advanced multipurpose discord bot for all your needs
     - Get the `client_id` and `client_secret` from the application settings.
     - Set the `client_id` and `client_secret` in the `config.json` file.
 
-
-5. Set emojis in [`emoji.json`](./configs/emoji.json) file. If you want to use default emojis, you can change the `emoji_file_path` to `./configs/default_emoji.json` in [`emoji.py`](./utils/emoji.py) file.
-
-
 5. Install dependencies
     ```sh
     python -m venv .venv
