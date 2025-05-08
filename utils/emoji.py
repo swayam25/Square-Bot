@@ -104,6 +104,7 @@ class Emoji:
             if emoji_type == "custom":
                 print(f"[red][bold]✗[/] Custom emoji file not found: {file_path}[/]")
                 print(f"[yellow][bold]![/] Make sure to run [cyan]/emoji upload[/] command and upload emojis to the discord bot and run [cyan]/emoji sync[/] to create required config files.[/]")
+                print(f"[yellow][bold]![/] If already uploaded, run [cyan]/emoji sync[/] to create required config files.[/]")
                 print(f"[yellow][bold]![/] If you want to use default emojis, change the emoji type in [cyan]./configs/config.json[/] to [green]default[/].[/]")
             else:
                 print(f"[red][bold]✗[/] Emoji file not found: {file_path}[/]")
