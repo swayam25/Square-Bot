@@ -123,7 +123,6 @@ class Emoji:
                 return { "status": "error", "missing_keys": missing_keys }
             else:
                 emojis = { key: emojis[key] for key in Emoji.__annotations__.keys() }
-                print(Emoji.__annotations__.keys())
                 json.dump(emojis, emoji_file, ensure_ascii=False, indent=4)
                 msg = { "status": "success" }
                 if extra_keys:
