@@ -291,6 +291,23 @@ class Devs(commands.Cog):
             error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
 
+# Guild invite
+    @guild.command(name="invite")
+    @option("guild", description="Enter the guild name", autocomplete=lambda self, ctx: [guild.name for guild in self.client.guilds if not any(guild.id == g for g in db.owner_guild_ids())])
+    async def guild_inv(self, ctx: discord.ApplicationContext, guild: discord.Guild):
+        """Creates an invite link for the guild."""
+        if check.is_owner(ctx.author.id):
+            if any(guild.id == g for g in db.owner_guild_ids()):
+                error_em = discord.Embed(description=f"{emoji.error} I can't create an invite link for the owner guild", color=db.error_color)
+                await ctx.respond(embed=error_em, ephemeral=True)
+            else:
+                invite = await guild.text_channels[0].create_invite(max_age=0, max_uses=0)
+                invite_em = discord.Embed(title=f"{emoji.plus} Guild Invite Link", description=f"Invite link for **{guild.name}**: {invite}", color=db.theme_color)
+                await ctx.respond(embed=invite_em)
+        else:
+            error_em = discord.Embed(description=f"{emoji.error} You are not authorized to use the command", color=db.error_color)
+            await ctx.respond(embed=error_em, ephemeral=True)
+
 # Emoji slash cmd group
     emoji = SlashCommandGroup(guild_ids=db.owner_guild_ids(), name="emoji", description="Emoji related commands.")
 
