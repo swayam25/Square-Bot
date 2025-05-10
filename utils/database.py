@@ -5,8 +5,14 @@ import json
 config_file_path = "./configs/config.json"
 temp_file_path = {}
 
-theme_color = int("22CEEC", 16)
-error_color = discord.Color.red()
+with open(config_file_path, "r") as config_file:
+    data = json.load(config_file)
+    color = data['colors']
+    for key, value in color.items():
+        color[key] = value.replace("#", "")
+
+theme_color = int(color['theme'], 16)
+error_color = int(color['error'], 16)
 
 # -------------------- CONFIG FILE --------------------
 

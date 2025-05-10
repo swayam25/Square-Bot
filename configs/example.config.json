@@ -6,6 +6,10 @@
     "system_ch_id": 0,
     "support_server_url": "https://discord.gg",
     "discord_api_token": "",
+    "colors": {
+        "theme": "#22CEEC",
+        "error": "#E74C3C"
+    },
     "emoji": "default",
     "lavalink": {
         "host": "",

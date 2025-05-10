@@ -35,7 +35,7 @@ Advanced multipurpose discord bot for all your needs
     cd square_bot
     ```
 
-2. Rename the [`config.json.example`](./configs/config.json.example) file to `config.json`.
+2. Rename the [`example.config.json`](./configs/example.config.json) file to `config.json`.
 
 3. Configure the `config.json` file
     <details>
@@ -71,6 +71,12 @@ Advanced multipurpose discord bot for all your needs
     - `discord_api_token` (`str`)
         - Discord api token
         - Bot will use this token to connect to discord
+
+    - `colors` (`dict[str, str]`)
+        - `theme` (`str`)
+            - Theme color
+        - `error` (`str`)
+            - Error color
 
     - `emoji` (`default` or `custom`)
         - Default refers to `./configs/default_emoji.json` file.
