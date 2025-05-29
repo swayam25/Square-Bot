@@ -14,7 +14,7 @@ def help_home_em(self, ctx: discord.ApplicationContext):
         color=db.theme_color,
     )
     help_em.add_field(
-        name=f"Categories",
+        name="Categories",
         value=f"{emoji.mod} `:` **Moderation**\n"
         + f"{emoji.mass_mod} `:` **Mass Moderation**\n"
         + f"{emoji.info} `:` **Info**\n"

@@ -208,7 +208,7 @@ class Devs(commands.Cog):
             db.lockdown(True) if status == "Enable" else db.lockdown(False)
             lockdown_em = discord.Embed(
                 title=f"{emoji.lock if db.lockdown(status_only=True) else emoji.unlock} Bot Lockdown",
-                description=f"Bot is now in lockdown mode"
+                description="Bot is now in lockdown mode"
                 if db.lockdown(status_only=True)
                 else "Bot is now out of lockdown mode",
                 color=db.error_color if db.lockdown(status_only=True) else db.theme_color,
@@ -439,7 +439,7 @@ class Devs(commands.Cog):
                         return
                     try:
                         await self.client.create_emoji(name=_emoji.name, image=zip_file.read(f"{_emoji.name}.png"))
-                    except:
+                    except Exception:
                         await self.client.delete_emoji(
                             [emoji for emoji in await self.client.fetch_emojis() if emoji.name == _emoji.name][0]
                         )

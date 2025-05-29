@@ -35,7 +35,7 @@ class MassModeration(commands.Cog):
             for user in users:
                 try:
                     _user = await commands.MemberConverter().convert(ctx, user.strip())
-                except:
+                except Exception:
                     errors.append((user.strip(), "User not found."))
                     continue
                 if _user == ctx.author:
@@ -88,7 +88,7 @@ class MassModeration(commands.Cog):
             for user in users:
                 try:
                     _user = await commands.MemberConverter().convert(ctx, user.strip())
-                except:
+                except Exception:
                     errors.append((user.strip(), "User not found."))
                     continue
                 if _user == ctx.author:
@@ -149,7 +149,7 @@ class MassModeration(commands.Cog):
             for user in users:
                 try:
                     _user = await commands.MemberConverter().convert(ctx, user.strip())
-                except:
+                except Exception:
                     errors.append((user.strip(), "User not found."))
                     continue
                 if _user == ctx.guild.owner:
@@ -208,7 +208,7 @@ class MassModeration(commands.Cog):
             for user in users:
                 try:
                     _user = await commands.MemberConverter().convert(ctx, user.strip())
-                except:
+                except Exception:
                     errors.append((user.strip(), "User not found."))
                     continue
                 if _user == ctx.author:
@@ -272,7 +272,7 @@ class MassModeration(commands.Cog):
             for role in roles:  # Check roles
                 try:
                     _role = await commands.RoleConverter().convert(ctx, role.strip())
-                except:
+                except Exception:
                     role_errors.append((role.strip(), "Role not found."))
                     continue
                 if _role.position >= ctx.guild.get_member(self.client.user.id).top_role.position:
@@ -284,7 +284,7 @@ class MassModeration(commands.Cog):
                 for user in users:  # Check users
                     try:
                         _user = await commands.MemberConverter().convert(ctx, user.strip())
-                    except:
+                    except Exception:
                         user_errors.append((user.strip(), "User not found."))
                         continue
                     if _user.top_role.position >= ctx.author.top_role.position:
@@ -348,7 +348,7 @@ class MassModeration(commands.Cog):
             for role in roles:  # Check roles
                 try:
                     _role = await commands.RoleConverter().convert(ctx, role.strip())
-                except:
+                except Exception:
                     role_errors.append((role.strip(), "Role not found."))
                     continue
                 if _role.position >= ctx.guild.get_member(self.client.user.id).top_role.position:
@@ -360,7 +360,7 @@ class MassModeration(commands.Cog):
                 for user in users:  # Check users
                     try:
                         _user = await commands.MemberConverter().convert(ctx, user.strip())
-                    except:
+                    except Exception:
                         user_errors.append((user.strip(), "User not found."))
                         continue
                     if _user.top_role.position >= ctx.author.top_role.position:

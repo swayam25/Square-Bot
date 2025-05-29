@@ -11,7 +11,7 @@ class Logs(commands.Cog):
     # Join
     @commands.Cog.listener()
     async def on_member_join(self, user: discord.Member):
-        if db.mod_log_ch(user.guild.id) != None:
+        if db.mod_log_ch(user.guild.id) is not None:
             join_ch = await self.client.fetch_channel(db.mod_log_ch(user.guild.id))
             join_em = discord.Embed(
                 title=f"{emoji.plus} Member Joined",
@@ -25,7 +25,7 @@ class Logs(commands.Cog):
     # Leave
     @commands.Cog.listener()
     async def on_member_remove(self, user: discord.Member):
-        if db.mod_log_ch(user.guild.id) != None:
+        if db.mod_log_ch(user.guild.id) is not None:
             leave_ch = await self.client.fetch_channel(db.mod_log_ch(user.guild.id))
             leave_em = discord.Embed(
                 title=f"{emoji.minus} Member Left",
@@ -40,7 +40,7 @@ class Logs(commands.Cog):
     # Ban
     @commands.Cog.listener()
     async def on_member_ban(self, user: discord.Member):
-        if db.mod_log_ch(user.guild.id) != None:
+        if db.mod_log_ch(user.guild.id) is not None:
             ban_ch = await self.client.fetch_channel(db.mod_log_ch(user.guild.id))
             ban_em = discord.Embed(
                 title=f"{emoji.mod2} Member Banned",
@@ -55,7 +55,7 @@ class Logs(commands.Cog):
     # Unban
     @commands.Cog.listener()
     async def on_member_unban(self, user: discord.Member):
-        if db.mod_log_ch(user.guild.id) != None:
+        if db.mod_log_ch(user.guild.id) is not None:
             unban_ch = await self.client.fetch_channel(db.mod_log_ch(user.guild.id))
             unban_em = discord.Embed(
                 title=f"{emoji.mod} Member Unbanned",
@@ -74,7 +74,7 @@ class Logs(commands.Cog):
             return
         elif msg_before.author.bot:
             return
-        elif msg_ch != None:
+        elif msg_ch is not None:
             edit_ch = await self.client.fetch_channel(msg_ch)
             edit_em = discord.Embed(
                 title=f"{emoji.edit} Message Edited",
@@ -100,7 +100,7 @@ class Logs(commands.Cog):
             return
         elif msg.author.bot:
             return
-        elif msg_ch != None:
+        elif msg_ch is not None:
             del_ch = await self.client.fetch_channel(msg_ch)
             del_em = discord.Embed(
                 title=f"{emoji.bin} Message Deleted",
@@ -137,7 +137,7 @@ class Logs(commands.Cog):
             return
         elif msgs[0].author.bot:
             return
-        elif msg_ch != None:
+        elif msg_ch is not None:
             bulk_ch = await self.client.fetch_channel(msg_ch)
             bulk_em = discord.Embed(
                 title=f"{emoji.bin} Bulk Message Deleted",

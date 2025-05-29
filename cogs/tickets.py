@@ -47,7 +47,7 @@ class TicketView(discord.ui.View):
         await interaction.response.edit_message(view=self)
         close_em = discord.Embed(
             title=f"{emoji.ticket2} Closing Ticket",
-            description=f"Closing ticket in 5 seconds.\n"
+            description="Closing ticket in 5 seconds.\n"
             + f"{emoji.bullet} **Author**: <@{interaction.channel.name.split('-')[1]}>\n"
             + f"{emoji.bullet} **Closed By**: {interaction.user.mention}",
             color=db.theme_color,
@@ -55,7 +55,7 @@ class TicketView(discord.ui.View):
         await interaction.followup.send(embed=close_em)
         await asyncio.sleep(5)
         await interaction.channel.delete()
-        if db.ticket_log_ch(interaction.guild.id) != None:
+        if db.ticket_log_ch(interaction.guild.id) is not None:
             logging_ch = await interaction.channel.guild.fetch_channel(db.ticket_log_ch(interaction.guild.id))
             close_log_em = discord.Embed(
                 title=f"{emoji.ticket2} Ticket Closed",
@@ -95,7 +95,7 @@ class Tickets(commands.Cog):
     @option("reason", description="Enter your reason for creating the ticket", required=False)
     async def create_ticket(self, ctx: discord.ApplicationContext, reason: str = "No reason provided"):
         """Creates a ticket."""
-        if db.ticket_cmds(ctx.guild.id) == False:
+        if db.ticket_cmds(ctx.guild.id) is False:
             error_em = discord.Embed(description=f"{emoji.error} Ticket commands are disabled", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -134,7 +134,7 @@ class Tickets(commands.Cog):
 
             create_em = discord.Embed(
                 title=f"{emoji.ticket} Ticket Created",
-                description=f"Thank you for creating the ticket. Your problem will be solved soon! Stay tuned!\n"
+                description="Thank you for creating the ticket. Your problem will be solved soon! Stay tuned!\n"
                 + f"{emoji.bullet} **Author**: {ctx.author.mention}\n"
                 + f"{emoji.bullet} **Reason**: {reason}",
                 color=db.theme_color,
@@ -147,7 +147,7 @@ class Tickets(commands.Cog):
             )
             await ctx.respond(embed=create_done_em)
 
-            if db.ticket_log_ch(ctx.guild.id) != None:
+            if db.ticket_log_ch(ctx.guild.id) is not None:
                 logging_ch = await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id))
                 create_log_em = discord.Embed(
                     title=f"{emoji.ticket} Ticket Created",
@@ -161,7 +161,7 @@ class Tickets(commands.Cog):
     @ticket.command(name="close")
     async def close_ticket(self, ctx: discord.ApplicationContext):
         """Closes a created ticket."""
-        if db.ticket_cmds(ctx.guild.id) == False:
+        if db.ticket_cmds(ctx.guild.id) is False:
             error_em = discord.Embed(description=f"{emoji.error} Ticket commands are disabled", color=db.error_color)
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -170,13 +170,13 @@ class Tickets(commands.Cog):
             ):
                 close_em = discord.Embed(
                     title=f"{emoji.ticket2} Closing Ticket",
-                    description=f"Closing ticket in 5 seconds.\n" + f"{emoji.bullet} **Author**: {ctx.author.mention}",
+                    description="Closing ticket in 5 seconds.\n" + f"{emoji.bullet} **Author**: {ctx.author.mention}",
                     color=db.theme_color,
                 )
                 await ctx.respond(embed=close_em)
                 await asyncio.sleep(5)
                 await ctx.channel.delete()
-                if db.ticket_log_ch(ctx.guild.id) != None:
+                if db.ticket_log_ch(ctx.guild.id) is not None:
                     logging_ch = await self.client.fetch_channel(db.ticket_log_ch(ctx.guild.id))
                     close_log_em = discord.Embed(
                         title=f"{emoji.ticket2} Ticket Closed",

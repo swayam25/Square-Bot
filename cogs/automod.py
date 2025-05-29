@@ -11,9 +11,9 @@ class AutoMod(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, user: discord.Member):
         autorole = db.autorole(user.guild.id)
-        if autorole != None and user.bot == False:
+        if autorole is not None and not user.bot:
             role = user.guild.get_role(autorole)
-            if role != None:
+            if role:
                 await user.add_roles(role)
             else:
                 db.autorole(user.guild.id, None, "set")

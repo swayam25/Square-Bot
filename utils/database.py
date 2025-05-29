@@ -4,7 +4,7 @@ import os
 config_file_path = "./configs/config.json"
 temp_file_path = {}
 
-with open(config_file_path, "r") as config_file:
+with open(config_file_path) as config_file:
     data = json.load(config_file)
     color = data["colors"]
     for key, value in color.items():
@@ -18,14 +18,14 @@ error_color = int(color["error"], 16)
 
 # Owner IDs
 def owner_id():
-    with open(f"{config_file_path}", "r") as config_file:
+    with open(config_file_path) as config_file:
         config_data = json.load(config_file)
         return config_data["owner_id"]
 
 
 # Add dev ID
 def add_dev_ids(user_id: int):
-    with open(f"{config_file_path}", "r") as config_file:
+    with open(config_file_path) as config_file:
         config_data = json.load(config_file)
     if user_id not in list(config_data["dev_ids"]):
         config_data["dev_ids"].append(user_id)
@@ -37,7 +37,7 @@ def add_dev_ids(user_id: int):
 
 # Remove dev
 def remove_dev_ids(user_id: int):
-    with open(f"{config_file_path}", "r") as config_file:
+    with open(config_file_path) as config_file:
         config_data = json.load(config_file)
     if user_id in list(config_data["dev_ids"]):
         config_data["dev_ids"].remove(user_id)
@@ -49,7 +49,7 @@ def remove_dev_ids(user_id: int):
 
 # Dev IDs
 def dev_ids():
-    with open(f"{config_file_path}", "r") as config_file:
+    with open(config_file_path) as config_file:
         config_data = json.load(config_file)
         dev_ids = []
         for ids in config_data["dev_ids"]:
@@ -59,7 +59,7 @@ def dev_ids():
 
 # Lockdown
 def lockdown(status: bool = True, status_only: bool = False):
-    with open(f"{config_file_path}", "r") as config_file:
+    with open(config_file_path) as config_file:
         config_data = json.load(config_file)
         if status_only:
             return config_data["lockdown"]
@@ -76,28 +76,28 @@ def guild_ids():
 
 # Owner guild IDs
 def owner_guild_ids():
-    with open(f"{config_file_path}", "r") as config_file:
+    with open(config_file_path) as config_file:
         config_data = json.load(config_file)
         return config_data["owner_guild_ids"]
 
 
 # System channel
 def system_ch_id():
-    with open(f"{config_file_path}", "r") as config_file:
+    with open(config_file_path) as config_file:
         config_data = json.load(config_file)
         return config_data["system_ch_id"]
 
 
 # Support server
 def support_server_url():
-    with open(f"{config_file_path}", "r") as config_file:
+    with open(config_file_path) as config_file:
         config_data = json.load(config_file)
         return config_data["support_server_url"]
 
 
 # Discord API token
 def discord_api_token():
-    with open(f"{config_file_path}", "r") as config_file:
+    with open(config_file_path) as config_file:
         config_data = json.load(config_file)
         try:
             return os.environ["discord_api_token"]
@@ -107,7 +107,7 @@ def discord_api_token():
 
 # Lavalink
 def lavalink(key: str = None, mode: str = "get", data: str = None):
-    with open(f"{config_file_path}", "r") as config_file:
+    with open(config_file_path) as config_file:
         config_data = json.load(config_file)
         if mode == "get":
             return config_data["lavalink"][key]
@@ -119,7 +119,7 @@ def lavalink(key: str = None, mode: str = "get", data: str = None):
 
 # Spotify credentials
 def spotify():
-    with open(f"{config_file_path}", "r") as config_file:
+    with open(config_file_path) as config_file:
         config_data = json.load(config_file)
         return config_data["spotify"]
 
@@ -146,7 +146,7 @@ def guild_config(guild_id: int, key: str = "", value: any = None, mode: str = "g
     data = {}
 
     try:
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             data = json.load(f)
     except FileNotFoundError:
         with open(file_path, "w") as f:
@@ -236,7 +236,7 @@ def queue_msg(guild_id: int, msg: any = None, mode: str = "get"):
             if temp_file_path.__contains__(f"{str(guild_id)}-queue_msgs"):
                 return temp_file_path.get(f"{str(guild_id)}-queue_msgs", None)
             else:
-                return list()
+                return []
         case "set":
             if temp_file_path.__contains__(f"{str(guild_id)}-queue_msgs"):
                 temp_file_path[f"{str(guild_id)}-queue_msgs"].append(msg)

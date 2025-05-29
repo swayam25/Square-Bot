@@ -10,7 +10,6 @@ from babel.dates import format_timedelta
 from discord.commands import option, slash_command
 from discord.ext import commands, tasks
 from spotipy.oauth2 import SpotifyClientCredentials
-from typing import Tuple
 from utils import database as db
 from utils.emoji import emoji
 
@@ -97,7 +96,7 @@ class SpotifySource(lavalink.Source):
         )(self.url)
 
     # Load playlist
-    async def _load_pl(self) -> Tuple[list[SpotifyAudioTrack], lavalink.PlaylistInfo]:
+    async def _load_pl(self) -> tuple[list[SpotifyAudioTrack], lavalink.PlaylistInfo]:
         pl = await self.get()
         tracks = []
         for track in pl["tracks"]["items"]:
@@ -121,7 +120,7 @@ class SpotifySource(lavalink.Source):
         return tracks, pl_info
 
     # Load album
-    async def _load_al(self) -> Tuple[list[SpotifyAudioTrack], lavalink.PlaylistInfo]:
+    async def _load_al(self) -> tuple[list[SpotifyAudioTrack], lavalink.PlaylistInfo]:
         al = await self.get()
         tracks = []
         for track in al["tracks"]["items"]:
@@ -371,7 +370,7 @@ class QueueEmbed:
             )
         queue_em = discord.Embed(title=f"{emoji.playlist} {self.ctx.guild.name}'s Queue", colour=db.theme_color)
         queue_em.add_field(
-            name=f"Now Playing",
+            name="Now Playing",
             value=f"`0.` **[{player.current.title}]({player.current.uri})** [{current_requester.mention if current_requester else 'Unknown'}]",
             inline=False,
         )
@@ -508,7 +507,7 @@ class Music(commands.Cog):
             permissions = ctx.author.voice.channel.permissions_for(ctx.me)
             if ctx.command.name in ("play") and self.current_voice_channel(ctx) is None:
                 if self.client.lavalink.node_manager.available_nodes:
-                    voice_client = await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
+                    await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
                     player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
                     db.play_ch_id(ctx.guild.id, ctx.channel, "set")
                 else:
@@ -525,7 +524,7 @@ class Music(commands.Cog):
                     description=f"{emoji.error} I need the `Connect` and `Speak` permissions", color=db.error_color
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
-            elif not ctx.command.name in ("play"):
+            elif "play" not in ctx.command.name:
                 if not player.current:
                     player: lavalink.DefaultPlayer = None
                     error_em = discord.Embed(
@@ -684,7 +683,7 @@ class Music(commands.Cog):
                 await player.clear_filters()
                 eq_em = discord.Embed(
                     title=f"{emoji.equalizer} Reset Equalizer",
-                    description=f"Reseted the equalizer",
+                    description="Reset the equalizer",
                     color=db.theme_color,
                 )
                 db.equalizer(guild_id=ctx.guild.id, name="None", mode="set")
@@ -712,7 +711,7 @@ class Music(commands.Cog):
                 player.queue.clear()
                 await player.stop()
                 await ctx.guild.voice_client.disconnect(force=True)
-            except:
+            except Exception:
                 pass
             stop_embed = discord.Embed(title=f"{emoji.stop} Player Destroyed", color=db.theme_color)
             disable = Disable(self.client, ctx.guild.id)
@@ -746,7 +745,7 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             skip_em = discord.Embed(
-                title=f"{emoji.skip} Track Skipped", description=f"Skipped the track", color=db.theme_color
+                title=f"{emoji.skip} Track Skipped", description="Skipped the track", color=db.theme_color
             )
             await Disable(self.client, ctx.guild.id).play_msg()
             await player.skip()
@@ -787,7 +786,7 @@ class Music(commands.Cog):
                 await player.set_pause(True)
                 pause_em = discord.Embed(
                     title=f"{emoji.pause} Player Paused",
-                    description=f"Successfully paused the player",
+                    description="Successfully paused the player",
                     color=db.theme_color,
                 )
                 await ctx.respond(embed=pause_em)
@@ -802,7 +801,7 @@ class Music(commands.Cog):
                 await player.set_pause(False)
                 resume_em = discord.Embed(
                     title=f"{emoji.play} Player Resumed",
-                    description=f"Successfully resumed the player",
+                    description="Successfully resumed the player",
                     color=db.theme_color,
                 )
                 await ctx.respond(embed=resume_em)

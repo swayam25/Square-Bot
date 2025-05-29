@@ -104,7 +104,7 @@ class Info(commands.Cog):
             + f"{emoji.bullet} **Text Channel(s)**: `{len(ctx.guild.text_channels)}`\n"
             + f"{emoji.bullet} **Voice Channel(s)**: `{len(ctx.guild.voice_channels)}`\n"
             + f"{emoji.bullet} **Stage Channel(s)**: `{len(ctx.guild.stage_channels)}`\n"
-            + f"{emoji.bullet} **Total Member(s)**: `{len([m for m in ctx.guild.members])}`\n"
+            + f"{emoji.bullet} **Total Member(s)**: `{len(list(ctx.guild.members))}`\n"
             + f"{emoji.bullet} **Human(s)**: `{len([m for m in ctx.guild.members if not m.bot])}`\n"
             + f"{emoji.bullet} **Bot(s)**: `{len([m for m in ctx.guild.members if m.bot])}`\n"
             + f"{emoji.bullet} **Role(s)**: `{len(ctx.guild.roles)}`\n"

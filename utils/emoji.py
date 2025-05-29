@@ -6,7 +6,7 @@ from utils import database as db
 # Load emojis from JSON file
 emoji_file_path = ""
 emoji_type = ""
-with open(f"{db.config_file_path}", "r") as config_file:
+with open(db.config_file_path) as config_file:
     config_data = json.load(config_file)
     emoji_type = config_data["emoji"]
     match config_data["emoji"]:
@@ -16,7 +16,7 @@ with open(f"{db.config_file_path}", "r") as config_file:
             emoji_file_path = "./configs/default_emoji.json"
         case _:
             print(f"[red][bold]✗[/] Invalid emoji type in [cyan]config.json[/]: {config_data['emoji']}[/]")
-            print(f"[yellow][bold]![/] Please choose either [green]custom[/] or [green]default[/].[/]")
+            print("[yellow][bold]![/] Please choose either [green]custom[/] or [green]default[/].[/]")
             exit(1)
 
 
@@ -85,7 +85,7 @@ class Emoji:
     @staticmethod
     def from_json(file_path: str) -> "Emoji":
         try:
-            with open(file_path, "r", encoding="utf8") as emoji_file:
+            with open(file_path, encoding="utf8") as emoji_file:
                 emoji_data = json.load(emoji_file)
 
             # Validate keys
@@ -105,18 +105,18 @@ class Emoji:
             if emoji_type == "custom":
                 print(f"[red][bold]✗[/] Custom emoji file not found: {file_path}[/]")
                 print(
-                    f"[yellow][bold]![/] Make sure to run [cyan]/emoji upload[/] command and upload emojis to the discord bot and run [cyan]/emoji sync[/] to create required config files.[/]"
+                    "[yellow][bold]![/] Make sure to run [cyan]/emoji upload[/] command and upload emojis to the discord bot and run [cyan]/emoji sync[/] to create required config files.[/]"
                 )
                 print(
-                    f"[yellow][bold]![/] If already uploaded, run [cyan]/emoji sync[/] to create required config files.[/]"
+                    "[yellow][bold]![/] If already uploaded, run [cyan]/emoji sync[/] to create required config files.[/]"
                 )
                 print(
-                    f"[yellow][bold]![/] If you want to use default emojis, change the emoji type in [cyan]./configs/config.json[/] to [green]default[/].[/]"
+                    "[yellow][bold]![/] If you want to use default emojis, change the emoji type in [cyan]./configs/config.json[/] to [green]default[/].[/]"
                 )
             else:
                 print(f"[red][bold]✗[/] Emoji file not found: {file_path}[/]")
                 print(
-                    f"[yellow][bold]![/] Seems like default emoji file is missing. Please download the default emoji file from the repository and place it in the [green]configs[/] folder.[/]"
+                    "[yellow][bold]![/] Seems like default emoji file is missing. Please download the default emoji file from the repository and place it in the [green]configs[/] folder.[/]"
                 )
             exit(1)
         except json.JSONDecodeError:
