@@ -108,17 +108,15 @@ Advanced multipurpose discord bot for all your needs
     - Get the `client_id` and `client_secret` from the application settings.
     - Set the `client_id` and `client_secret` in the `config.json` file.
 
-5. Install dependencies
+5. Start the bot
     ```sh
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
+    uv run main.py
     ```
 
-6. Start the bot
-    ```sh
-    python main.py
-    ```
+> [!IMPORTANT]
+> Make sure to have [uv](https://docs.astral.sh/uv) installed in your system. It is used to run the bot.
+> Know more about installing uv [here](https://docs.astral.sh/uv/getting-started/installation/).
+
 ## 🌐 Production
 
 1. Follow steps 1-4 from the [installation guide](#-installation). *Ignore if already done.*

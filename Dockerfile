@@ -1,9 +1,9 @@
-FROM python:3.13.2-bookworm
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm
 
 WORKDIR /square
 
 COPY . .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv sync --locked --no-dev
 
-CMD ["python", "main.py"]
+CMD ["uv", "run", "main.py"]
