@@ -26,7 +26,7 @@ dev = [
 ]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 
 [tool.ruff.lint]
 select = [
@@ -49,6 +49,3 @@ no-sections = true
 quote-style = "double"
 indent-style = "space"
 docstring-code-format = true
-
-[tool.pyright]
-typeCheckingMode = "standard"
