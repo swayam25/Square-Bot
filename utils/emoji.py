@@ -1,7 +1,7 @@
 import json
-from utils import database as db
-from rich import print
 from attr import dataclass
+from rich import print
+from utils import database as db
 
 # Load emojis from JSON file
 emoji_file_path = ""
@@ -18,6 +18,7 @@ with open(f"{db.config_file_path}", "r") as config_file:
             print(f"[red][bold]✗[/] Invalid emoji type in [cyan]config.json[/]: {config_data['emoji']}[/]")
             print(f"[yellow][bold]![/] Please choose either [green]custom[/] or [green]default[/].[/]")
             exit(1)
+
 
 # Dataclass
 @dataclass
@@ -103,16 +104,23 @@ class Emoji:
         except FileNotFoundError:
             if emoji_type == "custom":
                 print(f"[red][bold]✗[/] Custom emoji file not found: {file_path}[/]")
-                print(f"[yellow][bold]![/] Make sure to run [cyan]/emoji upload[/] command and upload emojis to the discord bot and run [cyan]/emoji sync[/] to create required config files.[/]")
-                print(f"[yellow][bold]![/] If already uploaded, run [cyan]/emoji sync[/] to create required config files.[/]")
-                print(f"[yellow][bold]![/] If you want to use default emojis, change the emoji type in [cyan]./configs/config.json[/] to [green]default[/].[/]")
+                print(
+                    f"[yellow][bold]![/] Make sure to run [cyan]/emoji upload[/] command and upload emojis to the discord bot and run [cyan]/emoji sync[/] to create required config files.[/]"
+                )
+                print(
+                    f"[yellow][bold]![/] If already uploaded, run [cyan]/emoji sync[/] to create required config files.[/]"
+                )
+                print(
+                    f"[yellow][bold]![/] If you want to use default emojis, change the emoji type in [cyan]./configs/config.json[/] to [green]default[/].[/]"
+                )
             else:
                 print(f"[red][bold]✗[/] Emoji file not found: {file_path}[/]")
-                print(f"[yellow][bold]![/] Seems like default emoji file is missing. Please download the default emoji file from the repository and place it in the [green]configs[/] folder.[/]")
+                print(
+                    f"[yellow][bold]![/] Seems like default emoji file is missing. Please download the default emoji file from the repository and place it in the [green]configs[/] folder.[/]"
+                )
             exit(1)
         except json.JSONDecodeError:
             print(f"[red][bold]✗[/] Invalid JSON format in file: {file_path}[/]")
-
 
     @staticmethod
     def create_custom_emoji_config(emojis: dict) -> dict:
@@ -120,13 +128,14 @@ class Emoji:
             missing_keys = [key for key in Emoji.__annotations__.keys() if key not in emojis]
             extra_keys = [emojis[key] for key in emojis if key not in Emoji.__annotations__.keys()]
             if missing_keys:
-                return { "status": "error", "missing_keys": missing_keys }
+                return {"status": "error", "missing_keys": missing_keys}
             else:
-                emojis = { key: emojis[key] for key in Emoji.__annotations__.keys() }
+                emojis = {key: emojis[key] for key in Emoji.__annotations__.keys()}
                 json.dump(emojis, emoji_file, ensure_ascii=False, indent=4)
-                msg = { "status": "success" }
+                msg = {"status": "success"}
                 if extra_keys:
                     msg["extra_keys"] = extra_keys
                 return msg
+
 
 emoji = Emoji.from_json(emoji_file_path)

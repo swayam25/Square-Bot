@@ -1,13 +1,16 @@
 import datetime
 import re
 
+
 def parse_duration(duration: str) -> datetime.timedelta:
     """Parse a duration string into a timedelta object."""
-    pattern = re.compile(r'(?P<value>\d+)(?P<unit>[wdhms])')
+    pattern = re.compile(r"(?P<value>\d+)(?P<unit>[wdhms])")
     matches = pattern.findall(duration)
 
     if not matches:
-        raise ValueError("Invalid duration format.\n-# Use `w` for weeks, `d` for days, `h` for hours, `m` for minutes, and `s` for seconds.")
+        raise ValueError(
+            "Invalid duration format.\n-# Use `w` for weeks, `d` for days, `h` for hours, `m` for minutes, and `s` for seconds."
+        )
 
     total_duration = datetime.timedelta()
     funcs = {

@@ -1,14 +1,15 @@
 import discord
+from discord.commands import SlashCommandGroup, option, slash_command
+from discord.ext import commands
 from utils import database as db
 from utils.emoji import emoji
-from discord.ext import commands
-from discord.commands import slash_command, option, SlashCommandGroup
+
 
 class Settings(commands.Cog):
     def __init__(self, client: discord.Client):
         self.client = client
 
-# Settings
+    # Settings
     @slash_command(guild_ids=db.guild_ids(), name="settings")
     @discord.default_permissions(manage_channels=True)
     async def settings(self, ctx: discord.ApplicationContext):
@@ -25,29 +26,33 @@ class Settings(commands.Cog):
         ticket_channel = await fetch_channel_mention(db.ticket_log_ch(ctx.guild.id))
 
         role_id = db.autorole(ctx.guild.id)
-        autorole = (ctx.guild.get_role(role_id).mention if (role_id and ctx.guild.get_role(role_id)) else emoji.off)
+        autorole = ctx.guild.get_role(role_id).mention if (role_id and ctx.guild.get_role(role_id)) else emoji.off
         if role_id and not ctx.guild.get_role(role_id):
             db.autorole(ctx.guild.id, None, "set")
 
         set_em = discord.Embed(
             title=f"{emoji.settings} {ctx.guild.name}'s Settings",
-            description=f"{emoji.bullet} **Mod Log Channel**: {mod_channel}\n" +
-                        f"{emoji.bullet} **Mod Command Log Channel**: {mod_cmd_channel}\n" +
-                        f"{emoji.bullet} **Message Log Channel**: {msg_channel}\n" +
-                        f"{emoji.bullet} **Ticket Commands**: {ticket_cmds}\n" +
-                        f"{emoji.bullet} **Ticket Log Channel**: {ticket_channel}\n" +
-                        f"{emoji.bullet} **Autorole**: {autorole}",
-            color=db.theme_color
+            description=f"{emoji.bullet} **Mod Log Channel**: {mod_channel}\n"
+            + f"{emoji.bullet} **Mod Command Log Channel**: {mod_cmd_channel}\n"
+            + f"{emoji.bullet} **Message Log Channel**: {msg_channel}\n"
+            + f"{emoji.bullet} **Ticket Commands**: {ticket_cmds}\n"
+            + f"{emoji.bullet} **Ticket Log Channel**: {ticket_channel}\n"
+            + f"{emoji.bullet} **Autorole**: {autorole}",
+            color=db.theme_color,
         )
         await ctx.respond(embed=set_em)
 
-# Settings slash cmd group
+    # Settings slash cmd group
     setting = SlashCommandGroup(guild_ids=db.guild_ids(), name="setting", description="Server settings commands.")
 
-# Reset
+    # Reset
     @setting.command(name="reset")
     @discord.default_permissions(manage_channels=True)
-    @option("setting", description="Setting to reset", choices=["All", "Mod Log", "Mod Command Log", "Message Log", "Ticket Commands", "Ticket Log", "Auto Role"])
+    @option(
+        "setting",
+        description="Setting to reset",
+        choices=["All", "Mod Log", "Mod Command Log", "Message Log", "Ticket Commands", "Ticket Log", "Auto Role"],
+    )
     async def reset_settings(self, ctx: discord.ApplicationContext, setting: str):
         """Resets server settings."""
         if setting.lower() == "all":
@@ -69,11 +74,11 @@ class Settings(commands.Cog):
         reset_em = discord.Embed(
             title=f"{emoji.settings} Reset Settings",
             description=f"Successfully reset the {setting.lower()} settings.",
-            color=db.theme_color
+            color=db.theme_color,
         )
         await ctx.respond(embed=reset_em)
 
-# Set mod log
+    # Set mod log
     @setting.command(name="mod-log")
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the mod log channel")
@@ -83,11 +88,11 @@ class Settings(commands.Cog):
         logging_em = discord.Embed(
             title=f"{emoji.settings} Mod Log Settings",
             description=f"Successfully set mod log channel to {channel.mention}.",
-            color=db.theme_color
+            color=db.theme_color,
         )
         await ctx.respond(embed=logging_em)
 
-# Set mod cmd log
+    # Set mod cmd log
     @setting.command(name="mod-command-log")
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the mod command log channel")
@@ -97,11 +102,11 @@ class Settings(commands.Cog):
         logging_em = discord.Embed(
             title=f"{emoji.settings} Mod Command Log Settings",
             description=f"Successfully set mod command log channel to {channel.mention}.",
-            color=db.theme_color
+            color=db.theme_color,
         )
         await ctx.respond(embed=logging_em)
 
-# Set message log
+    # Set message log
     @setting.command(name="message-log")
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the message log channel")
@@ -111,11 +116,11 @@ class Settings(commands.Cog):
         logging_em = discord.Embed(
             title=f"{emoji.settings} Message Log Settings",
             description=f"Successfully set message log channel to {channel.mention}.",
-            color=db.theme_color
+            color=db.theme_color,
         )
         await ctx.respond(embed=logging_em)
 
-# Set ticket cmds
+    # Set ticket cmds
     @setting.command(name="ticket-commands")
     @discord.default_permissions(manage_channels=True)
     @option("status", description="Enable or disable ticket commands", choices=["Enable", "Disable"])
@@ -129,11 +134,11 @@ class Settings(commands.Cog):
         ticket_cmds_em = discord.Embed(
             title=f"{emoji.settings} Ticket Commands Settings",
             description=f"Successfully {status.lower()}d ticket commands.",
-            color=db.theme_color
+            color=db.theme_color,
         )
         await ctx.respond(embed=ticket_cmds_em)
 
-# Set ticket log
+    # Set ticket log
     @setting.command(name="ticket-log")
     @discord.default_permissions(manage_channels=True)
     @option("channel", description="Mention the ticket log channel")
@@ -143,30 +148,35 @@ class Settings(commands.Cog):
         logging_em = discord.Embed(
             title=f"{emoji.settings} Ticket Log Settings",
             description=f"Successfully set ticket log channel to {channel.mention}.",
-            color=db.theme_color
+            color=db.theme_color,
         )
         await ctx.respond(embed=logging_em)
 
-# Set autorole
+    # Set autorole
     @setting.command(name="auto-role")
     @discord.default_permissions(moderate_members=True, manage_roles=True)
     @option("role", description="Mention the autorole")
     async def set_auto_role(self, ctx: discord.ApplicationContext, role: discord.Role):
         """Sets autorole. The bot will assign this role to new members."""
         if role >= ctx.guild.me.top_role:
-            error_em = discord.Embed(description=f"{emoji.error} I can't assign roles higher than my top role.", color=db.error_color)
+            error_em = discord.Embed(
+                description=f"{emoji.error} I can't assign roles higher than my top role.", color=db.error_color
+            )
             await ctx.respond(embed=error_em, ephemeral=True)
         elif role.name == "@everyone":
-            error_em = discord.Embed(description=f"{emoji.error} I can't assign the @everyone role.", color=db.error_color)
+            error_em = discord.Embed(
+                description=f"{emoji.error} I can't assign the @everyone role.", color=db.error_color
+            )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             db.autorole(guild_id=ctx.guild.id, role_id=int(role.id), mode="set")
             autorole_em = discord.Embed(
                 title=f"{emoji.settings} Auto Role Settings",
                 description=f"Successfully set autorole to {role.mention}.",
-                color=db.theme_color
+                color=db.theme_color,
             )
             await ctx.respond(embed=autorole_em)
+
 
 def setup(client: discord.Client):
     client.add_cog(Settings(client))

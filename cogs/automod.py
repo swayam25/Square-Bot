@@ -1,12 +1,13 @@
 import discord
-from utils import database as db
 from discord.ext import commands
+from utils import database as db
+
 
 class AutoMod(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-# Autorole
+    # Autorole
     @commands.Cog.listener()
     async def on_member_join(self, user: discord.Member):
         autorole = db.autorole(user.guild.id)
@@ -16,6 +17,7 @@ class AutoMod(commands.Cog):
                 await user.add_roles(role)
             else:
                 db.autorole(user.guild.id, None, "set")
+
 
 def setup(client: discord.Client):
     client.add_cog(AutoMod(client))

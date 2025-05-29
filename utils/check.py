@@ -1,5 +1,6 @@
 from utils import database as db
 
+
 # Is the user a owner
 def is_owner(user_id):
     owner_id = db.owner_id()
@@ -7,6 +8,7 @@ def is_owner(user_id):
         return True
     else:
         return False
+
 
 # Is the user a dev
 def is_dev(user_id):
