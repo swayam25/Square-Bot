@@ -13,7 +13,7 @@ from utils.emoji import Emoji, emoji
 
 
 class GuildListView(discord.ui.View):
-    def __init__(self, client: discord.Client, ctx: discord.ApplicationContext, page: int, timeout: int):
+    def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, page: int, timeout: int):
         super().__init__(timeout=timeout, disable_on_timeout=True)
         self.client = client
         self.ctx = ctx
@@ -68,7 +68,7 @@ class GuildListView(discord.ui.View):
 
 
 class GuildListEmbed(discord.Embed):
-    def __init__(self, client: discord.Client, page: int):
+    def __init__(self, client: discord.Bot, page: int):
         super().__init__(title=f"{emoji.embed} Guilds List", color=db.theme_color)
         self.client = client
         self.page = page
@@ -97,7 +97,7 @@ class GuildListEmbed(discord.Embed):
 
 
 class Devs(commands.Cog):
-    def __init__(self, client: discord.Client):
+    def __init__(self, client: discord.Bot):
         self.client = client
 
     # On start
@@ -505,5 +505,5 @@ class Devs(commands.Cog):
             await ctx.respond(embed=error_em, ephemeral=True)
 
 
-def setup(client: discord.Client):
+def setup(client: discord.Bot):
     client.add_cog(Devs(client))

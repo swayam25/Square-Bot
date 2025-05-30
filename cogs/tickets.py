@@ -212,5 +212,5 @@ class Tickets(commands.Cog):
         self.client.add_view(TicketView())
 
 
-def setup(client: discord.Client):
+def setup(client: discord.Bot):
     client.add_cog(Tickets(client))

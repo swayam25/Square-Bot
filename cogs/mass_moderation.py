@@ -394,5 +394,5 @@ class MassModeration(commands.Cog):
                 await ctx.respond(embed=error_em, ephemeral=True)
 
 
-def setup(client: discord.Client):
+def setup(client: discord.Bot):
     client.add_cog(MassModeration(client))

@@ -19,5 +19,5 @@ class AutoMod(commands.Cog):
                 db.autorole(user.guild.id, None, "set")
 
 
-def setup(client: discord.Client):
+def setup(client: discord.Bot):
     client.add_cog(AutoMod(client))

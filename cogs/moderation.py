@@ -299,5 +299,5 @@ class Moderation(commands.Cog):
         await ctx.respond(embed=remove_role_em)
 
 
-def setup(client: discord.Client):
+def setup(client: discord.Bot):
     client.add_cog(Moderation(client))

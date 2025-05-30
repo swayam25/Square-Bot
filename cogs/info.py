@@ -132,5 +132,5 @@ class Info(commands.Cog):
         await ctx.respond(embed=emoji_info_em)
 
 
-def setup(client: discord.Client):
+def setup(client: discord.Bot):
     client.add_cog(Info(client))

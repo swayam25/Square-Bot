@@ -149,5 +149,5 @@ class Logs(commands.Cog):
             await bulk_ch.send(embed=bulk_em)
 
 
-def setup(client: discord.Client):
+def setup(client: discord.Bot):
     client.add_cog(Logs(client))

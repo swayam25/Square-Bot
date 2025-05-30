@@ -6,7 +6,7 @@ from utils.emoji import emoji
 
 
 class Settings(commands.Cog):
-    def __init__(self, client: discord.Client):
+    def __init__(self, client: discord.Bot):
         self.client = client
 
     # Settings
@@ -178,5 +178,5 @@ class Settings(commands.Cog):
             await ctx.respond(embed=autorole_em)
 
 
-def setup(client: discord.Client):
+def setup(client: discord.Bot):
     client.add_cog(Settings(client))

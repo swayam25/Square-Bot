@@ -34,7 +34,7 @@ sp = spotipy.Spotify(
 
 
 class LavalinkVoiceClient(discord.VoiceProtocol):
-    def __init__(self, client: discord.Client, channel: discord.abc.Connectable):
+    def __init__(self, client: discord.Bot, channel: discord.abc.Connectable):
         self.client = client
         self.channel = channel
         self.connect_event = asyncio.Event()
@@ -73,7 +73,7 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
 
 
 class SpotifyAudioTrack(lavalink.DeferredAudioTrack):
-    async def load(self, client: discord.Client):
+    async def load(self, client: discord.Bot):
         result: lavalink.LoadResult = await client.get_tracks(f"ytsearch:{self.title} {self.author}")
         if result.load_type != lavalink.LoadType.SEARCH or not result.tracks:
             raise lavalink.LoadError
@@ -162,7 +162,7 @@ class SpotifySource(lavalink.Source):
         )
 
     # Load items
-    async def load_item(self, client: discord.Client):
+    async def load_item(self, client: discord.Bot):
         if "playlist" in self.url:
             pl, pl_info = await self._load_pl()
             return lavalink.LoadResult(lavalink.LoadType.PLAYLIST, pl, pl_info)
@@ -175,7 +175,7 @@ class SpotifySource(lavalink.Source):
 
 
 class MusicView(discord.ui.View):
-    def __init__(self, client: discord.Client, timeout: int):
+    def __init__(self, client: discord.Bot, timeout: int):
         super().__init__(timeout=timeout, disable_on_timeout=True)
         self.client = client
 
@@ -294,7 +294,7 @@ class MusicView(discord.ui.View):
 
 
 class QueueView(discord.ui.View):
-    def __init__(self, client: discord.Client, page: int, timeout: int):
+    def __init__(self, client: discord.Bot, page: int, timeout: int):
         super().__init__(timeout=timeout, disable_on_timeout=True)
         self.client = client
         self.page = page
@@ -350,7 +350,7 @@ class QueueView(discord.ui.View):
 
 
 class QueueEmbed:
-    def __init__(self, client: discord.Client, ctx: discord.ApplicationContext, page: int):
+    def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, page: int):
         self.client = client
         self.ctx = ctx
         self.page = page
@@ -380,7 +380,7 @@ class QueueEmbed:
 
 
 class Disable:
-    def __init__(self, client: discord.Client, guild_id: int):
+    def __init__(self, client: discord.Bot, guild_id: int):
         self.client = client
         self.guild_id = guild_id
 
@@ -407,7 +407,7 @@ class Disable:
 
 
 class Music(commands.Cog):
-    def __init__(self, client: discord.Client):
+    def __init__(self, client: discord.Bot):
         self.client = client
         self.music.start()
 
@@ -937,5 +937,5 @@ class Music(commands.Cog):
                 await ctx.respond(embed=error_em, ephemeral=True)
 
 
-def setup(client: discord.Client):
+def setup(client: discord.Bot):
     client.add_cog(Music(client))

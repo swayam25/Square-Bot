@@ -26,7 +26,7 @@ def help_home_em(self, ctx: discord.ApplicationContext):
 
 
 class HelpView(discord.ui.View):
-    def __init__(self, client: discord.Client, ctx: discord.ApplicationContext, timeout: int):
+    def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, timeout: int):
         super().__init__(timeout=timeout, disable_on_timeout=True)
         self.client = client
         self.ctx = ctx
@@ -100,5 +100,5 @@ class Help(commands.Cog):
         helpView.msg = await ctx.respond(embed=help_home_em(self, ctx), view=helpView)
 
 
-def setup(client: discord.Client):
+def setup(client: discord.Bot):
     client.add_cog(Help(client))
