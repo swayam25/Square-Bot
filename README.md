@@ -45,12 +45,12 @@ Advanced multipurpose discord bot for all your needs.
     - `emoji` (`Literal["default", "custom"]`)
         - Emoji type.
         - `default` will use default emojis.
-        - `custom` will use custom emojis defined in `./.cache/emoji.json` (*requires setting up custom emojis*).
-        - If you choose `custom`, make sure to define the emojis in the `./.cache/emoji.json` file.
-            - To create custom emojis, upload a `.zip` file contaning the emojis (*`.png` format*) using `/emoji upload` command.
+        - `custom` will use custom emojis defined in `.cache/emoji.json` (*requires setting up custom emojis*).
+        - If you choose `custom`, make sure to define the emojis in the `.cache/emoji.json` file.
+            - To create custom emojis, upload a `.zip` file containing the emojis (*`.png` format*) using `/emoji upload` command.
             - Emoji file names must match the attributes of `Emoji` class in [`emoji.py`](./utils/emoji.py).
-            - Then run `/emoji sync` command to sync the emojis. (*This creates `./.cache/emoji.json` file from bot's emojis*).
-            - You can also manually create the `./.cache/emoji.json` file with the same structure as `Emoji` class in [`emoji.py`](./utils/emoji.py).
+            - Then run `/emoji sync` command to sync the emojis. (*This creates `.cache/emoji.json` file from bot's emojis*).
+            - You can also manually create the `.cache/emoji.json` file with the same structure as `Emoji` class in [`emoji.py`](./utils/emoji.py).
             - Then set the `emoji` field to `custom`.
 
     - `bot-token` (`str`)
@@ -61,8 +61,8 @@ Advanced multipurpose discord bot for all your needs.
         - Database url.
         - Bot will use this url to connect to the database.
         - Postgres database is supported.
-        - Example: `asyncpg://user:password@localhost:5432/square`.
-            - If you connection string starts with `postgresql://`, replace it with `asyncpg://`.
+        - Example: `asyncpg://user:password@db.host:5432/square`.
+            - If your connection string starts with `postgresql://`, replace it with `asyncpg://`.
             - Services like Supabase provide a `postgresql://` connection string, remember to change it to `asyncpg://`.
 
     - `[colors]`
