@@ -1,6 +1,6 @@
 import discord
+from db.funcs.guild import fetch_guild_settings, set_autorole
 from discord.ext import commands
-from utils import database as db
 
 
 class AutoMod(commands.Cog):
@@ -10,13 +10,13 @@ class AutoMod(commands.Cog):
     # Autorole
     @commands.Cog.listener()
     async def on_member_join(self, user: discord.Member):
-        autorole = db.autorole(user.guild.id)
-        if autorole is not None and not user.bot:
+        autorole = (await fetch_guild_settings(user.guild.id)).autorole
+        if not user.bot:
             role = user.guild.get_role(autorole)
             if role:
                 await user.add_roles(role)
             else:
-                db.autorole(user.guild.id, None, "set")
+                await set_autorole(user.guild.id, None)
 
 
 def setup(client: discord.Bot):

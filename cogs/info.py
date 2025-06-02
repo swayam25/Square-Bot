@@ -4,7 +4,7 @@ import platform
 import time
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
-from utils import database as db
+from utils import config
 from utils.emoji import emoji
 
 # Starting time of bot
@@ -16,29 +16,30 @@ class Info(commands.Cog):
         self.client = client
 
     # Ping
-    @slash_command(guild_ids=db.guild_ids(), name="ping")
+    @slash_command(name="ping")
     async def ping(self, ctx: discord.ApplicationContext):
         """Shows heartbeats of the bot."""
         ping_em = discord.Embed(
-            description=f"{emoji.bullet} **Ping**: `{round(self.client.latency * 1000)} ms`", color=db.theme_color
+            description=f"{emoji.bullet} **Ping**: `{round(self.client.latency * 1000)} ms`",
+            color=config.color.theme,
         )
         await ctx.respond(embed=ping_em)
 
     # Uptime
-    @slash_command(guild_ids=db.guild_ids(), name="uptime")
+    @slash_command(name="uptime")
     async def uptime(self, ctx: discord.ApplicationContext):
         """Shows bot's uptime."""
         uptime_em = discord.Embed(
             description=f"{emoji.bullet} **Bot's Uptime**: `{str(datetime.timedelta(seconds=int(round(time.time() - start_time))))}`",
-            color=db.theme_color,
+            color=config.color.theme,
         )
         await ctx.respond(embed=uptime_em)
 
     # Stats
-    @slash_command(guild_ids=db.guild_ids(), name="stats")
+    @slash_command(name="stats")
     async def stats(self, ctx: discord.ApplicationContext):
         """Shows bot stats."""
-        owner = await self.client.fetch_user(db.owner_id())
+        owner = await self.client.fetch_user(config.owner_id)
         stats_em = discord.Embed(
             title=f"{self.client.user.name} Stats",
             description=f"{emoji.bullet} **Bot's Latency**: `{round(self.client.latency * 1000)} ms`\n"
@@ -48,24 +49,24 @@ class Info(commands.Cog):
             + f"{emoji.bullet} **Total Channels**: `{len(set(self.client.get_all_channels()))}`\n"
             + f"{emoji.bullet} **Python Version**: `v{platform.python_version()}`\n"
             + f"{emoji.bullet} **Pycord Version**: `v{discord.__version__}`",
-            color=db.theme_color,
+            color=config.color.theme,
         )
         stats_em.set_footer(text=f"Designed & Built by {owner}", icon_url=f"{owner.avatar.url}")
         await ctx.respond(embed=stats_em)
 
     # Avatar
-    @slash_command(guild_ids=db.guild_ids(), name="avatar")
+    @slash_command(name="avatar")
     @option("user", description="Mention the user whom you will see avatar")
     async def avatar(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Shows the avatar of the mentioned user."""
         avatar_em = discord.Embed(
-            title=f"{user.name}'s Avatar", description=f"[Avatar URL]({user.avatar.url})", color=db.theme_color
+            title=f"{user.name}'s Avatar", description=f"[Avatar URL]({user.avatar.url})", color=config.color.theme
         )
         avatar_em.set_image(url=f"{user.avatar.url}")
         await ctx.respond(embed=avatar_em)
 
     # Info slash cmd group
-    info = SlashCommandGroup(guild_ids=db.guild_ids(), name="info", description="Info related commands.")
+    info = SlashCommandGroup(name="info", description="Info related commands.")
 
     # User info
     @info.command(name="user")
@@ -83,7 +84,7 @@ class Info(commands.Cog):
             + f"{emoji.bullet} **Highest Role**: {user.top_role.mention}\n"
             + f"{emoji.bullet} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n"
             + f"{emoji.bullet} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}",
-            color=db.theme_color,
+            color=config.color.theme,
         )
         user_info_em.set_thumbnail(url=f"{user.avatar.url}")
         await ctx.respond(embed=user_info_em)
@@ -109,7 +110,7 @@ class Info(commands.Cog):
             + f"{emoji.bullet} **Bot(s)**: `{len([m for m in ctx.guild.members if m.bot])}`\n"
             + f"{emoji.bullet} **Role(s)**: `{len(ctx.guild.roles)}`\n"
             + f"{emoji.bullet} **Server Created**: {discord.utils.format_dt(ctx.guild.created_at, 'R')}",
-            color=db.theme_color,
+            color=config.color.theme,
         )
         server_info_em.set_thumbnail(url=ctx.guild.icon if ctx.guild.icon else "")
         await ctx.respond(embed=server_info_em)
@@ -126,7 +127,7 @@ class Info(commands.Cog):
             + f"{emoji.bullet} **Is Animated?**: {icon.animated}\n"
             + f"{emoji.bullet} **Usage**: `{icon}`\n"
             + f"{emoji.bullet} **Emoji Created**: {discord.utils.format_dt(icon.created_at, 'R')}",
-            color=db.theme_color,
+            color=config.color.theme,
         )
         emoji_info_em.set_thumbnail(url=f"{icon.url}")
         await ctx.respond(embed=emoji_info_em)

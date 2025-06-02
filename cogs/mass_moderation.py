@@ -1,11 +1,12 @@
 import datetime
 import discord
 from babel.dates import format_timedelta
+from db.funcs.guild import fetch_guild_settings
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
-from utils import database as db
+from utils import config
 from utils.emoji import emoji
-from utils.utils import parse_duration
+from utils.helpers import parse_duration
 
 
 class MassModeration(commands.Cog):
@@ -13,11 +14,14 @@ class MassModeration(commands.Cog):
         self.client = client
 
     # Mass slash cmd group
-    mass = SlashCommandGroup(guild_ids=db.guild_ids(), name="mass", description="Mass moderation commands.")
+    mass = SlashCommandGroup(
+        name="mass",
+        description="Mass moderation commands.",
+        default_member_permissions=discord.Permissions(manage_guild=True),
+    )
 
     # Mass kick
     @mass.command(name="kick")
-    @discord.default_permissions(kick_members=True)
     @option("users", description='Mention the users whom you want to kick. Use "," to separate users.', required=True)
     @option("reason", description="Enter the reason for kicking the user", required=False)
     async def mass_kick_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
@@ -28,7 +32,7 @@ class MassModeration(commands.Cog):
         errors: list[tuple] = []
         if len(users) > 10:
             error_em = discord.Embed(
-                description=f"{emoji.error} You can only mass kick upto 10 users.", color=db.error_color
+                description=f"{emoji.error} You can only mass kick upto 10 users.", color=config.color.error
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -53,24 +57,24 @@ class MassModeration(commands.Cog):
                     description=f"Successfully kicked {len(_users)} users.\n"
                     + f"{emoji.bullet2} **Reason**: {reason}\n"
                     + f"{emoji.bullet2} **Users**: {', '.join(_users)}",
-                    color=db.error_color,
+                    color=config.color.error,
                 )
                 await ctx.respond(embed=mass_kick_em)
-                if db.mod_cmd_log_ch(ctx.guild.id):
-                    log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
+                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                if channel_id:
+                    log_ch = await self.client.fetch_channel(channel_id)
                     mass_kick_em.description += f"\n{emoji.bullet2} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_kick_em)
             if len(errors) > 0:
                 error_em = discord.Embed(
                     title=f"{emoji.error} Can't kick users",
                     description="\n".join([f"{emoji.bullet2} **{user}**: {reason}" for user, reason in errors]),
-                    color=db.error_color,
+                    color=config.color.error,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 
     # Mass ban
     @mass.command(name="ban")
-    @discord.default_permissions(ban_members=True)
     @option("users", description='Mention the users whom you want to ban. Use "," to separate users.', required=True)
     @option("reason", description="Enter the reason for banning the user", required=False)
     async def mass_ban_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
@@ -81,7 +85,7 @@ class MassModeration(commands.Cog):
         errors: list[tuple] = []
         if len(users) > 10:
             error_em = discord.Embed(
-                description=f"{emoji.error} You can only mass ban upto 10 users.", color=db.error_color
+                description=f"{emoji.error} You can only mass ban upto 10 users.", color=config.color.error
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -105,24 +109,24 @@ class MassModeration(commands.Cog):
                     description=f"Successfully banned {len(_users)} users.\n"
                     + f"{emoji.bullet2} **Reason**: {reason}\n"
                     + f"{emoji.bullet2} **Users**: {', '.join(_users)}",
-                    color=db.error_color,
+                    color=config.color.error,
                 )
                 await ctx.respond(embed=mass_ban_em)
-                if db.mod_cmd_log_ch(ctx.guild.id):
-                    log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
+                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                if channel_id:
+                    log_ch = await self.client.fetch_channel(channel_id)
                     mass_ban_em.description += f"\n{emoji.bullet2} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_ban_em)
             if len(errors) > 0:
                 error_em = discord.Embed(
                     title=f"{emoji.error} Can't ban users",
                     description="\n".join([f"{emoji.bullet2} **{user}**: {reason}" for user, reason in errors]),
-                    color=db.error_color,
+                    color=config.color.error,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 
     # Mass timeout users
     @mass.command(name="timeout")
-    @discord.default_permissions(moderate_members=True)
     @option(
         "users", description='Mention the users whom you want to timeout. Use "," to separate users.', required=True
     )
@@ -136,13 +140,13 @@ class MassModeration(commands.Cog):
         try:
             dur: datetime.timedelta = parse_duration(duration)
         except ValueError as e:
-            error_em = discord.Embed(description=f"{emoji.error} {e}", color=db.error_color)
+            error_em = discord.Embed(description=f"{emoji.error} {e}", color=config.color.error)
             await ctx.respond(embed=error_em, ephemeral=True)
             return
         errors: list[tuple] = []
         if len(users) > 10:
             error_em = discord.Embed(
-                description=f"{emoji.error} You can only mass timeout upto 10 users.", color=db.error_color
+                description=f"{emoji.error} You can only mass timeout upto 10 users.", color=config.color.error
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -171,24 +175,24 @@ class MassModeration(commands.Cog):
                     + f"{emoji.bullet2} **Duration**: `{format_timedelta(dur, locale='en_IN')}`\n"
                     + f"{emoji.bullet2} **Reason**: {reason}\n"
                     + f"{emoji.bullet2} **Users**: {', '.join(_users)}",
-                    color=db.error_color,
+                    color=config.color.error,
                 )
                 await ctx.respond(embed=mass_timeout_em)
-                if db.mod_cmd_log_ch(ctx.guild.id):
-                    log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
+                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                if channel_id:
+                    log_ch = await self.client.fetch_channel(channel_id)
                     mass_timeout_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_timeout_em)
             if len(errors) > 0:
                 error_em = discord.Embed(
                     title=f"{emoji.error} Can't timeout users",
                     description="\n".join([f"{emoji.bullet2} **{user}**: {reason}" for user, reason in errors]),
-                    color=db.error_color,
+                    color=config.color.error,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 
     # Mass untimeout users
     @mass.command(name="untimeout")
-    @discord.default_permissions(moderate_members=True)
     @option(
         "users", description='Mention the users whom you want to untimeout. Use "," to separate users.', required=True
     )
@@ -201,7 +205,7 @@ class MassModeration(commands.Cog):
         errors: list[tuple] = []
         if len(users) > 10:
             error_em = discord.Embed(
-                description=f"{emoji.error} You can only mass untimeout upto 10 users.", color=db.error_color
+                description=f"{emoji.error} You can only mass untimeout upto 10 users.", color=config.color.error
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -226,24 +230,24 @@ class MassModeration(commands.Cog):
                     description=f"Successfully untimed out {len(_users)} users.\n"
                     + f"{emoji.bullet} **Reason**: {reason}\n"
                     + f"{emoji.bullet} **Users**: {', '.join(_users)}",
-                    color=db.theme_color,
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=mass_untimeout_em)
-                if db.mod_cmd_log_ch(ctx.guild.id):
-                    log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
+                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                if channel_id:
+                    log_ch = await self.client.fetch_channel(channel_id)
                     mass_untimeout_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_untimeout_em)
             if len(errors) > 0:
                 error_em = discord.Embed(
                     title=f"{emoji.error} Can't untimeout users",
                     description="\n".join([f"{emoji.bullet} **{user}**: {reason}" for user, reason in errors]),
-                    color=db.error_color,
+                    color=config.color.error,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 
     # Mass role add
     @mass.command(name="role-add")
-    @discord.default_permissions(manage_roles=True)
     @option(
         "users",
         description='Mention the users whom you want to add the role. Use "," to separate users.',
@@ -265,7 +269,7 @@ class MassModeration(commands.Cog):
         user_errors: list[tuple] = []
         if len(users) > 10 or len(roles) > 10:
             error_em = discord.Embed(
-                description=f"{emoji.error} You can only mass add 10 roles upto 10 users.", color=db.error_color
+                description=f"{emoji.error} You can only mass add 10 roles upto 10 users.", color=config.color.error
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -300,11 +304,12 @@ class MassModeration(commands.Cog):
                     description=f"Successfully added {len(_roles)} roles to {len(_users)} users.\n"
                     + f"{emoji.bullet} **User(s)**: {', '.join(_users)}\n"
                     + f"{emoji.bullet} **Role(s)**: {', '.join([role.mention for role in _roles])}",
-                    color=db.theme_color,
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=mass_role_add_em)
-                if db.mod_cmd_log_ch(ctx.guild.id):
-                    log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
+                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                if channel_id:
+                    log_ch = await self.client.fetch_channel(channel_id)
                     mass_role_add_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_role_add_em)
             if len(role_errors) > 0 or len(user_errors) > 0:
@@ -313,13 +318,12 @@ class MassModeration(commands.Cog):
                     description="\n".join(
                         [f"{emoji.bullet} **{obj}**: {reason}" for obj, reason in role_errors + user_errors]
                     ),
-                    color=db.error_color,
+                    color=config.color.error,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 
     # Mass role remove
     @mass.command(name="role-remove")
-    @discord.default_permissions(manage_roles=True)
     @option(
         "users",
         description='Mention the users whom you want to remove the role. Use "," to separate users.',
@@ -341,7 +345,8 @@ class MassModeration(commands.Cog):
         user_errors: list[tuple] = []
         if len(users) > 10 or len(roles) > 10:
             error_em = discord.Embed(
-                description=f"{emoji.error} You can only mass remove 10 roles upto 10 users.", color=db.error_color
+                description=f"{emoji.error} You can only mass remove 10 roles upto 10 users.",
+                color=config.color.error,
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -376,11 +381,12 @@ class MassModeration(commands.Cog):
                     description=f"Successfully removed {len(_roles)} roles from {len(_users)} users.\n"
                     + f"{emoji.bullet} **User(s)**: {', '.join(_users)}\n"
                     + f"{emoji.bullet} **Role(s)**: {', '.join([role.mention for role in _roles])}",
-                    color=db.theme_color,
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=mass_role_remove_em)
-                if db.mod_cmd_log_ch(ctx.guild.id):
-                    log_ch = await self.client.fetch_channel(db.mod_cmd_log_ch(ctx.guild.id))
+                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                if channel_id:
+                    log_ch = await self.client.fetch_channel(channel_id)
                     mass_role_remove_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_role_remove_em)
             if len(role_errors) > 0 or len(user_errors) > 0:
@@ -389,7 +395,7 @@ class MassModeration(commands.Cog):
                     description="\n".join(
                         [f"{emoji.bullet} **{obj}**: {reason}" for obj, reason in role_errors + user_errors]
                     ),
-                    color=db.error_color,
+                    color=config.color.error,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 

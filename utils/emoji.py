@@ -1,86 +1,76 @@
 import json
 from attr import dataclass
 from rich import print
-from utils import database as db
+from utils import config
 
-# Load emojis from JSON file
-emoji_file_path = ""
-emoji_type = ""
-with open(db.config_file_path) as config_file:
-    config_data = json.load(config_file)
-    emoji_type = config_data["emoji"]
-    match config_data["emoji"]:
-        case "custom":
-            emoji_file_path = "./configs/emoji.json"
-        case "default":
-            emoji_file_path = "./configs/default_emoji.json"
-        case _:
-            print(f"[red][bold]✗[/] Invalid emoji type in [cyan]config.json[/]: {config_data['emoji']}[/]")
-            print("[yellow][bold]![/] Please choose either [green]custom[/] or [green]default[/].[/]")
-            exit(1)
+custom_emoji_file_path = "./.cache/emoji.json"
+if not any([config.emoji_type == "custom", config.emoji_type == "default"]):
+    print(f"[red][bold]✗[/] Invalid emoji type in [cyan]config.toml[/]: {config.emoji_type}[/]")
+    print("[yellow][bold]![/] Please choose either [green]custom[/] or [green]default[/].[/]")
+    exit(1)
 
 
 # Dataclass
 @dataclass
 class Emoji:
-    bullet: str
-    bullet2: str
-    success: str
-    error: str
+    bullet: str = "▸"
+    bullet2: str = "▹"
+    success: str = "✅"
+    error: str = "❌"
 
-    on: str
-    off: str
+    on: str = "🟢"
+    off: str = "🔴"
 
-    embed: str
-    edit: str
-    bin: str
+    embed: str = "📜"
+    edit: str = "✏️"
+    bin: str = "🗑️"
 
-    plus: str
-    minus: str
-    next: str
-    previous: str
-    start: str
-    end: str
+    plus: str = "➕"
+    minus: str = "➖"
+    next: str = "➡️"
+    previous: str = "⬅️"
+    start: str = "⏮️"
+    end: str = "⏭️"
 
-    kick: str
-    info: str
-    mod: str
-    mod2: str
-    mass_mod: str
-    timer: str
-    timer2: str
-    lock: str
-    unlock: str
-    settings: str
+    kick: str = "🦵🏻"
+    info: str = "📑"
+    mod: str = "🔨"
+    mod2: str = "🔨"
+    mass_mod: str = "💪🏻"
+    timer: str = "🕛"
+    timer2: str = "🕛"
+    lock: str = "🔒"
+    unlock: str = "🔓"
+    settings: str = "⚙️"
 
-    ticket: str
-    ticket2: str
+    ticket: str = "🎟️"
+    ticket2: str = "🎟️"
 
-    music: str
-    play: str
-    play2: str
-    pause: str
-    pause2: str
-    stop: str
-    stop2: str
-    skip: str
-    skip2: str
-    shuffle: str
-    shuffle2: str
-    seek: str
-    loop: str
-    loop2: str
-    loop3: str
-    playlist: str
-    volume: str
-    equalizer: str
-    filled_bar: str
-    empty_bar: str
+    music: str = "🎵"
+    play: str = "▶️"
+    play2: str = "▶️"
+    pause: str = "⏸️"
+    pause2: str = "⏸️"
+    stop: str = "⏹️"
+    stop2: str = "⏹️"
+    skip: str = "⏭️"
+    skip2: str = "⏭️"
+    shuffle: str = "🔀"
+    shuffle2: str = "🔀"
+    seek: str = "⏩"
+    loop: str = "🔁"
+    loop2: str = "🔂"
+    loop3: str = "🔁"
+    playlist: str = "📃"
+    volume: str = "🔊"
+    equalizer: str = "🎶"
+    filled_bar: str = "⬜"
+    empty_bar: str = "🟥"
 
-    upload: str
-    console: str
-    restart: str
-    shutdown: str
+    upload: str = "📤"
+    console: str = "⌨️"
+    restart: str = "🔄️"
+    shutdown: str = "🛑"
 
     @staticmethod
     def from_json(file_path: str) -> "Emoji":
@@ -102,7 +92,7 @@ class Emoji:
             return Emoji(**{key: emoji_data.get(key, "") for key in Emoji.__annotations__.keys()})
 
         except FileNotFoundError:
-            if emoji_type == "custom":
+            if config.emoji_type == "custom":
                 print(f"[red][bold]✗[/] Custom emoji file not found: {file_path}[/]")
                 print(
                     "[yellow][bold]![/] Make sure to run [cyan]/emoji upload[/] command and upload emojis to the discord bot and run [cyan]/emoji sync[/] to create required config files.[/]"
@@ -111,7 +101,7 @@ class Emoji:
                     "[yellow][bold]![/] If already uploaded, run [cyan]/emoji sync[/] to create required config files.[/]"
                 )
                 print(
-                    "[yellow][bold]![/] If you want to use default emojis, change the emoji type in [cyan]./configs/config.json[/] to [green]default[/].[/]"
+                    "[yellow][bold]![/] If you want to use default emojis, change the emoji type in [cyan]config.toml[/] to [green]default[/].[/]"
                 )
             else:
                 print(f"[red][bold]✗[/] Emoji file not found: {file_path}[/]")
@@ -124,7 +114,7 @@ class Emoji:
 
     @staticmethod
     def create_custom_emoji_config(emojis: dict) -> dict:
-        with open("./configs/emoji.json", "w", encoding="utf8") as emoji_file:
+        with open(custom_emoji_file_path, "w", encoding="utf8") as emoji_file:
             missing_keys = [key for key in Emoji.__annotations__.keys() if key not in emojis]
             extra_keys = [emojis[key] for key in emojis if key not in Emoji.__annotations__.keys()]
             if missing_keys:
@@ -138,4 +128,4 @@ class Emoji:
                 return msg
 
 
-emoji = Emoji.from_json(emoji_file_path)
+emoji = Emoji.from_json(custom_emoji_file_path) if config.emoji_type == "custom" else Emoji()

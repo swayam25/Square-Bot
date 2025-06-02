@@ -2,7 +2,7 @@ import discord
 import discord.ui
 from discord.commands import SlashCommandGroup, slash_command
 from discord.ext import commands
-from utils import database as db
+from utils import config
 from utils.emoji import emoji
 
 
@@ -10,8 +10,8 @@ from utils.emoji import emoji
 def help_home_em(self, ctx: discord.ApplicationContext):
     help_em = discord.Embed(
         title=f"{self.client.user.name} Help Desk",
-        description=f"Hello {ctx.author.mention}! I'm {self.client.user.name}, use the dropdown menu below to see the commands of each category. If you need help, feel free to ask in the [support server]({db.support_server_url()}).",
-        color=db.theme_color,
+        description=f"Hello {ctx.author.mention}! I'm {self.client.user.name}, use the dropdown menu below to see the commands of each category. If you need help, feel free to ask in the [support server]({config.support_server_url}).",
+        color=config.color.theme,
     )
     help_em.add_field(
         name="Categories",
@@ -35,7 +35,7 @@ class HelpView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction):
         if interaction.user != self.ctx.author:
             help_check_em = discord.Embed(
-                description=f"{emoji.error} You are not the author of this message", color=db.error_color
+                description=f"{emoji.error} You are not the author of this message", color=config.color.error
             )
             await interaction.response.send_message(embed=help_check_em, ephemeral=True)
             return False
@@ -84,7 +84,9 @@ class HelpView(discord.ui.View):
                         cmds += f"</{command.name} {subcommand.name}:{command.id}>\n{emoji.bullet} {subcommand.description}\n\n"
                 else:
                     cmds += f"</{command.name}:{command.id}>\n{emoji.bullet} {command.description}\n\n"
-            help_em = discord.Embed(title=f"{select.values[0]} Commands", description=f"{cmds}", color=db.theme_color)
+            help_em = discord.Embed(
+                title=f"{select.values[0]} Commands", description=f"{cmds}", color=config.color.theme
+            )
             await interaction.response.edit_message(embed=help_em)
 
 
@@ -93,7 +95,7 @@ class Help(commands.Cog):
         self.client = client
 
     # Help
-    @slash_command(guild_ids=db.guild_ids(), name="help")
+    @slash_command(name="help")
     async def help(self, ctx: discord.ApplicationContext):
         """Need bot's help? Use this!"""
         helpView = HelpView(self.client, ctx, timeout=60)

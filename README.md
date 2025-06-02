@@ -1,100 +1,87 @@
 <div align="center">
 
-![Square Bot](./assets/square.png)
+![Square Bot](./assets/banner.png)
 
-Advanced multipurpose discord bot for all your needs
+Advanced multipurpose discord bot for all your needs.
 
 </div>
 
-## 🎬️ Preview
-
-- **Moderation System**
-
-    ![Moderation System](./assets/mod.gif)
-
-- **Music Player**
-
-    ![Music Player](./assets/music.gif)
-
-- **Ticket System**
-
-    ![Ticket System](./assets/ticket.gif)
-
 ## 🎯 Features
 
-- Advanced moderation system
-- Lots of utility & fun commands
-- Advanced music system with control system
-- Clean & informative help menu
+- Advanced moderation system.
+- Lots of utility & fun commands.
+- Advanced music system with support for YouTube, Spotify and SoundCloud.
+- Clean & informative help menu.
 
-## 🚀 Installation
+## 🚩 Installation
 
 1. Clone this repository
     ```sh
-    git clone https://github.com/swayam25/Square-Bot square_bot
-    cd square_bot
+    git clone https://github.com/swayam25/Square-Bot square
+    cd square
     ```
 
-2. Rename the [`example.config.json`](./configs/example.config.json) file to `config.json`.
-
-3. Configure the `config.json` file
+2. Create `config.toml` from `example.config.toml` and fill in the required values.
     <details>
 
     <summary>Configuration</summary>
 
-    - `owner_id` (`int`)
-        - Owner's discord id
-        - Gives access to all commands
+    - `owner-id` (`int`)
+        - Owner's discord id.
+        - Gives access to all commands.
 
-    - `dev_ids` (`list[int]`)
-        - Developer's discord ids
-        - Gives access to developer commands
-        - *This can be managed by `/dev list`, `/dev add` & `/dev remove` commands too*
+    - `owner-guild-ids` (`list[int]`)
+        - List of guild ids.
+        - Developer commands will only work in these guilds.
 
-    - `lockdown` (`bool`)
-        - Lockdown status
-        - If true, bot will not respond to any commands in any guild except owner's guilds
-        - *This can be toggled by `/lockdown` command*
+    - `system-channel-id` (`int`)
+        - System channel id.
+        - Bot will send logs in this channel.
 
-    - `owner_guild_ids` (`list[int]`)
-        - List of guild ids
-        - Developer commands will only work in these guilds
+    - `support-server-url` (`str`)
+        - Support server url.
+        - Bot will use this url for support server.
 
-    - `system_ch_id` (`int`)
-        - System channel id
-        - Bot will send logs in this channel
+    - `emoji` (`Literal["default", "custom"]`)
+        - Emoji type.
+        - `default` will use default emojis.
+        - `custom` will use custom emojis defined in `./.cache/emoji.json` (*requires setting up custom emojis*).
+        - If you choose `custom`, make sure to define the emojis in the `./.cache/emoji.json` file.
+            - To create custom emojis, upload a `.zip` file contaning the emojis (*`.png` format*) using `/emoji upload` command.
+            - Emoji file names must match the attributes of `Emoji` class in [`emoji.py`](./utils/emoji.py).
+            - Then run `/emoji sync` command to sync the emojis. (*This creates `./.cache/emoji.json` file from bot's emojis*).
+            - You can also manually create the `./.cache/emoji.json` file with the same structure as `Emoji` class in [`emoji.py`](./utils/emoji.py).
+            - Then set the `emoji` field to `custom`.
 
-    - `support_server_url` (`str`)
-        - Support server url
-        - Bot will use this url for support server
+    - `bot-token` (`str`)
+        - Discord api token.
+        - Bot will use this token to connect to discord.
 
-    - `discord_api_token` (`str`)
-        - Discord api token
-        - Bot will use this token to connect to discord
+    - `database-url` (`str`)
+        - Database url.
+        - Bot will use this url to connect to the database.
+        - Postgres database is supported.
+        - Example: `asyncpg://user:password@localhost:5432/square`.
+            - If you connection string starts with `postgresql://`, replace it with `asyncpg://`.
+            - Services like Supabase provide a `postgresql://` connection string, remember to change it to `asyncpg://`.
 
-    - `colors` (`dict[str, str]`)
+    - `[colors]`
         - `theme` (`str`)
-            - Theme color
+            - Theme color.
         - `error` (`str`)
-            - Error color
+            - Error color.
 
-    - `emoji` (`default` or `custom`)
-        - Default refers to `./configs/default_emoji.json` file.
-        - For `custom` emojis, upload emojis to the bot using `/emoji upload` command (*make sure emoji names are same as keys in `default_emoji.json` file*).
-        - Then use `/emoji sync` to generate `./configs/emojis.json` file from the uploaded emojis.
-        - Then set the `emoji` to `custom` in the `config.json` file.
-
-    - `lavalink` (`dict[str, Union[str, int, bool]]`)
+    - `[lavalink]`
         - `host` (`str`)
-            - Lavalink host
+            - Lavalink host.
         - `port` (`int`)
-            - Lavalink port
-        - `pass` (`str`)
-            - Lavalink password
+            - Lavalink port.
+        - `password` (`str`)
+            - Lavalink password.
         - `secure` (`bool`)
             - Lavalink secure status
 
-    - `spotify` (`dict[str, str]`)
+    - `[spotify]`
         - `client_id` (`str`)
             - Spotify client id
         - `client_secret` (`str`)
@@ -102,26 +89,38 @@ Advanced multipurpose discord bot for all your needs
 
     </details>
 
-4. Set spotify credentials in [`config.json`](./configs/config.json) file.
+3. Set spotify credentials in `config.toml` file.
     - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
     - Create a new application (*visit [Spotify Developer Docs](https://developer.spotify.com/documentation/web-api/tutorials/getting-started) for more details*).
     - Get the `client_id` and `client_secret` from the application settings.
-    - Set the `client_id` and `client_secret` in the `config.json` file.
+    - Set the `client_id` and `client_secret` in the `config.toml` file.
 
-5. Start the bot
+4. Start the bot.
     ```sh
     uv run main.py
     ```
 
 > [!IMPORTANT]
-> Make sure to have [uv](https://docs.astral.sh/uv) installed in your system. It is used to run the bot.
+> Make sure to have [uv](https://docs.astral.sh/uv) installed on your system to run the bot.
 > Know more about installing uv [here](https://docs.astral.sh/uv/getting-started/installation/).
 
-## 🌐 Production
+## 🚀 Production
 
-1. Follow steps 1-4 from the [installation guide](#-installation). *Ignore if already done.*
+1. Follow steps 1-3 from the [installation guide](#-installation). *Ignore if already done.*
 
 2. Run docker container (*via `docker compose`*)
     ```sh
     docker compose up -d
     ```
+
+## ❤️ Contributing
+
+- Things to keep in mind
+    - Follow our commit message convention.
+    - Write meaningful commit messages.
+    - Keep the code clean and readable.
+    - Make sure the bot is working as expected.
+
+- Code Formatting
+    - Run `ruff format` before committing your changes or use [`Ruff`](https://docs.astral.sh/ruff/editors) extension in your code editor.
+    - Make sure to commit error free code. Run `ruff check` to check for any errors.
