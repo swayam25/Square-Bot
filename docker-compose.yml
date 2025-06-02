@@ -4,6 +4,4 @@ services:
   bot:
     build: .
     container_name: "square"
-    volumes:
-      - ./database/:/square/database:rw
     restart: unless-stopped
