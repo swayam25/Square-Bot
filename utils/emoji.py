@@ -1,4 +1,5 @@
 import json
+import os
 from attr import dataclass
 from rich import print
 from utils import config
@@ -114,6 +115,7 @@ class Emoji:
 
     @staticmethod
     def create_custom_emoji_config(emojis: dict) -> dict:
+        os.makedirs(os.path.dirname(custom_emoji_file_path), exist_ok=True)
         with open(custom_emoji_file_path, "w", encoding="utf8") as emoji_file:
             missing_keys = [key for key in Emoji.__annotations__.keys() if key not in emojis]
             extra_keys = [emojis[key] for key in emojis if key not in Emoji.__annotations__.keys()]
