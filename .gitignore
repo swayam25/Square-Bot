@@ -1,5 +1,5 @@
 # Config file
-configs/config.json
+config.toml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -129,7 +129,10 @@ dmypy.json
 .pyre/
 
 # Database
-database/
+migrations/
 
-# Custom emoji file
-emoji.json
+# Ruff
+.ruff_cache/
+
+# Test script
+tst.*

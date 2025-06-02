@@ -5,173 +5,17 @@ import discord.ui
 import lavalink
 import math
 import re
-import spotipy
 from babel.dates import format_timedelta
 from discord.commands import option, slash_command
 from discord.ext import commands, tasks
-from spotipy.oauth2 import SpotifyClientCredentials
-from utils import database as db
+from music import equalizer_presets, store
+from music.client import LavalinkVoiceClient
+from music.sources import spotify
+from utils import config
 from utils.emoji import emoji
 
 # Regex
 url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
-
-# Equalizer Presets
-equalizer_presets = {
-    "bassboost": [(0, 0.10), (1, 0.15), (2, 0.20), (3, 0.25), (4, 0.35), (5, 0.45), (6, 0.50), (7, 0.55)],
-    "jazz": [(0, 0.18), (1, 0.16), (2, 0.12), (3, 0.09), (4, 0.08), (5, 0.08), (6, 0.12), (7, 0.18)],
-    "pop": [(0, 0.18), (1, 0.14), (2, 0.10), (3, 0.08), (4, 0.06), (5, 0.06), (6, 0.10), (7, 0.18)],
-    "treble": [(0, 0.55), (1, 0.50), (2, 0.40), (3, 0.30), (4, 0.20), (5, 0.10), (6, 0.05), (7, 0.02)],
-    "nightcore": [(0, 0.30), (1, 0.30), (2, 0.30), (3, 0.30), (4, 0.30), (5, 0.30), (6, 0.30), (7, 0.30)],
-    "superbass": [(0, 0.20), (1, 0.30), (2, 0.40), (3, 0.50), (4, 0.60), (5, 0.70), (6, 0.80), (7, 0.90)],
-}
-
-# Spotify
-spotify = db.spotify()
-sp = spotipy.Spotify(
-    auth_manager=SpotifyClientCredentials(client_id=spotify["client_id"], client_secret=spotify["client_secret"])
-)
-
-
-class LavalinkVoiceClient(discord.VoiceProtocol):
-    def __init__(self, client: discord.Bot, channel: discord.abc.Connectable):
-        self.client = client
-        self.channel = channel
-        self.connect_event = asyncio.Event()
-
-    async def on_voice_server_update(self, data):
-        lavalink_data = {"t": "VOICE_SERVER_UPDATE", "d": data}
-        await self.lavalink.voice_update_handler(lavalink_data)
-
-    async def on_voice_state_update(self, data):
-        lavalink_data = {"t": "VOICE_STATE_UPDATE", "d": data}
-        await self.lavalink.voice_update_handler(lavalink_data)
-
-    # Connect
-    async def connect(self, *, timeout: float, reconnect: bool) -> None:
-        await self.channel.guild.change_voice_state(channel=self.channel)
-        try:
-            self.lavalink: lavalink.Client = self.client.lavalink
-        except AttributeError:
-            self.client.lavalink = self.lavalink = lavalink.Client(self.client.user.id)
-            self.client.lavalink.add_node(
-                host=db.lavalink(key="host"),
-                port=db.lavalink(key="port"),
-                password=db.lavalink(key="pass"),
-                name="default-node",
-                ssl=db.lavalink(key="secure"),
-            )
-
-    # Disconnect
-    async def disconnect(self, *, force: bool) -> None:
-        await self.channel.guild.change_voice_state(channel=None)
-        player: lavalink.DefaultPlayer = self.lavalink.player_manager.get(self.channel.guild.id)
-        if player:
-            player.channel_id = False
-            await player.stop()
-        self.cleanup()
-
-
-class SpotifyAudioTrack(lavalink.DeferredAudioTrack):
-    async def load(self, client: discord.Bot):
-        result: lavalink.LoadResult = await client.get_tracks(f"ytsearch:{self.title} {self.author}")
-        if result.load_type != lavalink.LoadType.SEARCH or not result.tracks:
-            raise lavalink.LoadError
-        first_track = result.tracks[0]
-        base64 = first_track.track
-        self.track = base64
-        return base64
-
-
-class SpotifySource(lavalink.Source):
-    def __init__(self, url: str, requester: int):
-        self.url = url
-        self.requester = requester
-        super().__init__(name="spotify")
-
-    # Spotify source
-    async def get(self):
-        return {"playlist": sp.playlist, "album": sp.album, "track": sp.track}.get(
-            self.url.split("/")[-2], lambda _: None
-        )(self.url)
-
-    # Load playlist
-    async def _load_pl(self) -> tuple[list[SpotifyAudioTrack], lavalink.PlaylistInfo]:
-        pl = await self.get()
-        tracks = []
-        for track in pl["tracks"]["items"]:
-            tracks.append(
-                SpotifyAudioTrack(
-                    {
-                        "identifier": track["track"]["id"],
-                        "isSeekable": True,
-                        "author": ", ".join([artist["name"] for artist in track["track"]["artists"]]),
-                        "length": track["track"]["duration_ms"],
-                        "isStream": False,
-                        "title": track["track"]["name"],
-                        "uri": track["track"]["external_urls"]["spotify"],
-                        "sourceName": "spotify",
-                    },
-                    requester=self.requester,
-                    cover=track["track"]["album"]["images"][0]["url"],
-                )
-            )
-        pl_info = lavalink.PlaylistInfo(name=pl["name"])
-        return tracks, pl_info
-
-    # Load album
-    async def _load_al(self) -> tuple[list[SpotifyAudioTrack], lavalink.PlaylistInfo]:
-        al = await self.get()
-        tracks = []
-        for track in al["tracks"]["items"]:
-            tracks.append(
-                SpotifyAudioTrack(
-                    {
-                        "identifier": track["id"],
-                        "isSeekable": True,
-                        "author": ", ".join([artist["name"] for artist in track["artists"]]),
-                        "length": track["duration_ms"],
-                        "isStream": False,
-                        "title": track["name"],
-                        "uri": track["external_urls"]["spotify"],
-                        "sourceName": "spotify",
-                    },
-                    requester=self.requester,
-                    cover=track["album"]["images"][0]["url"],
-                )
-            )
-        pl_info = lavalink.PlaylistInfo(name=al["name"])
-        return tracks, pl_info
-
-    # Load track
-    async def _load_track(self) -> SpotifyAudioTrack:
-        track = await self.get()
-        return SpotifyAudioTrack(
-            {
-                "identifier": track["id"],
-                "isSeekable": True,
-                "author": ", ".join([artist["name"] for artist in track["artists"]]),
-                "length": track["duration_ms"],
-                "isStream": False,
-                "title": track["name"],
-                "uri": track["external_urls"]["spotify"],
-                "sourceName": "spotify",
-            },
-            requester=self.requester,
-            cover=track["album"]["images"][0]["url"],
-        )
-
-    # Load items
-    async def load_item(self, client: discord.Bot):
-        if "playlist" in self.url:
-            pl, pl_info = await self._load_pl()
-            return lavalink.LoadResult(lavalink.LoadType.PLAYLIST, pl, pl_info)
-        if "album" in self.url:
-            al, al_info = await self._load_al()
-            return lavalink.LoadResult(lavalink.LoadType.PLAYLIST, al, al_info)
-        if "track" in self.url:
-            track = await self._load_track()
-            return lavalink.LoadResult(lavalink.LoadType.TRACK, [track], lavalink.PlaylistInfo.none())
 
 
 class MusicView(discord.ui.View):
@@ -183,16 +27,18 @@ class MusicView(discord.ui.View):
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
         if not player.current:
             error_em = discord.Embed(
-                description=f"{emoji.error} Nothing is being played at the current moment", color=db.error_color
+                description=f"{emoji.error} Nothing is being played at the current moment", color=config.color.error
             )
             await interaction.response.send_message(embed=error_em, ephemeral=True)
             return False
         elif not interaction.user.voice:
-            error_em = discord.Embed(description=f"{emoji.error} Join a voice channel first", color=db.error_color)
+            error_em = discord.Embed(description=f"{emoji.error} Join a voice channel first", color=config.color.error)
             await interaction.response.send_message(embed=error_em, ephemeral=True)
             return False
         elif player.is_connected and interaction.user.voice.channel.id != int(player.channel_id):
-            error_em = discord.Embed(description=f"{emoji.error} You are not in my voice channel", color=db.error_color)
+            error_em = discord.Embed(
+                description=f"{emoji.error} You are not in my voice channel", color=config.color.error
+            )
             await interaction.response.send_message(embed=error_em, ephemeral=True)
         else:
             return True
@@ -209,7 +55,7 @@ class MusicView(discord.ui.View):
         pause_em = discord.Embed(
             title=f"{emoji.play if player.paused else emoji.pause} Player {'Paused' if player.paused else 'Resumed'}",
             description=f"{interaction.user.mention} {'Paused' if player.paused else 'Resumed'} the player",
-            color=db.theme_color,
+            color=config.color.theme,
         )
         await interaction.response.edit_message(view=self)
         await interaction.followup.send(embed=pause_em, delete_after=5)
@@ -226,7 +72,7 @@ class MusicView(discord.ui.View):
         stop_embed = discord.Embed(
             title=f"{emoji.stop} Player Destroyed",
             description=f"{interaction.user.mention} Destroyed the player",
-            color=db.theme_color,
+            color=config.color.theme,
         )
         for child in self.children:
             child.disabled = True
@@ -243,7 +89,7 @@ class MusicView(discord.ui.View):
         skip_em = discord.Embed(
             title=f"{emoji.skip} Track Skipped",
             description=f"{interaction.user.mention} Skipped the track",
-            color=db.theme_color,
+            color=config.color.theme,
         )
         for child in self.children:
             child.disabled = True
@@ -269,7 +115,7 @@ class MusicView(discord.ui.View):
         loop_em = discord.Embed(
             title=f"{button.emoji} {mode if mode != 'OFF' else ''} Loop {'Enabled' if mode != 'OFF' else 'Disabled'}",
             description=f"Successfully {'enabled' if mode != 'OFF' else 'disabled'} {mode if mode != 'OFF' else ''} Loop",
-            color=db.theme_color,
+            color=config.color.theme,
         )
         await interaction.response.edit_message(view=self)
         await interaction.followup.send(embed=loop_em, delete_after=5)
@@ -279,7 +125,7 @@ class MusicView(discord.ui.View):
     async def shuffle_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
         if not player.queue:
-            error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=db.error_color)
+            error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=config.color.error)
             await interaction.response.send_message(embed=error_em, ephemeral=True)
         else:
             player.shuffle = not player.shuffle
@@ -287,7 +133,7 @@ class MusicView(discord.ui.View):
             shuffle_em = discord.Embed(
                 title=f"{button.emoji} Shuffle {'Enabled' if player.shuffle else 'Disabled'}",
                 description=f"{interaction.user.mention} {'Enabled' if player.shuffle else 'Disabled'} shuffle",
-                color=db.theme_color,
+                color=config.color.theme,
             )
             await interaction.response.edit_message(view=self)
             await interaction.followup.send(embed=shuffle_em, delete_after=5)
@@ -303,7 +149,7 @@ class QueueView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction):
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(interaction.guild_id)
         if not player.queue:
-            error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=db.error_color)
+            error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=config.color.error)
             await interaction.response.send_message(embed=error_em, ephemeral=True)
         else:
             return True
@@ -368,7 +214,7 @@ class QueueEmbed:
             queue_list += (
                 f"`{index + 1}.` **[{track.title}]({track.uri})** [{requester.mention if requester else 'Unknown'}]\n"
             )
-        queue_em = discord.Embed(title=f"{emoji.playlist} {self.ctx.guild.name}'s Queue", colour=db.theme_color)
+        queue_em = discord.Embed(title=f"{emoji.playlist} {self.ctx.guild.name}'s Queue", colour=config.color.theme)
         queue_em.add_field(
             name="Now Playing",
             value=f"`0.` **[{player.current.title}]({player.current.uri})** [{current_requester.mention if current_requester else 'Unknown'}]",
@@ -390,16 +236,16 @@ class Disable:
         await asyncio.gather(*tasks)
 
     async def queue_msg(self) -> None:
-        if len(db.queue_msg(self.guild_id)) > 0:
+        if len(store.queue_msg(self.guild_id)) > 0:
             queue_view = QueueView(self.client, page=1, timeout=None)
             for child in queue_view.children:
                 child.disabled = True
-            await self.edit_messages_async(queue_view, db.queue_msg(self.guild_id))
-            db.queue_msg(self.guild_id, "clear")
+            await self.edit_messages_async(queue_view, store.queue_msg(self.guild_id))
+            store.queue_msg(self.guild_id, "clear")
 
     # Disable play message
     async def play_msg(self) -> None:
-        play_msg = db.play_msg(self.guild_id)
+        play_msg = store.play_msg(self.guild_id)
         music_view = MusicView(self.client, timeout=None)
         for child in music_view.children:
             child.disabled = True
@@ -418,7 +264,7 @@ class Music(commands.Cog):
         if not hasattr(self.client, "lavalink"):
             self.client.lavalink = lavalink.Client(self.client.user.id)
             self.client.lavalink.add_node(
-                db.lavalink(key="host"), db.lavalink(key="port"), db.lavalink(key="pass"), "us", "default-node"
+                config.lavalink["host"], config.lavalink["port"], config.lavalink["password"], "us", "default-node"
             )
             self.client.lavalink.add_event_hook(self.track_hook)
 
@@ -436,7 +282,7 @@ class Music(commands.Cog):
     async def track_hook(self, event: lavalink.Event):
         if isinstance(event, lavalink.events.TrackStartEvent):
             player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
-            channel = db.play_ch_id(event.player.guild_id)
+            channel = store.play_ch_id(event.player.guild_id)
             requester = f"<@{player.current.requester}>"
             if player.current.stream:
                 duration = "🔴 LIVE"
@@ -448,7 +294,7 @@ class Music(commands.Cog):
                 url=f"{player.current.uri}",
                 description=f"{emoji.bullet} **Requested By**: {requester if requester else 'Unknown'}\n"
                 + f"{emoji.bullet} **Duration**: `{duration}`",
-                color=db.theme_color,
+                color=config.color.theme,
             )
             if player.current.source_name == "spotify":
                 play_em.set_thumbnail(url=player.current.extra["cover"])
@@ -469,22 +315,22 @@ class Music(commands.Cog):
                 music_view.children[4].emoji = emoji.shuffle2
             # Player msg
             play_msg = await channel.send(embed=play_em, view=music_view)
-            db.play_msg(event.player.guild_id, play_msg, "set")
+            store.play_msg(event.player.guild_id, play_msg, "set")
         if isinstance(event, lavalink.events.TrackEndEvent):
             await Disable(self.client, event.player.guild_id).play_msg()
         if isinstance(event, lavalink.events.TrackStuckEvent):
-            channel = db.play_ch_id(event.player.guild_id)
+            channel = store.play_ch_id(event.player.guild_id)
             error_em = discord.Embed(
                 description=f"{emoji.error} Error while playing the track. Please try again later.",
-                color=db.error_color,
+                color=config.color.error,
             )
             await Disable(self.client, event.player.guild_id).play_msg()
             await channel.send(embed=error_em, delete_after=5)
         if isinstance(event, lavalink.events.TrackExceptionEvent):
-            channel = db.play_ch_id(event.player.guild_id)
+            channel = store.play_ch_id(event.player.guild_id)
             error_em = discord.Embed(
                 description=f"{emoji.error} Error while playing the track. Please try again later.",
-                color=db.error_color,
+                color=config.color.error,
             )
             await Disable(self.client, event.player.guild_id).play_msg()
             await channel.send(embed=error_em, delete_after=5)
@@ -500,7 +346,7 @@ class Music(commands.Cog):
         """Checks all the voice parameters."""
         player: lavalink.DefaultPlayer = None
         if not ctx.author.voice or not ctx.author.voice.channel:
-            error_em = discord.Embed(description=f"{emoji.error} Join a voice channel first", color=db.error_color)
+            error_em = discord.Embed(description=f"{emoji.error} Join a voice channel first", color=config.color.error)
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
@@ -509,32 +355,38 @@ class Music(commands.Cog):
                 if self.client.lavalink.node_manager.available_nodes:
                     await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
                     player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
-                    db.play_ch_id(ctx.guild.id, ctx.channel, "set")
+                    store.play_ch_id(ctx.guild.id, ctx.channel, "set")
                 else:
                     self.client.lavalink.add_node(
-                        db.lavalink(key="host"), db.lavalink(key="port"), db.lavalink(key="pass"), "us", "default-node"
+                        config.lavalink["host"],
+                        config.lavalink["port"],
+                        config.lavalink["password"],
+                        "us",
+                        "default-node",
                     )
             elif self.current_voice_channel(ctx) is not None and not self.client.lavalink.node_manager.available_nodes:
                 self.client.lavalink.add_node(
-                    db.lavalink(key="host"), db.lavalink(key="port"), db.lavalink(key="pass"), "us", "default-node"
+                    config.lavalink["host"], config.lavalink["port"], config.lavalink["password"], "us", "default-node"
                 )
             elif not permissions.connect or not permissions.speak:
                 player: lavalink.DefaultPlayer = None
                 error_em = discord.Embed(
-                    description=f"{emoji.error} I need the `Connect` and `Speak` permissions", color=db.error_color
+                    description=f"{emoji.error} I need the `Connect` and `Speak` permissions",
+                    color=config.color.error,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
             elif "play" not in ctx.command.name:
                 if not player.current:
                     player: lavalink.DefaultPlayer = None
                     error_em = discord.Embed(
-                        description=f"{emoji.error} Nothing is being played at the current moment", color=db.error_color
+                        description=f"{emoji.error} Nothing is being played at the current moment",
+                        color=config.color.error,
                     )
                     await ctx.respond(embed=error_em, ephemeral=True)
                 elif ctx.author.voice.channel.id != int(player.channel_id):
                     player: lavalink.DefaultPlayer = None
                     error_em = discord.Embed(
-                        description=f"{emoji.error} You are not in my voice channel", color=db.error_color
+                        description=f"{emoji.error} You are not in my voice channel", color=config.color.error
                     )
                     await ctx.respond(embed=error_em, ephemeral=True)
         return player
@@ -571,7 +423,7 @@ class Music(commands.Cog):
             await member.edit(deafen=True)
 
     # Play
-    @slash_command(guild_ids=db.guild_ids(), name="play")
+    @slash_command(name="play")
     @option("query", description="Enter your track name/link or playlist link", autocomplete=search)
     async def play(self, ctx: discord.ApplicationContext, query: str):
         """Searches and plays a track from a given query."""
@@ -579,10 +431,10 @@ class Music(commands.Cog):
         if player:
             await ctx.defer()
             query = query.strip("<>")
-            embed = discord.Embed(color=db.theme_color)
+            embed = discord.Embed(color=config.color.theme)
             # Spotify
             if "open.spotify.com" in query:
-                results = await SpotifySource(query, ctx.author.id).load_item(self.client.lavalink)
+                results = await spotify.SpotifySource(query, ctx.author.id).load_item(self.client.lavalink)
                 if results["loadType"] == lavalink.LoadType.PLAYLIST:
                     tracks = results["tracks"]
                     for track in tracks:
@@ -596,7 +448,7 @@ class Music(commands.Cog):
                     embed.description = f"**[{track.title}]({track.uri})**"
                 else:
                     error_em = discord.Embed(
-                        description=f"{emoji.error} No track found from the given query", color=db.error_color
+                        description=f"{emoji.error} No track found from the given query", color=config.color.error
                     )
                     await ctx.respond(embed=error_em, ephemeral=True)
                 await ctx.respond(embed=embed)
@@ -612,7 +464,7 @@ class Music(commands.Cog):
                 results = await player.node.get_tracks(query)
                 if not results or not results["tracks"]:
                     error_em = discord.Embed(
-                        description=f"{emoji.error} No track found from the given query", color=db.error_color
+                        description=f"{emoji.error} No track found from the given query", color=config.color.error
                     )
                     await ctx.respond(embed=error_em, ephemeral=True)
                 if results["loadType"] == "PLAYLIST_LOADED":
@@ -632,7 +484,7 @@ class Music(commands.Cog):
                 await player.play()
 
     # Now playing
-    @slash_command(guild_ids=db.guild_ids(), name="now-playing")
+    @slash_command(name="now-playing")
     async def now_playing(self, ctx: discord.ApplicationContext):
         """Shows currently playing track."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
@@ -645,7 +497,7 @@ class Music(commands.Cog):
                 filled_length = int(bar_length * player.position // float(player.current.duration))
                 bar = emoji.filled_bar * filled_length + "" + emoji.empty_bar * (bar_length - filled_length)
                 duration = lavalink.utils.format_time(player.current.duration)
-            equalizer = db.equalizer(ctx.guild.id)
+            equalizer = store.equalizer(ctx.guild.id)
             loop = ""
             if player.loop == player.LOOP_NONE:
                 loop = "Disabled"
@@ -663,48 +515,46 @@ class Music(commands.Cog):
                 + f"{emoji.bullet} **Shuffle**: {'Enabled' if player.shuffle else 'Disabled'}\n"
                 + f"{emoji.bullet} **Equalizer**: `{equalizer}`\n"
                 + f"{bar}",
-                color=db.theme_color,
+                color=config.color.theme,
             )
             await ctx.respond(embed=play_em)
 
     # Equalizer
-    @slash_command(guild_ids=db.guild_ids(), name="equalizer")
+    @slash_command(name="equalizer")
     @option(
-        "equalizer",
-        description="Choose your equalizer",
-        choices=["Reset", "Bassboost", "Jazz", "Pop", "Treble", "Nightcore", "Superbass"],
+        "equalizer", description="Choose your equalizer", choices=list(equalizer_presets.presets.keys()) + ["Reset"]
     )
     async def equalizer(self, ctx: discord.ApplicationContext, equalizer: str):
         """Equalizer to change track quality."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
-            _equalizer = equalizer.lower()
-            if _equalizer == "reset":
+            if equalizer == "Reset":
                 await player.clear_filters()
                 eq_em = discord.Embed(
                     title=f"{emoji.equalizer} Reset Equalizer",
                     description="Reset the equalizer",
-                    color=db.theme_color,
+                    color=config.color.theme,
                 )
-                db.equalizer(guild_id=ctx.guild.id, name="None", mode="set")
+                store.equalizer(guild_id=ctx.guild.id, name="None", mode="set")
             else:
-                for eq_name, eq_gains in equalizer_presets.items():
-                    if eq_name == _equalizer:
+                for eq_name, eq_gains in equalizer_presets.presets.items():
+                    if eq_name == equalizer:
                         eq = lavalink.Equalizer()
                         eq.update(bands=eq_gains)
                         await player.set_filter(eq)
                         eq_em = discord.Embed(
                             title=f"{emoji.equalizer} Equalizer Changed",
                             description=f"Added `{equalizer}` equalizer",
-                            color=db.theme_color,
+                            color=config.color.theme,
                         )
-                        db.equalizer(guild_id=ctx.guild.id, name=equalizer, mode="set")
+                        store.equalizer(guild_id=ctx.guild.id, name=equalizer, mode="set")
             await ctx.respond(embed=eq_em)
 
     # Stop
-    @slash_command(guild_ids=db.guild_ids(), name="stop")
+    @slash_command(name="stop")
     async def stop(self, ctx: discord.ApplicationContext):
         """Destroys the player."""
+        await ctx.defer()
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             try:
@@ -713,14 +563,14 @@ class Music(commands.Cog):
                 await ctx.guild.voice_client.disconnect(force=True)
             except Exception:
                 pass
-            stop_embed = discord.Embed(title=f"{emoji.stop} Player Destroyed", color=db.theme_color)
+            stop_embed = discord.Embed(title=f"{emoji.stop} Player Destroyed", color=config.color.theme)
             disable = Disable(self.client, ctx.guild.id)
             await disable.play_msg()
             await ctx.respond(embed=stop_embed)
             await disable.queue_msg()
 
     # Seek
-    @slash_command(guild_ids=db.guild_ids(), name="seek")
+    @slash_command(name="seek")
     @option("seconds", description="Enter track position in seconds")
     async def seek(self, ctx: discord.ApplicationContext, seconds: int):
         """Seeks to a given position in a track."""
@@ -732,27 +582,27 @@ class Music(commands.Cog):
                 seek_em = discord.Embed(
                     title=f"{emoji.seek} Track Seeked",
                     description=f"Moved track to `{lavalink.utils.format_time(track_time)}`",
-                    color=db.theme_color,
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=seek_em)
             elif lavalink.utils.format_time(player.current.duration) <= lavalink.utils.format_time(track_time):
                 await self.skip()
 
     # Skip
-    @slash_command(guild_ids=db.guild_ids(), name="skip")
+    @slash_command(name="skip")
     async def skip(self, ctx: discord.ApplicationContext):
         """Skips the current playing track."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             skip_em = discord.Embed(
-                title=f"{emoji.skip} Track Skipped", description="Skipped the track", color=db.theme_color
+                title=f"{emoji.skip} Track Skipped", description="Skipped the track", color=config.color.theme
             )
             await Disable(self.client, ctx.guild.id).play_msg()
             await player.skip()
             await ctx.respond(embed=skip_em)
 
     # Skip to
-    @slash_command(guild_ids=db.guild_ids(), name="skip-to")
+    @slash_command(name="skip-to")
     @option("track", description="Enter your track index number to skip")
     async def skip_to(self, ctx: discord.ApplicationContext, track: int):
         """Skips to a given track in the queue."""
@@ -762,37 +612,41 @@ class Music(commands.Cog):
             if track < 1 or track > len(player.queue):
                 error_em = discord.Embed(
                     description=f"{emoji.error} Track number must be between `1` and `{len(player.queue)}`",
-                    color=db.error_color,
+                    color=config.color.error,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
             else:
                 player.queue = player.queue[track - 1 :]
                 await player.skip()
                 skip_em = discord.Embed(
-                    title=f"{emoji.skip} Track Skipped", description=f"Skipped to track `{track}`", color=db.theme_color
+                    title=f"{emoji.skip} Track Skipped",
+                    description=f"Skipped to track `{track}`",
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=skip_em)
 
     # Pause
-    @slash_command(guild_ids=db.guild_ids(), name="pause")
+    @slash_command(name="pause")
     async def pause(self, ctx: discord.ApplicationContext):
         """Pauses the player."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if player.paused:
-                error_em = discord.Embed(description=f"{emoji.error} Player is already paused", color=db.error_color)
+                error_em = discord.Embed(
+                    description=f"{emoji.error} Player is already paused", color=config.color.error
+                )
                 await ctx.respond(embed=error_em, ephemeral=True)
             else:
                 await player.set_pause(True)
                 pause_em = discord.Embed(
                     title=f"{emoji.pause} Player Paused",
                     description="Successfully paused the player",
-                    color=db.theme_color,
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=pause_em)
 
     # Resume
-    @slash_command(guild_ids=db.guild_ids(), name="resume")
+    @slash_command(name="resume")
     async def resume(self, ctx: discord.ApplicationContext):
         """Resumes the player."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
@@ -802,15 +656,15 @@ class Music(commands.Cog):
                 resume_em = discord.Embed(
                     title=f"{emoji.play} Player Resumed",
                     description="Successfully resumed the player",
-                    color=db.theme_color,
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=resume_em)
             else:
-                error_em = discord.Embed(description=f"{emoji.error} Player is not paused", color=db.error_color)
+                error_em = discord.Embed(description=f"{emoji.error} Player is not paused", color=config.color.error)
                 await ctx.respond(embed=error_em, ephemeral=True)
 
     # Volume
-    @slash_command(guild_ids=db.guild_ids(), name="volume")
+    @slash_command(name="volume")
     @option("volume", description="Enter your volume amount from 1 - 100")
     async def volume(self, ctx: discord.ApplicationContext, volume: int):
         """Changes the player's volume 1 - 100."""
@@ -819,7 +673,7 @@ class Music(commands.Cog):
             volume_condition = [volume < 1, volume > 100]
             if any(volume_condition):
                 error_em = discord.Embed(
-                    description=f"{emoji.error} Volume amount must be between `1` - `100`", color=db.error_color
+                    description=f"{emoji.error} Volume amount must be between `1` - `100`", color=config.color.error
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
             else:
@@ -827,12 +681,12 @@ class Music(commands.Cog):
                 vol_em = discord.Embed(
                     title=f"{emoji.volume} Volume Changed",
                     description=f"Successfully changed volume to `{player.volume}%`",
-                    color=db.theme_color,
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=vol_em)
 
     # Queue
-    @slash_command(guild_ids=db.guild_ids(), name="queue")
+    @slash_command(name="queue")
     @option("page", description="Enter queue page number", default=1, required=False)
     async def queue(self, ctx: discord.ApplicationContext, page: int = 1):
         """Shows the player's queue."""
@@ -841,11 +695,11 @@ class Music(commands.Cog):
             items_per_page = 5
             pages = math.ceil(len(player.queue) / items_per_page)
             if not player.queue:
-                error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=db.error_color)
+                error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=config.color.error)
                 await ctx.respond(embed=error_em, ephemeral=True)
             elif page > pages or page < 1:
                 error_em = discord.Embed(
-                    description=f"{emoji.error} Page has to be between `1` to `{pages}`", color=db.error_color
+                    description=f"{emoji.error} Page has to be between `1` to `{pages}`", color=config.color.error
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
             else:
@@ -854,30 +708,30 @@ class Music(commands.Cog):
                 if pages > 1:
                     queue_view = QueueView(client=self.client, page=page, timeout=60)
                     queue_msg = await ctx.respond(embed=queue_em, view=queue_view)
-                    db.queue_msg(ctx.guild.id, queue_msg, "set")
+                    store.queue_msg(ctx.guild.id, queue_msg, "set")
                 else:
                     await ctx.respond(embed=queue_em)
 
     # Shuffle
-    @slash_command(guild_ids=db.guild_ids(), name="shuffle")
+    @slash_command(name="shuffle")
     async def shuffle(self, ctx: discord.ApplicationContext):
         """Shuffles the player's queue."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if not player.queue:
-                error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=db.error_color)
+                error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=config.color.error)
                 await ctx.respond(embed=error_em, ephemeral=True)
             else:
                 player.shuffle = not player.shuffle
                 shuffle_em = discord.Embed(
                     title=f"{emoji.shuffle if player.shuffle else emoji.shuffle2} Shuffle {'Enabled' if player.shuffle else 'Disabled'}",
                     description=f"Successfully {'enabled' if player.shuffle else 'disabled'} shuffle",
-                    color=db.theme_color,
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=shuffle_em)
 
     # Loop
-    @slash_command(guild_ids=db.guild_ids(), name="loop")
+    @slash_command(name="loop")
     @option("mode", description="Enter loop mode", choices=["OFF", "Queue", "Track"])
     async def loop(self, ctx: discord.ApplicationContext, mode: str):
         """Loops the current queue until the command is invoked again or until a new track is enqueued."""
@@ -892,7 +746,7 @@ class Music(commands.Cog):
                 _emoji = emoji.loop2
             elif mode == "Queue":
                 if not player.queue:
-                    error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=db.error_color)
+                    error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=config.color.error)
                     await ctx.respond(embed=error_em, ephemeral=True)
                     return
                 else:
@@ -901,12 +755,12 @@ class Music(commands.Cog):
             loop_em = discord.Embed(
                 title=f"{_emoji} {mode if mode != 'OFF' else ''} Loop {'Enabled' if mode != 'OFF' else 'Disabled'}",
                 description=f"Successfully {'enabled' if mode != 'OFF' else 'disabled'} {mode if mode != 'OFF' else ''} Loop",
-                color=db.theme_color,
+                color=config.color.theme,
             )
             await ctx.respond(embed=loop_em)
 
     # Remove
-    @slash_command(guild_ids=db.guild_ids(), name="remove")
+    @slash_command(name="remove")
     @option("index", description="Enter your track index number")
     async def remove(self, ctx: discord.ApplicationContext, index: int):
         """Removes a track from the player's queue with the given index."""
@@ -914,12 +768,12 @@ class Music(commands.Cog):
         if player:
             if ctx.author.id == player.queue[index - 1].requester:
                 if not player.queue:
-                    error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=db.error_color)
+                    error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=config.color.error)
                     await ctx.respond(embed=error_em, ephemeral=True)
                 elif index > len(player.queue) or index < 1:
                     error_em = discord.Embed(
                         description=f"{emoji.error} Index has to be between `1` to `{len(player.queue)}`",
-                        color=db.error_color,
+                        color=config.color.error,
                     )
                     await ctx.respond(embed=error_em, ephemeral=True)
                 else:
@@ -927,12 +781,12 @@ class Music(commands.Cog):
                     remove_em = discord.Embed(
                         title=f"{emoji.playlist} Track Removed",
                         description=f"**{removed.title}**",
-                        color=db.theme_color,
+                        color=config.color.theme,
                     )
                     await ctx.respond(embed=remove_em)
             else:
                 error_em = discord.Embed(
-                    description=f"{emoji.error} Only requester can remove from the list", color=db.error_color
+                    description=f"{emoji.error} Only requester can remove from the list", color=config.color.error
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 

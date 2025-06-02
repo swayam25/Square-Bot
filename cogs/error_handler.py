@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
-from utils import database as db
+from utils import check, config
 from utils.emoji import emoji
+from utils.helpers import fmt_perms
 
 
 class ErrorHandler(commands.Cog):
@@ -10,43 +11,30 @@ class ErrorHandler(commands.Cog):
 
     # Slash cmd Error Handler
     @commands.Cog.listener()
-    async def on_application_command_error(self, ctx: discord.ApplicationContext, error: Exception):
-        error_em = discord.Embed()
+    async def on_application_command_error(self, ctx: discord.ApplicationContext, error: discord.DiscordException):
+        error_em = discord.Embed(color=config.color.error)
 
         if isinstance(error, commands.CommandNotFound):
             pass
 
         elif isinstance(error, commands.CommandOnCooldown):
-            error_em = discord.Embed(
-                description=f"{emoji.error} You're on cooldown. Try again in {error.retry_after:.0f} seconds.",
-                color=db.error_color,
-            )
+            error_em.description = f"{emoji.error} You're on cooldown. Try again in {error.retry_after:.0f} seconds."
 
         elif isinstance(error, commands.BotMissingPermissions):
-            missing = [perm.replace("_", " ").replace("guild", "server").title() for perm in error.missing_perms]
-            if len(missing) > 2:
-                fmt = "{}, and {}".format("**, **".join(missing[:-1]), missing[-1])
-            else:
-                fmt = " and ".join(missing)
-            error_em = discord.Embed(
-                description=f"{emoji.error} I don't have **{fmt}** permission(s)", color=db.error_color
-            )
+            error_em.description = (f"{emoji.error} I don't have {fmt_perms(error.missing_permissions)} permission(s)",)
 
         elif isinstance(error, commands.MissingPermissions):
-            missing = [perm.replace("_", " ").replace("guild", "server").title() for perm in error.missing_perms]
-            if len(missing) > 2:
-                fmt = "{}, and {}".format("**, **".join(missing[:-1]), missing[-1])
-            else:
-                fmt = " and ".join(missing)
-            error_em = discord.Embed(
-                description=f"{emoji.error} You don't have **{fmt}** permission(s)", color=db.error_color
+            error_em.description = (
+                f"{emoji.error} You need {fmt_perms(error.missing_permissions)} permission(s) to use this command."
             )
 
         elif isinstance(error, discord.errors.Forbidden):
-            error_em = discord.Embed(description=f"{emoji.error} 404 Forbidden", color=db.error_color)
+            error_em.description = f"{emoji.error} I don't have permission to do that."
 
-        else:
-            error_em = discord.Embed(description=f"{emoji.error} {error}", color=db.error_color)
+        elif await check.is_dev().predicate(ctx):
+            error_em.description = (
+                f"{emoji.error} An unexpected error occurred: **`{error.__class__.__name__}`**\n```\n{error}```"
+            )
         await ctx.respond(embed=error_em, ephemeral=True)
 
 

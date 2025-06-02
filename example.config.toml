@@ -1,0 +1,22 @@
+owner-id = 0
+owner-guild-ids = []
+system-channel-id = 0
+support-server-url = "https://discord.gg" # Replace with your support server URL.
+emoji = "default"
+
+bot-token = ""
+database-url = "asyncpg://..." # If it starts with "postgresql://", replace it with "asyncpg://".
+
+[colors]
+theme = "#1FCEEC"
+error = "#E74C3C"
+
+[lavalink]
+host = ""
+port = 0
+password = ""
+secure = false
+
+[spotify]
+client_id = ""
+client_secret = ""
