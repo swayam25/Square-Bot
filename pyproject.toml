@@ -1,6 +1,6 @@
 [project]
 name = "square"
-version = "1.1.0"
+version = "1.1.1"
 description = "Advanced multipurpose discord bot for all your needs."
 license = "GPL-3.0"
 readme = "README.md"
