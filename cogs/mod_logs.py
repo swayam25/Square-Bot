@@ -74,8 +74,8 @@ class Logs(commands.Cog):
     # Edit
     @commands.Cog.listener()
     async def on_message_edit(self, msg_before: discord.Message, msg_after: discord.Message):
-        if msg_before.guild.id:
-            channel_id = (await fetch_guild_settings(msg_before.guild.id)).mod_log_channel_id
+        if msg_before.guild:
+            channel_id = (await fetch_guild_settings(msg_before.guild.id)).msg_log_channel_id
             if msg_before.author and msg_after.author == self.client.user:
                 return
             elif msg_before.author.bot:
@@ -102,7 +102,7 @@ class Logs(commands.Cog):
     @commands.Cog.listener()
     async def on_message_delete(self, msg: discord.Message):
         if msg.guild:
-            channel_id = (await fetch_guild_settings(msg.guild.id)).mod_log_channel_id
+            channel_id = (await fetch_guild_settings(msg.guild.id)).msg_log_channel_id
             if msg.author == self.client.user:
                 return
             elif msg.author.bot:
@@ -140,7 +140,7 @@ class Logs(commands.Cog):
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, msgs: list[discord.Message]):
         if msgs[0].guild:
-            channel_id = (await fetch_guild_settings(msgs[0].guild.id)).mod_log_channel_id
+            channel_id = (await fetch_guild_settings(msgs[0].guild.id)).msg_log_channel_id
             if msgs[0].author == self.client.user:
                 return
             elif msgs[0].author.bot:

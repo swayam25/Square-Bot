@@ -36,7 +36,7 @@ class Moderation(commands.Cog):
             purge_em = discord.Embed(
                 title=f"{emoji.bin} Messages Purged",
                 description=f"Successfully purged `{amount}` message(s)",
-                color=config.color.theme,
+                color=config.color.error,
             )
             await ctx.respond(embed=purge_em, ephemeral=True)
 
@@ -57,7 +57,7 @@ class Moderation(commands.Cog):
             purge_em = discord.Embed(
                 title=f"{emoji.bin} Messages Purged",
                 description=f"Successfully purged `{amount}` message(s) sent by humans",
-                color=config.color.theme,
+                color=config.color.error,
             )
             await ctx.respond(embed=purge_em, ephemeral=True)
 
@@ -78,7 +78,7 @@ class Moderation(commands.Cog):
             purge_em = discord.Embed(
                 title=f"{emoji.bin} Messages Purged",
                 description=f"Successfully purged `{amount}` message(s) sent by bots",
-                color=config.color.theme,
+                color=config.color.error,
             )
             await ctx.respond(embed=purge_em, ephemeral=True)
 
@@ -100,7 +100,7 @@ class Moderation(commands.Cog):
             purge_em = discord.Embed(
                 title=f"{emoji.bin} Messages Purged",
                 description=f"Successfully purged `{amount}` message(s) sent by {user.mention}",
-                color=config.color.theme,
+                color=config.color.error,
             )
             await ctx.respond(embed=purge_em, ephemeral=True)
 
@@ -122,7 +122,7 @@ class Moderation(commands.Cog):
             purge_em = discord.Embed(
                 title=f"{emoji.bin} Messages Purged",
                 description=f"Successfully purged `{amount}` message(s) containing `{phrase}`",
-                color=config.color.theme,
+                color=config.color.error,
             )
             await ctx.respond(embed=purge_em, ephemeral=True)
 
@@ -256,7 +256,7 @@ class Moderation(commands.Cog):
         lock_em = discord.Embed(
             title=f"{emoji.lock} Channel Locked",
             description=f"Successfull locked {ctx.channel.mention}.\n" + f"{emoji.bullet} **Reason**: {reason}",
-            color=config.color.theme,
+            color=config.color.error,
         )
         await ctx.channel.set_permissions(ctx.author, send_messages=True)
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
@@ -306,7 +306,7 @@ class Moderation(commands.Cog):
         remove_role_em = discord.Embed(
             title=f"{emoji.minus} Role Removed",
             description=f"Successfully removed {role.mention} from {user.mention}",
-            color=config.color.theme,
+            color=config.color.error,
         )
         await user.remove_roles(role)
         await ctx.respond(embed=remove_role_em)
