@@ -493,10 +493,11 @@ class Music(commands.Cog):
             if player.current.stream:
                 duration = "🔴 LIVE"
             elif not player.current.stream:
-                bar_length = 20
+                bar_length = 15
                 filled_length = int(bar_length * player.position // float(player.current.duration))
-                bar = emoji.filled_bar * filled_length + "" + emoji.empty_bar * (bar_length - filled_length)
-                duration = lavalink.utils.format_time(player.current.duration)
+                bar = f"`{lavalink.utils.format_time(player.position)}` {emoji.filled_bar * filled_length}{emoji.empty_bar * (bar_length - filled_length)} `{lavalink.utils.format_time(player.current.duration)}`"
+                duration = datetime.timedelta(milliseconds=player.current.duration)
+                duration = format_timedelta(duration, locale="en_IN")
             equalizer = store.equalizer(ctx.guild.id)
             loop = ""
             if player.loop == player.LOOP_NONE:
@@ -508,13 +509,15 @@ class Music(commands.Cog):
             play_em = discord.Embed(
                 title=f"{player.current.title}",
                 url=f"{player.current.uri}",
-                description=f"{emoji.bullet} **Requested By**: {requester.mention if requester else 'Unknown'}\n"
-                + f"{emoji.bullet} **Duration**: `{duration}`\n"
-                + f"{emoji.bullet} **Volume**: `{player.volume}%`\n"
-                + f"{emoji.bullet} **Loop**: {loop}\n"
-                + f"{emoji.bullet} **Shuffle**: {'Enabled' if player.shuffle else 'Disabled'}\n"
-                + f"{emoji.bullet} **Equalizer**: `{equalizer}`\n"
-                + f"{bar}",
+                description=(
+                    f"{emoji.bullet} **Requested By**: {requester.mention if requester else 'Unknown'}\n"
+                    f"{emoji.bullet} **Duration**: `{duration}`\n"
+                    f"{emoji.bullet} **Volume**: `{player.volume}%`\n"
+                    f"{emoji.bullet} **Loop**: {loop}\n"
+                    f"{emoji.bullet} **Shuffle**: {'Enabled' if player.shuffle else 'Disabled'}\n"
+                    f"{emoji.bullet} **Equalizer**: `{equalizer}`\n\n"
+                    f"{bar}"
+                ),
                 color=config.color.theme,
             )
             await ctx.respond(embed=play_em)
@@ -577,7 +580,7 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             track_time = player.position + (seconds * 1000)
-            if lavalink.utils.format_time(player.current.duration) > lavalink.utils.format_time(track_time):
+            if player.current.duration > track_time:
                 await player.seek(track_time)
                 seek_em = discord.Embed(
                     title=f"{emoji.seek} Track Seeked",
@@ -585,7 +588,7 @@ class Music(commands.Cog):
                     color=config.color.theme,
                 )
                 await ctx.respond(embed=seek_em)
-            elif lavalink.utils.format_time(player.current.duration) <= lavalink.utils.format_time(track_time):
+            elif player.current.duration <= track_time:
                 await self.skip()
 
     # Skip

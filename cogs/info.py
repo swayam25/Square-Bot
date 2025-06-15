@@ -2,6 +2,7 @@ import datetime
 import discord
 import platform
 import time
+from babel.dates import format_timedelta
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from utils import config
@@ -29,8 +30,10 @@ class Info(commands.Cog):
     @slash_command(name="uptime")
     async def uptime(self, ctx: discord.ApplicationContext):
         """Shows bot's uptime."""
+        dur = datetime.timedelta(seconds=int(round(time.time() - start_time)))
+        dur = format_timedelta(dur)
         uptime_em = discord.Embed(
-            description=f"{emoji.bullet} **Bot's Uptime**: `{str(datetime.timedelta(seconds=int(round(time.time() - start_time))))}`",
+            description=f"{emoji.bullet} **Bot's Uptime**: `{str(dur)}`",
             color=config.color.theme,
         )
         await ctx.respond(embed=uptime_em)
@@ -40,10 +43,12 @@ class Info(commands.Cog):
     async def stats(self, ctx: discord.ApplicationContext):
         """Shows bot stats."""
         owner = await self.client.fetch_user(config.owner_id)
+        dur = datetime.timedelta(seconds=int(round(time.time() - start_time)))
+        dur = format_timedelta(dur)
         stats_em = discord.Embed(
             title=f"{self.client.user.name} Stats",
             description=f"{emoji.bullet} **Bot's Latency**: `{round(self.client.latency * 1000)} ms`\n"
-            + f"{emoji.bullet} **Bot's Uptime**: `{str(datetime.timedelta(seconds=int(round(time.time() - start_time))))}`\n"
+            + f"{emoji.bullet} **Bot's Uptime**: `{str(dur)}`\n"
             + f"{emoji.bullet} **Total Servers**: `{str(len(self.client.guilds))}`\n"
             + f"{emoji.bullet} **Total Members**: `{len(set(self.client.get_all_members()))}`\n"
             + f"{emoji.bullet} **Total Channels**: `{len(set(self.client.get_all_channels()))}`\n"
