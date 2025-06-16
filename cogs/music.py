@@ -10,7 +10,6 @@ from discord.commands import option, slash_command
 from discord.ext import commands, tasks
 from music import equalizer_presets, store
 from music.client import LavalinkVoiceClient
-from music.sources import spotify
 from utils import config
 from utils.emoji import emoji
 
@@ -282,7 +281,7 @@ class Music(commands.Cog):
     async def track_hook(self, event: lavalink.Event):
         if isinstance(event, lavalink.events.TrackStartEvent):
             player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
-            channel = store.play_ch_id(event.player.guild_id)
+            channel = store.play_ch(event.player.guild_id)
             requester = f"<@{player.current.requester}>"
             if player.current.stream:
                 duration = "🔴 LIVE"
@@ -298,10 +297,12 @@ class Music(commands.Cog):
                 ),
                 color=config.color.theme,
             )
-            if player.current.source_name == "spotify":
-                play_em.set_thumbnail(url=player.current.extra["cover"])
-            elif player.current.source_name == "youtube":
-                play_em.set_image(url=f"https://i.ytimg.com/vi/{player.current.identifier}/maxresdefault.jpg")
+            source_images = {
+                "spotify": lambda: play_em.set_thumbnail(url=player.current.artwork_url),
+                "soundcloud": lambda: play_em.set_thumbnail(url=player.current.artwork_url),
+                "_": lambda: play_em.set_image(url=player.current.artwork_url),
+            }
+            (source_images.get(player.current.source_name) or source_images["_"])()
             music_view = MusicView(self.client, timeout=None)
             # Loop emoji
             if player.loop == player.LOOP_NONE:
@@ -321,7 +322,7 @@ class Music(commands.Cog):
         if isinstance(event, lavalink.events.TrackEndEvent):
             await Disable(self.client, event.player.guild_id).play_msg()
         if isinstance(event, lavalink.events.TrackStuckEvent):
-            channel = store.play_ch_id(event.player.guild_id)
+            channel = store.play_ch(event.player.guild_id)
             error_em = discord.Embed(
                 description=f"{emoji.error} Error while playing the track. Please try again later.",
                 color=config.color.error,
@@ -329,7 +330,7 @@ class Music(commands.Cog):
             await Disable(self.client, event.player.guild_id).play_msg()
             await channel.send(embed=error_em, delete_after=5)
         if isinstance(event, lavalink.events.TrackExceptionEvent):
-            channel = store.play_ch_id(event.player.guild_id)
+            channel = store.play_ch(event.player.guild_id)
             error_em = discord.Embed(
                 description=f"{emoji.error} Error while playing the track. Please try again later.",
                 color=config.color.error,
@@ -357,7 +358,7 @@ class Music(commands.Cog):
                 if self.client.lavalink.node_manager.available_nodes:
                     await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
                     player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
-                    store.play_ch_id(ctx.guild.id, ctx.channel, "set")
+                    store.play_ch(ctx.guild.id, ctx.channel, "set")
                 else:
                     self.client.lavalink.add_node(
                         config.lavalink["host"],
@@ -398,7 +399,7 @@ class Music(commands.Cog):
         """Searches a track from a given query."""
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.interaction.guild_id)
         if ctx.value != "":
-            result = await player.node.get_tracks(f"ytsearch:{ctx.value}")
+            result = await player.node.get_tracks(f"spsearch:{ctx.value}")
             tracks = []
             for track in result["tracks"]:
                 track_name = ""
@@ -434,54 +435,27 @@ class Music(commands.Cog):
             await ctx.defer()
             query = query.strip("<>")
             embed = discord.Embed(color=config.color.theme)
-            # Spotify
-            if "open.spotify.com" in query:
-                results = await spotify.SpotifySource(query, ctx.author.id).load_item(self.client.lavalink)
-                if results["loadType"] == lavalink.LoadType.PLAYLIST:
-                    tracks = results["tracks"]
-                    for track in tracks:
-                        player.add(requester=ctx.author.id, track=track)
-                    embed.title = f"{emoji.playlist} Playlist Enqueued"
-                    embed.description = f"**{results['playlistInfo'].name}** with `{len(tracks)}` tracks"
-                elif results["loadType"] == lavalink.LoadType.TRACK:
-                    track = results["tracks"][0]
+            if not url_rx.match(query):
+                query = f"ytsearch:{query}"
+            results = await player.node.get_tracks(query)
+            if not results or not results["tracks"]:
+                error_em = discord.Embed(
+                    description=f"{emoji.error} No track found from the given query", color=config.color.error
+                )
+                await ctx.respond(embed=error_em, ephemeral=True)
+            if results["loadType"] == lavalink.LoadType.PLAYLIST:
+                tracks = results["tracks"]
+                for track in tracks:
                     player.add(requester=ctx.author.id, track=track)
-                    embed.title = f"{emoji.music} Track Enqueued"
-                    embed.description = f"**[{track.title}]({track.uri})**"
-                else:
-                    error_em = discord.Embed(
-                        description=f"{emoji.error} No track found from the given query", color=config.color.error
-                    )
-                    await ctx.respond(embed=error_em, ephemeral=True)
+                embed.title = f"{emoji.playlist} Playlist Enqueued"
+                embed.description = f"**{results['playlistInfo']['name']}** with `{len(tracks)}` tracks"
                 await ctx.respond(embed=embed)
-            # Others
-            else:
-                if not url_rx.match(query):
-                    if "soundcloud.com" in query:
-                        query = f"scsearch:{query}"
-                    elif "music.youtube.com" in query:
-                        query = f"ytmsearch:{query}"
-                    else:
-                        query = f"ytsearch:{query}"
-                results = await player.node.get_tracks(query)
-                if not results or not results["tracks"]:
-                    error_em = discord.Embed(
-                        description=f"{emoji.error} No track found from the given query", color=config.color.error
-                    )
-                    await ctx.respond(embed=error_em, ephemeral=True)
-                if results["loadType"] == "PLAYLIST_LOADED":
-                    tracks = results["tracks"]
-                    for track in tracks:
-                        player.add(requester=ctx.author.id, track=track)
-                    embed.title = f"{emoji.playlist} Playlist Enqueued"
-                    embed.description = f"**{results['playlistInfo']['name']}** with `{len(tracks)}` tracks"
-                    await ctx.respond(embed=embed)
-                elif results["tracks"]:
-                    track = results["tracks"][0]
-                    player.add(requester=ctx.author.id, track=track)
-                    embed.title = f"{emoji.music} Track Enqueued"
-                    embed.description = f"**[{track['info']['title']}]({track['info']['uri']})**"
-                    await ctx.respond(embed=embed)
+            elif results["tracks"]:
+                track = results["tracks"][0]
+                player.add(requester=ctx.author.id, track=track)
+                embed.title = f"{emoji.music} Track Enqueued"
+                embed.description = f"**[{track['info']['title']}]({track['info']['uri']})**"
+                await ctx.respond(embed=embed)
             if not player.is_playing:
                 await player.play()
 

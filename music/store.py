@@ -4,20 +4,20 @@ obj = {}
 
 
 # Play channel ID
-def play_ch_id(guild_id: int, channel_id: Any | None = None, mode: Literal["get", "set"] = "get"):
+def play_ch(guild_id: int, channel: Any | None = None, mode: Literal["get", "set"] = "get"):
     """
     Gets or sets the play channel ID for a guild.
 
     Parameters:
         guild_id (int): The ID of the guild.
-        channel_id (Any | None): The channel ID to set, or None to get the current value.
+        channel (Any | None): The channel ID to set, or None to get the current value.
         mode (str): The operation mode, either "get" or "set".
     """
     match mode:
         case "get":
-            return obj.get(f"{str(guild_id)}-play_ch_id", None)
+            return obj.get(f"{str(guild_id)}-play_ch", None)
         case "set":
-            obj.update({f"{str(guild_id)}-play_ch_id": channel_id})
+            obj.update({f"{str(guild_id)}-play_ch": channel})
 
 
 # Play msg ID

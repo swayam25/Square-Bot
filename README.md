@@ -10,7 +10,7 @@ Advanced multipurpose discord bot for all your needs.
 
 - Advanced moderation system.
 - Lots of utility & fun commands.
-- Advanced music system with support for YouTube, Spotify and SoundCloud.
+- Advanced music system with support for various sources (*depends on your Lavalink server*).
 - Clean & informative help menu.
 
 ## 🚩 Installation
@@ -81,21 +81,9 @@ Advanced multipurpose discord bot for all your needs.
         - `secure` (`bool`)
             - Lavalink secure status
 
-    - `[spotify]`
-        - `client_id` (`str`)
-            - Spotify client id
-        - `client_secret` (`str`)
-            - Spotify client secret
-
     </details>
 
-3. Set spotify credentials in `config.toml` file.
-    - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
-    - Create a new application (*visit [Spotify Developer Docs](https://developer.spotify.com/documentation/web-api/tutorials/getting-started) for more details*).
-    - Get the `client_id` and `client_secret` from the application settings.
-    - Set the `client_id` and `client_secret` in the `config.toml` file.
-
-4. Start the bot.
+3. Start the bot.
     ```sh
     uv run main.py
     ```

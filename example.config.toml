@@ -16,7 +16,3 @@ host = ""
 port = 0
 password = ""
 secure = false
-
-[spotify]
-client_id = ""
-client_secret = ""

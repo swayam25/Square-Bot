@@ -46,12 +46,3 @@ class LavalinkConfig(TypedDict):
 
 
 lavalink: LavalinkConfig = data["lavalink"]
-
-
-# Spotify configuration
-class SpotifyConfig(TypedDict):
-    client_id: str
-    client_secret: str
-
-
-spotify: SpotifyConfig = data["spotify"]
