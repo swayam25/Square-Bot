@@ -147,8 +147,7 @@ class Moderation(commands.Cog):
         else:
             kich_em = discord.Embed(
                 title=f"{emoji.kick} Kicked User",
-                description=f"Successfully kicked **{user}** from the server.\n"
-                + f"{emoji.bullet2} **Reason**: {reason}",
+                description=(f"Successfully kicked **{user}** from the server.\n{emoji.bullet2} **Reason**: {reason}"),
                 color=config.color.error,
             )
             await user.kick(reason=reason)
@@ -175,8 +174,7 @@ class Moderation(commands.Cog):
         else:
             ban_em = discord.Embed(
                 title=f"{emoji.mod2} Banned User",
-                description=f"Successfully banned **{user}** from the server.\n"
-                + f"{emoji.bullet2} **Reason**: {reason}",
+                description=(f"Successfully banned **{user}** from the server.\n{emoji.bullet2} **Reason**: {reason}"),
                 color=config.color.error,
             )
             await user.ban(reason=reason)
@@ -213,9 +211,11 @@ class Moderation(commands.Cog):
             await user.timeout_for(dur, reason=reason)
             timeout_em = discord.Embed(
                 title=f"{emoji.timer2} Timed out User",
-                description=f"Successfully timed out {user.mention}.\n"
-                + f"{emoji.bullet2} **Duration**: `{format_timedelta(dur, locale='en_IN')}`\n"
-                + f"{emoji.bullet2} **Reason**: {reason}",
+                description=(
+                    f"Successfully timed out {user.mention}.\n"
+                    f"{emoji.bullet2} **Duration**: `{format_timedelta(dur, locale='en_IN')}`\n"
+                    f"{emoji.bullet2} **Reason**: {reason}"
+                ),
                 color=config.color.error,
             )
             await ctx.respond(embed=timeout_em)
@@ -242,7 +242,7 @@ class Moderation(commands.Cog):
             await user.timeout(None, reason=reason)
             untimeout_em = discord.Embed(
                 title=f"{emoji.timer} Untimed out User",
-                description=f"Successfully untimed out {user.mention}.\n" + f"{emoji.bullet} **Reason**: {reason}",
+                description=f"Successfully untimed out {user.mention}.\n{emoji.bullet} **Reason**: {reason}",
                 color=config.color.theme,
             )
             await ctx.respond(embed=untimeout_em)
@@ -255,7 +255,7 @@ class Moderation(commands.Cog):
         """Locks the current channel."""
         lock_em = discord.Embed(
             title=f"{emoji.lock} Channel Locked",
-            description=f"Successfull locked {ctx.channel.mention}.\n" + f"{emoji.bullet} **Reason**: {reason}",
+            description=f"Successfull locked {ctx.channel.mention}.\n{emoji.bullet} **Reason**: {reason}",
             color=config.color.error,
         )
         await ctx.channel.set_permissions(ctx.author, send_messages=True)

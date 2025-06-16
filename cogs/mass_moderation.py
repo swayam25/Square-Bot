@@ -54,9 +54,11 @@ class MassModeration(commands.Cog):
             if len(_users) > 0:
                 mass_kick_em = discord.Embed(
                     title=f"{emoji.kick} Mass Kicked Users",
-                    description=f"Successfully kicked {len(_users)} users.\n"
-                    + f"{emoji.bullet2} **Reason**: {reason}\n"
-                    + f"{emoji.bullet2} **Users**: {', '.join(_users)}",
+                    description=(
+                        f"Successfully kicked {len(_users)} users.\n"
+                        f"{emoji.bullet2} **Reason**: {reason}\n"
+                        f"{emoji.bullet2} **Users**: {', '.join(_users)}"
+                    ),
                     color=config.color.error,
                 )
                 await ctx.respond(embed=mass_kick_em)
@@ -106,9 +108,11 @@ class MassModeration(commands.Cog):
             if len(_users) > 0:
                 mass_ban_em = discord.Embed(
                     title=f"{emoji.mod2} Mass Banned Users",
-                    description=f"Successfully banned {len(_users)} users.\n"
-                    + f"{emoji.bullet2} **Reason**: {reason}\n"
-                    + f"{emoji.bullet2} **Users**: {', '.join(_users)}",
+                    description=(
+                        f"Successfully banned {len(_users)} users.\n"
+                        f"{emoji.bullet2} **Reason**: {reason}\n"
+                        f"{emoji.bullet2} **Users**: {', '.join(_users)}"
+                    ),
                     color=config.color.error,
                 )
                 await ctx.respond(embed=mass_ban_em)
@@ -171,10 +175,12 @@ class MassModeration(commands.Cog):
             if len(_users) > 0:
                 mass_timeout_em = discord.Embed(
                     title=f"{emoji.timer2} Mass Timed out Users",
-                    description=f"Successfully timed out {len(_users)} users.\n"
-                    + f"{emoji.bullet2} **Duration**: `{format_timedelta(dur, locale='en_IN')}`\n"
-                    + f"{emoji.bullet2} **Reason**: {reason}\n"
-                    + f"{emoji.bullet2} **Users**: {', '.join(_users)}",
+                    description=(
+                        f"Successfully timed out {len(_users)} users.\n"
+                        f"{emoji.bullet2} **Duration**: `{format_timedelta(dur, locale='en_IN')}`\n"
+                        f"{emoji.bullet2} **Reason**: {reason}\n"
+                        f"{emoji.bullet2} **Users**: {', '.join(_users)}"
+                    ),
                     color=config.color.error,
                 )
                 await ctx.respond(embed=mass_timeout_em)
@@ -227,9 +233,11 @@ class MassModeration(commands.Cog):
             if len(_users) > 0:
                 mass_untimeout_em = discord.Embed(
                     title=f"{emoji.timer} Mass Untimed out Users",
-                    description=f"Successfully untimed out {len(_users)} users.\n"
-                    + f"{emoji.bullet} **Reason**: {reason}\n"
-                    + f"{emoji.bullet} **Users**: {', '.join(_users)}",
+                    description=(
+                        f"Successfully untimed out {len(_users)} users.\n"
+                        f"{emoji.bullet} **Reason**: {reason}\n"
+                        f"{emoji.bullet} **Users**: {', '.join(_users)}"
+                    ),
                     color=config.color.theme,
                 )
                 await ctx.respond(embed=mass_untimeout_em)
@@ -301,9 +309,11 @@ class MassModeration(commands.Cog):
             if len(_users) > 0 and len(_roles) > 0:
                 mass_role_add_em = discord.Embed(
                     title=f"{emoji.plus} Mass Added Roles",
-                    description=f"Successfully added {len(_roles)} roles to {len(_users)} users.\n"
-                    + f"{emoji.bullet} **User(s)**: {', '.join(_users)}\n"
-                    + f"{emoji.bullet} **Role(s)**: {', '.join([role.mention for role in _roles])}",
+                    description=(
+                        f"Successfully added {len(_roles)} roles to {len(_users)} users.\n"
+                        f"{emoji.bullet} **User(s)**: {', '.join(_users)}\n"
+                        f"{emoji.bullet} **Role(s)**: {', '.join([role.mention for role in _roles])}"
+                    ),
                     color=config.color.theme,
                 )
                 await ctx.respond(embed=mass_role_add_em)
@@ -378,9 +388,11 @@ class MassModeration(commands.Cog):
             if len(_users) > 0 and len(_roles) > 0:
                 mass_role_remove_em = discord.Embed(
                     title=f"{emoji.minus} Mass Removed Roles",
-                    description=f"Successfully removed {len(_roles)} roles from {len(_users)} users.\n"
-                    + f"{emoji.bullet} **User(s)**: {', '.join(_users)}\n"
-                    + f"{emoji.bullet} **Role(s)**: {', '.join([role.mention for role in _roles])}",
+                    description=(
+                        f"Successfully removed {len(_roles)} roles from {len(_users)} users.\n"
+                        f"{emoji.bullet} **User(s)**: {', '.join(_users)}\n"
+                        f"{emoji.bullet} **Role(s)**: {', '.join([role.mention for role in _roles])}"
+                    ),
                     color=config.color.theme,
                 )
                 await ctx.respond(embed=mass_role_remove_em)

@@ -47,9 +47,11 @@ class TicketView(discord.ui.View):
         await interaction.response.edit_message(view=self)
         close_em = discord.Embed(
             title=f"{emoji.ticket2} Closing Ticket",
-            description="Closing ticket in 5 seconds.\n"
-            + f"{emoji.bullet} **Author**: <@{interaction.channel.name.split('-')[1]}>\n"
-            + f"{emoji.bullet} **Closed By**: {interaction.user.mention}",
+            description=(
+                "Closing ticket in 5 seconds.\n"
+                f"{emoji.bullet} **Author**: <@{interaction.channel.name.split('-')[1]}>\n"
+                f"{emoji.bullet} **Closed By**: {interaction.user.mention}"
+            ),
             color=config.color.theme,
         )
         await interaction.followup.send(embed=close_em)
@@ -60,8 +62,10 @@ class TicketView(discord.ui.View):
             logging_ch = await interaction.channel.guild.fetch_channel(channel_id)
             close_log_em = discord.Embed(
                 title=f"{emoji.ticket2} Ticket Closed",
-                description=f"{emoji.bullet} **Author**: <@{interaction.channel.name.split('-')[1]}>\n"
-                + f"{emoji.bullet} **Closed By**: {interaction.user.mention}",
+                description=(
+                    f"{emoji.bullet} **Author**: <@{interaction.channel.name.split('-')[1]}>\n"
+                    f"{emoji.bullet} **Closed By**: {interaction.user.mention}"
+                ),
                 color=config.color.theme,
             )
             await logging_ch.send(embed=close_log_em)
@@ -138,9 +142,11 @@ class Tickets(commands.Cog):
 
             create_em = discord.Embed(
                 title=f"{emoji.ticket} Ticket Created",
-                description="Thank you for creating the ticket. Your problem will be solved soon! Stay tuned!\n"
-                + f"{emoji.bullet} **Author**: {ctx.author.mention}\n"
-                + f"{emoji.bullet} **Reason**: {reason}",
+                description=(
+                    "Thank you for creating the ticket. Your problem will be solved soon! Stay tuned!\n"
+                    f"{emoji.bullet} **Author**: {ctx.author.mention}\n"
+                    f"{emoji.bullet} **Reason**: {reason}"
+                ),
                 color=config.color.theme,
             )
             await create_ch.send(ctx.author.mention, embed=create_em, view=TicketView())
@@ -156,8 +162,7 @@ class Tickets(commands.Cog):
                 logging_ch = await self.client.fetch_channel(log_ch_id)
                 create_log_em = discord.Embed(
                     title=f"{emoji.ticket} Ticket Created",
-                    description=f"{emoji.bullet} **Author**: {ctx.author.mention}\n"
-                    + f"{emoji.bullet} **Reason**: {reason}",
+                    description=f"{emoji.bullet} **Author**: {ctx.author.mention}\n{emoji.bullet} **Reason**: {reason}",
                     color=config.color.theme,
                 )
                 await logging_ch.send(embed=create_log_em)
@@ -178,7 +183,7 @@ class Tickets(commands.Cog):
             ):
                 close_em = discord.Embed(
                     title=f"{emoji.ticket2} Closing Ticket",
-                    description="Closing ticket in 5 seconds.\n" + f"{emoji.bullet} **Author**: {ctx.author.mention}",
+                    description=f"Closing ticket in 5 seconds.\n{emoji.bullet} **Author**: {ctx.author.mention}",
                     color=config.color.theme,
                 )
                 await ctx.respond(embed=close_em)
@@ -189,8 +194,10 @@ class Tickets(commands.Cog):
                     logging_ch = await self.client.fetch_channel(log_ch_id)
                     close_log_em = discord.Embed(
                         title=f"{emoji.ticket2} Ticket Closed",
-                        description=f"{emoji.bullet} **Author**: <@{ctx.channel.name.split('-')[1]}>\n"
-                        + f"{emoji.bullet} **Closed By**: {ctx.author.mention}",
+                        description=(
+                            f"{emoji.bullet} **Author**: <@{ctx.channel.name.split('-')[1]}>\n"
+                            f"{emoji.bullet} **Closed By**: {ctx.author.mention}"
+                        ),
                         color=config.color.theme,
                     )
                     await logging_ch.send(embed=close_log_em)

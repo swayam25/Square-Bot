@@ -47,13 +47,15 @@ class Info(commands.Cog):
         dur = format_timedelta(dur)
         stats_em = discord.Embed(
             title=f"{self.client.user.name} Stats",
-            description=f"{emoji.bullet} **Bot's Latency**: `{round(self.client.latency * 1000)} ms`\n"
-            + f"{emoji.bullet} **Bot's Uptime**: `{str(dur)}`\n"
-            + f"{emoji.bullet} **Total Servers**: `{str(len(self.client.guilds))}`\n"
-            + f"{emoji.bullet} **Total Members**: `{len(set(self.client.get_all_members()))}`\n"
-            + f"{emoji.bullet} **Total Channels**: `{len(set(self.client.get_all_channels()))}`\n"
-            + f"{emoji.bullet} **Python Version**: `v{platform.python_version()}`\n"
-            + f"{emoji.bullet} **Pycord Version**: `v{discord.__version__}`",
+            description=(
+                f"{emoji.bullet} **Bot's Latency**: `{round(self.client.latency * 1000)} ms`\n"
+                f"{emoji.bullet} **Bot's Uptime**: `{str(dur)}`\n"
+                f"{emoji.bullet} **Total Servers**: `{str(len(self.client.guilds))}`\n"
+                f"{emoji.bullet} **Total Members**: `{len(set(self.client.get_all_members()))}`\n"
+                f"{emoji.bullet} **Total Channels**: `{len(set(self.client.get_all_channels()))}`\n"
+                f"{emoji.bullet} **Python Version**: `v{platform.python_version()}`\n"
+                f"{emoji.bullet} **Pycord Version**: `v{discord.__version__}`"
+            ),
             color=config.color.theme,
         )
         stats_em.set_footer(text=f"Designed & Built by {owner}", icon_url=f"{owner.avatar.url}")
@@ -80,15 +82,17 @@ class Info(commands.Cog):
         """Shows info of the mentioned user."""
         user_info_em = discord.Embed(
             title=f"{user.name}'s Info",
-            description=f"{emoji.bullet} **Name**: `{user}`\n"
-            + f"{emoji.bullet} **ID**: `{user.id}`\n"
-            + f"{emoji.bullet} **Bot?**: {user.bot}\n"
-            + f"{emoji.bullet} **Avatar URL**: [Click Here]({user.avatar.url})\n"
-            + f"{emoji.bullet} **Status**: {user.status}\n"
-            + f"{emoji.bullet} **Nickname**: {user.nick}\n"
-            + f"{emoji.bullet} **Highest Role**: {user.top_role.mention}\n"
-            + f"{emoji.bullet} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n"
-            + f"{emoji.bullet} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}",
+            description=(
+                f"{emoji.bullet} **Name**: `{user}`\n"
+                f"{emoji.bullet} **ID**: `{user.id}`\n"
+                f"{emoji.bullet} **Bot?**: {user.bot}\n"
+                f"{emoji.bullet} **Avatar URL**: [Click Here]({user.avatar.url})\n"
+                f"{emoji.bullet} **Status**: {user.status}\n"
+                f"{emoji.bullet} **Nickname**: {user.nick}\n"
+                f"{emoji.bullet} **Highest Role**: {user.top_role.mention}\n"
+                f"{emoji.bullet} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n"
+                f"{emoji.bullet} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}"
+            ),
             color=config.color.theme,
         )
         user_info_em.set_thumbnail(url=f"{user.avatar.url}")
@@ -100,21 +104,23 @@ class Info(commands.Cog):
         """Shows info of the current server."""
         server_info_em = discord.Embed(
             title=f"{ctx.guild.name}'s Info",
-            description=f"{emoji.bullet} **Name**: {ctx.guild.name}\n"
-            + f"{emoji.bullet} **ID**: `{ctx.guild.id}`\n"
-            + f"{emoji.bullet} **Icon URL**: {f'[Click Here]({ctx.guild.icon})' if ctx.guild.icon else 'None'}\n"
-            + f"{emoji.bullet} **Owner**: {ctx.guild.owner.mention}\n"
-            + f"{emoji.bullet} **Verification Level**: `{ctx.guild.verification_level}`\n"
-            + f"{emoji.bullet} **Total Categorie(s)**: `{len(ctx.guild.categories)}`\n"
-            + f"{emoji.bullet} **Total Channel(s)**: `{len(ctx.guild.text_channels) + len(ctx.guild.voice_channels)}`\n"
-            + f"{emoji.bullet} **Text Channel(s)**: `{len(ctx.guild.text_channels)}`\n"
-            + f"{emoji.bullet} **Voice Channel(s)**: `{len(ctx.guild.voice_channels)}`\n"
-            + f"{emoji.bullet} **Stage Channel(s)**: `{len(ctx.guild.stage_channels)}`\n"
-            + f"{emoji.bullet} **Total Member(s)**: `{len(list(ctx.guild.members))}`\n"
-            + f"{emoji.bullet} **Human(s)**: `{len([m for m in ctx.guild.members if not m.bot])}`\n"
-            + f"{emoji.bullet} **Bot(s)**: `{len([m for m in ctx.guild.members if m.bot])}`\n"
-            + f"{emoji.bullet} **Role(s)**: `{len(ctx.guild.roles)}`\n"
-            + f"{emoji.bullet} **Server Created**: {discord.utils.format_dt(ctx.guild.created_at, 'R')}",
+            description=(
+                f"{emoji.bullet} **Name**: {ctx.guild.name}\n"
+                f"{emoji.bullet} **ID**: `{ctx.guild.id}`\n"
+                f"{emoji.bullet} **Icon URL**: {f'[Click Here]({ctx.guild.icon})' if ctx.guild.icon else 'None'}\n"
+                f"{emoji.bullet} **Owner**: {ctx.guild.owner.mention}\n"
+                f"{emoji.bullet} **Verification Level**: `{ctx.guild.verification_level}`\n"
+                f"{emoji.bullet} **Total Categorie(s)**: `{len(ctx.guild.categories)}`\n"
+                f"{emoji.bullet} **Total Channel(s)**: `{len(ctx.guild.text_channels) + len(ctx.guild.voice_channels)}`\n"
+                f"{emoji.bullet} **Text Channel(s)**: `{len(ctx.guild.text_channels)}`\n"
+                f"{emoji.bullet} **Voice Channel(s)**: `{len(ctx.guild.voice_channels)}`\n"
+                f"{emoji.bullet} **Stage Channel(s)**: `{len(ctx.guild.stage_channels)}`\n"
+                f"{emoji.bullet} **Total Member(s)**: `{len(list(ctx.guild.members))}`\n"
+                f"{emoji.bullet} **Human(s)**: `{len([m for m in ctx.guild.members if not m.bot])}`\n"
+                f"{emoji.bullet} **Bot(s)**: `{len([m for m in ctx.guild.members if m.bot])}`\n"
+                f"{emoji.bullet} **Role(s)**: `{len(ctx.guild.roles)}`\n"
+                f"{emoji.bullet} **Server Created**: {discord.utils.format_dt(ctx.guild.created_at, 'R')}"
+            ),
             color=config.color.theme,
         )
         server_info_em.set_thumbnail(url=ctx.guild.icon if ctx.guild.icon else "")
@@ -126,12 +132,14 @@ class Info(commands.Cog):
     async def emoji_info(self, ctx: discord.ApplicationContext, icon: discord.Emoji):
         """Shows info of the given emoji."""
         emoji_info_em = discord.Embed(
-            description=f"{emoji.bullet} **Name**: {icon.name}\n"
-            + f"{emoji.bullet} **ID**: `{icon.id}`\n"
-            + f"{emoji.bullet} **Emoji URL**: [Click Here]({icon.url})\n"
-            + f"{emoji.bullet} **Is Animated?**: {icon.animated}\n"
-            + f"{emoji.bullet} **Usage**: `{icon}`\n"
-            + f"{emoji.bullet} **Emoji Created**: {discord.utils.format_dt(icon.created_at, 'R')}",
+            description=(
+                f"{emoji.bullet} **Name**: {icon.name}\n"
+                f"{emoji.bullet} **ID**: `{icon.id}`\n"
+                f"{emoji.bullet} **Emoji URL**: [Click Here]({icon.url})\n"
+                f"{emoji.bullet} **Is Animated?**: {icon.animated}\n"
+                f"{emoji.bullet} **Usage**: `{icon}`\n"
+                f"{emoji.bullet} **Emoji Created**: {discord.utils.format_dt(icon.created_at, 'R')}"
+            ),
             color=config.color.theme,
         )
         emoji_info_em.set_thumbnail(url=f"{icon.url}")

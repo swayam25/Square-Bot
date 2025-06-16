@@ -15,12 +15,14 @@ def help_home_em(self, ctx: discord.ApplicationContext):
     )
     help_em.add_field(
         name="Categories",
-        value=f"{emoji.mod} `:` **Moderation**\n"
-        + f"{emoji.mass_mod} `:` **Mass Moderation**\n"
-        + f"{emoji.info} `:` **Info**\n"
-        + f"{emoji.settings}  `:` **Settings**\n"
-        + f"{emoji.music} `:` **Music**\n"
-        + f"{emoji.ticket} `:` **Tickets**",
+        value=(
+            f"{emoji.mod} `:` **Moderation**\n"
+            f"{emoji.mass_mod} `:` **Mass Moderation**\n"
+            f"{emoji.info} `:` **Info**\n"
+            f"{emoji.settings}  `:` **Settings**\n"
+            f"{emoji.music} `:` **Music**\n"
+            f"{emoji.ticket} `:` **Tickets**"
+        ),
     )
     return help_em
 

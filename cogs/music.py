@@ -292,8 +292,10 @@ class Music(commands.Cog):
             play_em = discord.Embed(
                 title=f"{player.current.title}",
                 url=f"{player.current.uri}",
-                description=f"{emoji.bullet} **Requested By**: {requester if requester else 'Unknown'}\n"
-                + f"{emoji.bullet} **Duration**: `{duration}`",
+                description=(
+                    f"{emoji.bullet} **Requested By**: {requester if requester else 'Unknown'}\n"
+                    f"{emoji.bullet} **Duration**: `{duration}`"
+                ),
                 color=config.color.theme,
             )
             if player.current.source_name == "spotify":

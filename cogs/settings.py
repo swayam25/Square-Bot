@@ -44,12 +44,14 @@ class Settings(commands.Cog):
 
         set_em = discord.Embed(
             title=f"{emoji.settings} {ctx.guild.name}'s Settings",
-            description=f"{emoji.bullet} **Mod Log Channel**: {mod_log_channel}\n"
-            + f"{emoji.bullet} **Mod Command Log Channel**: {mod_log_cmd_channel}\n"
-            + f"{emoji.bullet} **Message Log Channel**: {msg_log_channel}\n"
-            + f"{emoji.bullet} **Ticket Commands**: {ticket}\n"
-            + f"{emoji.bullet} **Ticket Log Channel**: {ticket_log_channel}\n"
-            + f"{emoji.bullet} **Autorole**: {autorole}",
+            description=(
+                f"{emoji.bullet} **Mod Log Channel**: {mod_log_channel}\n"
+                f"{emoji.bullet} **Mod Command Log Channel**: {mod_log_cmd_channel}\n"
+                f"{emoji.bullet} **Message Log Channel**: {msg_log_channel}\n"
+                f"{emoji.bullet} **Ticket Commands**: {ticket}\n"
+                f"{emoji.bullet} **Ticket Log Channel**: {ticket_log_channel}\n"
+                f"{emoji.bullet} **Autorole**: {autorole}"
+            ),
             color=config.color.theme,
         )
         await ctx.respond(embed=set_em)
