@@ -94,7 +94,7 @@ Advanced multipurpose discord bot for all your needs.
 
 ## 🚀 Production
 
-1. Follow steps 1-3 from the [installation guide](#-installation). *Ignore if already done.*
+1. Follow steps 1 & 2 from the [installation guide](#-installation). *Ignore if already done.*
 
 2. Run docker container (*via `docker compose`*)
     ```sh
