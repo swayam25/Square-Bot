@@ -39,7 +39,6 @@ class ErrorHandler(commands.Cog):
         else:
             error_em.description = f"{emoji.error} An unexpected error occurred. Please try again later."
 
-        file = discord.MISSING
         if await check.is_dev(ctx):
             error = getattr(error, "original", None) or error
             err = "".join(traceback.format_exception(type(error), error, error.__traceback__))
@@ -48,8 +47,10 @@ class ErrorHandler(commands.Cog):
                 error_em.description += f"\n```py\n{err}\n```"
             else:
                 file = discord.File(fp=io.BytesIO(err.encode()), filename="error.txt")
+                await ctx.respond(embed=error_em, file=file, ephemeral=True)
+                return
 
-        await ctx.respond(embed=error_em, file=file, ephemeral=True)
+        await ctx.respond(embed=error_em, ephemeral=True)
 
 
 def setup(client: discord.Bot):

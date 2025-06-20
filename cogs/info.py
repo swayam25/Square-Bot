@@ -13,7 +13,7 @@ start_time = time.time()
 
 
 class Info(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: discord.Bot):
         self.client = client
 
     # Ping

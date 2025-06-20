@@ -452,11 +452,10 @@ class Devs(commands.Cog):
                 description=f"{emoji.restart} Synced {len(emojis)} emojis.",
                 color=config.color.theme,
             )
-            view = discord.MISSING
             if resp.get("extra_keys"):
                 sync_em.add_field(
                     name="Extra emojis",
-                    value="\n".join([f"{emoji.bullet} `{i}`: {i}" for i in resp["extra_keys"]]),
+                    value="\n".join([f"{i}: `{i}`" for i in resp["extra_keys"]]),
                 )
                 view = discord.ui.View(
                     discord.ui.Button(
@@ -469,7 +468,9 @@ class Devs(commands.Cog):
                 )
                 view.interaction_check = lambda i: check.author_interaction_check(ctx, i)
                 view.children[0].callback = lambda i: self.delete_extra_emojis_callback(view, i, resp["extra_keys"])
-            await ctx.respond(embed=sync_em, view=view)
+                await ctx.respond(embed=sync_em, view=view)
+                return
+            await ctx.respond(embed=sync_em)
 
 
 def setup(client: discord.Bot):
