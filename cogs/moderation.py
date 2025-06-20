@@ -28,15 +28,14 @@ class Moderation(commands.Cog):
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
             error_em = discord.Embed(
-                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.error
+                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount)
             purge_em = discord.Embed(
-                title=f"{emoji.bin} Messages Purged",
-                description=f"Successfully purged `{amount}` message(s)",
-                color=config.color.error,
+                description=f"{emoji.success} Successfully purged `{amount}` messages.",
+                color=config.color.green,
             )
             await ctx.respond(embed=purge_em, ephemeral=True)
 
@@ -49,15 +48,14 @@ class Moderation(commands.Cog):
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
             error_em = discord.Embed(
-                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.error
+                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: not m.author.bot)
             purge_em = discord.Embed(
-                title=f"{emoji.bin} Messages Purged",
-                description=f"Successfully purged `{amount}` message(s) sent by humans",
-                color=config.color.error,
+                description=f"{emoji.success} Successfully purged `{amount}` messages sent by humans",
+                color=config.color.green,
             )
             await ctx.respond(embed=purge_em, ephemeral=True)
 
@@ -70,15 +68,14 @@ class Moderation(commands.Cog):
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
             error_em = discord.Embed(
-                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.error
+                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: m.author.bot)
             purge_em = discord.Embed(
-                title=f"{emoji.bin} Messages Purged",
-                description=f"Successfully purged `{amount}` message(s) sent by bots",
-                color=config.color.error,
+                description=f"{emoji.success} Successfully purged `{amount}` messages sent by bots",
+                color=config.color.green,
             )
             await ctx.respond(embed=purge_em, ephemeral=True)
 
@@ -92,15 +89,14 @@ class Moderation(commands.Cog):
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
             error_em = discord.Embed(
-                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.error
+                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: m.author.id == user.id)
             purge_em = discord.Embed(
-                title=f"{emoji.bin} Messages Purged",
-                description=f"Successfully purged `{amount}` message(s) sent by {user.mention}",
-                color=config.color.error,
+                description=f"{emoji.success} Successfully purged `{amount}` messages sent by {user.mention}",
+                color=config.color.green,
             )
             await ctx.respond(embed=purge_em, ephemeral=True)
 
@@ -114,15 +110,14 @@ class Moderation(commands.Cog):
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
             error_em = discord.Embed(
-                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.error
+                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: phrase.lower() in m.content.lower())
             purge_em = discord.Embed(
-                title=f"{emoji.bin} Messages Purged",
-                description=f"Successfully purged `{amount}` message(s) containing `{phrase}`",
-                color=config.color.error,
+                description=f"{emoji.success} Successfully purged `{amount}` messages containing `{phrase}`",
+                color=config.color.green,
             )
             await ctx.respond(embed=purge_em, ephemeral=True)
 
@@ -134,21 +129,21 @@ class Moderation(commands.Cog):
     async def kick(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Kicks the mentioned user."""
         if user == ctx.author:
-            error_em = discord.Embed(
-                description=f"{emoji.error} You cannot use it on yourself", color=config.color.error
-            )
+            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=config.color.red)
             await ctx.respond(embed=error_em, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
             error_em = discord.Embed(
                 description=f"{emoji.error} Given user has same role or higher role than you",
-                color=config.color.error,
+                color=config.color.red,
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             kich_em = discord.Embed(
-                title=f"{emoji.kick} Kicked User",
-                description=(f"Successfully kicked **{user}** from the server.\n{emoji.bullet2} **Reason**: {reason}"),
-                color=config.color.error,
+                title="Kicked User",
+                description=(
+                    f"Successfully kicked **{user}** from the server.\n{emoji.description_red} **Reason**: {reason}"
+                ),
+                color=config.color.theme,
             )
             await user.kick(reason=reason)
             await ctx.respond(embed=kich_em)
@@ -161,21 +156,21 @@ class Moderation(commands.Cog):
     async def ban(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Bans the mentioned user."""
         if user == ctx.author:
-            error_em = discord.Embed(
-                description=f"{emoji.error} You cannot use it on yourself", color=config.color.error
-            )
+            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=config.color.red)
             await ctx.respond(embed=error_em, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
             error_em = discord.Embed(
                 description=f"{emoji.error} Given user has same role or higher role than you",
-                color=config.color.error,
+                color=config.color.red,
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             ban_em = discord.Embed(
-                title=f"{emoji.mod2} Banned User",
-                description=(f"Successfully banned **{user}** from the server.\n{emoji.bullet2} **Reason**: {reason}"),
-                color=config.color.error,
+                title="Banned User",
+                description=(
+                    f"Successfully banned **{user}** from the server.\n{emoji.description_red} **Reason**: {reason}"
+                ),
+                color=config.color.theme,
             )
             await user.ban(reason=reason)
             await ctx.respond(embed=ban_em)
@@ -192,31 +187,31 @@ class Moderation(commands.Cog):
         """Timeouts the mentioned user."""
         if user == ctx.author:
             error_em = discord.Embed(
-                description=f"{emoji.error} You cannot use it on yourself.", color=config.color.error
+                description=f"{emoji.error} You cannot use it on yourself.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
             error_em = discord.Embed(
                 description=f"{emoji.error} Given user has same role or higher role than you.",
-                color=config.color.error,
+                color=config.color.red,
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             try:
                 dur: datetime.timedelta = parse_duration(duration)
             except ValueError as e:
-                error_em = discord.Embed(description=f"{emoji.error} {e}", color=config.color.error)
+                error_em = discord.Embed(description=f"{emoji.error} {e}", color=config.color.red)
                 await ctx.respond(embed=error_em, ephemeral=True)
                 return
             await user.timeout_for(dur, reason=reason)
             timeout_em = discord.Embed(
-                title=f"{emoji.timer2} Timed out User",
+                title="Timed out User",
                 description=(
                     f"Successfully timed out {user.mention}.\n"
-                    f"{emoji.bullet2} **Duration**: `{format_timedelta(dur, locale='en_IN')}`\n"
-                    f"{emoji.bullet2} **Reason**: {reason}"
+                    f"{emoji.duration} **Duration**: `{format_timedelta(dur, locale='en_IN')}`\n"
+                    f"{emoji.description} **Reason**: {reason}"
                 ),
-                color=config.color.error,
+                color=config.color.theme,
             )
             await ctx.respond(embed=timeout_em)
 
@@ -228,21 +223,19 @@ class Moderation(commands.Cog):
     async def untimeout_user(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Untimeouts the mentioned user."""
         if user == ctx.author:
-            error_em = discord.Embed(
-                description=f"{emoji.error} You cannot use it on yourself", color=config.color.error
-            )
+            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=config.color.red)
             await ctx.respond(embed=error_em, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
             error_em = discord.Embed(
                 description=f"{emoji.error} Given user has same role or higher role than you",
-                color=config.color.error,
+                color=config.color.red,
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             await user.timeout(None, reason=reason)
             untimeout_em = discord.Embed(
-                title=f"{emoji.timer} Untimed out User",
-                description=f"Successfully untimed out {user.mention}.\n{emoji.bullet} **Reason**: {reason}",
+                title="Untimed out User",
+                description=f"Successfully untimed out {user.mention}.\n{emoji.description} **Reason**: {reason}",
                 color=config.color.theme,
             )
             await ctx.respond(embed=untimeout_em)
@@ -254,9 +247,9 @@ class Moderation(commands.Cog):
     async def lock(self, ctx: discord.ApplicationContext, reason: str = None):
         """Locks the current channel."""
         lock_em = discord.Embed(
-            title=f"{emoji.lock} Channel Locked",
-            description=f"Successfull locked {ctx.channel.mention}.\n{emoji.bullet} **Reason**: {reason}",
-            color=config.color.error,
+            title="Channel Locked",
+            description=f"Successfull locked {ctx.channel.mention}.\n{emoji.description} **Reason**: {reason}",
+            color=config.color.theme,
         )
         await ctx.channel.set_permissions(ctx.author, send_messages=True)
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
@@ -268,9 +261,8 @@ class Moderation(commands.Cog):
     async def unlock(self, ctx: discord.ApplicationContext):
         """Unlocks the current channel."""
         unlock_em = discord.Embed(
-            title=f"{emoji.unlock} Channel Unlocked",
-            description=f"Successfull unlocked {ctx.channel.mention}",
-            color=config.color.theme,
+            description=f"{emoji.success} Successfull unlocked {ctx.channel.mention}.",
+            color=config.color.green,
         )
         await ctx.channel.set_permissions(ctx.author, send_messages=True)
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
@@ -290,9 +282,8 @@ class Moderation(commands.Cog):
     async def add_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Adds the mentioned role to the mentioned user."""
         add_role_em = discord.Embed(
-            title=f"{emoji.plus} Role Added",
-            description=f"Successfully added {role.mention} to {user.mention}",
-            color=config.color.theme,
+            description=f"{emoji.success} Successfully added {role.mention} to {user.mention}.",
+            color=config.color.green,
         )
         await user.add_roles(role)
         await ctx.respond(embed=add_role_em)
@@ -304,9 +295,8 @@ class Moderation(commands.Cog):
     async def remove_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Removes the mentioned role from the mentioned user."""
         remove_role_em = discord.Embed(
-            title=f"{emoji.minus} Role Removed",
-            description=f"Successfully removed {role.mention} from {user.mention}",
-            color=config.color.error,
+            description=f"{emoji.success} Successfully removed {role.mention} from {user.mention}.",
+            color=config.color.green,
         )
         await user.remove_roles(role)
         await ctx.respond(embed=remove_role_em)

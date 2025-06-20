@@ -51,11 +51,8 @@ def fmt_perms(perms: list[str]) -> str:
         str: A formatted string of permissions.
     """
     perms = [perm.replace("_", " ").replace("guild", "server").title() for perm in perms]
-    if len(perms) > 2:
-        return "{}, and {}".format("**, **".join(perms[:-1]), perms[-1])
-    elif len(perms) == 2:
-        return "{} and {}".format("**".join(perms[:-1]), perms[-1])
-    elif perms:
-        return perms[0]
-    else:
+    if not perms:
         return "No permissions"
+    if len(perms) == 1:
+        return perms[0]
+    return ", ".join(perms[:-1]) + " and " + perms[-1]

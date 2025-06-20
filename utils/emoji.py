@@ -6,112 +6,132 @@ from utils import config
 
 custom_emoji_file_path = "./.cache/emoji.json"
 if not any([config.emoji_type == "custom", config.emoji_type == "default"]):
-    print(f"[red][bold]✗[/] Invalid emoji type in [cyan]config.toml[/]: {config.emoji_type}[/]")
+    print(f"[red][bold]✗[/] Invalid emoji type in [cyan]{config.config_file_path}[/]: {config.emoji_type}[/]")
     print("[yellow][bold]![/] Please choose either [green]custom[/] or [green]default[/].[/]")
     exit(1)
 
 
-# Dataclass
+# Emoji class to hold all the emojis used in the bot.
 @dataclass
 class Emoji:
-    bullet: str = "▸"
-    bullet2: str = "▹"
-    success: str = "✅"
+    bullet: str = "•"
+    bullet_red: str = "•"
     error: str = "❌"
-
+    success: str = "✅"
     on: str = "🟢"
     off: str = "🔴"
+    next_white: str = "⏭️"
+    previous_white: str = "⏮️"
+    start_white: str = "⏪"
+    end_white: str = "⏩"
 
-    embed: str = "📜"
-    edit: str = "✏️"
-    bin: str = "🗑️"
-
-    plus: str = "➕"
-    minus: str = "➖"
-    next: str = "➡️"
-    previous: str = "⬅️"
-    start: str = "⏮️"
-    end: str = "⏭️"
-
-    kick: str = "🦵🏻"
-    info: str = "📑"
-    mod: str = "🔨"
-    mod2: str = "🔨"
-    mass_mod: str = "💪🏻"
-    timer: str = "🕛"
-    timer2: str = "🕛"
-    lock: str = "🔒"
-    unlock: str = "🔓"
     settings: str = "⚙️"
+    emoji: str = "😀"
+    info: str = "ℹ️"
+    mod: str = "🛠️"
+    mass_mod: str = "👥"
+    ticket: str = "🎫"
 
-    ticket: str = "🎟️"
-    ticket2: str = "🎟️"
+    mention: str = "🔔"
+    id: str = "🆔"
+    id_red: str = "🆔"
+    user: str = "👤"
+    user_red: str = "👤"
+    bot: str = "🤖"
+    description: str = "📝"
+    description_red: str = "📝"
+    description_white: str = "📝"
+    img_red: str = "🖼️"
+    date: str = "📅"
+    date_red: str = "📅"
+    role: str = "🔖"
+    lock_white: str = "🔒"
+    channel: str = "📺"
+    channel_red: str = "📺"
+    members: str = "👥"
+    members_red: str = "👥"
+    owner: str = "👑"
+    owner_red: str = "👑"
+    msg_red: str = "💬"
+    msg_edit: str = "✏️"
+    msg_link: str = "🔗"
+    link: str = "🔗"
+    verification: str = "🛡️"
+    join: str = "➕"
+    join_red: str = "➕"
+    leave: str = "➖"
+
+    python: str = "🐍"
+    ping: str = "🏓"
+    server: str = "🖥️"
+    server_red: str = "🖥️"
+    lavalink: str = "🎵"
+
+    pycord: str = "🐍"
+    spotify: str = "🟢"
+    youtube: str = "🔴"
+    soundcloud: str = "🟠"
 
     music: str = "🎵"
+    duration: str = "⏱️"
+    duration_red: str = "⏱️"
+    live: str = "🔴"
     play: str = "▶️"
-    play2: str = "▶️"
+    play_white: str = "▶️"
     pause: str = "⏸️"
-    pause2: str = "⏸️"
-    stop: str = "⏹️"
-    stop2: str = "⏹️"
-    skip: str = "⏭️"
-    skip2: str = "⏭️"
-    shuffle: str = "🔀"
-    shuffle2: str = "🔀"
+    pause_white: str = "⏸️"
     seek: str = "⏩"
-    loop: str = "🔁"
-    loop2: str = "🔂"
-    loop3: str = "🔁"
-    playlist: str = "📃"
+    skip: str = "⏭️"
+    skip_white: str = "⏭️"
+    stop: str = "⏹️"
+    stop_white: str = "⏹️"
     volume: str = "🔊"
-    equalizer: str = "🎶"
-    filled_bar: str = "⬜"
-    empty_bar: str = "🟥"
+    shuffle: str = "🔀"
+    shuffle_white: str = "🔀"
+    loop: str = "🔁"
+    loop_one: str = "🔂"
+    loop_white: str = "🔁"
+    equalizer: str = "🎛️"
+    empty_bar: str = "⬜"
+    filled_bar: str = "🟥"
 
+    restart: str = "🔄"
+    shutdown: str = "🔴"
+    console: str = "🖥️"
     upload: str = "📤"
-    console: str = "⌨️"
-    restart: str = "🔄️"
-    shutdown: str = "🛑"
+    bin_white: str = "🗑️"
 
     @staticmethod
     def from_json(file_path: str) -> "Emoji":
         try:
             with open(file_path, encoding="utf8") as emoji_file:
-                emoji_data = json.load(emoji_file)
+                emoji_data: dict[str, str] = dict(json.load(emoji_file))
 
             # Validate keys
             missing_keys = [key for key in Emoji.__annotations__.keys() if key not in emoji_data]
-            extra_keys = [key for key in emoji_data if key not in Emoji.__annotations__.keys()]
+            with open(file_path, "w", encoding="utf8") as f:
+                new_data = emoji_data.copy()
+                for key in emoji_data:
+                    if key not in Emoji.__annotations__.keys():
+                        new_data.pop(key, None)
+                json.dump(new_data, f, indent=4)
 
             if missing_keys:
-                print(f"[red][bold]✗[/] Missing keys in emoji JSON: [cyan]{missing_keys}[/][/]")
+                print(f"[red][bold]✗[/] Missing keys in emoji JSON: [cyan]{','.join(missing_keys)}[/][/]")
                 exit(1)
-            if extra_keys:
-                print(f"[yellow][bold]![/] Extra keys in emoji JSON: [cyan]{extra_keys}[/][/]")
 
             # Create Emoji instance
             return Emoji(**{key: emoji_data.get(key, "") for key in Emoji.__annotations__.keys()})
 
         except FileNotFoundError:
-            if config.emoji_type == "custom":
-                print(f"[red][bold]✗[/] Custom emoji file not found: {file_path}[/]")
-                print(
-                    "[yellow][bold]![/] Make sure to run [cyan]/emoji upload[/] command and upload emojis to the discord bot and run [cyan]/emoji sync[/] to create required config files.[/]"
-                )
-                print(
-                    "[yellow][bold]![/] If already uploaded, run [cyan]/emoji sync[/] to create required config files.[/]"
-                )
-                print(
-                    "[yellow][bold]![/] If you want to use default emojis, change the emoji type in [cyan]config.toml[/] to [green]default[/].[/]"
-                )
-            else:
-                print(f"[red][bold]✗[/] Emoji file not found: {file_path}[/]")
-                print(
-                    "[yellow][bold]![/] Seems like default emoji file is missing. Please download the default emoji file from the repository and place it in the [green]configs[/] folder.[/]"
-                )
+            print(
+                f"[red][bold]✗[/] Custom emoji file not found: {file_path}[/]",
+                "[yellow][bold]![/] Make sure to run [cyan]/emoji upload[/] command and upload emojis to the bot.[/]",
+                "[yellow][bold]![/] Try manually running [cyan]/emoji sync[/] to create required config files.[/]",
+                "[yellow][bold]![/] Read the README.md for more information on how to set up custom emojis.[/]",
+                f"[yellow][bold]![/] If you want to use default emojis, change the emoji type in [cyan]{config.config_file_path}[/] to [green]default[/].[/]",
+            )
             exit(1)
-        except json.JSONDecodeError:
-            print(f"[red][bold]✗[/] Invalid JSON format in file: {file_path}[/]")
 
     @staticmethod
     def create_custom_emoji_config(emojis: dict) -> dict:

@@ -32,7 +32,7 @@ class MassModeration(commands.Cog):
         errors: list[tuple] = []
         if len(users) > 10:
             error_em = discord.Embed(
-                description=f"{emoji.error} You can only mass kick upto 10 users.", color=config.color.error
+                description=f"{emoji.error} You can only mass kick upto 10 users.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -53,25 +53,25 @@ class MassModeration(commands.Cog):
                 await _user.kick(reason=reason)
             if len(_users) > 0:
                 mass_kick_em = discord.Embed(
-                    title=f"{emoji.kick} Mass Kicked Users",
+                    title="Mass Kicked Users",
                     description=(
                         f"Successfully kicked {len(_users)} users.\n"
-                        f"{emoji.bullet2} **Reason**: {reason}\n"
-                        f"{emoji.bullet2} **Users**: {', '.join(_users)}"
+                        f"{emoji.description} **Reason**: {reason}\n"
+                        f"{emoji.user} **Users**: {', '.join(_users)}"
                     ),
-                    color=config.color.error,
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=mass_kick_em)
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mass_kick_em.description += f"\n{emoji.bullet2} **Moderator**: {ctx.author.mention}"
+                    mass_kick_em.description += f"\n{emoji.owner} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_kick_em)
             if len(errors) > 0:
                 error_em = discord.Embed(
-                    title=f"{emoji.error} Can't kick users",
-                    description="\n".join([f"{emoji.bullet2} **{user}**: {reason}" for user, reason in errors]),
-                    color=config.color.error,
+                    title="Can't kick users",
+                    description="\n".join([f"{emoji.bullet_red} **{user}**: {reason}" for user, reason in errors]),
+                    color=config.color.red,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 
@@ -87,7 +87,7 @@ class MassModeration(commands.Cog):
         errors: list[tuple] = []
         if len(users) > 10:
             error_em = discord.Embed(
-                description=f"{emoji.error} You can only mass ban upto 10 users.", color=config.color.error
+                description=f"{emoji.error} You can only mass ban upto 10 users.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -110,22 +110,22 @@ class MassModeration(commands.Cog):
                     title=f"{emoji.mod2} Mass Banned Users",
                     description=(
                         f"Successfully banned {len(_users)} users.\n"
-                        f"{emoji.bullet2} **Reason**: {reason}\n"
-                        f"{emoji.bullet2} **Users**: {', '.join(_users)}"
+                        f"{emoji.description} **Reason**: {reason}\n"
+                        f"{emoji.user} **Users**: {', '.join(_users)}"
                     ),
-                    color=config.color.error,
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=mass_ban_em)
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mass_ban_em.description += f"\n{emoji.bullet2} **Moderator**: {ctx.author.mention}"
+                    mass_ban_em.description += f"\n{emoji.owner_red} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_ban_em)
             if len(errors) > 0:
                 error_em = discord.Embed(
-                    title=f"{emoji.error} Can't ban users",
-                    description="\n".join([f"{emoji.bullet2} **{user}**: {reason}" for user, reason in errors]),
-                    color=config.color.error,
+                    title="Can't ban users",
+                    description="\n".join([f"{emoji.bullet_red} **{user}**: {reason}" for user, reason in errors]),
+                    color=config.color.red,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 
@@ -144,13 +144,13 @@ class MassModeration(commands.Cog):
         try:
             dur: datetime.timedelta = parse_duration(duration)
         except ValueError as e:
-            error_em = discord.Embed(description=f"{emoji.error} {e}", color=config.color.error)
+            error_em = discord.Embed(description=f"{emoji.error} {e}", color=config.color.red)
             await ctx.respond(embed=error_em, ephemeral=True)
             return
         errors: list[tuple] = []
         if len(users) > 10:
             error_em = discord.Embed(
-                description=f"{emoji.error} You can only mass timeout upto 10 users.", color=config.color.error
+                description=f"{emoji.error} You can only mass timeout upto 10 users.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -174,26 +174,26 @@ class MassModeration(commands.Cog):
                 await _user.timeout_for(dur, reason=reason)
             if len(_users) > 0:
                 mass_timeout_em = discord.Embed(
-                    title=f"{emoji.timer2} Mass Timed out Users",
+                    title="Mass Timed out Users",
                     description=(
                         f"Successfully timed out {len(_users)} users.\n"
-                        f"{emoji.bullet2} **Duration**: `{format_timedelta(dur, locale='en_IN')}`\n"
-                        f"{emoji.bullet2} **Reason**: {reason}\n"
-                        f"{emoji.bullet2} **Users**: {', '.join(_users)}"
+                        f"{emoji.duration} **Duration**: `{format_timedelta(dur, locale='en_IN')}`\n"
+                        f"{emoji.description} **Reason**: {reason}\n"
+                        f"{emoji.user} **Users**: {', '.join(_users)}"
                     ),
-                    color=config.color.error,
+                    color=config.color.theme,
                 )
                 await ctx.respond(embed=mass_timeout_em)
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mass_timeout_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
+                    mass_timeout_em.description += f"\n{emoji.owner} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_timeout_em)
             if len(errors) > 0:
                 error_em = discord.Embed(
-                    title=f"{emoji.error} Can't timeout users",
-                    description="\n".join([f"{emoji.bullet2} **{user}**: {reason}" for user, reason in errors]),
-                    color=config.color.error,
+                    title="Can't timeout users",
+                    description="\n".join([f"{emoji.bullet_red} **{user}**: {reason}" for user, reason in errors]),
+                    color=config.color.red,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 
@@ -211,7 +211,7 @@ class MassModeration(commands.Cog):
         errors: list[tuple] = []
         if len(users) > 10:
             error_em = discord.Embed(
-                description=f"{emoji.error} You can only mass untimeout upto 10 users.", color=config.color.error
+                description=f"{emoji.error} You can only mass untimeout upto 10 users.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -232,11 +232,11 @@ class MassModeration(commands.Cog):
                 await _user.timeout(None, reason=reason)
             if len(_users) > 0:
                 mass_untimeout_em = discord.Embed(
-                    title=f"{emoji.timer} Mass Untimed out Users",
+                    title="Mass Untimed out Users",
                     description=(
                         f"Successfully untimed out {len(_users)} users.\n"
-                        f"{emoji.bullet} **Reason**: {reason}\n"
-                        f"{emoji.bullet} **Users**: {', '.join(_users)}"
+                        f"{emoji.description} **Reason**: {reason}\n"
+                        f"{emoji.user} **Users**: {', '.join(_users)}"
                     ),
                     color=config.color.theme,
                 )
@@ -244,13 +244,13 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mass_untimeout_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
+                    mass_untimeout_em.description += f"\n{emoji.owner} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_untimeout_em)
             if len(errors) > 0:
                 error_em = discord.Embed(
-                    title=f"{emoji.error} Can't untimeout users",
-                    description="\n".join([f"{emoji.bullet} **{user}**: {reason}" for user, reason in errors]),
-                    color=config.color.error,
+                    title="Can't untimeout users",
+                    description="\n".join([f"{emoji.bullet_red} **{user}**: {reason}" for user, reason in errors]),
+                    color=config.color.red,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 
@@ -277,7 +277,7 @@ class MassModeration(commands.Cog):
         user_errors: list[tuple] = []
         if len(users) > 10 or len(roles) > 10:
             error_em = discord.Embed(
-                description=f"{emoji.error} You can only mass add 10 roles upto 10 users.", color=config.color.error
+                description=f"{emoji.error} You can only mass add 10 roles upto 10 users.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -308,11 +308,11 @@ class MassModeration(commands.Cog):
                         await _user.add_roles(role)
             if len(_users) > 0 and len(_roles) > 0:
                 mass_role_add_em = discord.Embed(
-                    title=f"{emoji.plus} Mass Added Roles",
+                    title="Mass Added Roles",
                     description=(
                         f"Successfully added {len(_roles)} roles to {len(_users)} users.\n"
-                        f"{emoji.bullet} **User(s)**: {', '.join(_users)}\n"
-                        f"{emoji.bullet} **Role(s)**: {', '.join([role.mention for role in _roles])}"
+                        f"{emoji.user} **Users**: {', '.join(_users)}\n"
+                        f"{emoji.role} **Roles**: {', '.join([role.mention for role in _roles])}"
                     ),
                     color=config.color.theme,
                 )
@@ -320,15 +320,15 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mass_role_add_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
+                    mass_role_add_em.description += f"\n{emoji.owner} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_role_add_em)
             if len(role_errors) > 0 or len(user_errors) > 0:
                 error_em = discord.Embed(
-                    title=f"{emoji.error} Can't add roles",
+                    title="Can't add roles",
                     description="\n".join(
-                        [f"{emoji.bullet} **{obj}**: {reason}" for obj, reason in role_errors + user_errors]
+                        [f"{emoji.bullet_red} **{obj}**: {reason}" for obj, reason in role_errors + user_errors]
                     ),
-                    color=config.color.error,
+                    color=config.color.red,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 
@@ -356,7 +356,7 @@ class MassModeration(commands.Cog):
         if len(users) > 10 or len(roles) > 10:
             error_em = discord.Embed(
                 description=f"{emoji.error} You can only mass remove 10 roles upto 10 users.",
-                color=config.color.error,
+                color=config.color.red,
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
@@ -387,11 +387,11 @@ class MassModeration(commands.Cog):
                         await _user.remove_roles(role)
             if len(_users) > 0 and len(_roles) > 0:
                 mass_role_remove_em = discord.Embed(
-                    title=f"{emoji.minus} Mass Removed Roles",
+                    title="Mass Removed Roles",
                     description=(
                         f"Successfully removed {len(_roles)} roles from {len(_users)} users.\n"
-                        f"{emoji.bullet} **User(s)**: {', '.join(_users)}\n"
-                        f"{emoji.bullet} **Role(s)**: {', '.join([role.mention for role in _roles])}"
+                        f"{emoji.user} **Users**: {', '.join(_users)}\n"
+                        f"{emoji.role} **Roles**: {', '.join([role.mention for role in _roles])}"
                     ),
                     color=config.color.theme,
                 )
@@ -399,15 +399,15 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mass_role_remove_em.description += f"\n{emoji.bullet} **Moderator**: {ctx.author.mention}"
+                    mass_role_remove_em.description += f"\n{emoji.owner} **Moderator**: {ctx.author.mention}"
                     await log_ch.send(embed=mass_role_remove_em)
             if len(role_errors) > 0 or len(user_errors) > 0:
                 error_em = discord.Embed(
-                    title=f"{emoji.error} Can't remove roles",
+                    title="Can't remove roles",
                     description="\n".join(
-                        [f"{emoji.bullet} **{obj}**: {reason}" for obj, reason in role_errors + user_errors]
+                        [f"{emoji.bullet_red} **{obj}**: {reason}" for obj, reason in role_errors + user_errors]
                     ),
-                    color=config.color.error,
+                    color=config.color.red,
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
 

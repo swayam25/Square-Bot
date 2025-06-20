@@ -47,11 +47,13 @@ Advanced multipurpose discord bot for all your needs.
         - `default` will use default emojis.
         - `custom` will use custom emojis defined in `.cache/emoji.json` (*requires setting up custom emojis*).
         - If you choose `custom`, make sure to define the emojis in the `.cache/emoji.json` file.
-            - To create custom emojis, upload a `.zip` file containing the emojis (*`.png` format*) using `/emoji upload` command.
-            - Emoji file names must match the attributes of `Emoji` class in [`emoji.py`](./utils/emoji.py).
-            - Then run `/emoji sync` command to sync the emojis. (*This creates `.cache/emoji.json` file from bot's emojis*).
-            - You can also manually create the `.cache/emoji.json` file with the same structure as `Emoji` class in [`emoji.py`](./utils/emoji.py).
-            - Then set the `emoji` field to `custom`.
+            1. To create custom emojis, upload a `.zip` file containing the emojis (*`.png` format*) using `/emoji upload` command.
+                - There is a zip file of custom emojis that are used in this bot. Upload the [`emojis.zip`](./assets/emojis.zip) via `/emoji upload` command.
+                - Emoji file names must match the attributes of `Emoji` class in [`emoji.py`](./utils/emoji.py). The [`emojis.zip`](./assets/emojis.zip) file already does this for you.
+            2. Emojis are automatically stored in `.cache/emoji.json` file when you upload them via `/emoji upload` command.
+                - You can manually run `/emoji sync` command to store bot's emojis in `.cache/emoji.json` file.
+                - You can also manually create the `.cache/emoji.json` file with keys same as attributes in `Emoji` class in [`emoji.py`](./utils/emoji.py).
+            3. Then set the `emoji` field to `custom`.
 
     - `bot-token` (`str`)
         - Discord api token.

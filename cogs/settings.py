@@ -43,14 +43,14 @@ class Settings(commands.Cog):
             await set_autorole(ctx.guild.id, None)  # Reset autorole if role doesn't exist
 
         set_em = discord.Embed(
-            title=f"{emoji.settings} {ctx.guild.name}'s Settings",
+            title=f"{ctx.guild.name}'s Settings",
             description=(
-                f"{emoji.bullet} **Mod Log Channel**: {mod_log_channel}\n"
-                f"{emoji.bullet} **Mod Command Log Channel**: {mod_log_cmd_channel}\n"
-                f"{emoji.bullet} **Message Log Channel**: {msg_log_channel}\n"
-                f"{emoji.bullet} **Ticket Commands**: {ticket}\n"
-                f"{emoji.bullet} **Ticket Log Channel**: {ticket_log_channel}\n"
-                f"{emoji.bullet} **Autorole**: {autorole}"
+                f"{emoji.channel} **Mod Log Channel**: {mod_log_channel}\n"
+                f"{emoji.channel} **Mod Command Log Channel**: {mod_log_cmd_channel}\n"
+                f"{emoji.channel} **Message Log Channel**: {msg_log_channel}\n"
+                f"{emoji.channel} **Ticket Commands**: {ticket}\n"
+                f"{emoji.channel} **Ticket Log Channel**: {ticket_log_channel}\n"
+                f"{emoji.channel} **Autorole**: {autorole}"
             ),
             color=config.color.theme,
         )
@@ -89,9 +89,8 @@ class Settings(commands.Cog):
                 case "auto role":
                     await set_autorole(ctx.guild.id, None)
         reset_em = discord.Embed(
-            title=f"{emoji.settings} Reset Settings",
-            description=f"Successfully reset the {setting.lower()} settings.",
-            color=config.color.theme,
+            description=f"{emoji.success} Successfully reset the {setting.lower()} settings.",
+            color=config.color.green,
         )
         await ctx.respond(embed=reset_em)
 
@@ -102,9 +101,8 @@ class Settings(commands.Cog):
         """Sets mod log channel."""
         await set_mod_log_channel(ctx.guild.id, channel.id)
         logging_em = discord.Embed(
-            title=f"{emoji.settings} Mod Log Settings",
-            description=f"Successfully set mod log channel to {channel.mention}.",
-            color=config.color.theme,
+            description=f"{emoji.success} Successfully set mod log channel to {channel.mention}.",
+            color=config.color.green,
         )
         await ctx.respond(embed=logging_em)
 
@@ -115,9 +113,8 @@ class Settings(commands.Cog):
         """Sets mod command log channel."""
         await set_mod_cmd_log_channel(ctx.guild.id, channel.id)
         logging_em = discord.Embed(
-            title=f"{emoji.settings} Mod Command Log Settings",
-            description=f"Successfully set mod command log channel to {channel.mention}.",
-            color=config.color.theme,
+            description=f"{emoji.success} Successfully set mod command log channel to {channel.mention}.",
+            color=config.color.green,
         )
         await ctx.respond(embed=logging_em)
 
@@ -128,9 +125,8 @@ class Settings(commands.Cog):
         """Sets message log channel."""
         await set_msg_log_channel(ctx.guild.id, channel.id)
         logging_em = discord.Embed(
-            title=f"{emoji.settings} Message Log Settings",
-            description=f"Successfully set message log channel to {channel.mention}.",
-            color=config.color.theme,
+            description=f"{emoji.success} Successfully set message log channel to {channel.mention}.",
+            color=config.color.green,
         )
         await ctx.respond(embed=logging_em)
 
@@ -145,9 +141,8 @@ class Settings(commands.Cog):
             case "disable":
                 await set_ticket_cmds(ctx.guild.id, False)
         ticket_cmds_em = discord.Embed(
-            title=f"{emoji.settings} Ticket Commands Settings",
-            description=f"Successfully {status.lower()}d ticket commands.",
-            color=config.color.theme,
+            description=f"{emoji.success} Successfully {status.lower()}d ticket commands.",
+            color=config.color.green,
         )
         await ctx.respond(embed=ticket_cmds_em)
 
@@ -158,9 +153,8 @@ class Settings(commands.Cog):
         """Sets ticket log channel."""
         await set_ticket_log_channel(ctx.guild.id, channel.id)
         logging_em = discord.Embed(
-            title=f"{emoji.settings} Ticket Log Settings",
-            description=f"Successfully set ticket log channel to {channel.mention}.",
-            color=config.color.theme,
+            description=f"{emoji.success} Successfully set ticket log channel to {channel.mention}.",
+            color=config.color.green,
         )
         await ctx.respond(embed=logging_em)
 
@@ -171,20 +165,22 @@ class Settings(commands.Cog):
         """Sets autorole. The bot will assign this role to new members."""
         if role >= ctx.guild.me.top_role:
             error_em = discord.Embed(
-                description=f"{emoji.error} I can't assign roles higher than my top role.", color=config.color.error
+                description=f"{emoji.error} I can't assign roles higher than my top role.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         elif role.name == "@everyone":
             error_em = discord.Embed(
-                description=f"{emoji.error} I can't assign the @everyone role.", color=config.color.error
+                description=f"{emoji.error} I can't assign the @everyone role.", color=config.color.red
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             await set_autorole(ctx.guild.id, role.id)
             autorole_em = discord.Embed(
-                title=f"{emoji.settings} Auto Role Settings",
-                description=f"Successfully set autorole to {role.mention}.",
-                color=config.color.theme,
+                description=(
+                    f"{emoji.success} Successfully set autorole to {role.mention}."
+                    f"-# This role will be assigned to members when they join the server."
+                ),
+                color=config.color.green,
             )
             await ctx.respond(embed=autorole_em)
 

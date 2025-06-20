@@ -1,7 +1,7 @@
 owner-id = 0
 owner-guild-ids = []
 system-channel-id = 0
-support-server-url = "https://discord.gg" # Replace with your support server URL.
+support-server-url = "https://discord.gg" # Replace this with your support server URL
 emoji = "default"
 
 bot-token = ""
@@ -9,7 +9,10 @@ database-url = "asyncpg://..." # If it starts with "postgresql://", replace it w
 
 [colors]
 theme = "#1FCEEC"
-error = "#E74C3C"
+green = "#2ECC71"
+red = "#E74C3C"
+orange = "#E67E22"
+blurple = "#5865F2"
 
 [lavalink]
 host = ""

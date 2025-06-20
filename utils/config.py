@@ -23,7 +23,10 @@ db_url: str = data["database-url"]
 @dataclass
 class ColorConfig:
     theme: int
-    error: int
+    green: int
+    red: int
+    orange: int
+    blurple: int
 
 
 def colors() -> ColorConfig:
