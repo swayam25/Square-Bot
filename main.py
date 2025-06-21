@@ -2,26 +2,29 @@ import discord
 import os
 from db import DB
 from pyfiglet import Figlet
-from rich import print
+from rich.console import Console
 from rich.progress import Progress, SpinnerColumn
 from utils import config
 
-# Discord vars
+# Vars
 status = discord.Status.online
 activity = discord.Activity(type=discord.ActivityType.listening, name="Discord")
 intents = discord.Intents.all()
 client = discord.Bot(status=status, activity=activity, intents=intents, help_command=None)
+console = Console()
 
 # Startup printing
 figlted_txt = Figlet(font="standard", justify="center").renderText("Discord Bot")
-print(f"[cyan]{figlted_txt}[/]")
+console.print(f"[cyan]{figlted_txt}[/]")
 
 
 # On ready event
 @client.event
 async def on_ready():
-    print(f"[green][bold]✓[/] Logged in as [cyan]{client.user}[/] [ID: {client.user.id}][/]")
-    print(f"[green][bold]✓[/] Connected to {len(client.guilds)} guild{'' if len(client.guilds) <= 1 else 's'}[/]")
+    console.print(f"[green][bold]✓[/] Logged in as [cyan]{client.user}[/] [ID: {client.user.id}][/]")
+    console.print(
+        f"[green][bold]✓[/] Connected to {len(client.guilds)} guild{'' if len(client.guilds) <= 1 else 's'}[/]"
+    )
 
 
 # Loading all files
@@ -71,5 +74,5 @@ async def main():
 # Execute the main func
 try:
     client.loop.run_until_complete(main())
-except Exception as e:
-    print(f"[red][bold]✗[/] Unable to login due to {e}[/]")
+except Exception:
+    console.print_exception()

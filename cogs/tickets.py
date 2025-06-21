@@ -8,6 +8,30 @@ from utils import config
 from utils.emoji import emoji
 
 
+async def close_ticket(
+    channel: discord.TextChannel, author: discord.Member, ctx: discord.ApplicationContext | discord.Webhook
+):
+    """Helper function to close a ticket."""
+    await ctx.send(
+        embed=discord.Embed(
+            title="Closing Ticket",
+            description=f"Closing ticket in 5 seconds.\n{emoji.owner_red} **Author**: {author.mention}",
+            color=config.color.red,
+        )
+    )
+    await asyncio.sleep(5)
+    await channel.delete()
+    log_ch_id = (await fetch_guild_settings(channel.guild.id)).ticket_log_channel_id
+    if log_ch_id is not None:
+        logging_ch = await channel.guild.fetch_channel(log_ch_id)
+        close_log_em = discord.Embed(
+            title="Ticket Closed",
+            description=f"{emoji.owner_red} **Author**: <@{channel.name.split('-')[1]}>\n{emoji.user_red} **Closed By**: {author.mention}",
+            color=config.color.red,
+        )
+        await logging_ch.send(embed=close_log_em)
+
+
 class TicketTranscript:
     def __init__(self, channel: discord.TextChannel):
         self.channel = channel
@@ -45,30 +69,7 @@ class TicketView(discord.ui.View):
     async def close_ticket(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.disable_all_items()
         await interaction.response.edit_message(view=self)
-        close_em = discord.Embed(
-            title="Closing Ticket",
-            description=(
-                "Closing ticket in 5 seconds.\n"
-                f"{emoji.owner_red} **Author**: <@{interaction.channel.name.split('-')[1]}>\n"
-                f"{emoji.user_red} **Closed By**: {interaction.user.mention}"
-            ),
-            color=config.color.red,
-        )
-        await interaction.followup.send(embed=close_em)
-        await asyncio.sleep(5)
-        await interaction.channel.delete()
-        channel_id = (await fetch_guild_settings(interaction.guild.id)).ticket_log_channel_id
-        if channel_id is not None:
-            logging_ch = await interaction.channel.guild.fetch_channel(channel_id)
-            close_log_em = discord.Embed(
-                title="Ticket Closed",
-                description=(
-                    f"{emoji.owner_red} **Author**: <@{interaction.channel.name.split('-')[1]}>\n"
-                    f"{emoji.user_red} **Closed By**: {interaction.user.mention}"
-                ),
-                color=config.color.red,
-            )
-            await logging_ch.send(embed=close_log_em)
+        await close_ticket(interaction.channel, interaction.user, interaction.followup)
 
     # Ticket summary
     @discord.ui.button(
@@ -178,26 +179,8 @@ class Tickets(commands.Cog):
             if (ctx.channel.name == f"ticket-{ctx.author.id}") or (
                 ctx.channel.name.startswith("ticket-") and ctx.author.guild_permissions.manage_channels
             ):
-                close_em = discord.Embed(
-                    title="Closing Ticket",
-                    description=f"Closing ticket in 5 seconds.\n{emoji.owner_red} **Author**: {ctx.author.mention}",
-                    color=config.color.red,
-                )
-                await ctx.respond(embed=close_em)
-                await asyncio.sleep(5)
-                await ctx.channel.delete()
-                log_ch_id = (await fetch_guild_settings(ctx.guild.id)).ticket_log_channel_id
-                if log_ch_id is not None:
-                    logging_ch = await self.client.fetch_channel(log_ch_id)
-                    close_log_em = discord.Embed(
-                        title="Ticket Closed",
-                        description=(
-                            f"{emoji.owner_red} **Author**: <@{ctx.channel.name.split('-')[1]}>\n"
-                            f"{emoji.user_red} **Closed By**: {ctx.author.mention}"
-                        ),
-                        color=config.color.red,
-                    )
-                    await logging_ch.send(embed=close_log_em)
+                await ctx.defer()
+                await close_ticket(ctx.channel, ctx.author, ctx)
             else:
                 error_em = discord.Embed(
                     description=f"{emoji.error} This is not a ticket channel", color=config.color.red

@@ -71,8 +71,7 @@ class MusicView(discord.ui.View):
             description=f"{interaction.user.mention} Destroyed the player.",
             color=config.color.theme,
         )
-        for child in self.children:
-            child.disabled = True
+        self.disable_all_items()
         await interaction.response.edit_message(view=self)
         await guild.voice_client.disconnect(force=True)
         await interaction.followup.send(embed=stop_embed, delete_after=5)
@@ -87,8 +86,7 @@ class MusicView(discord.ui.View):
             description=f"{interaction.user.mention} Skipped the track.",
             color=config.color.theme,
         )
-        for child in self.children:
-            child.disabled = True
+        self.disable_all_items()
         await interaction.response.edit_message(view=self)
         await interaction.followup.send(embed=skip_em, delete_after=5)
 
@@ -232,8 +230,7 @@ class Disable:
     async def queue_msg(self) -> None:
         if store.queue_msg(self.guild_id):
             queue_view = QueueView(self.client, page=1, timeout=None)
-            for child in queue_view.children:
-                child.disabled = True
+            queue_view.disable_all_items()
             await self.edit_messages_async(queue_view, store.queue_msg(self.guild_id))
             store.queue_msg(self.guild_id, "clear")
 
@@ -242,8 +239,7 @@ class Disable:
         play_msg = store.play_msg(self.guild_id)
         if play_msg:
             music_view = MusicView(self.client, timeout=None)
-            for child in music_view.children:
-                child.disabled = True
+            music_view.disable_all_items()
             await play_msg.edit(view=music_view)
 
 
