@@ -19,7 +19,9 @@ async def close_ticket(
             color=config.color.red,
         )
     )
+    transcript_task = asyncio.create_task(TicketTranscript(channel).create())
     await asyncio.sleep(5)
+    file = await transcript_task
     await channel.delete()
     log_ch_id = (await fetch_guild_settings(channel.guild.id)).ticket_log_channel_id
     if log_ch_id is not None:
@@ -29,14 +31,22 @@ async def close_ticket(
             description=f"{emoji.owner_red} **Author**: <@{channel.name.split('-')[1]}>\n{emoji.user_red} **Closed By**: {author.mention}",
             color=config.color.red,
         )
-        await logging_ch.send(embed=close_log_em)
+        await logging_ch.send(embed=close_log_em, file=file)
 
 
 class TicketTranscript:
+    """
+    Class to create a transcript of a ticket channel.
+
+    Attributes:
+        channel (discord.TextChannel): The ticket channel to create a transcript for.
+    """
+
     def __init__(self, channel: discord.TextChannel):
         self.channel = channel
 
-    async def create(self):
+    async def create(self) -> discord.File:
+        """Creates a transcript of the ticket channel."""
         messages = await self.channel.history(limit=500).flatten()
         with io.StringIO() as file:
             for message in reversed(messages):
