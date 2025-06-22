@@ -80,6 +80,8 @@ Advanced multipurpose discord bot for all your needs.
             - Lavalink port.
         - `password` (`str`)
             - Lavalink password.
+        - `region` (`str`)
+            - Lavalink region.
         - `secure` (`bool`)
             - Lavalink secure status
 

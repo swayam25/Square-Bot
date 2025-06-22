@@ -246,18 +246,27 @@ class Disable:
 class Music(commands.Cog):
     def __init__(self, client: discord.Bot):
         self.client = client
-        self.music.start()
+        self.connection_loop.start()
 
-    # Looping music task
+    # Connect to lavalink
+    def connect_lavalink(self):
+        self.client.lavalink.add_node(
+            host=config.lavalink["host"],
+            port=config.lavalink["port"],
+            password=config.lavalink["password"],
+            region=config.lavalink["region"],
+            ssl=config.lavalink["secure"],
+        )
+
     @tasks.loop(seconds=0)
-    async def music(self):
+    async def connection_loop(self):
         await self.client.wait_until_ready()
         if not hasattr(self.client, "lavalink"):
             self.client.lavalink = lavalink.Client(self.client.user.id)
-            self.client.lavalink.add_node(
-                config.lavalink["host"], config.lavalink["port"], config.lavalink["password"], "us", "default-node"
-            )
-            self.client.lavalink.add_event_hook(self.track_hook)
+            self.connect_lavalink()
+        if self.client.lavalink._event_hooks:
+            self.client.lavalink._event_hooks.clear()
+        self.client.lavalink.add_event_hooks(self)
 
     # Current voice
     def current_voice_channel(self, ctx: discord.ApplicationContext):
@@ -269,122 +278,116 @@ class Music(commands.Cog):
     def cog_unload(self):
         self.client.lavalink._event_hooks.clear()
 
-    # Lavalink track hook event
-    async def track_hook(self, event: lavalink.Event):
-        if isinstance(event, lavalink.events.TrackStartEvent):
-            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
-            channel = store.play_ch(event.player.guild_id)
-            if channel:
-                requester = f"<@{player.current.requester}>"
-                if player.current.stream:
-                    duration = f"{emoji.live} LIVE"
-                else:
-                    duration = datetime.timedelta(milliseconds=player.current.duration)
-                    duration = format_timedelta(duration, locale="en_IN")
-                play_em = discord.Embed(
-                    title=f"{player.current.title}",
-                    url=f"{player.current.uri}",
-                    description=(
-                        f"{emoji.user} **Requested By**: {requester if requester else 'Unknown'}\n"
-                        f"{emoji.duration} **Duration**: {duration}"
-                    ),
-                    color=config.color.theme,
-                )
-                source_images = {
-                    "spotify": lambda: play_em.set_thumbnail(url=player.current.artwork_url),
-                    "soundcloud": lambda: play_em.set_thumbnail(url=player.current.artwork_url),
-                    "_": lambda: play_em.set_image(url=player.current.artwork_url),
-                }
-                (source_images.get(player.current.source_name) or source_images["_"])()
-                music_view = MusicView(self.client, timeout=None)
-                # Loop emoji
-                if player.loop == player.LOOP_NONE:
-                    music_view.children[3].emoji = emoji.loop_white
-                elif player.loop == player.LOOP_SINGLE:
-                    music_view.children[3].emoji = emoji.loop_one
-                else:
-                    music_view.children[3].emoji = emoji.loop
-                # Shuffle emoji
-                if player.shuffle:
-                    music_view.children[4].emoji = emoji.shuffle
-                else:
-                    music_view.children[4].emoji = emoji.shuffle_white
-                # Player msg
-                play_msg = await channel.send(embed=play_em, view=music_view)
-                store.play_msg(event.player.guild_id, play_msg, "set")
-        if isinstance(event, lavalink.events.TrackEndEvent):
+    # Hooks
+    @lavalink.listener(lavalink.TrackStartEvent)
+    async def track_start_hook(self, event: lavalink.Event):
+        """Hook for track start event."""
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
+        channel = store.play_ch(event.player.guild_id)
+        if channel:
+            requester = f"<@{player.current.requester}>"
+            if player.current.stream:
+                duration = f"{emoji.live} LIVE"
+            else:
+                duration = datetime.timedelta(milliseconds=player.current.duration)
+                duration = format_timedelta(duration, locale="en_IN")
+            play_em = discord.Embed(
+                title=f"{player.current.title}",
+                url=f"{player.current.uri}",
+                description=(
+                    f"{emoji.user} **Requested By**: {requester if requester else 'Unknown'}\n"
+                    f"{emoji.duration} **Duration**: {duration}"
+                ),
+                color=config.color.theme,
+            )
+            source_images = {
+                "spotify": lambda: play_em.set_thumbnail(url=player.current.artwork_url),
+                "soundcloud": lambda: play_em.set_thumbnail(url=player.current.artwork_url),
+                "_": lambda: play_em.set_image(url=player.current.artwork_url),
+            }
+            (source_images.get(player.current.source_name) or source_images["_"])()
+            music_view = MusicView(self.client, timeout=None)
+            # Loop emoji
+            if player.loop == player.LOOP_NONE:
+                music_view.children[3].emoji = emoji.loop_white
+            elif player.loop == player.LOOP_SINGLE:
+                music_view.children[3].emoji = emoji.loop_one
+            else:
+                music_view.children[3].emoji = emoji.loop
+            # Shuffle emoji
+            if player.shuffle:
+                music_view.children[4].emoji = emoji.shuffle
+            else:
+                music_view.children[4].emoji = emoji.shuffle_white
+            # Player msg
+            play_msg = await channel.send(embed=play_em, view=music_view)
+            store.play_msg(event.player.guild_id, play_msg, "set")
+
+    @lavalink.listener(lavalink.TrackEndEvent)
+    async def track_end_hook(self, event: lavalink.Event):
+        """Hook for track end event."""
+        await Disable(self.client, event.player.guild_id).play_msg()
+
+    @lavalink.listener(lavalink.TrackStuckEvent, lavalink.TrackExceptionEvent)
+    async def track_stuck_or_exception_hook(self, event: lavalink.Event):
+        """Hook for track stuck event."""
+        channel = store.play_ch(event.player.guild_id)
+        if channel:
+            error_em = discord.Embed(
+                description=f"{emoji.error} Error while playing the track. Please try again later.",
+                color=config.color.red,
+            )
             await Disable(self.client, event.player.guild_id).play_msg()
-        if isinstance(event, lavalink.events.TrackStuckEvent):
-            channel = store.play_ch(event.player.guild_id)
-            if channel:
-                error_em = discord.Embed(
-                    description=f"{emoji.error} Error while playing the track. Please try again later.",
-                    color=config.color.red,
-                )
-                await Disable(self.client, event.player.guild_id).play_msg()
-                await channel.send(embed=error_em, delete_after=5)
-        if isinstance(event, lavalink.events.TrackExceptionEvent):
-            channel = store.play_ch(event.player.guild_id)
-            if channel:
-                error_em = discord.Embed(
-                    description=f"{emoji.error} Error while playing the track. Please try again later.",
-                    color=config.color.red,
-                )
-                await Disable(self.client, event.player.guild_id).play_msg()
-                await channel.send(embed=error_em, delete_after=5)
-        if isinstance(event, lavalink.events.QueueEndEvent):
-            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
-            guild: discord.Guild = self.client.get_guild(int(event.player.guild_id))
-            await player.clear_filters()
-            await guild.voice_client.disconnect(force=True)
-            await Disable(self.client, event.player.guild_id).queue_msg()
+            await channel.send(embed=error_em, delete_after=5)
+
+    @lavalink.listener(lavalink.QueueEndEvent)
+    async def queue_end_hook(self, event: lavalink.Event):
+        """Hook for queue end event."""
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
+        guild: discord.Guild = self.client.get_guild(int(event.player.guild_id))
+        await player.clear_filters()
+        await guild.voice_client.disconnect(force=True)
+        await Disable(self.client, event.player.guild_id).queue_msg()
 
     # Ensures voice parameters
     async def ensure_voice(self, ctx: discord.ApplicationContext):
         """Checks all the voice parameters."""
-        player: lavalink.DefaultPlayer = None
+        player: lavalink.DefaultPlayer | None = None
         if not ctx.author.voice or not ctx.author.voice.channel:
-            error_em = discord.Embed(description=f"{emoji.error} Join a voice channel first", color=config.color.red)
+            error_em = discord.Embed(description=f"{emoji.error} Join a voice channel first.", color=config.color.red)
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
             player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
             permissions = ctx.author.voice.channel.permissions_for(ctx.me)
-            if ctx.command.name in ("play") and self.current_voice_channel(ctx) is None:
-                if self.client.lavalink.node_manager.available_nodes:
+            if ctx.command.name in ("play",) and (
+                self.current_voice_channel(ctx) is None
+                or (self.current_voice_channel(ctx) is not None and not player.current)
+            ):
+                if not permissions.connect or not permissions.speak:
+                    player = None
+                    error_em = discord.Embed(
+                        description=f"{emoji.error} I need the `Connect` and `Speak` permissions",
+                        color=config.color.red,
+                    )
+                    await ctx.respond(embed=error_em, ephemeral=True)
+                else:
+                    if not self.client.lavalink.node_manager.available_nodes:
+                        self.connect_lavalink()
                     await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
                     player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
                     store.play_ch(ctx.guild.id, ctx.channel, "set")
-                else:
-                    self.client.lavalink.add_node(
-                        config.lavalink["host"],
-                        config.lavalink["port"],
-                        config.lavalink["password"],
-                        "us",
-                        "default-node",
-                    )
-            elif self.current_voice_channel(ctx) is not None and not self.client.lavalink.node_manager.available_nodes:
-                self.client.lavalink.add_node(
-                    config.lavalink["host"], config.lavalink["port"], config.lavalink["password"], "us", "default-node"
-                )
-            elif not permissions.connect or not permissions.speak:
-                player: lavalink.DefaultPlayer = None
-                error_em = discord.Embed(
-                    description=f"{emoji.error} I need the `Connect` and `Speak` permissions",
-                    color=config.color.red,
-                )
-                await ctx.respond(embed=error_em, ephemeral=True)
-            elif "play" not in ctx.command.name:
+            else:
                 if not player.current:
-                    player: lavalink.DefaultPlayer = None
+                    player = None
                     error_em = discord.Embed(
-                        description=f"{emoji.error} Nothing is being played at the current moment",
+                        description=f"{emoji.error} Nothing is being played at the current moment.",
                         color=config.color.red,
                     )
                     await ctx.respond(embed=error_em, ephemeral=True)
                 elif ctx.author.voice.channel.id != int(player.channel_id):
-                    player: lavalink.DefaultPlayer = None
+                    player = None
                     error_em = discord.Embed(
-                        description=f"{emoji.error} You are not in my voice channel", color=config.color.red
+                        description=f"{emoji.error} You are not in my voice channel.", color=config.color.red
                     )
                     await ctx.respond(embed=error_em, ephemeral=True)
         return player
@@ -393,33 +396,83 @@ class Music(commands.Cog):
     async def search(self, ctx: discord.AutocompleteContext):
         """Searches a track from a given query."""
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.interaction.guild_id)
+        tracks = []
         if ctx.value != "":
             result = await player.node.get_tracks(f"spsearch:{ctx.value}")
-            tracks = []
-            for track in result.tracks:
-                dur = lavalink.format_time(track.duration)
-                track_name = ""
-                if len(track["info"]["title"]) >= 80:
-                    track_name = f"{track.title[:80]}... - {dur}"
-                else:
-                    track_name = f"{track.title} - {dur}"
-                tracks.append(track_name)
-            return tracks
         else:
-            return []
+            result = await player.node.get_tracks("spsearch:top tracks")
+        for track in result.tracks:
+            dur = lavalink.format_time(track.duration)
+            # Format: "Author - Title... - 00:00:00", max 100 chars
+            max_len = 100
+            dur_str = dur
+            author = track.author
+            title = track.title
+            # Reserve space for author, duration, and separators
+            reserved = len(author) + len(dur_str) + 6  # " - " x2 and possible "..."
+            max_title_len = max(0, max_len - reserved)
+            if len(title) > max_title_len:
+                title = title[: max_title_len - 3] + "..."
+            track_name = f"{author} - {title} - {dur_str}"
+            tracks.append(track_name)
+        return tracks
 
     # Voice state update event
     @commands.Cog.listener()
-    async def on_voice_state_update(self, member: discord.Member, before, after):
-        """Deafen yourself when joining a voice channel."""
+    async def on_voice_state_update(
+        self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState
+    ):
+        """Handles voice state updates to manage the bot's connection."""
         if member.id == member.guild.me.id and after.channel is None:
             if member.guild.voice_client:
                 await member.guild.voice_client.disconnect(force=True)
-        if member.id != member.guild.me.id or not after.channel:
-            return
-        my_perms = after.channel.permissions_for(member)
-        if not after.deaf and my_perms.deafen_members:
-            await member.edit(deafen=True)
+        if member.id != member.guild.me.id:
+            channel = before.channel
+            humans = [m for m in channel.members if not m.bot] if channel else []
+            if not humans:
+                player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(member.guild.id)
+                if player and player.is_connected:
+                    await player.set_pause(True)
+
+                    pending_inactivity_task = store.inactivity_task(member.guild.id, mode="get")
+                    if pending_inactivity_task:
+                        pending_inactivity_task.cancel()
+                        store.inactivity_task(member.guild.id, mode="clear")
+
+                    async def inactivity_task():
+                        async def stop_and_disconnect():
+                            """Stops the player and disconnects from the voice channel gracefully."""
+                            await player.stop()
+                            player.queue.clear()
+                            await channel.guild.voice_client.disconnect(force=True)
+                            disable = Disable(self.client, member.guild.id)
+                            await disable.play_msg()
+                            await disable.queue_msg()
+                            play_ch = store.play_ch(member.guild.id)
+                            if play_ch:
+                                em = discord.Embed(
+                                    description=f"{emoji.leave} Left {channel.mention} due to inactivity.",
+                                    color=config.color.red,
+                                )
+                                await play_ch.send(embed=em)
+
+                        try:
+                            await asyncio.sleep(60) # Wait for 60 seconds of inactivity
+                            await stop_and_disconnect()
+                        except asyncio.CancelledError:
+                            await stop_and_disconnect()
+
+                    store.inactivity_task(
+                        guild_id=member.guild.id, task=asyncio.create_task(inactivity_task()), mode="set"
+                    )
+            else:
+                inactivity_task = store.inactivity_task(member.guild.id, mode="get")
+                if inactivity_task:
+                    inactivity_task.cancel()
+                    store.inactivity_task(member.guild.id, mode="clear")
+                player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(member.guild.id)
+                if player and player.paused:
+                    await player.set_pause(False)
 
     # Play
     @slash_command(name="play")
@@ -444,7 +497,7 @@ class Music(commands.Cog):
             results = await player.node.get_tracks(query)
             if not results or not results.tracks:
                 error_em = discord.Embed(
-                    description=f"{emoji.error} No track found from the given query", color=config.color.red
+                    description=f"{emoji.error} No track found from the given query.", color=config.color.red
                 )
                 await ctx.respond(embed=error_em, ephemeral=True)
             if results.load_type == lavalink.LoadType.PLAYLIST:
@@ -487,7 +540,7 @@ class Music(commands.Cog):
             elif not player.current.stream:
                 bar_length = 10
                 filled_length = int(bar_length * player.position // float(player.current.duration))
-                bar = f"`{lavalink.utils.format_time(player.position)}` {emoji.filled_bar * filled_length}{emoji.empty_bar * (bar_length - filled_length)} `{lavalink.utils.format_time(player.current.duration)}`"
+                bar = f"`{lavalink.format_time(player.position)}` {emoji.filled_bar * filled_length}{emoji.empty_bar * (bar_length - filled_length)} `{lavalink.format_time(player.current.duration)}`"
                 duration = datetime.timedelta(milliseconds=player.current.duration)
                 duration = format_timedelta(duration, locale="en_IN")
             equalizer = store.equalizer(ctx.guild.id)
@@ -574,7 +627,7 @@ class Music(commands.Cog):
             if player.current.duration > track_time:
                 await player.seek(track_time)
                 seek_em = discord.Embed(
-                    description=f"{emoji.seek} Moved track to `{lavalink.utils.format_time(track_time)}`.",
+                    description=f"{emoji.seek} Moved track to `{lavalink.format_time(track_time)}`.",
                     color=config.color.theme,
                 )
                 await ctx.respond(embed=seek_em)

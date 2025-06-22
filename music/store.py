@@ -1,16 +1,17 @@
+import asyncio
 from typing import Any, Literal
 
 obj = {}
 
 
-# Play channel ID
+# Play channel
 def play_ch(guild_id: int, channel: Any | None = None, mode: Literal["get", "set"] = "get"):
     """
-    Gets or sets the play channel ID for a guild.
+    Gets or sets the play channel for a guild.
 
     Parameters:
         guild_id (int): The ID of the guild.
-        channel (Any | None): The channel ID to set, or None to get the current value.
+        channel (Any | None): The channel to set, or None to get the current value.
         mode (str): The operation mode, either "get" or "set".
     """
     match mode:
@@ -20,14 +21,14 @@ def play_ch(guild_id: int, channel: Any | None = None, mode: Literal["get", "set
             obj.update({f"{str(guild_id)}-play_ch": channel})
 
 
-# Play msg ID
+# Play msg
 def play_msg(guild_id: int, msg: Any | None = None, mode: Literal["get", "set"] = "get"):
     """
-    Gets or sets the play message ID for a guild.
+    Gets or sets the play message for a guild.
 
     Parameters:
         guild_id (int): The ID of the guild.
-        msg (Any | None): The message ID to set, or None to get the current value.
+        msg (Any | None): The message to set, or None to get the current value.
         mode (str): The operation mode, either "get" or "set".
     """
     match mode:
@@ -37,14 +38,14 @@ def play_msg(guild_id: int, msg: Any | None = None, mode: Literal["get", "set"] 
             obj.update({f"{str(guild_id)}-play_msg": msg})
 
 
-# Queue msg object
+# Queue msg
 def queue_msg(guild_id: int, msg: Any | None = None, mode: Literal["get", "set", "clear"] = "get"):
     """
     Gets or sets the queue message for a guild.
 
     Parameters:
         guild_id (int): The ID of the guild.
-        msg (Any | None): The message object to set, or None to get the current value.
+        msg (Any | None): The message to set, or None to get the current value.
         mode (str): The operation mode, either "get", "set", or "clear".
     """
     match mode:
@@ -77,3 +78,24 @@ def equalizer(guild_id: int, name: str = None, mode: Literal["get", "set"] = "ge
             return obj.get(f"{str(guild_id)}-equalizer", None)
         case "set":
             obj.update({f"{str(guild_id)}-equalizer": name})
+
+
+# Inactivity Task
+def inactivity_task(
+    guild_id: int, task: asyncio.Task | None = None, mode: Literal["get", "set", "clear"] = "get"
+) -> asyncio.Task | None:
+    """
+    Gets or sets the inactivity task for a guild.
+
+    Parameters:
+        guild_id (int): The ID of the guild.
+        task (asyncio.Task | None): The task to set, or None to get the current value.
+        mode (str): The operation mode, either "get", "set", or "clear".
+    """
+    match mode:
+        case "get":
+            return obj.get(f"{str(guild_id)}-inactivity_task", None)
+        case "set":
+            obj.update({f"{str(guild_id)}-inactivity_task": task})
+        case "clear":
+            obj.update({f"{str(guild_id)}-inactivity_task": None})

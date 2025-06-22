@@ -20,7 +20,7 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
 
     # Connect
     async def connect(self, *, timeout: float, reconnect: bool) -> None:
-        await self.channel.guild.change_voice_state(channel=self.channel)
+        await self.channel.guild.change_voice_state(channel=self.channel, self_deaf=True, self_mute=False)
         try:
             self.lavalink: lavalink.Client = self.client.lavalink
         except AttributeError:
@@ -29,7 +29,7 @@ class LavalinkVoiceClient(discord.VoiceProtocol):
                 host=config.lavalink["host"],
                 port=config.lavalink["port"],
                 password=config.lavalink["password"],
-                name="default-node",
+                region=config.lavalink["region"],
                 ssl=config.lavalink["secure"],
             )
 

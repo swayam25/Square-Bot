@@ -18,4 +18,5 @@ blurple = "#5865F2"
 host = ""
 port = 0
 password = ""
+region = ""
 secure = false
