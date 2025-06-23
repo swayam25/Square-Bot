@@ -63,9 +63,7 @@ class MusicView(discord.ui.View):
     async def stop_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         guild: discord.Guild = self.client.get_guild(int(interaction.guild_id))
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(interaction.guild_id))
-        if player:
-            player.channel_id = False
-            await player.stop()
+        await player.stop()
         player.queue.clear()
         stop_embed = discord.Embed(
             description=f"{interaction.user.mention} Destroyed the player.",
@@ -73,6 +71,7 @@ class MusicView(discord.ui.View):
         )
         self.disable_all_items()
         await interaction.response.edit_message(view=self)
+        await guild.me.voice.channel.set_status(status=None)
         await guild.voice_client.disconnect(force=True)
         await interaction.followup.send(embed=stop_embed, delete_after=5)
         await Disable(self.client, guild.id).queue_msg()
@@ -280,9 +279,12 @@ class Music(commands.Cog):
 
     # Hooks
     @lavalink.listener(lavalink.TrackStartEvent)
-    async def track_start_hook(self, event: lavalink.Event):
+    async def track_start_hook(self, event: lavalink.TrackStartEvent):
         """Hook for track start event."""
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
+        vc: discord.VoiceChannel = self.client.get_channel(int(event.player.channel_id))
+        if vc is not None:
+            await vc.set_status(status=f"Playing {player.current.title}")
         channel = store.play_ch(event.player.guild_id)
         if channel:
             requester = f"<@{player.current.requester}>"
@@ -324,12 +326,15 @@ class Music(commands.Cog):
             store.play_msg(event.player.guild_id, play_msg, "set")
 
     @lavalink.listener(lavalink.TrackEndEvent)
-    async def track_end_hook(self, event: lavalink.Event):
+    async def track_end_hook(self, event: lavalink.TrackStartEvent):
         """Hook for track end event."""
+        vc: discord.VoiceChannel = self.client.get_channel(int(event.player.channel_id))
+        if vc is not None:
+            await vc.set_status(status=None)
         await Disable(self.client, event.player.guild_id).play_msg()
 
     @lavalink.listener(lavalink.TrackStuckEvent, lavalink.TrackExceptionEvent)
-    async def track_stuck_or_exception_hook(self, event: lavalink.Event):
+    async def track_stuck_or_exception_hook(self, event: lavalink.TrackExceptionEvent):
         """Hook for track stuck event."""
         channel = store.play_ch(event.player.guild_id)
         if channel:
@@ -341,7 +346,7 @@ class Music(commands.Cog):
             await channel.send(embed=error_em, delete_after=5)
 
     @lavalink.listener(lavalink.QueueEndEvent)
-    async def queue_end_hook(self, event: lavalink.Event):
+    async def queue_end_hook(self, event: lavalink.QueueEndEvent):
         """Hook for queue end event."""
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
         guild: discord.Guild = self.client.get_guild(int(event.player.guild_id))
@@ -426,52 +431,80 @@ class Music(commands.Cog):
         if member.id == member.guild.me.id and after.channel is None:
             if member.guild.voice_client:
                 await member.guild.voice_client.disconnect(force=True)
-        if member.id != member.guild.me.id:
-            channel = before.channel
-            humans = [m for m in channel.members if not m.bot] if channel else []
+            return
+
+        if member.bot:  # Ignore bots
+            return
+
+        if hasattr(self.client, "lavalink"):
+            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(member.guild.id)
+            if (
+                not player or not player.is_connected
+            ):  # We don't need to handle voice state updates if the player is not connected
+                return
+
+            bot_voice_channel = member.guild.me.voice.channel if member.guild.me.voice else None
+            if (
+                not bot_voice_channel
+            ):  # We don't need to handle voice state updates if the bot is not in a voice channel
+                return
+
+            member_left_bot_channel = before.channel == bot_voice_channel and after.channel != bot_voice_channel
+            member_joined_bot_channel = before.channel != bot_voice_channel and after.channel == bot_voice_channel
+
+            if not (
+                member_left_bot_channel or member_joined_bot_channel
+            ):  # Only handle join/leave events in bot's voice channel
+                return
+
+            humans = [m for m in bot_voice_channel.members if not m.bot]
+
             if not humans:
-                player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(member.guild.id)
-                if player and player.is_connected:
-                    await player.set_pause(True)
+                await player.set_pause(True)  # Pause the player if no humans are in the voice channel
 
-                    pending_inactivity_task = store.inactivity_task(member.guild.id, mode="get")
-                    if pending_inactivity_task:
-                        pending_inactivity_task.cancel()
-                        store.inactivity_task(member.guild.id, mode="clear")
+                pending_inactivity_task = store.inactivity_task(member.guild.id, mode="get")
+                if pending_inactivity_task:  # Clear any existing inactivity task
+                    pending_inactivity_task.cancel()
+                    store.inactivity_task(member.guild.id, mode="clear")
 
-                    async def inactivity_task():
-                        async def stop_and_disconnect():
-                            """Stops the player and disconnects from the voice channel gracefully."""
-                            await player.stop()
-                            player.queue.clear()
-                            await channel.guild.voice_client.disconnect(force=True)
-                            disable = Disable(self.client, member.guild.id)
-                            await disable.play_msg()
-                            await disable.queue_msg()
-                            play_ch = store.play_ch(member.guild.id)
-                            if play_ch:
-                                em = discord.Embed(
-                                    description=f"{emoji.leave} Left {channel.mention} due to inactivity.",
-                                    color=config.color.red,
-                                )
-                                await play_ch.send(embed=em)
+                async def inactivity_task():  # Inactivity task to stop and disconnect the player
+                    async def stop_and_disconnect():
+                        """Stops the player and disconnects from the voice channel gracefully."""
+                        await player.stop()
+                        player.queue.clear()
+                        await bot_voice_channel.guild.voice_client.disconnect(force=True)
+                        disable = Disable(self.client, member.guild.id)
+                        await disable.play_msg()
+                        await disable.queue_msg()
+                        play_ch = store.play_ch(member.guild.id)
+                        if play_ch:
+                            em = discord.Embed(
+                                description=f"{emoji.leave} Left {bot_voice_channel.mention} due to inactivity.",
+                                color=config.color.red,
+                            )
+                            await play_ch.send(embed=em)
 
-                        try:
-                            await asyncio.sleep(60) # Wait for 60 seconds of inactivity
+                    sleep_done: bool = False
+                    try:
+                        await asyncio.sleep(60)
+                        sleep_done = True
+                        current_humans = [m for m in bot_voice_channel.members if not m.bot]
+                        if not current_humans:  # Double check if no humans are present
                             await stop_and_disconnect()
-                        except asyncio.CancelledError:
+                    except asyncio.CancelledError:
+                        if sleep_done:  # If the sleep was completed, we can safely stop and disconnect although the task was cancelled
                             await stop_and_disconnect()
+                        else:
+                            pass
 
-                    store.inactivity_task(
-                        guild_id=member.guild.id, task=asyncio.create_task(inactivity_task()), mode="set"
-                    )
-            else:
+                store.inactivity_task(guild_id=member.guild.id, task=asyncio.create_task(inactivity_task()), mode="set")
+            else:  # If humans are present in the voice channel
                 inactivity_task = store.inactivity_task(member.guild.id, mode="get")
-                if inactivity_task:
+                if inactivity_task:  # Cancel the inactivity task
                     inactivity_task.cancel()
                     store.inactivity_task(member.guild.id, mode="clear")
-                player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(member.guild.id)
-                if player and player.paused:
+
+                if player.paused:  # Resume the player if it was paused
                     await player.set_pause(False)
 
     # Play
@@ -604,12 +637,10 @@ class Music(commands.Cog):
         await ctx.defer()
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
-            try:
-                player.queue.clear()
-                await player.stop()
-                await ctx.guild.voice_client.disconnect(force=True)
-            except Exception:
-                pass
+            player.queue.clear()
+            await player.stop()
+            await ctx.guild.me.voice.channel.set_status(status=None)
+            await ctx.guild.voice_client.disconnect(force=True)
             stop_embed = discord.Embed(description=f"{emoji.stop} Player destroyed.", color=config.color.theme)
             disable = Disable(self.client, ctx.guild.id)
             await disable.play_msg()

@@ -8,7 +8,7 @@ from utils import config
 
 # Vars
 status = discord.Status.online
-activity = discord.Activity(type=discord.ActivityType.listening, name="Discord")
+activity = discord.Activity(type=discord.ActivityType.watching, name="Discord")
 intents = discord.Intents.all()
 client = discord.Bot(status=status, activity=activity, intents=intents, help_command=None)
 console = Console()
