@@ -50,7 +50,7 @@ Advanced multipurpose discord bot for all your needs.
             1. To create custom emojis, upload a `.zip` file containing the emojis (*`.png` format*) using `/emoji upload` command.
                 - There is a zip file of custom emojis that are used in this bot. Upload the [`emojis.zip`](./assets/emojis.zip) via `/emoji upload` command.
                 - Emoji file names must match the attributes of `Emoji` class in [`emoji.py`](./utils/emoji.py). The [`emojis.zip`](./assets/emojis.zip) file already does this for you.
-            2. Run the `/emoji generate` command to generate the `.cache/emoji.json` file.
+            2. Run the `/emoji sync` command to sync the emojis to `.cache/emoji.json`.
             3. Then set the `emoji` field to `custom`.
 
     - `bot-token` (`str`)
