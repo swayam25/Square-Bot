@@ -460,13 +460,12 @@ class Music(commands.Cog):
             humans = [m for m in bot_voice_channel.members if not m.bot]
 
             if not humans:
-                await player.set_pause(True)  # Pause the player if no humans are in the voice channel
-
                 pending_inactivity_task = store.inactivity_task(member.guild.id, mode="get")
                 if pending_inactivity_task:  # Clear any existing inactivity task
                     pending_inactivity_task.cancel()
                     store.inactivity_task(member.guild.id, mode="clear")
 
+                # We can safely use local variables to store guild-specific data within this task, as each inactivity task is uniquely associated with its guild ID in the store, ensuring isolation between guilds.
                 async def inactivity_task():  # Inactivity task to stop and disconnect the player
                     async def stop_and_disconnect():
                         """Stops the player and disconnects from the voice channel gracefully."""
@@ -484,6 +483,8 @@ class Music(commands.Cog):
                             )
                             await play_ch.send(embed=em)
 
+                    is_paused_before = player.paused
+                    await player.set_pause(True)  # Pause the player if no humans are in the voice channel
                     sleep_done: bool = False
                     try:
                         await asyncio.sleep(60)
@@ -492,6 +493,8 @@ class Music(commands.Cog):
                         if not current_humans:  # Double check if no humans are present
                             await stop_and_disconnect()
                     except asyncio.CancelledError:
+                        if player.paused and not is_paused_before:
+                            await player.set_pause(False)
                         if sleep_done:  # If the sleep was completed, we can safely stop and disconnect although the task was cancelled
                             await stop_and_disconnect()
                         else:
@@ -503,9 +506,6 @@ class Music(commands.Cog):
                 if inactivity_task:  # Cancel the inactivity task
                     inactivity_task.cancel()
                     store.inactivity_task(member.guild.id, mode="clear")
-
-                if player.paused:  # Resume the player if it was paused
-                    await player.set_pause(False)
 
     # Play
     @slash_command(name="play")
