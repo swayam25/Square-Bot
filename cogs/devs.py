@@ -400,7 +400,6 @@ class Devs(commands.Cog):
             color=config.color.green,
         )
         await msg.edit(embed=upload_em)
-        await self.sync_app_emojis(ctx)
 
     async def delete_extra_emojis_callback(
         self, view: discord.ui.View, interaction: discord.Interaction, emojis: dict[str, str]
