@@ -17,6 +17,39 @@ from utils.emoji import emoji
 url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
 
 
+async def update_play_msg(client: discord.Bot, guild_id: int):
+    """
+    Updates the play message with the current player status.
+
+    Parameters:
+        client (discord.Bot): The Discord bot client.
+        guild_id (int): The ID of the guild to update the play message for.
+    """
+    player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(guild_id)
+    if player and player.is_connected:
+        play_msg = store.play_msg(player.guild_id)
+        if play_msg:
+            music_view = MusicView(client, timeout=None)
+            # Pause emoji
+            if player.paused:
+                music_view.get_item("pause").emoji = emoji.play_white
+            else:
+                music_view.get_item("pause").emoji = emoji.pause_white
+            # Loop emoji
+            if player.loop == player.LOOP_NONE:
+                music_view.get_item("loop").emoji = emoji.loop_white
+            elif player.loop == player.LOOP_SINGLE:
+                music_view.get_item("loop").emoji = emoji.loop_one
+            else:
+                music_view.get_item("loop").emoji = emoji.loop
+            # Shuffle emoji
+            if player.shuffle:
+                music_view.get_item("shuffle").emoji = emoji.shuffle
+            else:
+                music_view.get_item("shuffle").emoji = emoji.shuffle_white
+            await play_msg.edit(view=music_view)
+
+
 class MusicView(discord.ui.View):
     def __init__(self, client: discord.Bot, timeout: int):
         super().__init__(timeout=timeout, disable_on_timeout=True)
@@ -104,9 +137,9 @@ class MusicView(discord.ui.View):
         else:
             player.set_loop(0)
             button.emoji = emoji.loop_white
-            mode = "OFF"
+            mode = "Disable"
         loop_em = discord.Embed(
-            description=f"{interaction.user.mention} {'Enabled' if mode != 'OFF' else 'Disabled'} {mode if mode != 'OFF' else ''} loop.",
+            description=f"{interaction.user.mention} {'Enabled' if mode != 'Disable' else 'Disabled'} {mode if mode != 'Disable' else ''} loop.",
             color=config.color.theme,
         )
         await interaction.response.edit_message(view=self)
@@ -381,20 +414,19 @@ class Music(commands.Cog):
                     await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
                     player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
                     store.play_ch(ctx.guild.id, ctx.channel, "set")
-            else:
-                if not player.current:
-                    player = None
-                    error_em = discord.Embed(
-                        description=f"{emoji.error} Nothing is being played at the current moment.",
-                        color=config.color.red,
-                    )
-                    await ctx.respond(embed=error_em, ephemeral=True)
-                elif ctx.author.voice.channel.id != int(player.channel_id):
-                    player = None
-                    error_em = discord.Embed(
-                        description=f"{emoji.error} You are not in my voice channel.", color=config.color.red
-                    )
-                    await ctx.respond(embed=error_em, ephemeral=True)
+            elif not player.current:
+                player = None
+                error_em = discord.Embed(
+                    description=f"{emoji.error} Nothing is being played at the current moment.",
+                    color=config.color.red,
+                )
+                await ctx.respond(embed=error_em, ephemeral=True)
+            elif ctx.author.voice.channel.id != int(player.channel_id):
+                player = None
+                error_em = discord.Embed(
+                    description=f"{emoji.error} You are not in my voice channel.", color=config.color.red
+                )
+                await ctx.respond(embed=error_em, ephemeral=True)
         return player
 
     # Search autocomplete
@@ -710,6 +742,7 @@ class Music(commands.Cog):
                 await ctx.respond(embed=error_em, ephemeral=True)
             else:
                 await player.set_pause(True)
+                await update_play_msg(self.client, ctx.guild.id)
                 pause_em = discord.Embed(
                     description=f"{emoji.pause} Player paused.",
                     color=config.color.theme,
@@ -724,6 +757,7 @@ class Music(commands.Cog):
         if player:
             if player.paused:
                 await player.set_pause(False)
+                await update_play_msg(self.client, ctx.guild.id)
                 resume_em = discord.Embed(
                     description=f"{emoji.play} Player resumed.",
                     color=config.color.theme,
@@ -792,6 +826,7 @@ class Music(commands.Cog):
                 await ctx.respond(embed=error_em, ephemeral=True)
             else:
                 player.shuffle = not player.shuffle
+                await update_play_msg(self.client, ctx.guild.id)
                 shuffle_em = discord.Embed(
                     description=f"{emoji.shuffle} {'Enabled' if player.shuffle else 'Disabled'} shuffle.",
                     color=config.color.theme,
@@ -800,13 +835,13 @@ class Music(commands.Cog):
 
     # Loop
     @slash_command(name="loop")
-    @option("mode", description="Enter loop mode", choices=["OFF", "Queue", "Track"])
+    @option("mode", description="Enter loop mode", choices=["Disable", "Queue", "Track"])
     async def loop(self, ctx: discord.ApplicationContext, mode: str):
         """Loops the current queue until the command is invoked again or until a new track is enqueued."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             _emoji = ""
-            if mode == "OFF":
+            if mode == "Disable":
                 player.set_loop(0)
                 _emoji = emoji.loop_white
             elif mode == "Track":
@@ -820,8 +855,9 @@ class Music(commands.Cog):
                 else:
                     player.set_loop(2)
                     _emoji = emoji.loop
+            await update_play_msg(self.client, ctx.guild.id)
             loop_em = discord.Embed(
-                description=f"{_emoji} {'Enabled' if mode != 'OFF' else 'Disabled'} {mode if mode != 'OFF' else ''} Loop.",
+                description=f"{_emoji} {'Enabled' if mode != 'Disable' else 'Disabled'} {mode if mode != 'Disable' else ''} Loop.",
                 color=config.color.theme,
             )
             await ctx.respond(embed=loop_em)
