@@ -47,7 +47,11 @@ async def update_play_msg(client: discord.Bot, guild_id: int):
                 music_view.get_item("shuffle").emoji = emoji.shuffle
             else:
                 music_view.get_item("shuffle").emoji = emoji.shuffle_white
-            await play_msg.edit(view=music_view)
+            try:
+                await play_msg.edit(view=music_view)
+            except discord.NotFound:
+                store.play_msg(guild_id, "clear")
+                return
 
 
 class MusicView(discord.ui.View):
@@ -153,7 +157,7 @@ class MusicView(discord.ui.View):
             error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=config.color.red)
             await interaction.response.send_message(embed=error_em, ephemeral=True)
         else:
-            player.shuffle = not player.shuffle
+            await player.set_shuffle(not player.shuffle)
             button.emoji = f"{emoji.shuffle if player.shuffle else emoji.shuffle_white}"
             shuffle_em = discord.Embed(
                 description=f"{interaction.user.mention} {'Enabled' if player.shuffle else 'Disabled'} shuffle.",
@@ -255,9 +259,12 @@ class Disable:
         self.guild_id = guild_id
 
     # Disable queue menu
-    async def edit_messages_async(self, queue_view, messages) -> None:
+    async def edit_messages_async(self, queue_view: QueueView, messages: list[discord.Message]) -> None:
         tasks = [msg.edit(view=queue_view) for msg in messages]
-        await asyncio.gather(*tasks)
+        try:
+            await asyncio.gather(*tasks)
+        except discord.NotFound:
+            pass
 
     async def queue_msg(self) -> None:
         if store.queue_msg(self.guild_id):
@@ -272,7 +279,11 @@ class Disable:
         if play_msg:
             music_view = MusicView(self.client, timeout=None)
             music_view.disable_all_items()
-            await play_msg.edit(view=music_view)
+            try:
+                await play_msg.edit(view=music_view)
+            except discord.NotFound:
+                store.play_msg(self.guild_id, "clear")
+                return
 
 
 class Music(commands.Cog):
@@ -355,7 +366,11 @@ class Music(commands.Cog):
             else:
                 music_view.get_item("shuffle").emoji = emoji.shuffle_white
             # Player msg
-            play_msg = await channel.send(embed=play_em, view=music_view)
+            try:
+                play_msg = await channel.send(embed=play_em, view=music_view)
+            except discord.Forbidden:
+                store.play_ch(event.player.guild_id, "clear")
+                return
             store.play_msg(event.player.guild_id, play_msg, "set")
 
     @lavalink.listener(lavalink.TrackEndEvent)
@@ -376,7 +391,11 @@ class Music(commands.Cog):
                 color=config.color.red,
             )
             await Disable(self.client, event.player.guild_id).play_msg()
-            await channel.send(embed=error_em, delete_after=5)
+            try:
+                await channel.send(embed=error_em, delete_after=5)
+            except discord.Forbidden:
+                store.play_ch(event.player.guild_id, "clear")
+                return
 
     @lavalink.listener(lavalink.QueueEndEvent)
     async def queue_end_hook(self, event: lavalink.QueueEndEvent):
@@ -513,7 +532,10 @@ class Music(commands.Cog):
                                 description=f"{emoji.leave} Left {bot_voice_channel.mention} due to inactivity.",
                                 color=config.color.red,
                             )
-                            await play_ch.send(embed=em)
+                            try:
+                                await play_ch.send(embed=em)
+                            except discord.Forbidden:
+                                store.play_ch(member.guild.id, "clear")
 
                     is_paused_before = player.paused
                     await player.set_pause(True)  # Pause the player if no humans are in the voice channel
@@ -741,6 +763,7 @@ class Music(commands.Cog):
                 error_em = discord.Embed(description=f"{emoji.error} Player is already paused", color=config.color.red)
                 await ctx.respond(embed=error_em, ephemeral=True)
             else:
+                await ctx.defer()
                 await player.set_pause(True)
                 await update_play_msg(self.client, ctx.guild.id)
                 pause_em = discord.Embed(
@@ -756,6 +779,7 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if player.paused:
+                await ctx.defer()
                 await player.set_pause(False)
                 await update_play_msg(self.client, ctx.guild.id)
                 resume_em = discord.Embed(
@@ -825,7 +849,8 @@ class Music(commands.Cog):
                 error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=config.color.red)
                 await ctx.respond(embed=error_em, ephemeral=True)
             else:
-                player.shuffle = not player.shuffle
+                await ctx.defer()
+                await player.set_shuffle(not player.shuffle)
                 await update_play_msg(self.client, ctx.guild.id)
                 shuffle_em = discord.Embed(
                     description=f"{emoji.shuffle} {'Enabled' if player.shuffle else 'Disabled'} shuffle.",
@@ -840,6 +865,7 @@ class Music(commands.Cog):
         """Loops the current queue until the command is invoked again or until a new track is enqueued."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
+            await ctx.defer()
             _emoji = ""
             if mode == "Disable":
                 player.set_loop(0)
