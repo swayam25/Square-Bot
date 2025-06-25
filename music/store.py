@@ -1,83 +1,128 @@
 import asyncio
+import discord
+from dataclasses import dataclass
 from typing import Any, Literal
 
-obj = {}
+
+@dataclass
+class Types:
+    PlayerChannel = (
+        discord.TextChannel | discord.VoiceChannel | discord.StageChannel | discord.ForumChannel | discord.Thread
+    )
+    PlayerMessage = discord.Message
+
+
+store: dict[
+    int,
+    dict[str, Any],
+] = {}
 
 
 # Play channel
-def play_ch(guild_id: int, channel: Any | None = None, mode: Literal["get", "set"] = "get"):
+def play_ch(
+    guild_id: int,
+    channel: Types.PlayerChannel | None = None,
+    mode: Literal["get", "set"] = "get",
+) -> Types.PlayerChannel | None:
     """
     Gets or sets the play channel for a guild.
 
     Parameters:
         guild_id (int): The ID of the guild.
-        channel (Any | None): The channel to set, or None to get the current value.
+        channel (Types.PlayerChannel | None): The channel to set, or None to get the current value.
         mode (str): The operation mode, either "get" or "set".
     """
     match mode:
         case "get":
-            return obj.get(f"{str(guild_id)}-play_ch", None)
+            guild = store.get(guild_id, {})
+            if guild:
+                return guild.get("play_ch", None)
+            return None
         case "set":
-            obj.update({f"{str(guild_id)}-play_ch": channel})
+            if guild_id not in store:
+                store[guild_id] = {}
+            store[guild_id]["play_ch"] = channel
 
 
 # Play msg
-def play_msg(guild_id: int, msg: Any | None = None, mode: Literal["get", "set"] = "get"):
+def play_msg(
+    guild_id: int,
+    msg: Types.PlayerMessage | None = None,
+    mode: Literal["get", "set", "clear"] = "get",
+) -> Types.PlayerMessage | None:
     """
     Gets or sets the play message for a guild.
 
     Parameters:
         guild_id (int): The ID of the guild.
-        msg (Any | None): The message to set, or None to get the current value.
-        mode (str): The operation mode, either "get" or "set".
+        msg (Types.PlayerMessage | None): The message to set, or None to get the current value.
+        mode (str): The operation mode, either "get", "set", or "clear".
     """
     match mode:
         case "get":
-            return obj.get(f"{str(guild_id)}-play_msg", None)
+            guild = store.get(guild_id, {})
+            if guild:
+                return guild.get("play_msg", None)
+            return None
         case "set":
-            obj.update({f"{str(guild_id)}-play_msg": msg})
+            if guild_id not in store:
+                store[guild_id] = {}
+            store[guild_id]["play_msg"] = msg
+        case "clear":
+            if guild_id in store and "play_msg" in store[guild_id]:
+                del store[guild_id]["play_msg"]
 
 
 # Queue msg
-def queue_msg(guild_id: int, msg: Any | None = None, mode: Literal["get", "set", "clear"] = "get"):
+def queue_msg(
+    guild_id: int, msg: Types.PlayerMessage | None = None, mode: Literal["get", "set", "clear"] = "get"
+) -> list[Types.PlayerMessage]:
     """
     Gets or sets the queue message for a guild.
 
     Parameters:
         guild_id (int): The ID of the guild.
-        msg (Any | None): The message to set, or None to get the current value.
+        msg (Types.PlayerMessage | None): The message to set, or None to get the current value.
         mode (str): The operation mode, either "get", "set", or "clear".
     """
     match mode:
         case "get":
-            if obj.__contains__(f"{str(guild_id)}-queue_msgs"):
-                return obj.get(f"{str(guild_id)}-queue_msgs", None)
-            else:
-                return []
+            guild = store.get(guild_id, {})
+            if guild:
+                return guild.get("queue_msg", [])
+            return []
         case "set":
-            if obj.__contains__(f"{str(guild_id)}-queue_msgs"):
-                obj[f"{str(guild_id)}-queue_msgs"].append(msg)
-            else:
-                obj.update({f"{str(guild_id)}-queue_msgs": [msg]})
+            if guild_id not in store:
+                store[guild_id] = {}
+            if "queue_msg" not in store[guild_id]:
+                store[guild_id]["queue_msg"] = []
+            if msg is not None:
+                store[guild_id]["queue_msg"].append(msg)
         case "clear":
-            obj.update({f"{str(guild_id)}-queue_msgs": []})
+            if guild_id in store and "queue_msg" in store[guild_id]:
+                del store[guild_id]["queue_msg"]
 
 
 # Equalizer
-def equalizer(guild_id: int, name: str = None, mode: Literal["get", "set"] = "get"):
+def equalizer(guild_id: int, name: str | None = None, mode: Literal["get", "set"] = "get") -> str | None:
     """
     Gets or sets the equalizer settings for a guild.
 
     Parameters:
         guild_id (int): The ID of the guild.
-        name (str | None): The name of the equalizer to set, or None to get the current value.
+        name (str | None): The equalizer name to set, or None to get the current value.
         mode (str): The operation mode, either "get" or "set".
     """
     match mode:
         case "get":
-            return obj.get(f"{str(guild_id)}-equalizer", None)
+            guild = store.get(guild_id, {})
+            if guild:
+                return guild.get("equalizer", None)
+            return None
         case "set":
-            obj.update({f"{str(guild_id)}-equalizer": name})
+            if guild_id not in store:
+                store[guild_id] = {}
+            store[guild_id]["equalizer"] = name
 
 
 # Inactivity Task
@@ -94,8 +139,14 @@ def inactivity_task(
     """
     match mode:
         case "get":
-            return obj.get(f"{str(guild_id)}-inactivity_task", None)
+            guild = store.get(guild_id, {})
+            if guild:
+                return guild.get("inactivity_task", None)
+            return None
         case "set":
-            obj.update({f"{str(guild_id)}-inactivity_task": task})
+            if guild_id not in store:
+                store[guild_id] = {}
+            store[guild_id]["inactivity_task"] = task
         case "clear":
-            obj.update({f"{str(guild_id)}-inactivity_task": None})
+            if guild_id in store and "inactivity_task" in store[guild_id]:
+                del store[guild_id]["inactivity_task"]

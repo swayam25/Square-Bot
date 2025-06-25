@@ -344,16 +344,16 @@ class Music(commands.Cog):
             music_view = MusicView(self.client, timeout=None)
             # Loop emoji
             if player.loop == player.LOOP_NONE:
-                music_view.children[3].emoji = emoji.loop_white
+                music_view.get_item("loop").emoji = emoji.loop_white
             elif player.loop == player.LOOP_SINGLE:
-                music_view.children[3].emoji = emoji.loop_one
+                music_view.get_item("loop").emoji = emoji.loop_one
             else:
-                music_view.children[3].emoji = emoji.loop
+                music_view.get_item("loop").emoji = emoji.loop
             # Shuffle emoji
             if player.shuffle:
-                music_view.children[4].emoji = emoji.shuffle
+                music_view.get_item("shuffle").emoji = emoji.shuffle
             else:
-                music_view.children[4].emoji = emoji.shuffle_white
+                music_view.get_item("shuffle").emoji = emoji.shuffle_white
             # Player msg
             play_msg = await channel.send(embed=play_em, view=music_view)
             store.play_msg(event.player.guild_id, play_msg, "set")
