@@ -119,6 +119,21 @@ async def set_ticket_log_channel(guild_id: int, channel_id: int) -> None:
     await guild.save()
 
 
+async def set_media_only_channel(guild_id: int, channel_id: int) -> None:
+    """
+    Sets the media-only channel for a guild.
+
+    Parameters:
+        guild_id (int): The guild ID to perform action on.
+        channel_id (int): The channel ID to set as the media-only channel.
+    """
+    guild = await GuildTable.filter(guild_id=guild_id).first()
+    if not guild:
+        guild = await add_guild(guild_id)
+    guild.media_only_channel_id = channel_id
+    await guild.save()
+
+
 async def set_autorole(guild_id: int, role_id: int) -> None:
     """
     Sets the autorole for a guild.

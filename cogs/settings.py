@@ -3,6 +3,7 @@ from db.funcs.guild import (
     fetch_guild_settings,
     remove_guild,
     set_autorole,
+    set_media_only_channel,
     set_mod_cmd_log_channel,
     set_mod_log_channel,
     set_msg_log_channel,
@@ -36,6 +37,7 @@ class Settings(commands.Cog):
         msg_log_channel = await mention_ch(guild_settings.msg_log_channel_id)
         ticket = emoji.on if guild_settings.ticket_cmds else emoji.off
         ticket_log_channel = await mention_ch(guild_settings.ticket_log_channel_id)
+        media_only_channel = await mention_ch(guild_settings.media_only_channel_id)
 
         role_id = guild_settings.autorole
         autorole = ctx.guild.get_role(role_id).mention if (role_id and ctx.guild.get_role(role_id)) else emoji.off
@@ -45,12 +47,13 @@ class Settings(commands.Cog):
         set_em = discord.Embed(
             title=f"{ctx.guild.name}'s Settings",
             description=(
-                f"{emoji.channel} **Mod Log Channel**: {mod_log_channel}\n"
-                f"{emoji.channel} **Mod Command Log Channel**: {mod_log_cmd_channel}\n"
-                f"{emoji.channel} **Message Log Channel**: {msg_log_channel}\n"
-                f"{emoji.channel} **Ticket Commands**: {ticket}\n"
-                f"{emoji.channel} **Ticket Log Channel**: {ticket_log_channel}\n"
-                f"{emoji.channel} **Autorole**: {autorole}"
+                f"{emoji.mod} **Mod Log Channel**: {mod_log_channel}\n"
+                f"{emoji.owner} **Mod Command Log Channel**: {mod_log_cmd_channel}\n"
+                f"{emoji.msg} **Message Log Channel**: {msg_log_channel}\n"
+                f"{emoji.ticket} **Ticket Commands**: {ticket}\n"
+                f"{emoji.ticket} **Ticket Log Channel**: {ticket_log_channel}\n"
+                f"{emoji.img} **Media only Channel**: {media_only_channel}\n"
+                f"{emoji.role} **Autorole**: {autorole}"
             ),
             color=config.color.theme,
         )
@@ -68,7 +71,16 @@ class Settings(commands.Cog):
     @option(
         "setting",
         description="Setting to reset",
-        choices=["All", "Mod Log", "Mod Command Log", "Message Log", "Ticket Commands", "Ticket Log", "Auto Role"],
+        choices=[
+            "All",
+            "Mod Log",
+            "Mod Command Log",
+            "Message Log",
+            "Ticket Commands",
+            "Ticket Log",
+            "Media only Channel",
+            "Auto Role",
+        ],
     )
     async def reset_settings(self, ctx: discord.ApplicationContext, setting: str):
         """Resets server settings."""
@@ -86,6 +98,8 @@ class Settings(commands.Cog):
                     await set_ticket_cmds(ctx.guild.id, False)
                 case "ticket log":
                     await set_ticket_log_channel(ctx.guild.id, None)
+                case "media only channel":
+                    await set_media_only_channel(ctx.guild.id, None)
                 case "auto role":
                     await set_autorole(ctx.guild.id, None)
         reset_em = discord.Embed(
@@ -157,6 +171,25 @@ class Settings(commands.Cog):
             color=config.color.green,
         )
         await ctx.respond(embed=logging_em)
+
+    # Set media only channel
+    @setting.command(name="media-only-channel")
+    @option("channel", description="Mention the media only channel")
+    async def set_image_only_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
+        """Sets media only channel."""
+        if not channel.permissions_for(ctx.guild.me).send_messages:
+            error_em = discord.Embed(
+                description=f"{emoji.error} I don't have permission to send messages in {channel.mention}.",
+                color=config.color.red,
+            )
+            await ctx.respond(embed=error_em, ephemeral=True)
+        else:
+            await set_media_only_channel(ctx.guild.id, channel.id)
+            img_only_em = discord.Embed(
+                description=f"{emoji.success} Successfully set media only channel to {channel.mention}.",
+                color=config.color.green,
+            )
+            await ctx.respond(embed=img_only_em)
 
     # Set autorole
     @setting.command(name="auto-role")
