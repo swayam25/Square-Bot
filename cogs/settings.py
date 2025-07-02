@@ -173,7 +173,7 @@ class Settings(commands.Cog):
         await ctx.respond(embed=logging_em)
 
     # Set media only channel
-    @setting.command(name="media-only-channel")
+    @setting.command(name="media-only")
     @option("channel", description="Mention the media only channel")
     async def set_image_only_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets media only channel."""
