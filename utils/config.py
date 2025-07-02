@@ -14,7 +14,6 @@ owner_id: int = data["owner-id"]
 owner_guild_ids: list[int] = data["owner-guild-ids"]
 system_channel_id: int = data["system-channel-id"]
 support_server_url: str = data["support-server-url"]
-emoji_type: str = data["emoji"]
 bot_token: str = data["bot-token"]
 db_url: str = data["database-url"]
 

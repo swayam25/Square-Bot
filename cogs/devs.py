@@ -440,36 +440,40 @@ class Devs(commands.Cog):
                 emoji_dict[app_emoji.name] = f"<:{app_emoji.name}:{app_emoji.id}>"
 
         resp: dict = Emoji.create_custom_emoji_config(emoji_dict)
-        if resp["status"] == "error":
-            error_em = discord.Embed(
-                description=f"{emoji.error} Missing emojis:\n{'\n'.join([f'{emoji.bullet} `{i}`' for i in resp['missing_keys']])}",
-                color=config.color.red,
+        sync_em = discord.Embed(
+            description=f"{emoji.restart} Synced {len(emojis)} emojis.",
+            color=config.color.theme,
+        )
+
+        # Add info about keys that use default emojis (no custom emoji available)
+        if resp.get("default_emojis_used"):
+            sync_em.add_field(
+                name="Default Emojis Used",
+                value="\n".join([f"{getattr(emoji, i)} `{i}`" for i in resp["default_emojis_used"]]),
+                inline=False,
             )
-            await ctx.respond(embed=error_em, ephemeral=True)
-        else:
-            sync_em = discord.Embed(
-                description=f"{emoji.restart} Synced {len(emojis)} emojis.",
-                color=config.color.theme,
+
+        # Handle extra emojis
+        if resp.get("extra_keys_ignored"):
+            sync_em.add_field(
+                name="Ignored Extra Emojis",
+                value="\n".join([f"{emoji_dict.get(i, emoji.bullet)} `{i}`" for i in resp["extra_keys_ignored"]]),
+                inline=False,
             )
-            if resp.get("extra_keys"):
-                sync_em.add_field(
-                    name="Extra emojis",
-                    value="\n".join([f"{i}: `{i}`" for i in resp["extra_keys"]]),
-                )
-                view = discord.ui.View(
-                    discord.ui.Button(
-                        emoji=emoji.bin_white,
-                        label="Delete Extra Emojis",
-                        style=discord.ButtonStyle.grey,
-                    ),
-                    timeout=60,
-                    disable_on_timeout=True,
-                )
-                view.interaction_check = lambda i: check.author_interaction_check(ctx, i)
-                view.children[0].callback = lambda i: self.delete_extra_emojis_callback(view, i, resp["extra_keys"])
-                await ctx.respond(embed=sync_em, view=view)
-                return
-            await ctx.respond(embed=sync_em)
+            view = discord.ui.View(
+                discord.ui.Button(
+                    emoji=emoji.bin_white,
+                    label="Delete Extra Emojis",
+                    style=discord.ButtonStyle.grey,
+                ),
+                timeout=60,
+                disable_on_timeout=True,
+            )
+            view.interaction_check = lambda i: check.author_interaction_check(ctx, i)
+            view.children[0].callback = lambda i: self.delete_extra_emojis_callback(view, i, resp["extra_keys_ignored"])
+            await ctx.respond(embed=sync_em, view=view)
+            return
+        await ctx.respond(embed=sync_em)
 
 
 def setup(client: discord.Bot):

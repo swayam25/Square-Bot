@@ -2,13 +2,8 @@ import json
 import os
 from attr import dataclass
 from rich import print
-from utils import config
 
 custom_emoji_file_path = "./.cache/emoji.json"
-if not any([config.emoji_type == "custom", config.emoji_type == "default"]):
-    print(f"[red][bold]✗[/] Invalid emoji type in [cyan]{config.config_file_path}[/]: {config.emoji_type}[/]")
-    print("[yellow][bold]![/] Please choose either [green]custom[/] or [green]default[/].[/]")
-    exit(1)
 
 
 # Emoji class to hold all the emojis used in the bot.
@@ -26,11 +21,11 @@ class Emoji:
     end_white: str = "⏩"
 
     settings: str = "⚙️"
-    emoji: str = "😀"
     info: str = "ℹ️"
     mod: str = "🛠️"
     mass_mod: str = "👥"
     ticket: str = "🎫"
+    fun: str = "🤣"
 
     mention: str = "🔔"
     id: str = "🆔"
@@ -38,11 +33,12 @@ class Emoji:
     user: str = "👤"
     user_red: str = "👤"
     bot: str = "🤖"
+    emoji: str = "😀"
     description: str = "📝"
     description_red: str = "📝"
     description_white: str = "📝"
-    media: str = "🖼️"
-    media_red: str = "🖼️"
+    img: str = "🖼️"
+    img_red: str = "🖼️"
     date: str = "📅"
     date_red: str = "📅"
     role: str = "🔖"
@@ -62,6 +58,8 @@ class Emoji:
     join: str = "➕"
     join_red: str = "➕"
     leave: str = "➖"
+
+    coin: str = "🪙"
 
     python: str = "🐍"
     ping: str = "🏓"
@@ -105,12 +103,14 @@ class Emoji:
 
     @staticmethod
     def from_json(file_path: str) -> "Emoji":
+        """Load custom emojis and fall back to default emojis for missing ones."""
+        default_emoji = Emoji()
+
         try:
             with open(file_path, encoding="utf8") as emoji_file:
                 emoji_data: dict[str, str] = dict(json.load(emoji_file))
 
-            # Validate keys
-            missing_keys = [key for key in Emoji.__annotations__.keys() if key not in emoji_data]
+            # Clean up the JSON file by removing invalid keys
             with open(file_path, "w", encoding="utf8") as f:
                 new_data = emoji_data.copy()
                 for key in emoji_data:
@@ -118,38 +118,55 @@ class Emoji:
                         new_data.pop(key, None)
                 json.dump(new_data, f, indent=4)
 
-            if missing_keys:
-                print(f"[red][bold]✗[/] Missing keys in emoji JSON: [cyan]{','.join(missing_keys)}[/][/]")
-                exit(1)
+            # Create emoji instance: use custom emojis where available, default otherwise
+            emoji_data_final = {}
+            for key in Emoji.__annotations__.keys():
+                if key in emoji_data and emoji_data[key].strip():
+                    emoji_data_final[key] = emoji_data[key]
+                else:
+                    emoji_data_final[key] = getattr(default_emoji, key)
 
-            # Create Emoji instance
-            return Emoji(**{key: emoji_data.get(key, "") for key in Emoji.__annotations__.keys()})
+            return Emoji(**emoji_data_final)
 
         except FileNotFoundError:
+            print(f"[yellow][bold]![/] Custom emoji file not found: {file_path}[/]")
             print(
-                f"[red][bold]✗[/] Custom emoji file not found: {file_path}[/]",
-                "[yellow][bold]![/] Make sure to run [cyan]/emoji upload[/] command and upload emojis to the bot.[/]",
-                "[yellow][bold]![/] Try manually running [cyan]/emoji sync[/] to create required config files.[/]",
-                "[yellow][bold]![/] Read the README.md for more information on how to set up custom emojis.[/]",
-                f"[yellow][bold]![/] If you want to use default emojis, change the emoji type in [cyan]{config.config_file_path}[/] to [green]default[/].[/]",
+                "[yellow][bold]![/] Falling back to default emojis. Use [cyan]/emoji upload[/] to add custom emojis.[/]"
             )
-            exit(1)
+            return default_emoji
 
     @staticmethod
     def create_custom_emoji_config(emojis: dict) -> dict:
         os.makedirs(os.path.dirname(custom_emoji_file_path), exist_ok=True)
+        default_emoji = Emoji()
+
         with open(custom_emoji_file_path, "w", encoding="utf8") as emoji_file:
-            missing_keys = [key for key in Emoji.__annotations__.keys() if key not in emojis]
-            extra_keys = [emojis[key] for key in emojis if key not in Emoji.__annotations__.keys()]
-            if missing_keys:
-                return {"status": "error", "missing_keys": missing_keys}
-            else:
-                emojis = {key: emojis[key] for key in Emoji.__annotations__.keys()}
-                json.dump(emojis, emoji_file, ensure_ascii=False, indent=4)
-                msg = {"status": "success"}
-                if extra_keys:
-                    msg["extra_keys"] = extra_keys
-                return msg
+            # Find keys that don't have custom emojis (will use defaults)
+            default_emoji_keys = []
+            extra_keys = [key for key in emojis if key not in Emoji.__annotations__.keys()]
+
+            # Create final emoji config: use provided emojis, fill missing ones with defaults
+            final_emojis = {}
+            for key in Emoji.__annotations__.keys():
+                if key in emojis and emojis[key].strip():
+                    final_emojis[key] = emojis[key]
+                else:
+                    final_emojis[key] = getattr(default_emoji, key)
+                    default_emoji_keys.append(key)
+
+            json.dump(final_emojis, emoji_file, ensure_ascii=False, indent=4)
+
+            msg = {"status": "success"}
+            if default_emoji_keys:
+                msg["default_emojis_used"] = default_emoji_keys
+            if extra_keys:
+                msg["extra_keys_ignored"] = extra_keys
+            return msg
 
 
-emoji = Emoji.from_json(custom_emoji_file_path) if config.emoji_type == "custom" else Emoji()
+def get_emoji_instance() -> Emoji:
+    """Get the emoji instance with custom emojis and default fallback."""
+    return Emoji.from_json(custom_emoji_file_path)
+
+
+emoji = get_emoji_instance()
