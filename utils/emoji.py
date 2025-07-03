@@ -19,6 +19,8 @@ class Emoji:
     previous_white: str = "⏮️"
     start_white: str = "⏪"
     end_white: str = "⏩"
+    upvote: str = "👍"
+    downvote: str = "👎"
 
     settings: str = "⚙️"
     info: str = "ℹ️"
@@ -60,6 +62,10 @@ class Emoji:
     leave: str = "➖"
 
     coin: str = "🪙"
+    dice: str = "🎲"
+    numbers: str = "🔢"
+    sparkles: str = "✨"
+    dog: str = "🐶"
 
     python: str = "🐍"
     ping: str = "🏓"
@@ -71,6 +77,7 @@ class Emoji:
     spotify: str = "🟢"
     youtube: str = "🔴"
     soundcloud: str = "🟠"
+    reddit: str = "🔴"
 
     music: str = "🎵"
     duration: str = "⏱️"
@@ -96,6 +103,7 @@ class Emoji:
     filled_bar: str = "🟥"
 
     restart: str = "🔄"
+    restart_white: str = "🔄"
     shutdown: str = "🔴"
     console: str = "🖥️"
     upload: str = "📤"

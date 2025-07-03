@@ -1,5 +1,9 @@
+import aiohttp
 import datetime
+import discord
 import re
+from utils import config
+from utils.emoji import emoji
 
 
 def parse_duration(duration: str) -> datetime.timedelta:
@@ -56,3 +60,26 @@ def fmt_perms(perms: list[str]) -> str:
     if len(perms) == 1:
         return perms[0]
     return ", ".join(perms[:-1]) + " and " + perms[-1]
+
+
+async def meme_embed() -> discord.Embed | None:
+    """Creates a meme embed with a default theme color."""
+    url = "https://meme-api.com/gimme"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                data = await response.json()
+                if "url" in data:
+                    em = discord.Embed(
+                        title=data["title"],
+                        url=data["postLink"],
+                        description=(
+                            f"{emoji.reddit} **Subreddit**: [`r/{data['subreddit']}`](https://reddit.com/r/{data['subreddit']})\n"
+                            f"{emoji.upvote} **Upvotes**: {data['ups']}"
+                        ),
+                        color=config.color.theme,
+                    )
+                    em.set_image(url=data["url"])
+                    return em
+                else:
+                    return None

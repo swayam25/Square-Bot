@@ -2,6 +2,7 @@ import discord
 from db.funcs.guild import (
     fetch_guild_settings,
     remove_guild,
+    set_auto_meme_channel,
     set_autorole,
     set_media_only_channel,
     set_mod_cmd_log_channel,
@@ -38,6 +39,7 @@ class Settings(commands.Cog):
         ticket = emoji.on if guild_settings.ticket_cmds else emoji.off
         ticket_log_channel = await mention_ch(guild_settings.ticket_log_channel_id)
         media_only_channel = await mention_ch(guild_settings.media_only_channel_id)
+        auto_meme_channel = await mention_ch(guild_settings.auto_meme_channel_id)
 
         role_id = guild_settings.autorole
         autorole = ctx.guild.get_role(role_id).mention if (role_id and ctx.guild.get_role(role_id)) else emoji.off
@@ -53,7 +55,8 @@ class Settings(commands.Cog):
                 f"{emoji.ticket} **Ticket Commands**: {ticket}\n"
                 f"{emoji.ticket} **Ticket Log Channel**: {ticket_log_channel}\n"
                 f"{emoji.img} **Media only Channel**: {media_only_channel}\n"
-                f"{emoji.role} **Autorole**: {autorole}"
+                f"{emoji.role} **Autorole**: {autorole}\n"
+                f"{emoji.fun} **Auto Meme Channel**: {auto_meme_channel}\n"
             ),
             color=config.color.theme,
         )
@@ -78,8 +81,9 @@ class Settings(commands.Cog):
             "Message Log",
             "Ticket Commands",
             "Ticket Log",
-            "Media only Channel",
+            "Media Only Channel",
             "Auto Role",
+            "Auto Meme Channel",
         ],
     )
     async def reset_settings(self, ctx: discord.ApplicationContext, setting: str):
@@ -102,6 +106,8 @@ class Settings(commands.Cog):
                     await set_media_only_channel(ctx.guild.id, None)
                 case "auto role":
                     await set_autorole(ctx.guild.id, None)
+                case "auto meme channel":
+                    await set_auto_meme_channel(ctx.guild.id, None)
         reset_em = discord.Embed(
             description=f"{emoji.success} Successfully reset the {setting.lower()} settings.",
             color=config.color.green,
@@ -216,6 +222,25 @@ class Settings(commands.Cog):
                 color=config.color.green,
             )
             await ctx.respond(embed=autorole_em)
+
+    # Set auto meme channel
+    @setting.command(name="auto-meme-channel")
+    @option("channel", description="Mention the auto meme channel")
+    async def set_auto_meme_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
+        """Sets auto meme channel. The bot will post memes in this channel. Delay is 10 minutes."""
+        if not channel.permissions_for(ctx.guild.me).send_messages:
+            error_em = discord.Embed(
+                description=f"{emoji.error} I don't have permission to send messages in {channel.mention}.",
+                color=config.color.red,
+            )
+            await ctx.respond(embed=error_em, ephemeral=True)
+        else:
+            await set_auto_meme_channel(ctx.guild.id, channel.id)
+            auto_meme_em = discord.Embed(
+                description=f"{emoji.success} Successfully set auto meme channel to {channel.mention}.",
+                color=config.color.green,
+            )
+            await ctx.respond(embed=auto_meme_em)
 
 
 def setup(client: discord.Bot):

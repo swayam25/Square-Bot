@@ -147,3 +147,18 @@ async def set_autorole(guild_id: int, role_id: int) -> None:
         guild = await add_guild(guild_id)
     guild.autorole = role_id
     await guild.save()
+
+
+async def set_auto_meme_channel(guild_id: int, channel_id: int) -> None:
+    """
+    Sets the auto meme channel for a guild.
+
+    Parameters:
+        guild_id (int): The guild ID to perform action on.
+        channel_id (int): The channel ID to set as the auto meme channel.
+    """
+    guild = await GuildTable.filter(guild_id=guild_id).first()
+    if not guild:
+        guild = await add_guild(guild_id)
+    guild.auto_meme_channel_id = channel_id
+    await guild.save()
