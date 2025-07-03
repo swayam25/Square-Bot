@@ -11,8 +11,8 @@ custom_emoji_file_path = "./.cache/emoji.json"
 class Emoji:
     bullet: str = "•"
     bullet_red: str = "•"
-    error: str = "❌"
     success: str = "✅"
+    error: str = "❌"
     on: str = "🟢"
     off: str = "🔴"
     next_white: str = "⏭️"
@@ -142,6 +142,11 @@ class Emoji:
                 "[yellow][bold]![/] Falling back to default emojis. Use [cyan]/emoji upload[/] to add custom emojis.[/]"
             )
             return default_emoji
+
+    @staticmethod
+    def get_emoji_names() -> list[str]:
+        """Get a list of all emoji names defined in the Emoji class."""
+        return list(Emoji.__annotations__.keys())
 
     @staticmethod
     def create_custom_emoji_config(emojis: dict) -> dict:

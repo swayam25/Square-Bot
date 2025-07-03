@@ -334,7 +334,7 @@ class Devs(commands.Cog):
 
     # Upload app emojis
     @emoji.command(name="upload")
-    @option("file", description="Upload emojis zip file", type=discord.Attachment)
+    @option("file", description="Upload emojis zip file.", type=discord.Attachment)
     @check.is_dev()
     async def upload_app_emojis(self, ctx: discord.ApplicationContext, file: discord.Attachment):
         """Uploads all emojis to the app (only supports .zip files with .png emojis)."""
@@ -417,6 +417,80 @@ class Devs(commands.Cog):
             color=config.color.green,
         )
         await interaction.followup.send(embed=delete_em, ephemeral=True)
+
+    # Check emoji zip file
+    @emoji.command(name="check-zip")
+    @option("file", description="Upload emojis zip file.", type=discord.Attachment)
+    @check.is_dev()
+    async def check_emoji_zip(self, ctx: discord.ApplicationContext, file: discord.Attachment):
+        """Checks the uploaded zip file for emojis."""
+        await ctx.defer()
+        if not file.filename.endswith(".zip"):
+            error_em = discord.Embed(
+                description=f"{emoji.error} Please upload a valid zip file.", color=config.color.red
+            )
+            await ctx.respond(embed=error_em, ephemeral=True)
+            return
+
+        zip_buffer = BytesIO()
+        await file.save(zip_buffer)
+        zip_buffer.seek(0)
+
+        with zipfile.ZipFile(zip_buffer, "r") as zip_file:
+            namelist = zip_file.namelist()
+            # Handle both flat structure and directory structure
+            file_entries = [n for n in namelist if not n.endswith("/")]
+            top_dirs = set()
+            for n in namelist:
+                parts = n.split("/")
+                if len(parts) > 1 and parts[0]:
+                    top_dirs.add(parts[0])
+
+            if len(top_dirs) == 1:
+                base_dir = list(top_dirs)[0]
+                emoji_files = [f for f in file_entries if f.startswith(base_dir + "/") and f.endswith(".png")]
+                emoji_names = [f.split("/")[-1][:-4] for f in emoji_files]
+            else:
+                emoji_files = [f for f in file_entries if "/" not in f and f.endswith(".png")]
+                emoji_names = [f[:-4] for f in emoji_files]
+
+            if not emoji_files:
+                error_em = discord.Embed(
+                    description=f"{emoji.error} No `.png` emoji files found in the zip.",
+                    color=config.color.red,
+                )
+                await ctx.respond(embed=error_em, ephemeral=True)
+                return
+
+            # Get expected emoji names from Emoji class
+            expected_emojis = set(Emoji.get_emoji_names())
+            found_emojis = set(emoji_names)
+
+            # Find missing and extra emojis
+            missing_emojis = expected_emojis - found_emojis
+            extra_emojis = found_emojis - expected_emojis
+
+            em = discord.Embed(
+                title="Emoji Zip Check",
+                description=f"Found `{len(emoji_files)}` emoji files in the zip.\nExpected `{len(expected_emojis)}` emojis.",
+                color=config.color.theme,
+            )
+
+            if missing_emojis:
+                missing_list = "\n".join([f"{emoji.bullet} `{name}`" for name in sorted(missing_emojis)])
+                if len(missing_list) > 1024:
+                    missing_list = missing_list[:1020] + "..."
+                em.add_field(name=f"Missing Emojis (`{len(missing_emojis)}`)", value=missing_list, inline=False)
+
+            if extra_emojis:
+                extra_list = "\n".join([f"{emoji.bullet_red} `{name}`" for name in sorted(extra_emojis)])
+                if len(extra_list) > 1024:
+                    extra_list = extra_list[:1020] + "..."
+                em.add_field(name=f"Extra Emojis (`{len(extra_emojis)}`)", value=extra_list, inline=False)
+
+            await ctx.respond(embed=em)
+
+        zip_buffer.close()
 
     # Sync app emojis
     @emoji.command(name="sync")
