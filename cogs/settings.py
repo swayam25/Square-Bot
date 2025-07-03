@@ -242,27 +242,26 @@ class Settings(commands.Cog):
             if subreddit:  # Check if subreddit is provided
                 await ctx.defer()
                 check = await check_subreddit(subreddit)
-                if not check:  # If subreddit is invalid
+                if not check.exist:  # If subreddit is invalid
                     error_em = discord.Embed(
-                        description=f"{emoji.error} The subreddit `r/{subreddit}` does not exist or is invalid.",
+                        description=f"{emoji.error} The subreddit `r/{check.display_name}` does not exist or is invalid.",
                         color=config.color.red,
                     )
                     await ctx.respond(embed=error_em, ephemeral=True)
                     return
                 # Use the display name from the check so that it is formatted correctly
-                subreddit = check["display_name"]
-                if check["nsfw"] and not channel.nsfw:  # If subreddit is NSFW and channel is not NSFW
+                if check.nsfw and not channel.nsfw:  # If subreddit is NSFW and channel is not NSFW
                     error_em = discord.Embed(
-                        description=f"{emoji.error} The subreddit `r/{subreddit}` is **NSFW**. Please enable **NSFW** in {channel.mention} or choose a different subreddit.",
+                        description=f"{emoji.error} The subreddit `r/{check.display_name}` is **NSFW**. Please enable **NSFW** in {channel.mention} or choose a different subreddit.",
                         color=config.color.red,
                     )
                     await ctx.respond(embed=error_em, ephemeral=True)
                     return
             # Finally set the auto meme channel and subreddit
-            await set_auto_meme(ctx.guild.id, channel.id, subreddit)
+            await set_auto_meme(ctx.guild.id, channel.id, check.display_name)
             auto_meme_em = discord.Embed(
                 description=(
-                    f"{emoji.success} Successfully set auto meme channel to {channel.mention}{f' and subreddit to [`r/{subreddit}`](https://reddit.com/r/{subreddit})' if subreddit else ''}.\n"
+                    f"{emoji.success} Successfully set auto meme channel to {channel.mention}{f' and subreddit to [`r/{check.display_name}`](https://reddit.com/r/{check.display_name})' if subreddit else ''}.\n"
                     f"-# The bot will post memes every `10 minutes` to {channel.mention}.\n\n"
                     f"-# Technically you can use any subreddit, but it is recommended to use subreddits that have memes."
                 ),

@@ -1,8 +1,8 @@
 import aiohttp
 import discord
+from attr import dataclass
 from db.funcs.dev import fetch_dev_ids
 from discord.ext import commands
-from typing import TypedDict
 from utils import config
 from utils.emoji import emoji
 
@@ -64,36 +64,34 @@ async def author_interaction_check(ctx: discord.ApplicationContext, interaction:
         return True
 
 
-class CheckSubreddit(TypedDict):
-    nsfw: bool
-    display_name: str
+@dataclass
+class CheckSubreddit:
+    exist: bool = True
+    nsfw: bool = False
+    display_name: str | None = None
 
 
-async def check_subreddit(subreddit: str | None) -> CheckSubreddit | bool:
+async def check_subreddit(subreddit: str | None) -> CheckSubreddit:
     """
     Check if the subreddit is valid.
 
     Parameters:
         subreddit (str | None): The subreddit to check.
-
-    Returns:
-        bool: True if the subreddit is valid, False otherwise.
     """
-    if not subreddit:
-        return False
     subreddit = None if not subreddit else subreddit.replace("r/", "").lower().strip()
+    if not subreddit:
+        return CheckSubreddit(exist=False, display_name=subreddit)
     async with aiohttp.ClientSession() as session:
-        async with session.get(
-            f"https://reddit.com/r/{subreddit}/about.json", headers={"User-agent": "Chrome"}
-        ) as response:
+        async with session.get(f"https://meme-api.com/gimme/{subreddit}") as response:
             try:
                 data = await response.json()
             except Exception:
-                return False
-            if response.status != 200 or "data" not in data or "display_name" not in data["data"]:
-                return False
+                return CheckSubreddit(exist=False, display_name=subreddit)
+            if response.status != 200:
+                return CheckSubreddit(exist=False, display_name=subreddit)
             else:
-                return {
-                    "nsfw": data["data"].get("over18", False),
-                    "display_name": str(data["data"]["display_name"]).strip(),
-                }
+                return CheckSubreddit(
+                    exist=True,
+                    nsfw=data.get("nsfw", False),
+                    display_name=str(data["subreddit"]).strip(),
+                )
