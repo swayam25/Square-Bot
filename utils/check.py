@@ -69,24 +69,27 @@ class CheckSubreddit(TypedDict):
     display_name: str
 
 
-async def check_subreddit(subreddit: str) -> CheckSubreddit | bool:
+async def check_subreddit(subreddit: str | None) -> CheckSubreddit | bool:
     """
     Check if the subreddit is valid.
 
     Parameters:
-        subreddit (str): The subreddit to check.
+        subreddit (str | None): The subreddit to check.
 
     Returns:
         bool: True if the subreddit is valid, False otherwise.
     """
-    subreddit = None if not subreddit else subreddit.replace("r/", "").lower().strip()
     if not subreddit:
         return False
+    subreddit = None if not subreddit else subreddit.replace("r/", "").lower().strip()
     async with aiohttp.ClientSession() as session:
         async with session.get(
             f"https://reddit.com/r/{subreddit}/about.json", headers={"User-agent": "Chrome"}
         ) as response:
-            data = await response.json()
+            try:
+                data = await response.json()
+            except Exception:
+                return False
             if response.status != 200 or "data" not in data or "display_name" not in data["data"]:
                 return False
             else:

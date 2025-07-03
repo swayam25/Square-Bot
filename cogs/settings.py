@@ -263,7 +263,7 @@ class Settings(commands.Cog):
             auto_meme_em = discord.Embed(
                 description=(
                     f"{emoji.success} Successfully set auto meme channel to {channel.mention}{f' and subreddit to [`r/{subreddit}`](https://reddit.com/r/{subreddit})' if subreddit else ''}.\n"
-                    f"-# The bot will post memes from this subreddit every `10 minutes` to {channel.mention}.\n\n"
+                    f"-# The bot will post memes every `10 minutes` to {channel.mention}.\n\n"
                     f"-# Technically you can use any subreddit, but it is recommended to use subreddits that have memes."
                 ),
                 color=config.color.green,
