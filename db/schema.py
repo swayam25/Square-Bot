@@ -21,7 +21,7 @@ class GuildTable(Model):
     ticket_log_channel_id = fields.BigIntField(null=True)
     media_only_channel_id = fields.BigIntField(null=True)
     autorole = fields.BigIntField(null=True)
-    auto_meme_channel_id = fields.BigIntField(null=True)
+    auto_meme = fields.JSONField(default={"channel_id": None, "subreddit": None})
 
     class Meta:
         table = "guild"

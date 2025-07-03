@@ -2,6 +2,7 @@ import aiohttp
 import datetime
 import discord
 import re
+from typing import TypedDict
 from utils import config
 from utils.emoji import emoji
 
@@ -62,9 +63,21 @@ def fmt_perms(perms: list[str]) -> str:
     return ", ".join(perms[:-1]) + " and " + perms[-1]
 
 
-async def meme_embed() -> discord.Embed | None:
-    """Creates a meme embed with a default theme color."""
+class MemeEmbedData(TypedDict):
+    nsfw: bool
+    embed: discord.Embed
+
+
+async def meme_embed(subreddit: str | None = None) -> MemeEmbedData | None:
+    """
+    Creates a meme embed with a default theme color.
+
+    Parameters:
+        subreddit (str): The subreddit to fetch a meme from. If empty, fetches from a random subreddit.
+    """
     url = "https://meme-api.com/gimme"
+    if subreddit:
+        url += f"/{subreddit}"
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status == 200:
@@ -80,6 +93,9 @@ async def meme_embed() -> discord.Embed | None:
                         color=config.color.theme,
                     )
                     em.set_image(url=data["url"])
-                    return em
+                    return {
+                        "nsfw": data.get("nsfw", False),
+                        "embed": em,
+                    }
                 else:
                     return None

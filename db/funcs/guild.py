@@ -44,7 +44,7 @@ async def fetch_guild_settings(guild_id: int) -> GuildTable:
     return guild
 
 
-async def set_mod_log_channel(guild_id: int, channel_id: int) -> None:
+async def set_mod_log(guild_id: int, channel_id: int) -> None:
     """
     Sets the mod log channel for a guild.
 
@@ -59,7 +59,7 @@ async def set_mod_log_channel(guild_id: int, channel_id: int) -> None:
     await guild.save()
 
 
-async def set_mod_cmd_log_channel(guild_id: int, channel_id: int) -> None:
+async def set_mod_cmd_log(guild_id: int, channel_id: int) -> None:
     """
     Sets the mod command log channel for a guild.
 
@@ -74,7 +74,7 @@ async def set_mod_cmd_log_channel(guild_id: int, channel_id: int) -> None:
     await guild.save()
 
 
-async def set_msg_log_channel(guild_id: int, channel_id: int) -> None:
+async def set_msg_log(guild_id: int, channel_id: int) -> None:
     """
     Sets the message log channel for a guild.
 
@@ -104,7 +104,7 @@ async def set_ticket_cmds(guild_id: int, enabled: bool) -> None:
     await guild.save()
 
 
-async def set_ticket_log_channel(guild_id: int, channel_id: int) -> None:
+async def set_ticket_log(guild_id: int, channel_id: int) -> None:
     """
     Sets the ticket log channel for a guild.
 
@@ -119,7 +119,7 @@ async def set_ticket_log_channel(guild_id: int, channel_id: int) -> None:
     await guild.save()
 
 
-async def set_media_only_channel(guild_id: int, channel_id: int) -> None:
+async def set_media_only(guild_id: int, channel_id: int) -> None:
     """
     Sets the media-only channel for a guild.
 
@@ -149,16 +149,18 @@ async def set_autorole(guild_id: int, role_id: int) -> None:
     await guild.save()
 
 
-async def set_auto_meme_channel(guild_id: int, channel_id: int) -> None:
+async def set_auto_meme(guild_id: int, channel_id: int, subreddit: str | None = None) -> None:
     """
-    Sets the auto meme channel for a guild.
+    Sets the auto meme channel and subreddit for a guild.
 
     Parameters:
         guild_id (int): The guild ID to perform action on.
         channel_id (int): The channel ID to set as the auto meme channel.
+        subreddit (str | None): The subreddit to fetch memes from (optional).
     """
     guild = await GuildTable.filter(guild_id=guild_id).first()
     if not guild:
         guild = await add_guild(guild_id)
-    guild.auto_meme_channel_id = channel_id
+    guild.auto_meme["channel_id"] = channel_id
+    guild.auto_meme["subreddit"] = subreddit
     await guild.save()

@@ -2,18 +2,19 @@ import discord
 from db.funcs.guild import (
     fetch_guild_settings,
     remove_guild,
-    set_auto_meme_channel,
+    set_auto_meme,
     set_autorole,
-    set_media_only_channel,
-    set_mod_cmd_log_channel,
-    set_mod_log_channel,
-    set_msg_log_channel,
+    set_media_only,
+    set_mod_cmd_log,
+    set_mod_log,
+    set_msg_log,
     set_ticket_cmds,
-    set_ticket_log_channel,
+    set_ticket_log,
 )
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from utils import config
+from utils.check import check_subreddit
 from utils.emoji import emoji
 
 
@@ -39,7 +40,9 @@ class Settings(commands.Cog):
         ticket = emoji.on if guild_settings.ticket_cmds else emoji.off
         ticket_log_channel = await mention_ch(guild_settings.ticket_log_channel_id)
         media_only_channel = await mention_ch(guild_settings.media_only_channel_id)
-        auto_meme_channel = await mention_ch(guild_settings.auto_meme_channel_id)
+        auto_meme_channel = await mention_ch(guild_settings.auto_meme["channel_id"])
+        if guild_settings.auto_meme["subreddit"]:
+            auto_meme_channel += f" ([`r/{guild_settings.auto_meme['subreddit']}`](https://reddit.com/r/{guild_settings.auto_meme['subreddit']}))"
 
         role_id = guild_settings.autorole
         autorole = ctx.guild.get_role(role_id).mention if (role_id and ctx.guild.get_role(role_id)) else emoji.off
@@ -54,7 +57,7 @@ class Settings(commands.Cog):
                 f"{emoji.msg} **Message Log Channel**: {msg_log_channel}\n"
                 f"{emoji.ticket} **Ticket Commands**: {ticket}\n"
                 f"{emoji.ticket} **Ticket Log Channel**: {ticket_log_channel}\n"
-                f"{emoji.img} **Media only Channel**: {media_only_channel}\n"
+                f"{emoji.img} **Media Only Channel**: {media_only_channel}\n"
                 f"{emoji.role} **Autorole**: {autorole}\n"
                 f"{emoji.fun} **Auto Meme Channel**: {auto_meme_channel}\n"
             ),
@@ -81,9 +84,9 @@ class Settings(commands.Cog):
             "Message Log",
             "Ticket Commands",
             "Ticket Log",
-            "Media Only Channel",
+            "Media Only",
             "Auto Role",
-            "Auto Meme Channel",
+            "Auto Meme",
         ],
     )
     async def reset_settings(self, ctx: discord.ApplicationContext, setting: str):
@@ -93,21 +96,21 @@ class Settings(commands.Cog):
         else:
             match setting.lower():
                 case "mod log":
-                    await set_mod_cmd_log_channel(ctx.guild.id, None)
+                    await set_mod_cmd_log(ctx.guild.id, None)
                 case "mod command log":
-                    await set_mod_cmd_log_channel(ctx.guild.id, None)
+                    await set_mod_cmd_log(ctx.guild.id, None)
                 case "message log":
-                    await set_msg_log_channel(ctx.guild.id, None)
+                    await set_msg_log(ctx.guild.id, None)
                 case "ticket commands":
                     await set_ticket_cmds(ctx.guild.id, False)
                 case "ticket log":
-                    await set_ticket_log_channel(ctx.guild.id, None)
+                    await set_ticket_log(ctx.guild.id, None)
                 case "media only channel":
-                    await set_media_only_channel(ctx.guild.id, None)
+                    await set_media_only(ctx.guild.id, None)
                 case "auto role":
                     await set_autorole(ctx.guild.id, None)
-                case "auto meme channel":
-                    await set_auto_meme_channel(ctx.guild.id, None)
+                case "auto meme":
+                    await set_auto_meme(ctx.guild.id, None)
         reset_em = discord.Embed(
             description=f"{emoji.success} Successfully reset the {setting.lower()} settings.",
             color=config.color.green,
@@ -119,7 +122,7 @@ class Settings(commands.Cog):
     @option("channel", description="Mention the mod log channel")
     async def set_mod_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets mod log channel."""
-        await set_mod_log_channel(ctx.guild.id, channel.id)
+        await set_mod_log(ctx.guild.id, channel.id)
         logging_em = discord.Embed(
             description=f"{emoji.success} Successfully set mod log channel to {channel.mention}.",
             color=config.color.green,
@@ -131,7 +134,7 @@ class Settings(commands.Cog):
     @option("channel", description="Mention the mod command log channel")
     async def set_mod_cmd_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets mod command log channel."""
-        await set_mod_cmd_log_channel(ctx.guild.id, channel.id)
+        await set_mod_cmd_log(ctx.guild.id, channel.id)
         logging_em = discord.Embed(
             description=f"{emoji.success} Successfully set mod command log channel to {channel.mention}.",
             color=config.color.green,
@@ -143,7 +146,7 @@ class Settings(commands.Cog):
     @option("channel", description="Mention the message log channel")
     async def set_msg_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets message log channel."""
-        await set_msg_log_channel(ctx.guild.id, channel.id)
+        await set_msg_log(ctx.guild.id, channel.id)
         logging_em = discord.Embed(
             description=f"{emoji.success} Successfully set message log channel to {channel.mention}.",
             color=config.color.green,
@@ -171,7 +174,7 @@ class Settings(commands.Cog):
     @option("channel", description="Mention the ticket log channel")
     async def set_ticket_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets ticket log channel."""
-        await set_ticket_log_channel(ctx.guild.id, channel.id)
+        await set_ticket_log(ctx.guild.id, channel.id)
         logging_em = discord.Embed(
             description=f"{emoji.success} Successfully set ticket log channel to {channel.mention}.",
             color=config.color.green,
@@ -181,7 +184,7 @@ class Settings(commands.Cog):
     # Set media only channel
     @setting.command(name="media-only")
     @option("channel", description="Mention the media only channel")
-    async def set_image_only_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
+    async def set_image_only(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets media only channel."""
         if not channel.permissions_for(ctx.guild.me).send_messages:
             error_em = discord.Embed(
@@ -190,7 +193,7 @@ class Settings(commands.Cog):
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
-            await set_media_only_channel(ctx.guild.id, channel.id)
+            await set_media_only(ctx.guild.id, channel.id)
             img_only_em = discord.Embed(
                 description=f"{emoji.success} Successfully set media only channel to {channel.mention}.",
                 color=config.color.green,
@@ -223,11 +226,12 @@ class Settings(commands.Cog):
             )
             await ctx.respond(embed=autorole_em)
 
-    # Set auto meme channel
-    @setting.command(name="auto-meme-channel")
-    @option("channel", description="Mention the auto meme channel")
-    async def set_auto_meme_channel(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
-        """Sets auto meme channel. The bot will post memes in this channel. Delay is 10 minutes."""
+    # Set auto meme
+    @setting.command(name="auto-meme")
+    @option("channel", description="Mention the auto meme channel.")
+    @option("subreddit", description="Subreddit to fetch memes from.", required=False)
+    async def set_auto_meme(self, ctx: discord.ApplicationContext, channel: discord.TextChannel, subreddit: str = ""):
+        """Sets auto meme channel. Posts memes every 10 minutes."""
         if not channel.permissions_for(ctx.guild.me).send_messages:
             error_em = discord.Embed(
                 description=f"{emoji.error} I don't have permission to send messages in {channel.mention}.",
@@ -235,9 +239,33 @@ class Settings(commands.Cog):
             )
             await ctx.respond(embed=error_em, ephemeral=True)
         else:
-            await set_auto_meme_channel(ctx.guild.id, channel.id)
+            if subreddit:  # Check if subreddit is provided
+                await ctx.defer()
+                check = await check_subreddit(subreddit)
+                if not check:  # If subreddit is invalid
+                    error_em = discord.Embed(
+                        description=f"{emoji.error} The subreddit `r/{subreddit}` does not exist or is invalid.",
+                        color=config.color.red,
+                    )
+                    await ctx.respond(embed=error_em, ephemeral=True)
+                    return
+                # Use the display name from the check so that it is formatted correctly
+                subreddit = check["display_name"]
+                if check["nsfw"] and not channel.nsfw:  # If subreddit is NSFW and channel is not NSFW
+                    error_em = discord.Embed(
+                        description=f"{emoji.error} The subreddit `r/{subreddit}` is **NSFW**. Please enable **NSFW** in {channel.mention} or choose a different subreddit.",
+                        color=config.color.red,
+                    )
+                    await ctx.respond(embed=error_em, ephemeral=True)
+                    return
+            # Finally set the auto meme channel and subreddit
+            await set_auto_meme(ctx.guild.id, channel.id, subreddit)
             auto_meme_em = discord.Embed(
-                description=f"{emoji.success} Successfully set auto meme channel to {channel.mention}.",
+                description=(
+                    f"{emoji.success} Successfully set auto meme channel to {channel.mention}{f' and subreddit to [`r/{subreddit}`](https://reddit.com/r/{subreddit})' if subreddit else ''}.\n"
+                    f"-# The bot will post memes from this subreddit every `10 minutes` to {channel.mention}.\n\n"
+                    f"-# Technically you can use any subreddit, but it is recommended to use subreddits that have memes."
+                ),
                 color=config.color.green,
             )
             await ctx.respond(embed=auto_meme_em)
