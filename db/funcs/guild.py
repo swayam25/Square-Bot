@@ -163,6 +163,6 @@ async def set_auto_meme(guild_id: int, channel_id: int | str, subreddit: str | N
     if not guild:
         guild = await add_guild(guild_id)
     subreddit = None if not subreddit else subreddit
-    guild.auto_meme["channel_id"] = str(channel_id)
+    guild.auto_meme["channel_id"] = str(channel_id) if isinstance(channel_id, int) else channel_id
     guild.auto_meme["subreddit"] = subreddit
     await guild.save()
