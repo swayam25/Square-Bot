@@ -258,11 +258,11 @@ class Settings(commands.Cog):
                     await ctx.respond(embed=error_em, ephemeral=True)
                     return
             # Finally set the auto meme channel and subreddit
-            await set_auto_meme(ctx.guild.id, channel.id, check.display_name)
+            await set_auto_meme(ctx.guild.id, channel.id, check.display_name if subreddit else None)
             auto_meme_em = discord.Embed(
                 description=(
                     f"{emoji.success} Successfully set auto meme channel to {channel.mention}{f' and subreddit to [`r/{check.display_name}`](https://reddit.com/r/{check.display_name})' if subreddit else ''}.\n"
-                    f"-# The bot will post memes every `10 minutes` to {channel.mention}.\n\n"
+                    f"-# The bot will post memes every `10 minutes`.\n\n"
                     f"-# Technically you can use any subreddit, but it is recommended to use subreddits that have memes."
                 ),
                 color=config.color.green,
