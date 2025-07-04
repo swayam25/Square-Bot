@@ -191,7 +191,7 @@ class Devs(commands.Cog):
     @slash_command(guild_ids=config.owner_guild_ids, name="reload-cogs")
     @check.is_dev()
     async def reload_cogs(self, ctx: discord.ApplicationContext):
-        """Reloads bot's all files."""
+        """Reloads the bot cogs."""
         reload_em = discord.Embed(description=f"{emoji.restart} Reloaded Cogs.", color=config.color.theme)
         await ctx.respond(embed=reload_em, ephemeral=True, delete_after=2)
         for filename in os.listdir("./cogs"):
