@@ -84,9 +84,15 @@ class Logs(commands.Cog):
     async def on_message_edit(self, msg_before: discord.Message, msg_after: discord.Message):
         if msg_before.guild:
             channel_id = (await fetch_guild_settings(msg_before.guild.id)).msg_log_channel_id
-            if msg_before.author and msg_after.author == self.client.user:
-                return
-            elif msg_before.author.bot:
+            if any(
+                [
+                    msg_before.author == self.client.user,
+                    msg_after.author == self.client.user,
+                    msg_before.author.bot,
+                    msg_after.author.bot,
+                    msg_before.content == msg_after.content,
+                ]
+            ):
                 return
             elif channel_id is not None:
                 edit_ch = await self.client.fetch_channel(channel_id)
