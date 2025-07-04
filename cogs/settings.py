@@ -29,7 +29,7 @@ class Settings(commands.Cog):
         """Shows server settings."""
 
         # Fetch channel mention util func
-        async def mention_ch(channel_id):
+        async def mention_ch(channel_id: int | None) -> str:
             return f"<#{channel_id}>" if channel_id else emoji.off
 
         guild_settings = await fetch_guild_settings(ctx.guild.id)

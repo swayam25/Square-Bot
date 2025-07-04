@@ -40,7 +40,8 @@ async def fetch_guild_settings(guild_id: int) -> GuildTable:
     """
     guild = await GuildTable.filter(guild_id=guild_id).first()
     if not guild:
-        guild = guild = await add_guild(guild_id)
+        guild = await add_guild(guild_id)
+    guild.auto_meme["channel_id"] = int(guild.auto_meme["channel_id"]) if guild.auto_meme["channel_id"] else None
     return guild
 
 
@@ -149,7 +150,7 @@ async def set_autorole(guild_id: int, role_id: int) -> None:
     await guild.save()
 
 
-async def set_auto_meme(guild_id: int, channel_id: int, subreddit: str | None = None) -> None:
+async def set_auto_meme(guild_id: int, channel_id: int | str, subreddit: str | None = None) -> None:
     """
     Sets the auto meme channel and subreddit for a guild.
 
@@ -162,6 +163,6 @@ async def set_auto_meme(guild_id: int, channel_id: int, subreddit: str | None = 
     if not guild:
         guild = await add_guild(guild_id)
     subreddit = None if not subreddit else subreddit
-    guild.auto_meme["channel_id"] = channel_id
+    guild.auto_meme["channel_id"] = str(channel_id)
     guild.auto_meme["subreddit"] = subreddit
     await guild.save()

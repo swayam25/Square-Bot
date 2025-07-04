@@ -13,7 +13,9 @@ class DevTable(Model):
 
 
 class AutomemeField(TypedDict):
-    channel_id: int | None
+    # Stored as a string because Tortoise ORM does not support BigIntField for JSON
+    # This value gets converted to `int` when fetched using `fetch_guild_settings()`
+    channel_id: str | int | None
     subreddit: str | None
 
 
