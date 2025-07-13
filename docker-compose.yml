@@ -5,3 +5,6 @@ services:
     build: .
     container_name: "square"
     restart: unless-stopped
+    volumes:
+      - ./.cache:/square/.cache
+      - ./config.toml:/square/config.toml
