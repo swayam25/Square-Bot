@@ -82,7 +82,8 @@ class LavaNode(lavalink.Node):
                 f"{emoji.music} **Players Connected**: `{self.stats.players}`\n"
                 f"{emoji.play} **Currently Playing**: `{self.stats.playing_players}`"
                 + (
-                    f"\n{emoji.memory} **Memory**: `{fmt_memory(self.stats.memory_allocated)}`"
+                    f"\n{emoji.lavalink} **Lavalink Version**: `{await self.get_version()}`\n"
+                    f"{emoji.memory} **Memory**: `{fmt_memory(self.stats.memory_allocated)}`"
                     f" `({fmt_memory(self.stats.memory_used)} Used | {fmt_memory(self.stats.memory_free)} Free)`\n"
                     f"{emoji.cpu} **Total CPU Cores**: `{self.stats.cpu_cores}`\n"
                     f"{emoji.tasks} **CPU Load**: `{round(self.stats.system_load * 100)}% System | {round(self.stats.lavalink_load * 100)}% Lavalink `"
