@@ -65,8 +65,8 @@ def fmt_perms(perms: list[str]) -> str:
 
 
 def fmt_memory(bytes_value):
-    gb = bytes_value / 1024 / 1024 / 1024
-    mb = bytes_value / 1024 / 1024
+    gb = round(bytes_value / 1024 / 1024 / 1024, 2)
+    mb = round(bytes_value / 1024 / 1024, 2)
     if gb >= 1:
         return format_unit(gb, "digital-gigabyte", "short")
     else:
