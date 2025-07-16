@@ -60,6 +60,8 @@ class Emoji:
     join: str = "➕"
     join_red: str = "➕"
     leave: str = "➖"
+    server: str = "🖥️"
+    server_red: str = "🖥️"
 
     coin: str = "🪙"
     dice: str = "🎲"
@@ -69,9 +71,11 @@ class Emoji:
 
     python: str = "🐍"
     ping: str = "🏓"
-    server: str = "🖥️"
-    server_red: str = "🖥️"
-    lavalink: str = "🎵"
+    memory: str = "💾"
+    tasks: str = "📊"
+    cpu: str = "📡"
+    lavalink: str = "🌋"
+    lavalink_white: str = "🌋"
 
     pycord: str = "🐍"
     spotify: str = "🟢"

@@ -2,6 +2,7 @@ import aiohttp
 import datetime
 import discord
 import re
+from babel.units import format_unit
 from typing import TypedDict
 from utils import config
 from utils.emoji import emoji
@@ -61,6 +62,15 @@ def fmt_perms(perms: list[str]) -> str:
     if len(perms) == 1:
         return perms[0]
     return ", ".join(perms[:-1]) + " and " + perms[-1]
+
+
+def fmt_memory(bytes_value):
+    gb = bytes_value / 1024 / 1024 / 1024
+    mb = bytes_value / 1024 / 1024
+    if gb >= 1:
+        return format_unit(gb, "digital-gigabyte", "short")
+    else:
+        return format_unit(mb, "digital-megabyte", "short")
 
 
 class MemeEmbedData(TypedDict):

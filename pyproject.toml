@@ -1,6 +1,6 @@
 [project]
 name = "square"
-version = "1.5.4"
+version = "1.5.5"
 description = "Advanced multipurpose discord bot for all your needs."
 license = "GPL-3.0"
 readme = "README.md"
@@ -11,6 +11,7 @@ dependencies = [
     "aiohttp>=3.12.4",
     "babel>=2.17.0",
     "lavalink>=5.9.0",
+    "psutil>=7.0.0",
     "py-cord",
     "pyfiglet>=1.0.2",
     "requests>=2.32.3",
