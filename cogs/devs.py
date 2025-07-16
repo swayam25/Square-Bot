@@ -334,72 +334,99 @@ class Devs(commands.Cog):
 
     # Upload app emojis
     @emoji.command(name="upload")
-    @option("file", description="Upload emojis zip file.", type=discord.Attachment)
+    @option("file", description="Upload emojis zip file or single png file.", type=discord.Attachment)
     @check.is_dev()
     async def upload_app_emojis(self, ctx: discord.ApplicationContext, file: discord.Attachment):
-        """Uploads all emojis to the app (only supports .zip files with .png emojis)."""
+        """Uploads all emojis to the app (supports .zip files with .png emojis or a single .png file)."""
         await ctx.defer()
-        if not file.filename.endswith(".zip"):
-            error_em = discord.Embed(
-                description=f"{emoji.error} Please upload a valid zip file.", color=config.color.red
-            )
-            await ctx.respond(embed=error_em, ephemeral=True)
-            return
-        zip_buffer = BytesIO()
-        await file.save(zip_buffer)
-        zip_buffer.seek(0)
-        with zipfile.ZipFile(zip_buffer, "r") as zip_file:
-            namelist = zip_file.namelist()
-            file_entries = [n for n in namelist if not n.endswith("/")]
-            top_dirs = set()
-            for n in namelist:
-                parts = n.split("/")
-                if len(parts) > 1 and parts[0]:
-                    top_dirs.add(parts[0])
-            if len(top_dirs) > 1:
-                error_em = discord.Embed(
-                    description=f"{emoji.error} Zip file contains more than one top-level directory.",
-                    color=config.color.red,
-                )
-                await ctx.respond(embed=error_em, ephemeral=True)
-                return
-            if len(top_dirs) == 1:
-                base_dir = list(top_dirs)[0]
-                emoji_files = [f for f in file_entries if f.startswith(base_dir + "/") and f.endswith(".png")]
-            else:
-                emoji_files = [f for f in file_entries if "/" not in f and f.endswith(".png")]
-            if not emoji_files:
-                error_em = discord.Embed(
-                    description=f"{emoji.error} No `.png` emoji files found in the zip.",
-                    color=config.color.red,
-                )
-                await ctx.respond(embed=error_em, ephemeral=True)
-                return
-            embed = self.emoji_prog_embed(len(emoji_files))
-            msg = await ctx.respond(embed=embed)
-            for emoji_path in emoji_files:
-                _emoji = emoji_path.split("/")[-1][:-4]
-                if len(_emoji) > 32:
+        if file.filename.endswith(".zip"):
+            zip_buffer = BytesIO()
+            await file.save(zip_buffer)
+            zip_buffer.seek(0)
+            with zipfile.ZipFile(zip_buffer, "r") as zip_file:
+                namelist = zip_file.namelist()
+                file_entries = [n for n in namelist if not n.endswith("/")]
+                top_dirs = set()
+                for n in namelist:
+                    parts = n.split("/")
+                    if len(parts) > 1 and parts[0]:
+                        top_dirs.add(parts[0])
+                if len(top_dirs) > 1:
                     error_em = discord.Embed(
-                        description=f"{emoji.error} Emoji name `{_emoji}` is too long (max 32 characters).",
+                        description=f"{emoji.error} Zip file contains more than one top-level directory.",
                         color=config.color.red,
                     )
                     await ctx.respond(embed=error_em, ephemeral=True)
                     return
-                try:
-                    await self.client.create_emoji(name=_emoji, image=zip_file.read(emoji_path))
-                except Exception:
-                    await self.client.delete_emoji(
-                        [emoji for emoji in await self.client.fetch_emojis() if emoji.name == _emoji][0]
+                if len(top_dirs) == 1:
+                    base_dir = list(top_dirs)[0]
+                    emoji_files = [f for f in file_entries if f.startswith(base_dir + "/") and f.endswith(".png")]
+                else:
+                    emoji_files = [f for f in file_entries if "/" not in f and f.endswith(".png")]
+                if not emoji_files:
+                    error_em = discord.Embed(
+                        description=f"{emoji.error} No `.png` emoji files found in the zip.",
+                        color=config.color.red,
                     )
-                    await self.client.create_emoji(name=_emoji, image=zip_file.read(emoji_path))
-                await msg.edit(embed=self.emoji_prog_embed(len(emoji_files), emoji_files.index(emoji_path) + 1))
-        zip_buffer.close()
-        upload_em = discord.Embed(
-            description=f"{emoji.success} Uploaded {len(emoji_files)} emojis.",
-            color=config.color.green,
-        )
-        await msg.edit(embed=upload_em)
+                    await ctx.respond(embed=error_em, ephemeral=True)
+                    return
+                embed = self.emoji_prog_embed(len(emoji_files))
+                msg = await ctx.respond(embed=embed)
+                for emoji_path in emoji_files:
+                    _emoji = emoji_path.split("/")[-1][:-4]
+                    if len(_emoji) > 32:
+                        error_em = discord.Embed(
+                            description=f"{emoji.error} Emoji name `{_emoji}` is too long (max 32 characters).",
+                            color=config.color.red,
+                        )
+                        await ctx.respond(embed=error_em, ephemeral=True)
+                        return
+                    try:
+                        await self.client.create_emoji(name=_emoji, image=zip_file.read(emoji_path))
+                    except Exception:
+                        await self.client.delete_emoji(
+                            [emoji for emoji in await self.client.fetch_emojis() if emoji.name == _emoji][0]
+                        )
+                        await self.client.create_emoji(name=_emoji, image=zip_file.read(emoji_path))
+                    await msg.edit(embed=self.emoji_prog_embed(len(emoji_files), emoji_files.index(emoji_path) + 1))
+            zip_buffer.close()
+            upload_em = discord.Embed(
+                description=f"{emoji.success} Uploaded {len(emoji_files)} emojis.",
+                color=config.color.green,
+            )
+            await msg.edit(embed=upload_em)
+        elif file.filename.endswith(".png"):
+            # Handle single PNG file upload
+            if len(file.filename[:-4]) > 32:
+                error_em = discord.Embed(
+                    description=f"{emoji.error} Emoji name `{file.filename[:-4]}` is too long (max 32 characters).",
+                    color=config.color.red,
+                )
+                await ctx.respond(embed=error_em, ephemeral=True)
+                return
+            png_buffer = BytesIO()
+            await file.save(png_buffer)
+            png_buffer.seek(0)
+            try:
+                await self.client.create_emoji(name=file.filename[:-4], image=png_buffer.read())
+                upload_em = discord.Embed(
+                    description=f"{emoji.success} Uploaded emoji `{file.filename[:-4]}`.",
+                    color=config.color.green,
+                )
+                await ctx.respond(embed=upload_em)
+            except Exception as e:
+                error_em = discord.Embed(
+                    description=f"{emoji.error} Failed to upload emoji `{file.filename[:-4]}`.\n{e}",
+                    color=config.color.red,
+                )
+                await ctx.respond(embed=error_em, ephemeral=True)
+            png_buffer.close()
+        else:
+            error_em = discord.Embed(
+                description=f"{emoji.error} Please upload a valid zip file or a single png file.",
+                color=config.color.red,
+            )
+            await ctx.respond(embed=error_em, ephemeral=True)
 
     async def delete_extra_emojis_callback(
         self, view: discord.ui.View, interaction: discord.Interaction, emojis: dict[str, str]

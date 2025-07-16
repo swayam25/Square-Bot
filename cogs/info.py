@@ -29,6 +29,7 @@ class BotStats:
             mem = psutil.virtual_memory()
             cpu_cores = psutil.cpu_count()
             cpu_load = psutil.cpu_percent()
+            disk = psutil.disk_usage("/")
         em = discord.Embed(
             title=f"{self.client.user.name} Stats",
             description=(
@@ -42,6 +43,8 @@ class BotStats:
                     f"{emoji.pycord} **Pycord Version**: `v{discord.__version__}`\n"
                     f"{emoji.memory} **Memory**: `{fmt_memory(mem.total)}`"
                     f" `({fmt_memory(mem.used)} Used | {fmt_memory(mem.available)} Free)`\n"
+                    f"{emoji.storage} **Storage**: `{fmt_memory(disk.total)}`"
+                    f" `({fmt_memory(disk.used)} Used | {fmt_memory(disk.free)} Free)`\n"
                     f"{emoji.cpu} **Total CPU Cores**: `{cpu_cores}`\n"
                     f"{emoji.tasks} **CPU Load**: `{cpu_load}%`"
                     if is_dev

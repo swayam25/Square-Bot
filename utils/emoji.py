@@ -71,7 +71,8 @@ class Emoji:
 
     python: str = "🐍"
     ping: str = "🏓"
-    memory: str = "💾"
+    memory: str = "📈"
+    storage: str = "💾"
     tasks: str = "📊"
     cpu: str = "📡"
     lavalink: str = "🌋"
