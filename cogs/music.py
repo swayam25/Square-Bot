@@ -92,7 +92,7 @@ class MusicView(discord.ui.View):
             description=f"{interaction.user.mention} {'Paused' if player.paused else 'Resumed'} the player.",
             color=config.color.theme,
         )
-        await interaction.response.edit_message(view=self)
+        await interaction.edit(view=self)
         await interaction.followup.send(embed=pause_em, delete_after=5)
 
     # Stop
@@ -107,7 +107,7 @@ class MusicView(discord.ui.View):
             color=config.color.theme,
         )
         self.disable_all_items()
-        await interaction.response.edit_message(view=self)
+        await interaction.edit(view=self)
         await guild.me.voice.channel.set_status(status=None)
         await guild.voice_client.disconnect(force=True)
         await interaction.followup.send(embed=stop_embed, delete_after=5)
@@ -123,7 +123,7 @@ class MusicView(discord.ui.View):
             color=config.color.theme,
         )
         self.disable_all_items()
-        await interaction.response.edit_message(view=self)
+        await interaction.edit(view=self)
         await interaction.followup.send(embed=skip_em, delete_after=5)
 
     # Loop
@@ -146,7 +146,7 @@ class MusicView(discord.ui.View):
             description=f"{interaction.user.mention} {'Enabled' if mode != 'Disable' else 'Disabled'} {mode if mode != 'Disable' else ''} loop.",
             color=config.color.theme,
         )
-        await interaction.response.edit_message(view=self)
+        await interaction.edit(view=self)
         await interaction.followup.send(embed=loop_em, delete_after=5)
 
     # Shuffle
@@ -163,7 +163,7 @@ class MusicView(discord.ui.View):
                 description=f"{interaction.user.mention} {'Enabled' if player.shuffle else 'Disabled'} shuffle.",
                 color=config.color.theme,
             )
-            await interaction.response.edit_message(view=self)
+            await interaction.edit(view=self)
             await interaction.followup.send(embed=shuffle_em, delete_after=5)
 
 
@@ -187,7 +187,7 @@ class QueueView(discord.ui.View):
     async def start_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.page = 1
         queue_embed = await QueueEmbed(self.client, interaction, self.page).get_embed()
-        await interaction.response.edit_message(embed=queue_embed, view=self)
+        await interaction.edit(embed=queue_embed, view=self)
 
     # Previous
     @discord.ui.button(emoji=f"{emoji.previous_white}", custom_id="previous", style=discord.ButtonStyle.grey)
@@ -199,7 +199,7 @@ class QueueView(discord.ui.View):
         else:
             self.page -= 1
         queue_embed = await QueueEmbed(self.client, interaction, self.page).get_embed()
-        await interaction.response.edit_message(embed=queue_embed, view=self)
+        await interaction.edit(embed=queue_embed, view=self)
 
     # Next
     @discord.ui.button(emoji=f"{emoji.next_white}", custom_id="next", style=discord.ButtonStyle.grey)
@@ -211,7 +211,7 @@ class QueueView(discord.ui.View):
         else:
             self.page += 1
         queue_embed = await QueueEmbed(self.client, interaction, self.page).get_embed()
-        await interaction.response.edit_message(embed=queue_embed, view=self)
+        await interaction.edit(embed=queue_embed, view=self)
 
     # End
     @discord.ui.button(emoji=f"{emoji.end_white}", custom_id="end", style=discord.ButtonStyle.grey)
@@ -220,7 +220,7 @@ class QueueView(discord.ui.View):
         pages = math.ceil(len(player.queue) / self.items_per_page)
         self.page = pages
         queue_embed = await QueueEmbed(self.client, interaction, self.page).get_embed()
-        await interaction.response.edit_message(embed=queue_embed, view=self)
+        await interaction.edit(embed=queue_embed, view=self)
 
 
 class QueueEmbed:

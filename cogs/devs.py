@@ -27,7 +27,7 @@ class GuildListView(discord.ui.View):
     async def start_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.page = 1
         em = GuildListEmbed(self.client, self.page).get_embed()
-        await interaction.response.edit_message(embed=em, view=self)
+        await interaction.edit(embed=em, view=self)
 
     # Previous
     @discord.ui.button(emoji=f"{emoji.previous_white}", custom_id="previous", style=discord.ButtonStyle.grey)
@@ -38,7 +38,7 @@ class GuildListView(discord.ui.View):
         else:
             self.page -= 1
         em = GuildListEmbed(self.client, self.page).get_embed()
-        await interaction.response.edit_message(embed=em, view=self)
+        await interaction.edit(embed=em, view=self)
 
     # Next
     @discord.ui.button(emoji=f"{emoji.next_white}", custom_id="next", style=discord.ButtonStyle.grey)
@@ -49,14 +49,14 @@ class GuildListView(discord.ui.View):
         else:
             self.page += 1
         em = GuildListEmbed(self.client, self.page).get_embed()
-        await interaction.response.edit_message(embed=em, view=self)
+        await interaction.edit(embed=em, view=self)
 
     # End
     @discord.ui.button(emoji=f"{emoji.end_white}", custom_id="end", style=discord.ButtonStyle.grey)
     async def end_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.page = math.ceil(len(self.client.guilds) / self.items_per_page)
         em = GuildListEmbed(self.client, self.page).get_embed()
-        await interaction.response.edit_message(embed=em, view=self)
+        await interaction.edit(embed=em, view=self)
 
 
 class GuildListEmbed(discord.Embed):

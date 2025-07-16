@@ -97,7 +97,7 @@ class HelpView(discord.ui.View):
                     discord.SelectOption(
                         label="Home",
                         description="Go back to the home menu",
-                        emoji=emoji.start_white,
+                        emoji=emoji.previous_white,
                     ),
                 ],
             )
@@ -108,7 +108,7 @@ class HelpView(discord.ui.View):
     async def help_callback(self, select: discord.ui.Select, interaction: discord.Interaction):
         cmds = ""
         if select.values[0] == "Home":
-            await interaction.response.edit_message(embed=await help_home_em(self, self.ctx))
+            await interaction.edit(embed=await help_home_em(self, self.ctx))
         else:
             cog = self.client.get_cog(select.values[0].replace(" ", ""))
             for command in cog.get_commands():
@@ -120,7 +120,7 @@ class HelpView(discord.ui.View):
             help_em = discord.Embed(
                 title=f"{select.values[0]} Commands", description=f"{cmds}", color=config.color.theme
             )
-            await interaction.response.edit_message(embed=help_em)
+            await interaction.edit(embed=help_em)
 
 
 class Help(commands.Cog):

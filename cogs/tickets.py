@@ -78,7 +78,7 @@ class TicketView(discord.ui.View):
     @discord.ui.button(label="Close", emoji=emoji.lock_white, style=discord.ButtonStyle.grey, custom_id="close_ticket")
     async def close_ticket(self, button: discord.ui.Button, interaction: discord.Interaction):
         self.disable_all_items()
-        await interaction.response.edit_message(view=self)
+        await interaction.edit(view=self)
         await close_ticket(interaction.channel, interaction.user, interaction.followup)
 
     # Ticket summary
@@ -87,7 +87,7 @@ class TicketView(discord.ui.View):
     )
     async def ticket_summary(self, button: discord.ui.Button, interaction: discord.Interaction):
         button.disabled = True
-        await interaction.response.edit_message(view=self)
+        await interaction.edit(view=self)
         await interaction.channel.trigger_typing()
         file = await TicketTranscript(interaction.channel).create()
         await interaction.followup.send(

@@ -82,7 +82,7 @@ class LavaNode(lavalink.Node):
                 f"{emoji.music} **Players Connected**: `{self.stats.players}`\n"
                 f"{emoji.play} **Currently Playing**: `{self.stats.playing_players}`"
                 + (
-                    f"\n{emoji.lavalink} **Lavalink Version**: `{await self.get_version()}`\n"
+                    f"\n{emoji.lavalink} **Lavalink Version**: `v{await self.get_version()}`\n"
                     f"{emoji.memory} **Memory**: `{fmt_memory(self.stats.memory_allocated)}`"
                     f" `({fmt_memory(self.stats.memory_used)} Used | {fmt_memory(self.stats.memory_free)} Free)`\n"
                     f"{emoji.cpu} **Total CPU Cores**: `{self.stats.cpu_cores}`\n"
@@ -97,7 +97,7 @@ class LavaNode(lavalink.Node):
         return em
 
 
-class LavalinkStatsView(discord.ui.View):
+class StatsView(discord.ui.View):
     def __init__(
         self, client: discord.Bot, ctx: discord.ApplicationContext, manager: lavalink.NodeManager | None, timeout: int
     ):
@@ -117,18 +117,20 @@ class LavalinkStatsView(discord.ui.View):
         self.children[0].callback = self.lavalink_stats_callback
 
     async def lavalink_stats_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         stats_em = await LavaNode(self.client, self.ctx, self.client.lavalink.node_manager).get_stats_embed()
         self.children[0].emoji = emoji.previous_white
         self.children[0].label = "Back"
         self.children[0].callback = self.back_callback
-        await interaction.response.edit_message(embed=stats_em, view=self)
+        await interaction.edit(embed=stats_em, view=self)
 
     async def back_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         stats_em = await BotStats(self.client, self.ctx).get_embed()
         self.children[0].emoji = emoji.lavalink_white
         self.children[0].label = "Show Lavalink Stats" if self.manager else "Lavalink Not Connected"
         self.children[0].callback = self.lavalink_stats_callback
-        await interaction.response.edit_message(embed=stats_em, view=self)
+        await interaction.edit(embed=stats_em, view=self)
 
 
 class Info(commands.Cog):
@@ -161,8 +163,9 @@ class Info(commands.Cog):
     @slash_command(name="stats")
     async def stats(self, ctx: discord.ApplicationContext):
         """Shows bot stats."""
+        await ctx.defer()
         stats_em = await BotStats(self.client, ctx).get_embed()
-        view = LavalinkStatsView(
+        view = StatsView(
             client=self.client,
             ctx=ctx,
             manager=self.client.lavalink.node_manager if isinstance(self.client.lavalink, lavalink.Client) else None,
