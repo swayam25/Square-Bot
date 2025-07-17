@@ -429,16 +429,17 @@ class Devs(commands.Cog):
             await ctx.respond(embed=error_em, ephemeral=True)
 
     async def delete_extra_emojis_callback(
-        self, view: discord.ui.View, interaction: discord.Interaction, emojis: dict[str, str]
+        self, view: discord.ui.View, interaction: discord.Interaction, emojis: list[str]
     ):
         """Deletes extra emojis."""
         await interaction.response.defer()
         view.disable_all_items()
         await interaction.message.edit(view=view)
-        for extra_emoji in emojis:
-            extra_emoji = extra_emoji.strip("<>").split(":")
-            em = int(extra_emoji[2])
-            await self.client.delete_emoji(discord.Object(id=em))
+        for e in emojis:
+            obj = e.strip("<>").split(":")
+            id = int(obj[-1]) if len(obj) > 1 else None
+            if id:
+                await self.client.delete_emoji(discord.Object(id=id))
         delete_em = discord.Embed(
             description=f"{emoji.success} Deleted extra emojis.",
             color=config.color.green,
@@ -571,7 +572,9 @@ class Devs(commands.Cog):
                 disable_on_timeout=True,
             )
             view.interaction_check = lambda i: check.author_interaction_check(ctx, i)
-            view.children[0].callback = lambda i: self.delete_extra_emojis_callback(view, i, resp["extra_keys_ignored"])
+            view.children[0].callback = lambda i: self.delete_extra_emojis_callback(
+                view, i, [emoji_dict.get(e) for e in resp["extra_keys_ignored"]]
+            )
             await ctx.respond(embed=sync_em, view=view)
             return
         await ctx.respond(embed=sync_em)
