@@ -1,5 +1,6 @@
 import discord
 import io
+import traceback
 from discord.ext import commands
 from rich.console import Console
 from rich.traceback import Traceback
@@ -22,6 +23,19 @@ class ErrorHandler(commands.Cog):
         if isinstance(error, commands.CommandNotFound):
             pass
 
+        elif await check.is_dev(ctx):
+            tb = Traceback.from_exception(type(error), error, error.__traceback__, show_locals=True)
+            console.print(tb)
+            error = getattr(error, "original", None) or error
+            err = "".join(traceback.format_exception(type(error), error, error.__traceback__))
+            error_em.description = f"{emoji.error} An unexpected error occurred: **`{error.__class__.__name__}`**"
+            if len(err) < 4096:
+                error_em.description += f"\n```py\n{err}\n```"
+            else:
+                file = discord.File(fp=io.BytesIO(tb.encode()), filename="error.txt")
+                await ctx.respond(embed=error_em, file=file, ephemeral=True)
+                return
+
         elif isinstance(error, commands.CommandOnCooldown):
             error_em.description = f"{emoji.error} You're on cooldown. Try again in {error.retry_after:.0f} seconds."
 
@@ -41,17 +55,6 @@ class ErrorHandler(commands.Cog):
 
         else:
             error_em.description = f"{emoji.error} An unexpected error occurred. Please try again later."
-
-        if await check.is_dev(ctx):
-            tb = Traceback.from_exception(type(error), error, error.__traceback__, show_locals=True)
-            console.print(tb)
-            error_em.description = f"{emoji.error} An unexpected error occurred: **`{error.__class__.__name__}`**"
-            if len(tb) < 4096:
-                error_em.description += f"\n```py\n{tb}\n```"
-            else:
-                file = discord.File(fp=io.BytesIO(tb.encode()), filename="error.txt")
-                await ctx.respond(embed=error_em, file=file, ephemeral=True)
-                return
         await ctx.respond(embed=error_em, ephemeral=True)
 
 

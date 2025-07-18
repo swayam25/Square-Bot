@@ -280,6 +280,15 @@ class Info(commands.Cog):
             view=discord.ui.View(discord.ui.Button(label="URL", style=discord.ButtonStyle.link, url=icon.url)),
         )
 
+    @emoji_info.error
+    async def on_error(self, ctx: discord.ApplicationContext, error: discord.DiscordException):
+        if isinstance(error, commands.errors.EmojiNotFound):
+            em = discord.Embed(
+                description=f"{emoji.error} Invalid emoji provided. Please provide a valid emoji.",
+                color=config.color.red,
+            )
+            await ctx.respond(embed=em, ephemeral=True)
+
 
 def setup(client: discord.Bot):
     client.add_cog(Info(client))
