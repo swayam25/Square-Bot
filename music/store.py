@@ -104,14 +104,14 @@ def queue_msg(
 
 
 # Equalizer
-def equalizer(guild_id: int, name: str | None = None, mode: Literal["get", "set"] = "get") -> str | None:
+def equalizer(guild_id: int, name: str | None = None, mode: Literal["get", "set", "clear"] = "get") -> str | None:
     """
     Gets or sets the equalizer settings for a guild.
 
     Parameters:
         guild_id (int): The ID of the guild.
         name (str | None): The equalizer name to set, or None to get the current value.
-        mode (str): The operation mode, either "get" or "set".
+        mode (str): The operation mode, either "get", "set" or "clear".
     """
     match mode:
         case "get":
@@ -123,6 +123,9 @@ def equalizer(guild_id: int, name: str | None = None, mode: Literal["get", "set"
             if guild_id not in store:
                 store[guild_id] = {}
             store[guild_id]["equalizer"] = name
+        case "clear":
+            if guild_id in store and "equalizer" in store[guild_id]:
+                del store[guild_id]["equalizer"]
 
 
 # Inactivity Task

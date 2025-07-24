@@ -54,6 +54,17 @@ async def update_play_msg(client: discord.Bot, guild_id: int):
                 return
 
 
+async def stop_player(player: lavalink.DefaultPlayer, guild: discord.Guild):
+    player.queue.clear()
+    await player.stop()
+    await guild.me.voice.channel.set_status(status=None)
+    await guild.voice_client.disconnect(force=True)
+    player.set_loop(player.LOOP_NONE)
+    player.set_shuffle(False)
+    await player.clear_filters()
+    store.equalizer(guild.id, mode="clear")
+
+
 class MusicView(discord.ui.View):
     def __init__(self, client: discord.Bot, timeout: int):
         super().__init__(timeout=timeout, disable_on_timeout=True)
@@ -100,16 +111,14 @@ class MusicView(discord.ui.View):
     async def stop_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         guild: discord.Guild = self.client.get_guild(int(interaction.guild_id))
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(interaction.guild_id))
-        await player.stop()
-        player.queue.clear()
         stop_embed = discord.Embed(
             description=f"{interaction.user.mention} Destroyed the player.",
             color=config.color.theme,
         )
         self.disable_all_items()
         await interaction.edit(view=self)
-        await guild.me.voice.channel.set_status(status=None)
-        await guild.voice_client.disconnect(force=True)
+        store.play_msg(interaction.guild_id, mode="clear")
+        await stop_player(player, guild)
         await interaction.followup.send(embed=stop_embed, delete_after=5)
         await Disable(self.client, guild.id).queue_msg()
 
@@ -328,7 +337,7 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
         vc: discord.VoiceChannel = self.client.get_channel(int(event.player.channel_id))
         if vc is not None:
-            await vc.set_status(status=f"Playing {player.current.title}")
+            await vc.set_status(status=f"Playing **{player.current.title}**")
         channel = store.play_ch(event.player.guild_id)
         if channel:
             requester = f"<@{player.current.requester}>"
@@ -520,9 +529,7 @@ class Music(commands.Cog):
                 async def inactivity_task():  # Inactivity task to stop and disconnect the player
                     async def stop_and_disconnect():
                         """Stops the player and disconnects from the voice channel gracefully."""
-                        await player.stop()
-                        player.queue.clear()
-                        await bot_voice_channel.guild.voice_client.disconnect(force=True)
+                        await stop_player(player, bot_voice_channel.guild)
                         disable = Disable(self.client, member.guild.id)
                         await disable.play_msg()
                         await disable.queue_msg()
@@ -691,10 +698,7 @@ class Music(commands.Cog):
         await ctx.defer()
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
-            player.queue.clear()
-            await player.stop()
-            await ctx.guild.me.voice.channel.set_status(status=None)
-            await ctx.guild.voice_client.disconnect(force=True)
+            await stop_player(player, ctx.guild)
             stop_embed = discord.Embed(description=f"{emoji.stop} Player destroyed.", color=config.color.theme)
             disable = Disable(self.client, ctx.guild.id)
             await disable.play_msg()
