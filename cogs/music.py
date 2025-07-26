@@ -892,13 +892,31 @@ class Music(commands.Cog):
             )
             await ctx.respond(embed=loop_em)
 
+    # Remove autocomplete
+    async def remove_autocomplete(self, ctx: discord.AutocompleteContext):
+        """Provides track indices for removal."""
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(ctx.interaction.guild_id)
+        if not player or not player.queue:
+            return []
+        # Return track indices and names in the format "{index}. {name}"
+        result = []
+        for i, track in enumerate(player.queue):
+            title = track.title
+            # Limit title length to 100 characters
+            full_entry = f"{i + 1}. {title}"
+            entry = full_entry[:100]
+            if ctx.value.lower() in entry.lower():
+                result.append(entry)
+        return result
+
     # Remove
     @slash_command(name="remove")
-    @option("index", description="Enter your track index number")
-    async def remove(self, ctx: discord.ApplicationContext, index: int):
+    @option("track", description="Select the track to remove", autocomplete=remove_autocomplete)
+    async def remove(self, ctx: discord.ApplicationContext, track: str):
         """Removes a track from the player's queue with the given index."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
+            index: int = int(track.split(".")[0])  # Extract index from the selected track
             if ctx.author.id == player.queue[index - 1].requester:
                 if not player.queue:
                     error_em = discord.Embed(description=f"{emoji.error} Queue is empty", color=config.color.red)
@@ -912,8 +930,7 @@ class Music(commands.Cog):
                 else:
                     removed = player.queue.pop(index - 1)
                     remove_em = discord.Embed(
-                        title="Track Removed",
-                        description=f"**{removed.title}**",
+                        description=f"{emoji.leave} Removed **{removed.title}**.",
                         color=config.color.red,
                     )
                     await ctx.respond(embed=remove_em)
