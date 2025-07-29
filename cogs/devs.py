@@ -40,7 +40,7 @@ class GuildListView(discord.ui.View):
 
     def build(self) -> None:
         self.clear_items()
-        guilds = self.client.guilds * 15
+        guilds = self.client.guilds
         self.add_item(GuildContainer(guilds, page=self.page, items_per_page=self.items_per_page))
         for btn_emoji, callback in [
             (emoji.start_white, "start"),
@@ -53,7 +53,7 @@ class GuildListView(discord.ui.View):
             self.add_item(btn)
 
     async def interaction_callback(self, interaction: discord.Interaction, action: str):
-        guilds = self.client.guilds * 15
+        guilds = self.client.guilds
         total_pages = math.ceil(len(guilds) / self.items_per_page)
         if action == "start":
             self.page = 1
@@ -262,7 +262,7 @@ class Devs(commands.Cog):
     async def list_guilds(self, ctx: discord.ApplicationContext):
         """Shows all guilds."""
         guild_list_view = None
-        if len(self.client.guilds) < 10:
+        if len(self.client.guilds) > 10:
             guild_list_view = GuildListView(self.client, ctx)
         else:
             guilds = self.client.guilds
