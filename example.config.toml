@@ -11,7 +11,6 @@ theme = "#1FCEEC"
 green = "#2ECC71"
 red = "#E74C3C"
 orange = "#E67E22"
-blurple = "#5865F2"
 
 [lavalink]
 host = ""

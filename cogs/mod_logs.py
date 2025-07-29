@@ -15,16 +15,19 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             join_ch = await self.client.fetch_channel(channel_id)
-            join_em = discord.Embed(
-                title="Member Joined",
-                description=(
-                    f"{emoji.user} **Name**: {user.mention} (`{user.name}`)\n"
-                    f"{emoji.duration} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}"
-                ),
-                color=config.color.theme,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.Section(
+                        discord.ui.TextDisplay("## Member Joined"),
+                        discord.ui.TextDisplay(
+                            f"{emoji.user} **Name**: {user.mention} (`{user.name}`)\n"
+                            f"{emoji.duration} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}"
+                        ),
+                        accessory=discord.ui.Thumbnail(user.avatar.url if user.avatar else ""),
+                    ),
+                )
             )
-            join_em.set_thumbnail(url=f"{user.avatar.url}")
-            await join_ch.send(embed=join_em)
+            await join_ch.send(view=view)
 
     # Leave
     @commands.Cog.listener()
@@ -32,17 +35,21 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             leave_ch = await self.client.fetch_channel(channel_id)
-            leave_em = discord.Embed(
-                title="Member Left",
-                description=(
-                    f"{emoji.user_red} **Name**: {user.mention} (`{user.name}`)\n"
-                    f"{emoji.duration_red} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n"
-                    f"{emoji.join_red} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}"
-                ),
-                color=config.color.red,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.Section(
+                        discord.ui.TextDisplay("## Member Left"),
+                        discord.ui.TextDisplay(
+                            f"{emoji.user_red} **Name**: {user.mention} (`{user.name}`)\n"
+                            f"{emoji.duration_red} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n"
+                            f"{emoji.join_red} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}"
+                        ),
+                        accessory=discord.ui.Thumbnail(user.avatar.url if user.avatar else ""),
+                    ),
+                    color=config.color.red,
+                )
             )
-            leave_em.set_thumbnail(url=f"{user.avatar.url}")
-            await leave_ch.send(embed=leave_em)
+            await leave_ch.send(view=view)
 
     # Ban
     @commands.Cog.listener()
@@ -50,17 +57,21 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             ban_ch = await self.client.fetch_channel(channel_id)
-            ban_em = discord.Embed(
-                title="Member Banned",
-                description=(
-                    f"{emoji.user_red} **Name**: {user.mention} (`{user.name}`)\n"
-                    f"{emoji.duration_red} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n"
-                    f"{emoji.duration_red} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}"
-                ),
-                color=config.color.red,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.Section(
+                        discord.ui.TextDisplay("## Member Banned"),
+                        discord.ui.TextDisplay(
+                            f"{emoji.user_red} **Name**: {user.mention} (`{user.name}`)\n"
+                            f"{emoji.duration_red} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n"
+                            f"{emoji.duration_red} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}"
+                        ),
+                        accessory=discord.ui.Thumbnail(user.avatar.url if user.avatar else ""),
+                    ),
+                    color=config.color.red,
+                )
             )
-            ban_em.set_thumbnail(url=f"{user.avatar.url}")
-            await ban_ch.send(embed=ban_em)
+            await ban_ch.send(view=view)
 
     # Unban
     @commands.Cog.listener()
@@ -68,16 +79,19 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             unban_ch = await self.client.fetch_channel(channel_id)
-            unban_em = discord.Embed(
-                title="Member Unbanned",
-                description=(
-                    f"{emoji.user} **Name**: {user.mention} (`{user.name}`)\n"
-                    f"{emoji.duration} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}"
-                ),
-                color=config.color.theme,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.Section(
+                        discord.ui.TextDisplay("## Member Unbanned"),
+                        discord.ui.TextDisplay(
+                            f"{emoji.user} **Name**: {user.mention} (`{user.name}`)\n"
+                            f"{emoji.duration} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}"
+                        ),
+                        accessory=discord.ui.Thumbnail(user.avatar.url if user.avatar else ""),
+                    ),
+                )
             )
-            unban_em.set_thumbnail(url=f"{user.avatar.url}")
-            await unban_ch.send(embed=unban_em)
+            await unban_ch.send(view=view)
 
     # Edit
     @commands.Cog.listener()
@@ -96,65 +110,52 @@ class Logs(commands.Cog):
                 return
             elif channel_id is not None:
                 edit_ch = await self.client.fetch_channel(channel_id)
-                edit_em = discord.Embed(
-                    title="Message Edited",
-                    description=(
+                items: list[discord.ui.Item] = [
+                    discord.ui.TextDisplay("## Message Edited"),
+                    discord.ui.TextDisplay(
                         f"{emoji.owner} **Author**: {msg_before.author.mention}\n"
                         f"{emoji.channel} **Channel**: {msg_before.channel.mention}\n"
-                        f"{emoji.msg_link} **Message:** [Jump to Message]({msg_before.jump_url})\n"
                         f"{emoji.msg_red} **Original Message**: {msg_before.content}\n"
                         f"{emoji.msg_edit} **Edited Message**: {msg_after.content}"
                     ),
-                    color=config.color.theme,
-                )
+                ]
                 if msg_before.attachments:
-                    edit_em.description += (
-                        f"\n{emoji.img_red} **Removed Attachment**: [Click Here]({msg_before.attachments[0].url})"
+                    items.append(discord.ui.TextDisplay(f"## Removed Attachment [`{len(msg_before.attachments)}`]"))
+                    items.append(
+                        discord.ui.MediaGallery(
+                            discord.MediaGalleryItem(url=media.url) for media in msg_before.attachments
+                        )
                     )
-                    edit_em.set_image(url=msg_before.attachments[0].url)
-                await edit_ch.send(embed=edit_em)
+                view = discord.ui.View(
+                    discord.ui.Container(*items),
+                    discord.ui.Button(label="Jump to Message", url=msg_before.jump_url, style=discord.ButtonStyle.link),
+                )
+                await edit_ch.send(view=view)
 
     # Delete
     @commands.Cog.listener()
     async def on_message_delete(self, msg: discord.Message):
         if msg.guild:
             channel_id = (await fetch_guild_settings(msg.guild.id)).msg_log_channel_id
-            if msg.author == self.client.user:
-                return
-            elif msg.author.bot:
+            if msg.author == self.client.user or msg.author.bot:
                 return
             elif channel_id is not None:
                 del_ch = await self.client.fetch_channel(channel_id)
-                del_em = discord.Embed(
-                    title="Message Deleted",
-                    description=(
+                items: list[discord.ui.Item] = [
+                    discord.ui.TextDisplay("## Message Deleted"),
+                    discord.ui.TextDisplay(
                         f"{emoji.owner_red} **Author**: {msg.author.mention}\n"
                         f"{emoji.channel_red} **Channel**: {msg.channel.mention}\n"
                         f"{emoji.msg_red} **Message**: {msg.content}"
                     ),
-                    color=config.color.red,
-                )
+                ]
                 if msg.attachments:
-                    del_em.description += f"\n{emoji.img_red} **Attachment(s)**: {', '.join([f'[Click Here]({attachment.url})' for attachment in msg.attachments])}"
-                await del_ch.send(embed=del_em)
-                # Deleted Attachments
-                if msg.attachments:
-                    del_list: list = []
-                    for attachment in msg.attachments:
-                        del_em = discord.Embed(
-                            title="Attachment Deleted",
-                            description=(
-                                f"{emoji.owner_red} **Author**: {msg.author.mention}\n"
-                                f"{emoji.channel_red} **Channel**: {msg.channel.mention}\n"
-                                f"{emoji.img_red} **Attachment**: [Click Here]({attachment.url})"
-                            ),
-                            color=config.color.red,
-                        )
-                        del_em.set_image(url=attachment.url)
-                        del_list.append(del_em)
-                    await del_ch.send(
-                        embeds=del_list
-                    )  # Limited to send 10 embeds because of discord limitations, user: discord.Members are also limited to 10 attachments per message so this will work fine.
+                    items.append(discord.ui.TextDisplay(f"## Deleted Attachment [`{len(msg.attachments)}`]"))
+                    items.append(
+                        discord.ui.MediaGallery(discord.MediaGalleryItem(url=media.url) for media in msg.attachments)
+                    )
+                view = discord.ui.View(discord.ui.Container(*items, color=config.color.red))
+                await del_ch.send(view=view)
 
     # Bulk delete
     @commands.Cog.listener()
@@ -167,14 +168,18 @@ class Logs(commands.Cog):
                 return
             elif channel_id is not None:
                 bulk_ch = await self.client.fetch_channel(channel_id)
-                bulk_em = discord.Embed(
-                    title="Bulk Message Deleted",
-                    description=f"{emoji.owner_red} **Author**: {msgs[0].author.mention}\n"
-                    f"{emoji.channel_red} **Channel**: {msgs[0].channel.mention}\n"
-                    f"{emoji.msg_red} **Messages Deleted**: {len(msgs)}",
-                    color=config.color.red,
+                view = discord.ui.View(
+                    discord.ui.Container(
+                        discord.ui.TextDisplay("## Bulk Message Deleted"),
+                        discord.ui.TextDisplay(
+                            f"{emoji.owner_red} **Author**: {msgs[0].author.mention}\n"
+                            f"{emoji.channel_red} **Channel**: {msgs[0].channel.mention}\n"
+                            f"{emoji.msg_red} **Messages Deleted**: {len(msgs)}"
+                        ),
+                        color=config.color.red,
+                    )
                 )
-                await bulk_ch.send(embed=bulk_em)
+                await bulk_ch.send(view=view)
 
 
 def setup(client: discord.Bot):

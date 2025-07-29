@@ -42,17 +42,6 @@ Advanced multipurpose discord bot for all your needs.
         - Support server url.
         - Bot will use this url for support server.
 
-    - `emoji` (`Literal["default", "custom"]`)
-        - Emoji type.
-        - `default` will use default emojis.
-        - `custom` will use custom emojis defined in `.cache/emoji.json` (*requires setting up custom emojis*).
-        - If you choose `custom`, make sure to define the emojis in the `.cache/emoji.json` file.
-            1. To create custom emojis, upload a `.zip` file containing the emojis (*`.png` format*) using `/emoji upload` command.
-                - There is a zip file of custom emojis that are used in this bot. Upload the [`emojis.zip`](./assets/emojis.zip) via `/emoji upload` command.
-                - Emoji file names must match the attributes of `Emoji` class in [`emoji.py`](./utils/emoji.py). The [`emojis.zip`](./assets/emojis.zip) file already does this for you.
-            2. Run the `/emoji sync` command to sync the emojis to `.cache/emoji.json`.
-            3. Then set the `emoji` field to `custom`.
-
     - `bot-token` (`str`)
         - Discord api token.
         - Bot will use this token to connect to discord.
@@ -68,8 +57,12 @@ Advanced multipurpose discord bot for all your needs.
     - `[colors]`
         - `theme` (`str`)
             - Theme color.
-        - `error` (`str`)
-            - Error color.
+        - `green` (`str`)
+            - Green color.
+        - `red` (`str`)
+            - Red color.
+        - `orange` (`str`)
+            - Orange color.
 
     - `[lavalink]`
         - `host` (`str`)
@@ -92,7 +85,7 @@ Advanced multipurpose discord bot for all your needs.
 
 > [!IMPORTANT]
 > Make sure to have [uv](https://docs.astral.sh/uv) installed on your system to run the bot.
-> Know more about installing uv [here](https://docs.astral.sh/uv/getting-started/installation/).
+> Learn more about installing uv [here](https://docs.astral.sh/uv/getting-started/installation/).
 
 ## 🚀 Production
 
@@ -103,6 +96,38 @@ Advanced multipurpose discord bot for all your needs.
     docker compose up -d
     ```
 
+## ✨ Using Custom Emojis
+
+- To create custom emojis, upload a `.zip` file containing the emojis (*`.png` format*) using `/emoji upload` command.
+- There is a zip file containing custom emojis that are used in this bot.
+- Upload the [`emojis.zip`](./assets/emojis.zip) via `/emoji upload` command.
+- Run the `/emoji sync` command to sync the emojis to `.cache/emoji.json`.
+- Restart the bot to apply the changes.
+
+## 🙂 Using Your Own Emojis
+
+- Emojis are synced (*when you run the `/emoji sync` command*) based on their file names, which must match the attribute names of the `Emoji` class in [`emoji.py`](./utils/emoji.py).
+- Collect all the emojis you want the bot to use and name each file according to the corresponding attribute in the `Emoji` class.
+- Compress all the emoji files into a single `.zip` archive.
+- Upload this archive using the `/emoji upload` command.
+- After uploading, run the `/emoji sync` command to sync the emojis to `.cache/emoji.json`.
+- Restart the bot to apply the changes.
+
+Alternatively, you can manually create a `.cache/emoji.json` file with the following structure:
+```json
+{
+    "emoji_name": "<a:dc_emoji_name:dc_emoji_id>",
+    "emoji_name": "<:dc_emoji_name:dc_emoji_id>"
+}
+```
+- `emoji_name` must match the corresponding attribute name in the `Emoji` class.
+- `<a:...>` denotes an animated emoji, while `<:...>` denotes a static emoji.
+- `dc_emoji_name` refers to the name of the emoji as it appears in Discord.
+- `dc_emoji_id` is the unique identifier of the emoji in Discord.
+
+> [!NOTE]
+> If a custom emoji is missing for any attribute in `.cache/emoji.json`, the bot will automatically use the default emoji from the `Emoji` class.
+
 ## ❤️ Contributing
 
 - Things to keep in mind
@@ -112,5 +137,5 @@ Advanced multipurpose discord bot for all your needs.
     - Make sure the bot is working as expected.
 
 - Code Formatting
-    - Run `ruff format` before committing your changes or use [`Ruff`](https://docs.astral.sh/ruff/editors) extension in your code editor.
-    - Make sure to commit error free code. Run `ruff check` to check for any errors.
+    - Run `ruff format` before committing your changes, or use [`Ruff`](https://docs.astral.sh/ruff/editors) extension in your code editor.
+    - Ensure the bot is working as expected. Run `ruff check` to check for any errors.

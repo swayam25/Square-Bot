@@ -21,105 +21,184 @@ class Moderation(commands.Cog):
 
     # Purge any
     @purge.command(name="any")
-    @option("amount", description="Enter an integer between 1 to 1000.")
+    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000)
     async def purge_any(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages."""
         amount_condition = [amount < 1, amount > 1000]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            error_em = discord.Embed(
-                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.red
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    color=config.color.red,
+                )
             )
-            await ctx.respond(embed=error_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount)
-            purge_em = discord.Embed(
-                description=f"{emoji.success} Successfully purged `{amount}` messages.",
-                color=config.color.green,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages."),
+                    color=config.color.green,
+                )
             )
-            await ctx.respond(embed=purge_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
 
     # Purge humans
     @purge.command(name="humans")
-    @option("amount", description="Enter an integer between 1 to 1000.")
+    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000)
     async def purge_humans(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages sent by humans."""
         amount_condition = [amount < 1, amount > 1000]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            error_em = discord.Embed(
-                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.red
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    color=config.color.red,
+                )
             )
-            await ctx.respond(embed=error_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: not m.author.bot)
-            purge_em = discord.Embed(
-                description=f"{emoji.success} Successfully purged `{amount}` messages sent by humans",
-                color=config.color.green,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages sent by humans"),
+                    color=config.color.green,
+                )
             )
-            await ctx.respond(embed=purge_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
 
     # Purge bots
     @purge.command(name="bots")
-    @option("amount", description="Enter an integer between 1 to 1000.")
+    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000)
     async def purge_bots(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages sent by bots."""
         amount_condition = [amount < 1, amount > 1000]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            error_em = discord.Embed(
-                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.red
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    color=config.color.red,
+                )
             )
-            await ctx.respond(embed=error_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: m.author.bot)
-            purge_em = discord.Embed(
-                description=f"{emoji.success} Successfully purged `{amount}` messages sent by bots",
-                color=config.color.green,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages sent by bots"),
+                    color=config.color.green,
+                )
             )
-            await ctx.respond(embed=purge_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
 
     # Purge user
     @purge.command(name="user")
-    @option("amount", description="Enter an integer between 1 to 1000.")
+    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000)
     @option("user", description="Mention the user whose messages you want to purge.")
     async def purge_user(self, ctx: discord.ApplicationContext, amount: int, user: discord.Member):
         """Purges the amount of given messages sent by the mentioned user."""
         amount_condition = [amount < 1, amount > 1000]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            error_em = discord.Embed(
-                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.red
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    color=config.color.red,
+                )
             )
-            await ctx.respond(embed=error_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: m.author.id == user.id)
-            purge_em = discord.Embed(
-                description=f"{emoji.success} Successfully purged `{amount}` messages sent by {user.mention}",
-                color=config.color.green,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(
+                        f"{emoji.success} Successfully purged `{amount}` messages sent by {user.mention}"
+                    ),
+                    color=config.color.green,
+                )
             )
-            await ctx.respond(embed=purge_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
 
     # Purge containing phrase
     @purge.command(name="contains")
-    @option("amount", description="Enter an integer between 1 to 1000.")
+    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000)
     @option("phrase", description="Enter the phrase to purge messages containing it.")
     async def purge_contains(self, ctx: discord.ApplicationContext, amount: int, phrase: str):
         """Purges the amount of given messages containing the given phrase."""
         amount_condition = [amount < 1, amount > 1000]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            error_em = discord.Embed(
-                description=f"{emoji.error} Amount must be between 1 to 1000.", color=config.color.red
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    color=config.color.red,
+                )
             )
-            await ctx.respond(embed=error_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: phrase.lower() in m.content.lower())
-            purge_em = discord.Embed(
-                description=f"{emoji.success} Successfully purged `{amount}` messages containing `{phrase}`",
-                color=config.color.green,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(
+                        f"{emoji.success} Successfully purged `{amount}` messages containing `{phrase}`"
+                    ),
+                    color=config.color.green,
+                )
             )
-            await ctx.respond(embed=purge_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
+
+    # Purge after
+    @purge.command(name="after")
+    @option("message_id", description="Enter the message ID after which you want to purge messages.")
+    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000, required=False)
+    async def purge_after(self, ctx: discord.ApplicationContext, message_id: str, amount: int = 1000):
+        """Purges the amount of given messages after the given message ID."""
+        amount_condition = [amount < 1, amount > 1000]
+        if not message_id.isdigit():
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Message ID must be a valid integer."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+            return
+        message_id = int(
+            message_id
+        )  # Discord uses Javascript and Python have different integer sizes, so we convert it to int.
+        await ctx.defer(ephemeral=True)
+        if any(amount_condition):
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+        else:
+            try:
+                message = await ctx.channel.fetch_message(message_id)
+                await ctx.channel.purge(limit=amount, check=lambda m: m.id > message.id)
+                view = discord.ui.View(
+                    discord.ui.Container(
+                        discord.ui.TextDisplay(
+                            f"{emoji.success} Successfully purged `{amount}` messages after `{message.id}`."
+                        ),
+                        color=config.color.green,
+                    )
+                )
+                await ctx.respond(view=view, ephemeral=True)
+            except discord.NotFound:
+                view = discord.ui.View(
+                    discord.ui.Container(
+                        discord.ui.TextDisplay(f"{emoji.error} Message with ID `{message_id}` not found."),
+                        color=config.color.red,
+                    )
+                )
+                await ctx.respond(view=view, ephemeral=True)
 
     # Kick
     @slash_command(name="kick")
@@ -129,24 +208,32 @@ class Moderation(commands.Cog):
     async def kick(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Kicks the mentioned user."""
         if user == ctx.author:
-            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=config.color.red)
-            await ctx.respond(embed=error_em, ephemeral=True)
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} You cannot use it on yourself"),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
-            error_em = discord.Embed(
-                description=f"{emoji.error} Given user has same role or higher role than you",
-                color=config.color.red,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you"),
+                    color=config.color.red,
+                )
             )
-            await ctx.respond(embed=error_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
         else:
-            kich_em = discord.Embed(
-                title="Kicked User",
-                description=(
-                    f"Successfully kicked **{user}** from the server.\n{emoji.description_red} **Reason**: {reason}"
-                ),
-                color=config.color.theme,
-            )
             await user.kick(reason=reason)
-            await ctx.respond(embed=kich_em)
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay("## Kicked User"),
+                    discord.ui.TextDisplay(
+                        f"Successfully kicked **{user}** from the server.\n{emoji.description_red} **Reason**: {reason}"
+                    ),
+                )
+            )
+            await ctx.respond(view=view)
 
     # Ban
     @slash_command(name="ban")
@@ -156,24 +243,32 @@ class Moderation(commands.Cog):
     async def ban(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Bans the mentioned user."""
         if user == ctx.author:
-            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=config.color.red)
-            await ctx.respond(embed=error_em, ephemeral=True)
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} You cannot use it on yourself"),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
-            error_em = discord.Embed(
-                description=f"{emoji.error} Given user has same role or higher role than you",
-                color=config.color.red,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you"),
+                    color=config.color.red,
+                )
             )
-            await ctx.respond(embed=error_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
         else:
-            ban_em = discord.Embed(
-                title="Banned User",
-                description=(
-                    f"Successfully banned **{user}** from the server.\n{emoji.description_red} **Reason**: {reason}"
-                ),
-                color=config.color.theme,
-            )
             await user.ban(reason=reason)
-            await ctx.respond(embed=ban_em)
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay("## Banned User"),
+                    discord.ui.TextDisplay(
+                        f"Successfully banned **{user}** from the server.\n{emoji.description_red} **Reason**: {reason}"
+                    ),
+                )
+            )
+            await ctx.respond(view=view)
 
     # Timeout user
     @slash_command(name="timeout")
@@ -186,34 +281,45 @@ class Moderation(commands.Cog):
     ):
         """Timeouts the mentioned user."""
         if user == ctx.author:
-            error_em = discord.Embed(
-                description=f"{emoji.error} You cannot use it on yourself.", color=config.color.red
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} You cannot use it on yourself."),
+                    color=config.color.red,
+                )
             )
-            await ctx.respond(embed=error_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
-            error_em = discord.Embed(
-                description=f"{emoji.error} Given user has same role or higher role than you.",
-                color=config.color.red,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you."),
+                    color=config.color.red,
+                )
             )
-            await ctx.respond(embed=error_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
         else:
             try:
                 dur: datetime.timedelta = parse_duration(duration)
             except ValueError as e:
-                error_em = discord.Embed(description=f"{emoji.error} {e}", color=config.color.red)
-                await ctx.respond(embed=error_em, ephemeral=True)
+                view = discord.ui.View(
+                    discord.ui.Container(
+                        discord.ui.TextDisplay(f"{emoji.error} {e}"),
+                        color=config.color.red,
+                    )
+                )
+                await ctx.respond(view=view, ephemeral=True)
                 return
             await user.timeout_for(dur, reason=reason)
-            timeout_em = discord.Embed(
-                title="Timed out User",
-                description=(
-                    f"Successfully timed out {user.mention}.\n"
-                    f"{emoji.duration} **Duration**: `{format_timedelta(dur, locale='en_IN')}`\n"
-                    f"{emoji.description} **Reason**: {reason}"
-                ),
-                color=config.color.theme,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay("## Timed out User"),
+                    discord.ui.TextDisplay(
+                        f"Successfully timed out {user.mention}.\n"
+                        f"{emoji.duration} **Duration**: `{format_timedelta(dur)}`\n"
+                        f"{emoji.description} **Reason**: {reason}"
+                    ),
+                )
             )
-            await ctx.respond(embed=timeout_em)
+            await ctx.respond(view=view)
 
     # Untimeout user
     @slash_command(name="untimeout")
@@ -223,22 +329,32 @@ class Moderation(commands.Cog):
     async def untimeout_user(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Untimeouts the mentioned user."""
         if user == ctx.author:
-            error_em = discord.Embed(description=f"{emoji.error} You cannot use it on yourself", color=config.color.red)
-            await ctx.respond(embed=error_em, ephemeral=True)
-        elif user.top_role.position >= ctx.author.top_role.position:
-            error_em = discord.Embed(
-                description=f"{emoji.error} Given user has same role or higher role than you",
-                color=config.color.red,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} You cannot use it on yourself"),
+                    color=config.color.red,
+                )
             )
-            await ctx.respond(embed=error_em, ephemeral=True)
+            await ctx.respond(view=view, ephemeral=True)
+        elif user.top_role.position >= ctx.author.top_role.position:
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you"),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
         else:
             await user.timeout(None, reason=reason)
-            untimeout_em = discord.Embed(
-                title="Untimed out User",
-                description=f"Successfully untimed out {user.mention}.\n{emoji.description} **Reason**: {reason}",
-                color=config.color.theme,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay("## Untimed out User"),
+                    discord.ui.TextDisplay(
+                        f"Successfully untimed out {user.mention}.\n{emoji.description} **Reason**: {reason}"
+                    ),
+                )
             )
-            await ctx.respond(embed=untimeout_em)
+            await ctx.respond(view=view)
 
     # Lock
     @slash_command(name="lock")
@@ -246,27 +362,34 @@ class Moderation(commands.Cog):
     @option("reason", description="Enter the reason for locking the channel", required=False)
     async def lock(self, ctx: discord.ApplicationContext, reason: str = None):
         """Locks the current channel."""
-        lock_em = discord.Embed(
-            title="Channel Locked",
-            description=f"Successfull locked {ctx.channel.mention}.\n{emoji.description} **Reason**: {reason}",
-            color=config.color.theme,
-        )
         await ctx.channel.set_permissions(ctx.author, send_messages=True)
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
-        await ctx.respond(embed=lock_em)
+        view = discord.ui.View(
+            discord.ui.Container(
+                discord.ui.TextDisplay("## Channel Locked"),
+                discord.ui.TextDisplay(
+                    f"Successfully locked {ctx.channel.mention}.\n{emoji.description} **Reason**: {reason}"
+                ),
+            )
+        )
+        await ctx.respond(view=view)
 
     # Unlock
     @slash_command(name="unlock")
     @discord.default_permissions(manage_channels=True)
     async def unlock(self, ctx: discord.ApplicationContext):
         """Unlocks the current channel."""
-        unlock_em = discord.Embed(
-            description=f"{emoji.success} Successfull unlocked {ctx.channel.mention}.",
-            color=config.color.green,
-        )
         await ctx.channel.set_permissions(ctx.author, send_messages=True)
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
-        await ctx.respond(embed=unlock_em)
+        view = discord.ui.View(
+            discord.ui.Container(
+                discord.ui.TextDisplay(
+                    f"{emoji.success} Successfully unlocked {ctx.channel.mention}.",
+                ),
+                color=config.color.green,
+            )
+        )
+        await ctx.respond(view=view)
 
     # Role slash cmd group
     role = SlashCommandGroup(
@@ -281,12 +404,16 @@ class Moderation(commands.Cog):
     @option("role", description="Mention the role which you will add to the user")
     async def add_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Adds the mentioned role to the mentioned user."""
-        add_role_em = discord.Embed(
-            description=f"{emoji.success} Successfully added {role.mention} to {user.mention}.",
-            color=config.color.green,
-        )
         await user.add_roles(role)
-        await ctx.respond(embed=add_role_em)
+        view = discord.ui.View(
+            discord.ui.Container(
+                discord.ui.TextDisplay(
+                    f"{emoji.success} Successfully added {role.mention} to {user.mention}.",
+                ),
+                color=config.color.green,
+            )
+        )
+        await ctx.respond(view=view)
 
     # Remove role
     @role.command(name="remove")
@@ -294,12 +421,16 @@ class Moderation(commands.Cog):
     @option("role", description="Mention the role which you will remove from the user")
     async def remove_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Removes the mentioned role from the mentioned user."""
-        remove_role_em = discord.Embed(
-            description=f"{emoji.success} Successfully removed {role.mention} from {user.mention}.",
-            color=config.color.green,
-        )
         await user.remove_roles(role)
-        await ctx.respond(embed=remove_role_em)
+        view = discord.ui.View(
+            discord.ui.Container(
+                discord.ui.TextDisplay(
+                    f"{emoji.success} Successfully removed {role.mention} from {user.mention}.",
+                ),
+                color=config.color.green,
+            )
+        )
+        await ctx.respond(view=view)
 
 
 def setup(client: discord.Bot):

@@ -2,7 +2,6 @@ import asyncio
 import discord
 from db.funcs.guild import fetch_guild_settings
 from discord.ext import commands, tasks
-from utils.helpers import meme_embed
 
 
 class AutoMeme(commands.Cog):
@@ -20,18 +19,20 @@ class AutoMeme(commands.Cog):
                 channel = guild.get_channel(settings.auto_meme["channel_id"])
                 # Check if the channel exists and the bot has permission to send messages
                 if channel and channel.permissions_for(guild.me).send_messages:
-                    meme = await meme_embed(settings.auto_meme["subreddit"])
+                    from utils.helpers import meme_view
+
+                    meme = await meme_view(settings.auto_meme["subreddit"])
                     # Check if the meme is valid, and if the meme is NSFW or the channel is NSFW
                     if meme and (meme["nsfw"] is False or channel.is_nsfw()):
                         try:
-                            await channel.send(embed=meme["embed"])
+                            await channel.send(view=meme["view"])
                         except discord.HTTPException as e:
                             if e.status == 429:  # Rate limit error
                                 retry_after = e.retry_after if hasattr(e, "retry_after") else 60
                                 # Wait for the `retry_after` time before trying again
                                 await asyncio.sleep(retry_after)
                                 try:
-                                    await channel.send(embed=meme["embed"])
+                                    await channel.send(view=meme["view"])
                                 except discord.HTTPException:
                                     pass
                         except Exception:

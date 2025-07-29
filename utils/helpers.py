@@ -2,9 +2,8 @@ import aiohttp
 import datetime
 import discord
 import re
+from attr import dataclass
 from babel.units import format_unit
-from typing import TypedDict
-from utils import config
 from utils.emoji import emoji
 
 
@@ -73,14 +72,15 @@ def fmt_memory(bytes_value):
         return format_unit(mb, "digital-megabyte", "short")
 
 
-class MemeEmbedData(TypedDict):
+@dataclass
+class MemeViewData:
     nsfw: bool
-    embed: discord.Embed
+    view: discord.ui.View
 
 
-async def meme_embed(subreddit: str | None = None) -> MemeEmbedData | None:
+async def meme_view(subreddit: str | None = None) -> MemeViewData | None:
     """
-    Creates a meme embed with a default theme color.
+    Creates a meme view from a subreddit or a random meme.
 
     Parameters:
         subreddit (str): The subreddit to fetch a meme from. If empty, fetches from a random subreddit.
@@ -93,19 +93,19 @@ async def meme_embed(subreddit: str | None = None) -> MemeEmbedData | None:
             if response.status == 200:
                 data = await response.json()
                 if "url" in data:
-                    em = discord.Embed(
-                        title=data["title"],
-                        url=data["postLink"],
-                        description=(
-                            f"{emoji.reddit} **Subreddit**: [`r/{data['subreddit']}`](https://reddit.com/r/{data['subreddit']})\n"
-                            f"{emoji.upvote} **Upvotes**: {data['ups']}"
-                        ),
-                        color=config.color.theme,
+                    view = discord.ui.View(
+                        discord.ui.Container(
+                            discord.ui.TextDisplay(f"## [{data['title']}]({data['postLink']})"),
+                            discord.ui.TextDisplay(
+                                f"{emoji.reddit} **Subreddit**: [`r/{data['subreddit']}`](https://reddit.com/r/{data['subreddit']})\n"
+                                f"{emoji.upvote} **Upvotes**: {data['ups']}"
+                            ),
+                            discord.ui.MediaGallery(discord.MediaGalleryItem(url=data["url"])),
+                        )
                     )
-                    em.set_image(url=data["url"])
-                    return {
-                        "nsfw": data.get("nsfw", False),
-                        "embed": em,
-                    }
+                    return MemeViewData(
+                        nsfw=data.get("nsfw", False),
+                        view=view,
+                    )
                 else:
                     return None

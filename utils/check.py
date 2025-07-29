@@ -57,8 +57,13 @@ def is_dev(_ctx: discord.ApplicationContext | None = None):
 async def author_interaction_check(ctx: discord.ApplicationContext, interaction: discord.Interaction):
     """Check if the interaction is from the author of the original command."""
     if interaction.user != ctx.author:
-        em = discord.Embed(description=f"{emoji.error} You are not the author of this message.", color=config.color.red)
-        await interaction.response.send_message(embed=em, ephemeral=True)
+        view = discord.ui.View(
+            discord.ui.Container(
+                discord.ui.TextDisplay(f"{emoji.error} You are not the author of this command."),
+                color=config.color.red,
+            )
+        )
+        await interaction.response.send_message(embed=view, ephemeral=True)
         return False
     else:
         return True

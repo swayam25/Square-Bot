@@ -48,8 +48,9 @@ def play_ch(
 def play_msg(
     guild_id: int,
     msg: Types.PlayerMessage | None = None,
+    view: discord.ui.View | None = None,
     mode: Literal["get", "set", "clear"] = "get",
-) -> Types.PlayerMessage | None:
+) -> tuple[Types.PlayerMessage, discord.ui.View] | None:
     """
     Gets or sets the play message for a guild.
 
@@ -62,45 +63,17 @@ def play_msg(
         case "get":
             guild = store.get(guild_id, {})
             if guild:
-                return guild.get("play_msg", None)
+                return (guild.get("play_msg", None), guild.get("play_msg_view", None))
             return None
         case "set":
             if guild_id not in store:
                 store[guild_id] = {}
             store[guild_id]["play_msg"] = msg
+            store[guild_id]["play_msg_view"] = view
         case "clear":
             if guild_id in store and "play_msg" in store[guild_id]:
                 del store[guild_id]["play_msg"]
-
-
-# Queue msg
-def queue_msg(
-    guild_id: int, msg: Types.PlayerMessage | None = None, mode: Literal["get", "set", "clear"] = "get"
-) -> list[Types.PlayerMessage]:
-    """
-    Gets or sets the queue message for a guild.
-
-    Parameters:
-        guild_id (int): The ID of the guild.
-        msg (Types.PlayerMessage | None): The message to set, or None to get the current value.
-        mode (str): The operation mode, either "get", "set", or "clear".
-    """
-    match mode:
-        case "get":
-            guild = store.get(guild_id, {})
-            if guild:
-                return guild.get("queue_msg", [])
-            return []
-        case "set":
-            if guild_id not in store:
-                store[guild_id] = {}
-            if "queue_msg" not in store[guild_id]:
-                store[guild_id]["queue_msg"] = []
-            if msg is not None:
-                store[guild_id]["queue_msg"].append(msg)
-        case "clear":
-            if guild_id in store and "queue_msg" in store[guild_id]:
-                del store[guild_id]["queue_msg"]
+                del store[guild_id]["play_msg_view"]
 
 
 # Equalizer

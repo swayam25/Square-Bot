@@ -25,7 +25,6 @@ class ColorConfig:
     green: int
     red: int
     orange: int
-    blurple: int
 
 
 def colors() -> ColorConfig:

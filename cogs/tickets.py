@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import discord
 import io
 from db.funcs.guild import fetch_guild_settings
@@ -9,16 +10,23 @@ from utils.emoji import emoji
 
 
 async def close_ticket(
-    channel: discord.TextChannel, author: discord.Member, ctx: discord.ApplicationContext | discord.Webhook
+    channel: discord.TextChannel,
+    author: discord.Member,
+    send_function,
+    closed_by: discord.User | discord.Member | None = None,
 ):
     """Helper function to close a ticket."""
-    await ctx.send(
-        embed=discord.Embed(
-            title="Closing Ticket",
-            description=f"Closing ticket in 5 seconds.\n{emoji.owner_red} **Author**: {author.mention}",
+    view = discord.ui.View(
+        discord.ui.Container(
+            discord.ui.TextDisplay(
+                f"Closing ticket {discord.utils.format_dt(datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=5), 'R')}\n"
+                f"{emoji.owner_red} **Author**: {author.mention}"
+                + (f"\n{emoji.user_red} **Closed By**: {closed_by.mention}" if closed_by else "")
+            ),
             color=config.color.red,
         )
     )
+    await send_function(view=view)
     transcript_task = asyncio.create_task(TicketTranscript(channel).create())
     await asyncio.sleep(5)
     file = await transcript_task
@@ -26,12 +34,18 @@ async def close_ticket(
     log_ch_id = (await fetch_guild_settings(channel.guild.id)).ticket_log_channel_id
     if log_ch_id is not None:
         logging_ch = await channel.guild.fetch_channel(log_ch_id)
-        close_log_em = discord.Embed(
-            title="Ticket Closed",
-            description=f"{emoji.owner_red} **Author**: <@{channel.name.split('-')[1]}>\n{emoji.user_red} **Closed By**: {author.mention}",
-            color=config.color.red,
+        view = discord.ui.View(
+            discord.ui.Container(
+                discord.ui.Section(
+                    discord.ui.TextDisplay("## Ticket Closed"),
+                    discord.ui.TextDisplay(
+                        f"{emoji.owner_red} **Author**: <@{channel.name.split('-')[1]}>\n{emoji.user_red} **Closed By**: {author.mention}"
+                    ),
+                ),
+                color=config.color.red,
+            )
         )
-        await logging_ch.send(embed=close_log_em, file=file)
+        await logging_ch.send(view=view, file=file)
 
 
 class TicketTranscript:
@@ -59,43 +73,77 @@ class TicketTranscript:
 
 
 class TicketView(discord.ui.View):
-    def __init__(self):
+    def __init__(self, ctx: discord.ApplicationContext | None = None, reason: str = "No reason provided"):
         super().__init__(timeout=None)
+        self.ctx = ctx
+        self.reason = reason
+        self.build()
 
     # Interaction check
     async def interaction_check(self, interaction: discord.Interaction):
         if interaction.user.guild_permissions.manage_channels:
             return True
         else:
-            ticket_check_em = discord.Embed(
-                description=f"{emoji.error} You don't have `Manage Channels` permission to use this command.",
-                color=config.color.red,
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(
+                        f"{emoji.error} You don't have `Manage Channels` permission to use this command."
+                    ),
+                    color=config.color.red,
+                )
             )
-            await interaction.response.send_message(embed=ticket_check_em, ephemeral=True)
+            await interaction.response.send_message(view=view, ephemeral=True)
             return False
 
+    # Build
+    def build(self):
+        """Builds the ticket view."""
+        if self.ctx and hasattr(self.ctx, "author") and self.ctx.author:
+            author_mention = self.ctx.author.mention
+        else:
+            author_mention = "Unknown"
+        self.add_item(
+            discord.ui.Container(
+                discord.ui.TextDisplay(
+                    "## Ticket Created\nThank you for creating the ticket. Your problem will be solved soon! Stay tuned!"
+                ),
+                discord.ui.TextDisplay(
+                    f"{emoji.user} **Author**: {author_mention}\n{emoji.description} **Reason**: {self.reason}"
+                ),
+            )
+        )
+        for label, btn_emoji, callback in (
+            ("Close", emoji.lock_white, self.close_ticket),
+            ("Transcript", emoji.description_white, self.ticket_transcript),
+        ):
+            btn = discord.ui.Button(
+                label=label,
+                emoji=btn_emoji,
+                style=discord.ButtonStyle.grey,
+                custom_id=f"ticket_{label.lower()}",
+            )
+            btn.callback = callback
+            self.add_item(btn)
+
     # Ticket close button
-    @discord.ui.button(label="Close", emoji=emoji.lock_white, style=discord.ButtonStyle.grey, custom_id="close_ticket")
-    async def close_ticket(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def close_ticket(self, interaction: discord.Interaction):
         self.disable_all_items()
         await interaction.edit(view=self)
-        await close_ticket(interaction.channel, interaction.user, interaction.followup)
+        await close_ticket(interaction.channel, interaction.user, interaction.followup.send, closed_by=interaction.user)
 
     # Ticket summary
-    @discord.ui.button(
-        label="Transcript", emoji=emoji.description_white, style=discord.ButtonStyle.grey, custom_id="ticket_summary"
-    )
-    async def ticket_summary(self, button: discord.ui.Button, interaction: discord.Interaction):
+    async def ticket_transcript(self, interaction: discord.Interaction):
+        button: discord.ui.Button = self.get_item("ticket_transcript")
         button.disabled = True
         await interaction.edit(view=self)
         await interaction.channel.trigger_typing()
         file = await TicketTranscript(interaction.channel).create()
-        await interaction.followup.send(
-            embed=discord.Embed(
-                description=f"{emoji.user} **Requested by**: {interaction.user.mention}", color=config.color.theme
-            ),
-            file=file,
+        view = discord.ui.View(
+            discord.ui.Container(
+                discord.ui.TextDisplay(f"{emoji.user} **Requested by**: {interaction.user.mention}"),
+            )
         )
+        await interaction.followup.send(view=view, file=file)
         await asyncio.sleep(2)
         button.disabled = False
         await interaction.message.edit(view=self)
@@ -115,8 +163,13 @@ class Tickets(commands.Cog):
         """Creates a ticket."""
         ticket_status = (await fetch_guild_settings(ctx.guild.id)).ticket_cmds
         if not ticket_status:
-            error_em = discord.Embed(description=f"{emoji.error} Ticket commands are disabled", color=config.color.red)
-            await ctx.respond(embed=error_em, ephemeral=True)
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Ticket commands are disabled"),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
         else:
             await ctx.defer()
             category = discord.utils.get(ctx.guild.categories, name="Tickets")
@@ -151,31 +204,32 @@ class Tickets(commands.Cog):
                 ctx.guild.default_role, view_channel=False, send_messages=False, read_messages=False
             )
 
-            create_em = discord.Embed(
-                title="Ticket Created",
-                description=(
-                    "Thank you for creating the ticket. Your problem will be solved soon! Stay tuned!\n"
-                    f"{emoji.user} **Author**: {ctx.author.mention}\n"
-                    f"{emoji.description} **Reason**: {reason}"
-                ),
-                color=config.color.theme,
+            view = TicketView(
+                ctx=ctx,
+                reason=reason,
             )
-            await create_ch.send(ctx.author.mention, embed=create_em, view=TicketView())
-            create_done_em = discord.Embed(
-                description=f"{emoji.success} Successfully created {create_ch.mention}.",
-                color=config.color.green,
+            await create_ch.send(view=view)
+            done_view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(
+                        f"{emoji.success} Successfully created {create_ch.mention}.",
+                    ),
+                    color=config.color.green,
+                )
             )
-            await ctx.respond(embed=create_done_em)
+            await ctx.respond(view=done_view)
 
             log_ch_id = (await fetch_guild_settings(ctx.guild.id)).ticket_log_channel_id
             if log_ch_id is not None:
                 logging_ch = await self.client.fetch_channel(log_ch_id)
-                create_log_em = discord.Embed(
-                    title="Ticket Created",
-                    description=f"{emoji.user} **Author**: {ctx.author.mention}\n{emoji.description} **Reason**: {reason}",
-                    color=config.color.theme,
+                log_view = discord.ui.View(
+                    discord.ui.Container(
+                        discord.ui.TextDisplay("## Ticket Created"),
+                        discord.ui.TextDisplay(f"{emoji.user} **Author**: {ctx.author.mention}"),
+                        discord.ui.TextDisplay(f"{emoji.description} **Reason**: {reason}"),
+                    )
                 )
-                await logging_ch.send(embed=create_log_em)
+                await logging_ch.send(view=log_view)
 
     # Ticket close
     @ticket.command(name="close")
@@ -183,19 +237,27 @@ class Tickets(commands.Cog):
         """Closes a created ticket."""
         ticket_status = (await fetch_guild_settings(ctx.guild.id)).ticket_cmds
         if not ticket_status:
-            error_em = discord.Embed(description=f"{emoji.error} Ticket commands are disabled", color=config.color.red)
-            await ctx.respond(embed=error_em, ephemeral=True)
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Ticket commands are disabled"),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
         else:
             if (ctx.channel.name == f"ticket-{ctx.author.id}") or (
                 ctx.channel.name.startswith("ticket-") and ctx.author.guild_permissions.manage_channels
             ):
                 await ctx.defer()
-                await close_ticket(ctx.channel, ctx.author, ctx)
+                await close_ticket(ctx.channel, ctx.author, ctx.respond)
             else:
-                error_em = discord.Embed(
-                    description=f"{emoji.error} This is not a ticket channel", color=config.color.red
+                view = discord.ui.View(
+                    discord.ui.Container(
+                        discord.ui.TextDisplay(f"{emoji.error} This is not a ticket channel"),
+                        color=config.color.red,
+                    )
                 )
-                await ctx.respond(embed=error_em, ephemeral=True)
+                await ctx.respond(view=view, ephemeral=True)
 
     # Ticket transcript
     @ticket.command(name="transcript")
@@ -209,8 +271,13 @@ class Tickets(commands.Cog):
             file = await TicketTranscript(ctx.channel).create()
             await ctx.respond(file=file)
         else:
-            error_em = discord.Embed(description=f"{emoji.error} This is not a ticket channel", color=config.color.red)
-            await ctx.respond(embed=error_em, ephemeral=True)
+            view = discord.ui.View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} This is not a ticket channel"),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
 
     # Add ticket view on restart
     @commands.Cog.listener()

@@ -22,11 +22,15 @@ class AutoMod(commands.Cog):
             if not msg.attachments and not msg.content.startswith("http"):
                 await msg.delete()
                 try:
-                    err_em = discord.Embed(
-                        description=f"{emoji.error} This channel is for **media** only! Please do not send text messages here.",
-                        color=config.color.red,
+                    view = discord.ui.View(
+                        discord.ui.Container(
+                            discord.ui.TextDisplay(
+                                f"{emoji.error} {msg.author.mention} This channel is for **media** only! Please do not send text messages here."
+                            ),
+                            color=config.color.red,
+                        )
                     )
-                    await msg.channel.send(msg.author.mention, embed=err_em, delete_after=10)
+                    await msg.channel.send(view=view, delete_after=10)
                 except discord.Forbidden:
                     pass
 
