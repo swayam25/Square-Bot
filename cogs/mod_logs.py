@@ -7,8 +7,13 @@ from utils.view import View
 
 
 class Logs(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: discord.Bot):
         self.client = client
+        self.allowed_mentions = discord.AllowedMentions(
+            users=False,
+            roles=False,
+            everyone=False,
+        )
 
     # Join
     @commands.Cog.listener()
@@ -28,7 +33,7 @@ class Logs(commands.Cog):
                     ),
                 )
             )
-            await join_ch.send(view=view)
+            await join_ch.send(view=view, allowed_mentions=self.allowed_mentions)
 
     # Leave
     @commands.Cog.listener()
@@ -50,7 +55,7 @@ class Logs(commands.Cog):
                     color=config.color.red,
                 )
             )
-            await leave_ch.send(view=view)
+            await leave_ch.send(view=view, allowed_mentions=self.allowed_mentions)
 
     # Ban
     @commands.Cog.listener()
@@ -72,7 +77,7 @@ class Logs(commands.Cog):
                     color=config.color.red,
                 )
             )
-            await ban_ch.send(view=view)
+            await ban_ch.send(view=view, allowed_mentions=self.allowed_mentions)
 
     # Unban
     @commands.Cog.listener()
@@ -92,7 +97,7 @@ class Logs(commands.Cog):
                     ),
                 )
             )
-            await unban_ch.send(view=view)
+            await unban_ch.send(view=view, allowed_mentions=self.allowed_mentions)
 
     # Edit
     @commands.Cog.listener()
@@ -131,7 +136,7 @@ class Logs(commands.Cog):
                     discord.ui.Container(*items),
                     discord.ui.Button(label="Jump to Message", url=msg_before.jump_url, style=discord.ButtonStyle.link),
                 )
-                await edit_ch.send(view=view)
+                await edit_ch.send(view=view, allowed_mentions=self.allowed_mentions)
 
     # Delete
     @commands.Cog.listener()
@@ -156,7 +161,7 @@ class Logs(commands.Cog):
                         discord.ui.MediaGallery(discord.MediaGalleryItem(url=media.url) for media in msg.attachments)
                     )
                 view = View(discord.ui.Container(*items, color=config.color.red))
-                await del_ch.send(view=view)
+                await del_ch.send(view=view, allowed_mentions=self.allowed_mentions)
 
     # Bulk delete
     @commands.Cog.listener()
@@ -180,7 +185,7 @@ class Logs(commands.Cog):
                         color=config.color.red,
                     )
                 )
-                await bulk_ch.send(view=view)
+                await bulk_ch.send(view=view, allowed_mentions=self.allowed_mentions)
 
 
 def setup(client: discord.Bot):
