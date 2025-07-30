@@ -941,7 +941,7 @@ class Music(commands.Cog):
                 await ctx.respond(view=error_view, ephemeral=True)
             else:
                 await ctx.defer()
-                await player.set_shuffle(not player.shuffle)
+                player.set_shuffle(not player.shuffle)
                 await update_play_msg(self.client, ctx.guild.id)
                 shuffle_view = View(
                     Container(
