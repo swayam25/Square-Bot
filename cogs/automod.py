@@ -3,6 +3,7 @@ from db.funcs.guild import fetch_guild_settings, set_autorole
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
+from utils.view import View
 
 
 class AutoMod(commands.Cog):
@@ -22,7 +23,7 @@ class AutoMod(commands.Cog):
             if not msg.attachments and not msg.content.startswith("http"):
                 await msg.delete()
                 try:
-                    view = discord.ui.View(
+                    view = View(
                         discord.ui.Container(
                             discord.ui.TextDisplay(
                                 f"{emoji.error} {msg.author.mention} This channel is for **media** only! Please do not send text messages here."

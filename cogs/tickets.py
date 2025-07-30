@@ -7,6 +7,7 @@ from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
+from utils.view import View
 
 
 async def close_ticket(
@@ -16,7 +17,7 @@ async def close_ticket(
     closed_by: discord.User | discord.Member | None = None,
 ):
     """Helper function to close a ticket."""
-    view = discord.ui.View(
+    view = View(
         discord.ui.Container(
             discord.ui.TextDisplay(
                 f"Closing ticket {discord.utils.format_dt(datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=5), 'R')}\n"
@@ -34,7 +35,7 @@ async def close_ticket(
     log_ch_id = (await fetch_guild_settings(channel.guild.id)).ticket_log_channel_id
     if log_ch_id is not None:
         logging_ch = await channel.guild.fetch_channel(log_ch_id)
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.Section(
                     discord.ui.TextDisplay("## Ticket Closed"),
@@ -72,19 +73,20 @@ class TicketTranscript:
             return discord.File(file, filename=f"ticket_{self.channel.id}.txt")
 
 
-class TicketView(discord.ui.View):
+class TicketView(View):
     def __init__(self, ctx: discord.ApplicationContext | None = None, reason: str = "No reason provided"):
-        super().__init__(timeout=None, disable_on_timeout=True)
+        super().__init__(timeout=None)
         self.ctx = ctx
         self.reason = reason
-        self.build()
+        if ctx:
+            self.build()
 
     # Interaction check
     async def interaction_check(self, interaction: discord.Interaction):
         if interaction.user.guild_permissions.manage_channels:
             return True
         else:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(
                         f"{emoji.error} You don't have `Manage Channels` permission to use this command."
@@ -138,7 +140,7 @@ class TicketView(discord.ui.View):
         await interaction.edit(view=self)
         await interaction.channel.trigger_typing()
         file = await TicketTranscript(interaction.channel).create()
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"{emoji.user} **Requested by**: {interaction.user.mention}"),
             )
@@ -163,7 +165,7 @@ class Tickets(commands.Cog):
         """Creates a ticket."""
         ticket_status = (await fetch_guild_settings(ctx.guild.id)).ticket_cmds
         if not ticket_status:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} Ticket commands are disabled"),
                     color=config.color.red,
@@ -209,7 +211,7 @@ class Tickets(commands.Cog):
                 reason=reason,
             )
             await create_ch.send(view=view)
-            done_view = discord.ui.View(
+            done_view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(
                         f"{emoji.success} Successfully created {create_ch.mention}.",
@@ -222,7 +224,7 @@ class Tickets(commands.Cog):
             log_ch_id = (await fetch_guild_settings(ctx.guild.id)).ticket_log_channel_id
             if log_ch_id is not None:
                 logging_ch = await self.client.fetch_channel(log_ch_id)
-                log_view = discord.ui.View(
+                log_view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Ticket Created"),
                         discord.ui.TextDisplay(f"{emoji.user} **Author**: {ctx.author.mention}"),
@@ -237,7 +239,7 @@ class Tickets(commands.Cog):
         """Closes a created ticket."""
         ticket_status = (await fetch_guild_settings(ctx.guild.id)).ticket_cmds
         if not ticket_status:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} Ticket commands are disabled"),
                     color=config.color.red,
@@ -251,7 +253,7 @@ class Tickets(commands.Cog):
                 await ctx.defer()
                 await close_ticket(ctx.channel, ctx.author, ctx.respond)
             else:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay(f"{emoji.error} This is not a ticket channel"),
                         color=config.color.red,
@@ -271,7 +273,7 @@ class Tickets(commands.Cog):
             file = await TicketTranscript(ctx.channel).create()
             await ctx.respond(file=file)
         else:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} This is not a ticket channel"),
                     color=config.color.red,

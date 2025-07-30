@@ -3,6 +3,7 @@ from db.funcs.guild import fetch_guild_settings
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
+from utils.view import View
 
 
 class Logs(commands.Cog):
@@ -15,7 +16,7 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             join_ch = await self.client.fetch_channel(channel_id)
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.Section(
                         discord.ui.TextDisplay("## Member Joined"),
@@ -35,7 +36,7 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             leave_ch = await self.client.fetch_channel(channel_id)
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.Section(
                         discord.ui.TextDisplay("## Member Left"),
@@ -57,7 +58,7 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             ban_ch = await self.client.fetch_channel(channel_id)
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.Section(
                         discord.ui.TextDisplay("## Member Banned"),
@@ -79,7 +80,7 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             unban_ch = await self.client.fetch_channel(channel_id)
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.Section(
                         discord.ui.TextDisplay("## Member Unbanned"),
@@ -126,7 +127,7 @@ class Logs(commands.Cog):
                             discord.MediaGalleryItem(url=media.url) for media in msg_before.attachments
                         )
                     )
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(*items),
                     discord.ui.Button(label="Jump to Message", url=msg_before.jump_url, style=discord.ButtonStyle.link),
                 )
@@ -154,7 +155,7 @@ class Logs(commands.Cog):
                     items.append(
                         discord.ui.MediaGallery(discord.MediaGalleryItem(url=media.url) for media in msg.attachments)
                     )
-                view = discord.ui.View(discord.ui.Container(*items, color=config.color.red))
+                view = View(discord.ui.Container(*items, color=config.color.red))
                 await del_ch.send(view=view)
 
     # Bulk delete
@@ -168,7 +169,7 @@ class Logs(commands.Cog):
                 return
             elif channel_id is not None:
                 bulk_ch = await self.client.fetch_channel(channel_id)
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Bulk Message Deleted"),
                         discord.ui.TextDisplay(

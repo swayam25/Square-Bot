@@ -8,6 +8,7 @@ from utils import config
 from utils.check import check_subreddit
 from utils.emoji import emoji
 from utils.helpers import meme_view
+from utils.view import View
 
 
 class Fun(commands.Cog):
@@ -18,14 +19,14 @@ class Fun(commands.Cog):
     async def coinflip(self, ctx: discord.ApplicationContext):
         """Flips a coin."""
         result = random.choice(["heads", "tails"])
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"{emoji.coin} Flipping coin..."),
             )
         )
         msg = await ctx.respond(view=view)
         await asyncio.sleep(2)
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"The coin landed on {emoji.coin} **{result.title()}**."),
             )
@@ -37,7 +38,7 @@ class Fun(commands.Cog):
     async def roll(self, ctx: discord.ApplicationContext, sides: int = 6):
         """Rolls a die with a specified number of sides."""
         if sides < 1 or sides > 1000:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(
                         f"{emoji.error} Invalid number of sides! Please choose a number between 1 and 1000."
@@ -48,14 +49,14 @@ class Fun(commands.Cog):
             await ctx.respond(view=view)
             return
         result = random.randint(1, sides)
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"{emoji.dice} Rolling a {sides} sided die..."),
             )
         )
         msg = await ctx.respond(view=view)
         await asyncio.sleep(2)
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"The die landed on {emoji.dice} **{result}**."),
             )
@@ -70,7 +71,7 @@ class Fun(commands.Cog):
     async def random_number(self, ctx: discord.ApplicationContext, min: int = 1, max: int = 100):
         """Generates a random number between min and max."""
         if min >= max:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} Invalid range! Minimum must be less than maximum."),
                     color=config.color.red,
@@ -79,14 +80,14 @@ class Fun(commands.Cog):
             await ctx.respond(view=view)
             return
         result = random.randint(min, max)
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"{emoji.numbers} Generating a random number between {min} and {max}..."),
             )
         )
         msg = await ctx.respond(view=view)
         await asyncio.sleep(2)
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"{emoji.numbers} The random number is **{result}**."),
             )
@@ -99,7 +100,7 @@ class Fun(commands.Cog):
         """Chooses a random option from a comma-separated list."""
         options_list = [opt.strip() for opt in options.split(",") if opt.strip()]
         if not options_list:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(
                         f"{emoji.error} No valid options provided! Please provide at least one option."
@@ -110,14 +111,14 @@ class Fun(commands.Cog):
             await ctx.respond(view=view)
             return
         result = random.choice(options_list)
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"{emoji.sparkles} Choosing from options: {', '.join(options_list)}..."),
             )
         )
         msg = await ctx.respond(view=view)
         await asyncio.sleep(2)
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"{emoji.sparkles} The chosen option is **{result}**."),
             )
@@ -135,7 +136,7 @@ class Fun(commands.Cog):
                     data = await response.json()
                     if "message" in data:
                         breed = str(data["message"]).split("/")[4].replace("-", " ").title()
-                        view = discord.ui.View(
+                        view = View(
                             discord.ui.Container(
                                 discord.ui.TextDisplay("## Woof Woof"),
                                 discord.ui.TextDisplay(f"{emoji.dog} **Breed**: {breed}"),
@@ -144,7 +145,7 @@ class Fun(commands.Cog):
                         )
                         await ctx.respond(view=view)
                     else:
-                        view = discord.ui.View(
+                        view = View(
                             discord.ui.Container(
                                 discord.ui.TextDisplay(
                                     f"{emoji.error} Could not fetch a dog image. Please try again later."
@@ -154,7 +155,7 @@ class Fun(commands.Cog):
                         )
                         await ctx.respond(view=view)
                 else:
-                    view = discord.ui.View(
+                    view = View(
                         discord.ui.Container(
                             discord.ui.TextDisplay(f"{emoji.error} Failed to fetch dog image."),
                             color=config.color.red,
@@ -172,7 +173,7 @@ class Fun(commands.Cog):
                 if response.status == 200:
                     data = await response.json()
                     if data:
-                        view = discord.ui.View(
+                        view = View(
                             discord.ui.Container(
                                 discord.ui.TextDisplay("## Meowwww"),
                                 discord.ui.MediaGallery(discord.MediaGalleryItem(url=data[0]["url"])),
@@ -180,7 +181,7 @@ class Fun(commands.Cog):
                         )
                         await ctx.respond(view=view)
                     else:
-                        view = discord.ui.View(
+                        view = View(
                             discord.ui.Container(
                                 discord.ui.TextDisplay(
                                     f"{emoji.error} Could not fetch a cat image. Please try again later."
@@ -190,7 +191,7 @@ class Fun(commands.Cog):
                         )
                         await ctx.respond(view=view)
                 else:
-                    view = discord.ui.View(
+                    view = View(
                         discord.ui.Container(
                             discord.ui.TextDisplay(f"{emoji.error} Failed to fetch cat image."),
                             color=config.color.red,
@@ -207,7 +208,7 @@ class Fun(commands.Cog):
             check_result = await check_subreddit(subreddit)
             if not check_result:
                 await ctx.respond(
-                    view=discord.ui.View(
+                    view=View(
                         discord.ui.Container(
                             discord.ui.TextDisplay(
                                 f"{emoji.error} The subreddit `r/{subreddit}` does not exist or is invalid."
@@ -221,7 +222,7 @@ class Fun(commands.Cog):
             subreddit = check_result.display_name
             if check_result.nsfw and not ctx.channel.nsfw:
                 await ctx.respond(
-                    view=discord.ui.View(
+                    view=View(
                         discord.ui.Container(
                             discord.ui.TextDisplay(
                                 f"{emoji.error} The subreddit `r/{subreddit}` is **NSFW**. Please enable **NSFW** in {ctx.channel.mention} or choose a different subreddit."
@@ -237,7 +238,7 @@ class Fun(commands.Cog):
             if meme and (not meme.nsfw or ctx.channel.is_nsfw()):
                 await ctx.respond(view=meme.view)
                 return
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"{emoji.error} Failed to fetch meme."),
                 color=config.color.red,

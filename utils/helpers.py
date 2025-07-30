@@ -5,6 +5,7 @@ import re
 from attr import dataclass
 from babel.units import format_unit
 from utils.emoji import emoji
+from utils.view import View
 
 
 def parse_duration(duration: str) -> datetime.timedelta:
@@ -75,7 +76,7 @@ def fmt_memory(bytes_value):
 @dataclass
 class MemeViewData:
     nsfw: bool
-    view: discord.ui.View
+    view: View
 
 
 async def meme_view(subreddit: str | None = None) -> MemeViewData | None:
@@ -93,7 +94,7 @@ async def meme_view(subreddit: str | None = None) -> MemeViewData | None:
             if response.status == 200:
                 data = await response.json()
                 if "url" in data:
-                    view = discord.ui.View(
+                    view = View(
                         discord.ui.Container(
                             discord.ui.TextDisplay(f"## [{data['title']}]({data['postLink']})"),
                             discord.ui.TextDisplay(

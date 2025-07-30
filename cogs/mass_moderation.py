@@ -7,6 +7,7 @@ from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
 from utils.helpers import parse_duration
+from utils.view import View
 
 
 class MassModeration(commands.Cog):
@@ -31,7 +32,7 @@ class MassModeration(commands.Cog):
         _users: list = []
         errors: list[tuple] = []
         if len(users) > 10:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} You can only mass kick upto 10 users."),
                     color=config.color.red,
@@ -55,7 +56,7 @@ class MassModeration(commands.Cog):
                     _users.append(_user.mention)
                 await _user.kick(reason=reason)
             if len(_users) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Mass Kicked Users"),
                         discord.ui.TextDisplay(
@@ -69,7 +70,7 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = discord.ui.View(
+                    mod_view = View(
                         discord.ui.Container(
                             discord.ui.TextDisplay("## Mass Kicked Users"),
                             discord.ui.TextDisplay(
@@ -83,7 +84,7 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(errors) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Can't kick users"),
                         discord.ui.TextDisplay(
@@ -105,7 +106,7 @@ class MassModeration(commands.Cog):
         _users: list = []
         errors: list[tuple] = []
         if len(users) > 10:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} You can only mass ban upto 10 users."),
                     color=config.color.red,
@@ -128,7 +129,7 @@ class MassModeration(commands.Cog):
                 _users.append(_user.mention)
                 await _user.ban(reason=reason)
             if len(_users) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Mass Banned Users"),
                         discord.ui.TextDisplay(
@@ -142,7 +143,7 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = discord.ui.View(
+                    mod_view = View(
                         discord.ui.Container(
                             discord.ui.TextDisplay("## Mass Banned Users"),
                             discord.ui.TextDisplay(
@@ -156,7 +157,7 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(errors) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Can't ban users"),
                         discord.ui.TextDisplay(
@@ -182,7 +183,7 @@ class MassModeration(commands.Cog):
         try:
             dur: datetime.timedelta = parse_duration(duration)
         except ValueError as e:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} {e}"),
                     color=config.color.red,
@@ -192,7 +193,7 @@ class MassModeration(commands.Cog):
             return
         errors: list[tuple] = []
         if len(users) > 10:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} You can only mass timeout upto 10 users."),
                     color=config.color.red,
@@ -219,7 +220,7 @@ class MassModeration(commands.Cog):
                     _users.append(_user.mention)
                 await _user.timeout_for(dur, reason=reason)
             if len(_users) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Mass Timed out Users"),
                         discord.ui.TextDisplay(
@@ -234,7 +235,7 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = discord.ui.View(
+                    mod_view = View(
                         discord.ui.Container(
                             discord.ui.TextDisplay("## Mass Timed out Users"),
                             discord.ui.TextDisplay(
@@ -249,7 +250,7 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(errors) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Can't timeout users"),
                         discord.ui.TextDisplay(
@@ -273,7 +274,7 @@ class MassModeration(commands.Cog):
         _users: list = []
         errors: list[tuple] = []
         if len(users) > 10:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} You can only mass untimeout upto 10 users."),
                     color=config.color.red,
@@ -297,7 +298,7 @@ class MassModeration(commands.Cog):
                     _users.append(_user.mention)
                 await _user.timeout(None, reason=reason)
             if len(_users) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Mass Untimed out Users"),
                         discord.ui.TextDisplay(
@@ -311,7 +312,7 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = discord.ui.View(
+                    mod_view = View(
                         discord.ui.Container(
                             discord.ui.TextDisplay("## Mass Untimed out Users"),
                             discord.ui.TextDisplay(
@@ -325,7 +326,7 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(errors) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Can't untimeout users"),
                         discord.ui.TextDisplay(
@@ -358,7 +359,7 @@ class MassModeration(commands.Cog):
         role_errors: list[tuple] = []
         user_errors: list[tuple] = []
         if len(users) > 10 or len(roles) > 10:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} You can only mass add 10 roles upto 10 users."),
                     color=config.color.red,
@@ -392,7 +393,7 @@ class MassModeration(commands.Cog):
                     for role in _roles:
                         await _user.add_roles(role)
             if len(_users) > 0 and len(_roles) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Mass Added Roles"),
                         discord.ui.TextDisplay(
@@ -406,7 +407,7 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = discord.ui.View(
+                    mod_view = View(
                         discord.ui.Container(
                             discord.ui.TextDisplay("## Mass Added Roles"),
                             discord.ui.TextDisplay(
@@ -420,7 +421,7 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(role_errors) > 0 or len(user_errors) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Can't add roles"),
                         discord.ui.TextDisplay(
@@ -455,7 +456,7 @@ class MassModeration(commands.Cog):
         role_errors: list[tuple] = []
         user_errors: list[tuple] = []
         if len(users) > 10 or len(roles) > 10:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} You can only mass remove 10 roles upto 10 users."),
                     color=config.color.red,
@@ -489,7 +490,7 @@ class MassModeration(commands.Cog):
                     for role in _roles:
                         await _user.remove_roles(role)
             if len(_users) > 0 and len(_roles) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Mass Removed Roles"),
                         discord.ui.TextDisplay(
@@ -503,7 +504,7 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = discord.ui.View(
+                    mod_view = View(
                         discord.ui.Container(
                             discord.ui.TextDisplay("## Mass Removed Roles"),
                             discord.ui.TextDisplay(
@@ -517,7 +518,7 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(role_errors) > 0 or len(user_errors) > 0:
-                view = discord.ui.View(
+                view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Can't remove roles"),
                         discord.ui.TextDisplay(

@@ -4,6 +4,7 @@ from discord.ext import commands
 from typing import TypedDict
 from utils import check, config
 from utils.emoji import emoji
+from utils.view import View
 
 
 # Typed dictionary for cogs
@@ -66,13 +67,12 @@ async def get_cogs(ctx: discord.ApplicationContext) -> list[CogDict]:
     return cogs
 
 
-class HelpView(discord.ui.View):
+class HelpView(View):
     def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, cogs: list[CogDict]):
-        super().__init__(disable_on_timeout=True)
+        super().__init__(ctx=ctx, check_author_interaction=True)
         self.client = client
         self.ctx = ctx
         self.cogs = cogs
-        self.interaction_check = lambda i: check.author_interaction_check(ctx, i)
         self._build_home_view()  # Creates the initial home view
 
     # Home view builder
@@ -154,7 +154,9 @@ class HelpView(discord.ui.View):
             self._build_home_view()
         else:
             self._build_cog_view(selected_value)
-        await interaction.response.edit_message(view=self)
+        await interaction.edit(
+            view=self, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
+        )
 
 
 class Help(commands.Cog):

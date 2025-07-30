@@ -4,7 +4,6 @@ from attr import dataclass
 from db.funcs.dev import fetch_dev_ids
 from discord.ext import commands
 from utils import config
-from utils.emoji import emoji
 
 
 def is_owner(_ctx: discord.ApplicationContext | None = None):
@@ -52,21 +51,6 @@ def is_dev(_ctx: discord.ApplicationContext | None = None):
         return commands.check(check_func)
     else:
         return check_func(_ctx)
-
-
-async def author_interaction_check(ctx: discord.ApplicationContext, interaction: discord.Interaction):
-    """Check if the interaction is from the author of the original command."""
-    if interaction.user != ctx.author:
-        view = discord.ui.View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.error} You are not the author of this command."),
-                color=config.color.red,
-            )
-        )
-        await interaction.response.send_message(embed=view, ephemeral=True)
-        return False
-    else:
-        return True
 
 
 @dataclass

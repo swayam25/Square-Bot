@@ -11,6 +11,7 @@ from typing import Literal
 from utils import check, config
 from utils.emoji import emoji
 from utils.helpers import fmt_memory
+from utils.view import View
 
 # Starting time of bot
 start_time = time.time()
@@ -91,18 +92,17 @@ class Stats:
             ]
 
 
-class StatsView(discord.ui.View):
+class StatsView(View):
     def __init__(
         self,
         client: discord.Bot,
         ctx: discord.ApplicationContext,
         manager: lavalink.NodeManager | None,
     ):
-        super().__init__(disable_on_timeout=True)
+        super().__init__(ctx=ctx, check_author_interaction=True)
         self.client = client
         self.ctx = ctx
         self.manager = manager
-        self.interaction_check = lambda i: check.author_interaction_check(ctx, i)
 
     async def async_init(self):
         await self._build_bot_stats_view()
@@ -167,7 +167,7 @@ class Info(commands.Cog):
     @slash_command(name="ping")
     async def ping(self, ctx: discord.ApplicationContext):
         """Shows heartbeats of the bot."""
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"{emoji.ping} **Ping**: `{round(self.client.latency * 1000)} ms`"),
             )
@@ -180,7 +180,7 @@ class Info(commands.Cog):
         """Shows bot's uptime."""
         dur = datetime.timedelta(seconds=int(round(time.time() - start_time)))
         dur = format_timedelta(dur)
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"{emoji.duration} **Bot's Uptime**: `{str(dur)}`"),
             )
@@ -207,7 +207,7 @@ class Info(commands.Cog):
         """Shows the avatar of the mentioned user."""
         if not user:
             user = ctx.author
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(f"## {user.display_name}'s Avatar"),
                 discord.ui.MediaGallery(discord.MediaGalleryItem(url=user.avatar.url)),
@@ -244,7 +244,7 @@ class Info(commands.Cog):
     @option("user", description="Mention the member whom you will see info")
     async def user_info(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Shows info of the mentioned user."""
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.Section(
                     discord.ui.TextDisplay(f"## {user.display_name}'s Info"),
@@ -269,7 +269,7 @@ class Info(commands.Cog):
     @info.command(name="server")
     async def server_info(self, ctx: discord.ApplicationContext):
         """Shows info of the current server."""
-        view = discord.ui.View(
+        view = View(
             discord.ui.Container(
                 discord.ui.Section(
                     discord.ui.TextDisplay(f"## {ctx.guild.name}'s Info"),
@@ -299,7 +299,7 @@ class Info(commands.Cog):
         """Shows info of the given emoji."""
         try:
             _emoji = await ctx.guild.fetch_emoji(icon.id)
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.Section(
                         discord.ui.TextDisplay("## Emoji Info"),
@@ -322,7 +322,7 @@ class Info(commands.Cog):
                 view=view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
             )
         except discord.errors.HTTPException:
-            view = discord.ui.View(
+            view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} Invalid emoji provided. Please provide a valid emoji."),
                     color=config.color.red,

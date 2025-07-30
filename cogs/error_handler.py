@@ -7,6 +7,7 @@ from rich.traceback import Traceback
 from utils import check, config
 from utils.emoji import emoji
 from utils.helpers import fmt_perms
+from utils.view import View
 
 console = Console()
 
@@ -53,7 +54,7 @@ class ErrorHandler(commands.Cog):
 
         else:
             msg = f"{emoji.error} An unexpected error occurred. Please try again later."
-        view = discord.ui.View(discord.ui.Container(discord.ui.TextDisplay(msg), color=config.color.red))
+        view = View(discord.ui.Container(discord.ui.TextDisplay(msg), color=config.color.red))
         await ctx.respond(view=view, ephemeral=True)
 
 

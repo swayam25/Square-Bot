@@ -8,12 +8,13 @@ import re
 from babel.dates import format_timedelta
 from discord.commands import option, slash_command
 from discord.ext import commands, tasks
-from discord.ui import Button, Container, Section, TextDisplay, Thumbnail, View
+from discord.ui import Button, Container, Section, TextDisplay, Thumbnail
 from music import equalizer_presets, store
 from music.client import LavalinkVoiceClient
 from utils import config
 from utils.emoji import emoji
 from utils.helpers import parse_duration
+from utils.view import View
 
 # Regex
 url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
@@ -56,6 +57,37 @@ async def stop_player(player: lavalink.DefaultPlayer, guild: discord.Guild):
     asyncio.create_task(background_cleanup())
 
 
+async def music_interaction_check(player: lavalink.DefaultPlayer, interaction: discord.Interaction):
+    if not player.current:
+        err_view = View(
+            Container(
+                TextDisplay(f"{emoji.error} Nothing is being played at the current moment."),
+                color=config.color.red,
+            )
+        )
+        await interaction.response.send_message(view=err_view, ephemeral=True)
+        return False
+    elif not interaction.user.voice:
+        err_view = View(
+            Container(
+                TextDisplay(f"{emoji.error} Join a voice channel first."),
+                color=config.color.red,
+            )
+        )
+        await interaction.response.send_message(view=err_view, ephemeral=True)
+        return False
+    elif player.is_connected and interaction.user.voice.channel.id != int(player.channel_id):
+        err_view = View(
+            Container(
+                TextDisplay(f"{emoji.error} You are not in my voice channel."),
+                color=config.color.red,
+            )
+        )
+        await interaction.response.send_message(view=err_view, ephemeral=True)
+    else:
+        return True
+
+
 class MusicContainer(Container):
     def __init__(self, player: lavalink.DefaultPlayer):
         super().__init__()
@@ -79,41 +111,12 @@ class MusicContainer(Container):
 
 class MusicView(View):
     def __init__(self, client: discord.Bot, guild_id: int):
-        super().__init__(timeout=None, disable_on_timeout=True)
+        super().__init__(timeout=None)
         self.client = client
         self.player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(guild_id)
         self.allowed_mentions = discord.AllowedMentions(users=False, roles=False, everyone=False)
+        self.interaction_check = lambda interaction: music_interaction_check(self.player, interaction)
         self.build()
-
-    async def interaction_check(self, interaction: discord.Interaction):
-        if not self.player.current:
-            err_view = View(
-                Container(
-                    TextDisplay(f"{emoji.error} Nothing is being played at the current moment."),
-                    color=config.color.red,
-                )
-            )
-            await interaction.response.send_message(view=err_view, ephemeral=True)
-            return False
-        elif not interaction.user.voice:
-            err_view = View(
-                Container(
-                    TextDisplay(f"{emoji.error} Join a voice channel first."),
-                    color=config.color.red,
-                )
-            )
-            await interaction.response.send_message(view=err_view, ephemeral=True)
-            return False
-        elif self.player.is_connected and interaction.user.voice.channel.id != int(self.player.channel_id):
-            err_view = View(
-                Container(
-                    TextDisplay(f"{emoji.error} You are not in my voice channel."),
-                    color=config.color.red,
-                )
-            )
-            await interaction.response.send_message(view=err_view, ephemeral=True)
-        else:
-            return True
 
     # Builder
     def build(self):
@@ -257,19 +260,20 @@ class QueueContainer(discord.ui.Container):
             self.add_item(discord.ui.TextDisplay(f"-# Viewing Page {page}/{pages}"))
 
 
-class QueueListView(discord.ui.View):
+class QueueListView(View):
     def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, page: int = 1):
-        super().__init__(disable_on_timeout=True)
+        super().__init__()
         self.client = client
         self.ctx = ctx
         self.page = page
         self.items_per_page = 5
+        self.player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(ctx.guild.id)
+        self.interaction_check = lambda interaction: music_interaction_check(self.player, interaction)
         self.build()
 
     def build(self):
         self.clear_items()
-        player = self.client.lavalink.player_manager.get(self.ctx.guild_id)
-        self.add_item(QueueContainer(player, self.ctx, page=self.page, items_per_page=self.items_per_page))
+        self.add_item(QueueContainer(self.player, self.ctx, page=self.page, items_per_page=self.items_per_page))
         for btn_emoji, action in [
             (emoji.start_white, "start"),
             (emoji.previous_white, "previous"),
@@ -281,21 +285,7 @@ class QueueListView(discord.ui.View):
             self.add_item(btn)
 
     async def interaction_callback(self, interaction: discord.Interaction, action: str):
-        player = self.client.lavalink.player_manager.get(interaction.guild_id)
-        total_pages = max(1, math.ceil(len(player.queue) / self.items_per_page))
-        if not player.queue:
-            view = View(
-                Container(
-                    TextDisplay(f"{emoji.error} Queue is empty."),
-                    color=config.color.red,
-                )
-            )
-            self.disable_all_items()
-            await interaction.edit(
-                view=self, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
-            )
-            await interaction.response.send_message(view=view, ephemeral=True)
-            return
+        total_pages = max(1, math.ceil(len(self.player.queue) / self.items_per_page))
         if action == "start":
             self.page = 1
         elif action == "previous":
