@@ -759,7 +759,6 @@ class Music(commands.Cog):
         if player:
             timedelta = parse_duration(duration)
             track_time = int(player.position + timedelta.total_seconds() * 1000)
-            await ctx.send(f"{track_time}, pt:{player.position}, dur: {player.current.duration}")
             if track_time < player.current.duration:
                 await player.seek(track_time)
                 view = View(
