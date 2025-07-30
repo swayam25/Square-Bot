@@ -794,7 +794,10 @@ class Music(commands.Cog):
                 await ctx.respond(view=err_view, ephemeral=True)
             else:
                 player.queue = player.queue[index - 1 :]
+                shuffle_state = player.shuffle
+                player.set_shuffle(False)  # Disable shuffle to ensure the skip works correctly
                 await player.skip()
+                player.set_shuffle(shuffle_state)  # Restore shuffle state
                 skip_view = View(
                     Container(
                         TextDisplay(f"{emoji.skip} Skipped to track `{index}`."),
