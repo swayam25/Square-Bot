@@ -97,7 +97,7 @@ class Settings(commands.Cog):
         else:
             match setting.lower():
                 case "mod log":
-                    await set_mod_cmd_log(ctx.guild.id, None)
+                    await set_mod_log(ctx.guild.id, None)
                 case "mod command log":
                     await set_mod_cmd_log(ctx.guild.id, None)
                 case "message log":
@@ -106,7 +106,7 @@ class Settings(commands.Cog):
                     await set_ticket_cmds(ctx.guild.id, False)
                 case "ticket log":
                     await set_ticket_log(ctx.guild.id, None)
-                case "media only channel":
+                case "media only":
                     await set_media_only(ctx.guild.id, None)
                 case "auto role":
                     await set_autorole(ctx.guild.id, None)
