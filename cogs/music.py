@@ -78,8 +78,8 @@ class MusicContainer(Container):
 
 
 class MusicView(View):
-    def __init__(self, client: discord.Bot, guild_id: int, timeout: int | None = None):
-        super().__init__(timeout=timeout, disable_on_timeout=True)
+    def __init__(self, client: discord.Bot, guild_id: int):
+        super().__init__(timeout=None, disable_on_timeout=True)
         self.client = client
         self.player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(guild_id)
         self.allowed_mentions = discord.AllowedMentions(users=False, roles=False, everyone=False)
@@ -258,8 +258,8 @@ class QueueContainer(discord.ui.Container):
 
 
 class QueueListView(discord.ui.View):
-    def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, page: int = 1, timeout: int = 60):
-        super().__init__(timeout=timeout, disable_on_timeout=True)
+    def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, page: int = 1):
+        super().__init__(disable_on_timeout=True)
         self.client = client
         self.ctx = ctx
         self.page = page
@@ -914,7 +914,7 @@ class Music(commands.Cog):
             await ctx.respond(view=error_view, ephemeral=True)
             return
         if pages > 1:
-            queue_view = QueueListView(client=self.client, ctx=ctx, page=page, timeout=60)
+            queue_view = QueueListView(client=self.client, ctx=ctx, page=page)
             await ctx.respond(
                 view=queue_view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
             )

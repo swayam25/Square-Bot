@@ -67,8 +67,8 @@ async def get_cogs(ctx: discord.ApplicationContext) -> list[CogDict]:
 
 
 class HelpView(discord.ui.View):
-    def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, cogs: list[CogDict], timeout: int):
-        super().__init__(timeout=timeout, disable_on_timeout=True)
+    def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, cogs: list[CogDict]):
+        super().__init__(disable_on_timeout=True)
         self.client = client
         self.ctx = ctx
         self.cogs = cogs
@@ -166,7 +166,7 @@ class Help(commands.Cog):
     async def help(self, ctx: discord.ApplicationContext):
         """Need bot's help? Use this!"""
         cogs = await get_cogs(ctx)
-        helpView = HelpView(self.client, ctx, cogs, timeout=60)
+        helpView = HelpView(self.client, ctx, cogs)
         helpView.msg = await ctx.respond(
             view=helpView, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
         )

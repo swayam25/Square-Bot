@@ -74,7 +74,7 @@ class TicketTranscript:
 
 class TicketView(discord.ui.View):
     def __init__(self, ctx: discord.ApplicationContext | None = None, reason: str = "No reason provided"):
-        super().__init__(timeout=None)
+        super().__init__(timeout=None, disable_on_timeout=True)
         self.ctx = ctx
         self.reason = reason
         self.build()

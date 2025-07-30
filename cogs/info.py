@@ -97,9 +97,8 @@ class StatsView(discord.ui.View):
         client: discord.Bot,
         ctx: discord.ApplicationContext,
         manager: lavalink.NodeManager | None,
-        timeout: int = 60,
     ):
-        super().__init__(timeout=timeout, disable_on_timeout=True)
+        super().__init__(disable_on_timeout=True)
         self.client = client
         self.ctx = ctx
         self.manager = manager
@@ -197,7 +196,6 @@ class Info(commands.Cog):
             client=self.client,
             ctx=ctx,
             manager=self.client.lavalink.node_manager if isinstance(self.client.lavalink, lavalink.Client) else None,
-            timeout=60,
         )
         await view.async_init()
         await ctx.respond(view=view)
