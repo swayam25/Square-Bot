@@ -471,6 +471,24 @@ class Moderation(commands.Cog):
     async def add_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Adds the mentioned role to the mentioned user."""
         await user.add_roles(role)
+        if user.top_role.position >= ctx.author.top_role.position:
+            view = View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+            return
+        if role.position >= ctx.guild.me.top_role.position:
+            view = View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Given role position is same or higher than my role."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+            return
         view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(
@@ -488,6 +506,24 @@ class Moderation(commands.Cog):
     async def remove_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Removes the mentioned role from the mentioned user."""
         await user.remove_roles(role)
+        if user.top_role.position >= ctx.author.top_role.position:
+            view = View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+            return
+        if role.position >= ctx.guild.me.top_role.position:
+            view = View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} Given role position is same or higher than my role."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+            return
         view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(
