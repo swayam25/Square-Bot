@@ -216,7 +216,7 @@ class Moderation(commands.Cog):
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
-        elif user.top_role.position >= ctx.author.top_role.position:
+        elif isinstance(user, discord.Member) and user.top_role.position >= ctx.author.top_role.position:
             view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you"),
