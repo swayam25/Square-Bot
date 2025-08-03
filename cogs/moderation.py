@@ -10,7 +10,7 @@ from utils.view import View
 
 
 class Moderation(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: discord.Bot):
         self.client = client
 
     # Purge slash cmd group
@@ -228,10 +228,13 @@ class Moderation(commands.Cog):
             await user.kick(reason=reason)
             view = View(
                 discord.ui.Container(
-                    discord.ui.TextDisplay("## Kicked User"),
-                    discord.ui.TextDisplay(
-                        f"Successfully kicked **{user}** from the server.\n{emoji.description_red} **Reason**: {reason}"
-                    ),
+                    discord.ui.Section(
+                        discord.ui.TextDisplay("## Kicked User"),
+                        discord.ui.TextDisplay(
+                            f"Successfully kicked **{user}** from the server.\n{emoji.description_red} **Reason**: {reason}"
+                        ),
+                        accessory=discord.ui.Thumbnail(url=user.display_avatar.url),
+                    )
                 )
             )
             await ctx.respond(view=view)
@@ -239,10 +242,21 @@ class Moderation(commands.Cog):
     # Ban
     @slash_command(name="ban")
     @discord.default_permissions(ban_members=True)
-    @option("user", description="Mention the user whom you want to ban")
-    @option("reason", description="Enter the reason for banning the user", required=False)
-    async def ban(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
-        """Bans the mentioned user."""
+    @option("user", description="Mention the user whom you want to ban.")
+    @option(
+        "delete_messages",
+        description="Enter the duration of messages to delete. Ex: 1m, 2h, 7d (default), 0 (disable) etc...",
+        required=False,
+    )
+    @option("reason", description="Enter the reason for banning the user.", required=False)
+    async def ban(
+        self,
+        ctx: discord.ApplicationContext,
+        user: discord.Member,
+        delete_messages: str = "7d",
+        reason: str = None,
+    ):
+        """Bans the a user from the server."""
         if user == ctx.author:
             view = View(
                 discord.ui.Container(
@@ -251,7 +265,7 @@ class Moderation(commands.Cog):
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
-        elif user.top_role.position >= ctx.author.top_role.position:
+        elif isinstance(user, discord.Member) and user.top_role.position >= ctx.author.top_role.position:
             view = View(
                 discord.ui.Container(
                     discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you"),
@@ -260,16 +274,67 @@ class Moderation(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
-            await user.ban(reason=reason)
+            dur, del_after = None, None
+            if delete_messages and delete_messages != "0":
+                del_after = parse_duration(delete_messages, max_duration="7d")
+                dur = int(del_after.total_seconds()) if del_after else None
+            await ctx.guild.ban(user, reason=reason, delete_message_seconds=dur)
             view = View(
                 discord.ui.Container(
-                    discord.ui.TextDisplay("## Banned User"),
-                    discord.ui.TextDisplay(
-                        f"Successfully banned **{user}** from the server.\n{emoji.description_red} **Reason**: {reason}"
-                    ),
+                    discord.ui.Section(
+                        discord.ui.TextDisplay("## Banned User"),
+                        discord.ui.TextDisplay(
+                            f"Successfully banned **{user.display_name}** from the server.\n"
+                            f"{emoji.id_red} **ID**: `{user.id}`\n"
+                            f"{emoji.user_red} **User**: `{user}`\n"
+                            f"{emoji.description_red} **Reason**: {reason}\n"
+                            + (
+                                f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after)}`"
+                                if del_after
+                                else ""
+                            )
+                        ),
+                        accessory=discord.ui.Thumbnail(url=user.display_avatar.url),
+                    )
                 )
             )
             await ctx.respond(view=view)
+
+    # Unban user
+    @slash_command(name="unban")
+    @discord.default_permissions(ban_members=True)
+    @option("user_id", description="Enter the user ID whom you want to unban")
+    @option("reason", description="Enter the reason for unbanning the user", required=False)
+    async def unban(self, ctx: discord.ApplicationContext, user_id: str, reason: str = None):
+        """Unbans the user with the given ID."""
+        if not user_id.isdigit():
+            view = View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} User ID must be a valid integer."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+            return
+        user_id = int(user_id)
+        try:
+            user = await self.client.fetch_user(user_id)
+            await ctx.guild.unban(user, reason=reason)
+            view = View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.success} Successfully unbanned {user.mention}."),
+                    color=config.color.green,
+                )
+            )
+            await ctx.respond(view=view)
+        except discord.NotFound:
+            view = View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} User with ID `{user_id}` not found."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
 
     # Timeout user
     @slash_command(name="timeout")

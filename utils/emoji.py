@@ -114,6 +114,7 @@ class Emoji:
     shutdown: str = "🔴"
     console: str = "🖥️"
     upload: str = "📤"
+    bin_red: str = "🗑️"
     bin_white: str = "🗑️"
 
     @staticmethod

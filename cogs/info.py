@@ -253,11 +253,19 @@ class Info(commands.Cog):
                         f"{emoji.id} **ID**: `{user.id}`\n"
                         f"{emoji.bot} **Bot?**: {user.bot}\n"
                         f"{emoji.link} **Avatar URL**: [Click Here]({user.avatar.url})\n"
-                        f"{emoji.description} **Status**: {user.status}\n"
-                        f"{emoji.user} **Nickname**: {user.nick}\n"
-                        f"{emoji.role} **Highest Role**: {user.top_role.mention}\n"
-                        f"{emoji.date} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n"
-                        f"{emoji.join} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}"
+                        + (
+                            f"{emoji.description} **Status**: {user.status}\n"
+                            f"{emoji.user} **Nickname**: {user.nick}\n"
+                            f"{emoji.role} **Highest Role**: {user.top_role.mention}\n"
+                            if isinstance(user, discord.Member) and user.nick and user.top_role
+                            else ""
+                        )
+                        + (f"{emoji.date} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n")
+                        + (
+                            f"{emoji.join} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}"
+                            if isinstance(user, discord.Member) and user.joined_at
+                            else ""
+                        )
                     ),
                     accessory=discord.ui.Thumbnail(user.avatar.url),
                 ),

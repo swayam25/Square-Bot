@@ -98,13 +98,24 @@ class MassModeration(commands.Cog):
     # Mass ban
     @mass.command(name="ban")
     @option("users", description='Mention the users whom you want to ban. Use "," to separate users.', required=True)
+    @option(
+        "delete_messages",
+        description="Enter the duration of messages to delete. Ex: 1m, 2h, 7d (default), 0 (disable) etc...",
+        required=False,
+    )
     @option("reason", description="Enter the reason for banning the user", required=False)
-    async def mass_ban_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
+    async def mass_ban_users(
+        self, ctx: discord.ApplicationContext, users: str, delete_messages: str = "7d", reason: str = None
+    ):
         """Bans mentioned users."""
         await ctx.defer()
         users: list = users.split(",")
         _users: list = []
         errors: list[tuple] = []
+        dur, del_after = None, None
+        if delete_messages and delete_messages != "0":
+            del_after = parse_duration(delete_messages, max_duration="7d")
+            dur = int(del_after.total_seconds()) if del_after else None
         if len(users) > 10:
             view = View(
                 discord.ui.Container(
@@ -127,7 +138,7 @@ class MassModeration(commands.Cog):
                     errors.append((_user.mention, "User has same role or higher role than you."))
                     continue
                 _users.append(_user.mention)
-                await _user.ban(reason=reason)
+                await ctx.guild.ban(_user, reason=reason, delete_message_seconds=dur)
             if len(_users) > 0:
                 view = View(
                     discord.ui.Container(
@@ -136,6 +147,11 @@ class MassModeration(commands.Cog):
                             f"Successfully banned {len(_users)} users.\n"
                             f"{emoji.description} **Reason**: {reason}\n"
                             f"{emoji.user} **Users**: {', '.join(_users)}"
+                            + (
+                                f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after)}`"
+                                if del_after
+                                else ""
+                            )
                         ),
                     )
                 )
@@ -160,6 +176,75 @@ class MassModeration(commands.Cog):
                 view = View(
                     discord.ui.Container(
                         discord.ui.TextDisplay("## Can't ban users"),
+                        discord.ui.TextDisplay(
+                            "\n".join([f"{emoji.bullet_red} **{user}**: {reason}" for user, reason in errors])
+                        ),
+                        color=config.color.red,
+                    )
+                )
+                await ctx.respond(view=view, ephemeral=True)
+
+    # Mass unban
+    @mass.command(name="unban")
+    @option(
+        "users", description='Enter the user IDs whom you want to unban. Use "," to separate user IDs.', required=True
+    )
+    @option("reason", description="Enter the reason for unbanning the user", required=False)
+    async def mass_unban_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
+        """Unbans mentioned users."""
+        await ctx.defer()
+        users: list = users.split(",")
+        _users: list = []
+        errors: list[tuple] = []
+        if len(users) > 10:
+            view = View(
+                discord.ui.Container(
+                    discord.ui.TextDisplay(f"{emoji.error} You can only mass unban upto 10 users."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+        else:
+            for user in users:
+                try:
+                    user_id = int(user.strip())
+                    _user = await self.client.fetch_user(user_id)
+                except Exception:
+                    errors.append((user.strip(), "User not found."))
+                    continue
+                _users.append(_user.mention)
+                await ctx.guild.unban(_user, reason=reason)
+            if len(_users) > 0:
+                view = View(
+                    discord.ui.Container(
+                        discord.ui.TextDisplay("## Mass Unbanned Users"),
+                        discord.ui.TextDisplay(
+                            f"Successfully unbanned {len(_users)} users.\n"
+                            f"{emoji.description} **Reason**: {reason}\n"
+                            f"{emoji.user} **Users**: {', '.join(_users)}"
+                        ),
+                    )
+                )
+                await ctx.respond(view=view)
+                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                if channel_id:
+                    log_ch = await self.client.fetch_channel(channel_id)
+                    mod_view = View(
+                        discord.ui.Container(
+                            discord.ui.TextDisplay("## Mass Unbanned Users"),
+                            discord.ui.TextDisplay(
+                                f"Successfully unbanned {len(_users)} users.\n"
+                                f"{emoji.description} **Reason**: {reason}\n"
+                                f"{emoji.user} **Users**: {', '.join(_users)}\n"
+                                f"{emoji.owner} **Moderator**: {ctx.author.mention}"
+                            ),
+                        )
+                    )
+                    await log_ch.send(view=mod_view)
+            if len(errors) > 0:
+                view = View(
+                    discord.ui.Container(
+                        discord.ui.TextDisplay("## Can't unban users"),
                         discord.ui.TextDisplay(
                             "\n".join([f"{emoji.bullet_red} **{user}**: {reason}" for user, reason in errors])
                         ),

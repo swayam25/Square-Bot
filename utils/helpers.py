@@ -8,12 +8,13 @@ from utils.emoji import emoji
 from utils.view import View
 
 
-def parse_duration(duration: str) -> datetime.timedelta:
+def parse_duration(duration: str, max_duration: str | None = None) -> datetime.timedelta:
     """
     Parse a duration string into a timedelta object.
 
     Parameters:
         duration (str): A string representing the duration, e.g., "2w3d4h5m6s".
+        max_duration (str | None): An optional maximum duration string, e.g., "2w3d".
     """
     pattern = re.compile(r"(?P<value>\d+)(?P<unit>[wdhms])")
     matches = pattern.findall(duration)
@@ -40,6 +41,13 @@ def parse_duration(duration: str) -> datetime.timedelta:
 
     if total_duration.total_seconds() <= 0:
         raise ValueError("Total duration must be positive.")
+
+    # Check against max_duration if provided
+    if max_duration is not None:
+        max_td = parse_duration(max_duration)
+        if total_duration > max_td:
+            raise ValueError(f"Total duration must not exceed `{max_duration}`.")
+
     elif total_duration.days > 28:
         raise ValueError("Total duration must be less than `28 days`.")
 
