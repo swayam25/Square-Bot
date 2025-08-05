@@ -2,12 +2,13 @@ import asyncio
 import datetime
 import discord
 import io
+from core import Client
+from core.view import View
 from db.funcs.guild import fetch_guild_settings
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
-from utils.view import View
 
 
 async def close_ticket(
@@ -152,7 +153,7 @@ class TicketView(View):
 
 
 class Tickets(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: Client):
         self.client = client
 
     # Ticket slash cmd group
@@ -287,5 +288,5 @@ class Tickets(commands.Cog):
         self.client.add_view(TicketView())
 
 
-def setup(client: discord.Bot):
+def setup(client: Client):
     client.add_cog(Tickets(client))

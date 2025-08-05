@@ -1,17 +1,18 @@
 import datetime
 import discord
 from babel.dates import format_timedelta
+from core import Client
+from core.view import View
 from db.funcs.guild import fetch_guild_settings
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
 from utils.helpers import parse_duration
-from utils.view import View
 
 
 class MassModeration(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: Client):
         self.client = client
 
     # Mass slash cmd group
@@ -617,5 +618,5 @@ class MassModeration(commands.Cog):
                 await ctx.respond(view=view, ephemeral=True)
 
 
-def setup(client: discord.Bot):
+def setup(client: Client):
     client.add_cog(MassModeration(client))

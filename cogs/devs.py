@@ -4,6 +4,8 @@ import math
 import os
 import sys
 import zipfile
+from core import Client
+from core.view import View
 from db.funcs.dev import add_dev, fetch_dev_ids, remove_dev
 from db.funcs.guild import add_guild, remove_guild
 from discord.commands import SlashCommandGroup, option, slash_command
@@ -11,7 +13,6 @@ from discord.ext import commands
 from io import BytesIO
 from utils import check, config
 from utils.emoji import Emoji, emoji
-from utils.view import View
 
 
 class GuildContainer(discord.ui.Container):
@@ -30,7 +31,7 @@ class GuildContainer(discord.ui.Container):
 
 
 class GuildListView(View):
-    def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, page: int = 1):
+    def __init__(self, client: Client, ctx: discord.ApplicationContext, page: int = 1):
         super().__init__(ctx=ctx, check_author_interaction=True)
         self.client = client
         self.page = page
@@ -67,7 +68,7 @@ class GuildListView(View):
 
 
 class Devs(commands.Cog):
-    def __init__(self, client: discord.Bot):
+    def __init__(self, client: Client):
         self.client = client
 
     # On start
@@ -632,5 +633,5 @@ class Devs(commands.Cog):
         await ctx.respond(view=view)
 
 
-def setup(client: discord.Bot):
+def setup(client: Client):
     client.add_cog(Devs(client))

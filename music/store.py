@@ -1,8 +1,8 @@
 import asyncio
 import discord
+from core.view import View
 from dataclasses import dataclass
 from typing import Any, Literal
-from utils.view import View
 
 
 @dataclass

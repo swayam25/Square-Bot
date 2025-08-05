@@ -1,4 +1,6 @@
 import discord
+from core import Client
+from core.view import View
 from db.funcs.guild import (
     fetch_guild_settings,
     remove_guild,
@@ -16,11 +18,10 @@ from discord.ext import commands
 from utils import config
 from utils.check import check_subreddit
 from utils.emoji import emoji
-from utils.view import View
 
 
 class Settings(commands.Cog):
-    def __init__(self, client: discord.Bot):
+    def __init__(self, client: Client):
         self.client = client
 
     # Settings
@@ -315,5 +316,5 @@ class Settings(commands.Cog):
             await ctx.respond(view=view)
 
 
-def setup(client: discord.Bot):
+def setup(client: Client):
     client.add_cog(Settings(client))

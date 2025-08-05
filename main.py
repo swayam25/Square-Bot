@@ -1,5 +1,6 @@
 import discord
 import os
+from core import Client
 from db import DB
 from pyfiglet import Figlet
 from rich.console import Console
@@ -10,21 +11,12 @@ from utils import config
 status = discord.Status.online
 activity = discord.Activity(type=discord.ActivityType.watching, name="Discord")
 intents = discord.Intents.all()
-client = discord.Bot(status=status, activity=activity, intents=intents, help_command=None)
+client = Client(status=status, activity=activity, intents=intents)
 console = Console()
 
 # Startup printing
 figlted_txt = Figlet(font="standard", justify="center").renderText("Discord Bot")
 console.print(f"[cyan]{figlted_txt}[/]")
-
-
-# On ready event
-@client.event
-async def on_ready():
-    console.print(f"[green][bold]✓[/] Logged in as [cyan]{client.user}[/] [ID: {client.user.id}][/]")
-    console.print(
-        f"[green][bold]✓[/] Connected to {len(client.guilds)} guild{'' if len(client.guilds) <= 1 else 's'}[/]"
-    )
 
 
 # Loading all files

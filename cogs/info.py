@@ -5,13 +5,14 @@ import platform
 import psutil
 import time
 from babel.dates import format_timedelta
+from core import Client
+from core.view import View
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from typing import Literal
 from utils import check, config
 from utils.emoji import emoji
 from utils.helpers import fmt_memory
-from utils.view import View
 
 # Starting time of bot
 start_time = time.time()
@@ -19,7 +20,7 @@ start_time = time.time()
 
 class Stats:
     class BotStats:
-        def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext):
+        def __init__(self, client: Client, ctx: discord.ApplicationContext):
             self.client = client
             self.ctx = ctx
 
@@ -56,7 +57,7 @@ class Stats:
             ]
 
     class LavaNode(lavalink.Node):
-        def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, manager: lavalink.NodeManager):
+        def __init__(self, client: Client, ctx: discord.ApplicationContext, manager: lavalink.NodeManager):
             super().__init__(
                 host=config.lavalink["host"],
                 port=config.lavalink["port"],
@@ -95,7 +96,7 @@ class Stats:
 class StatsView(View):
     def __init__(
         self,
-        client: discord.Bot,
+        client: Client,
         ctx: discord.ApplicationContext,
         manager: lavalink.NodeManager | None,
     ):
@@ -160,7 +161,7 @@ class StatsView(View):
 
 
 class Info(commands.Cog):
-    def __init__(self, client: discord.Bot):
+    def __init__(self, client: Client):
         self.client = client
 
     # Ping
@@ -195,7 +196,7 @@ class Info(commands.Cog):
         view = StatsView(
             client=self.client,
             ctx=ctx,
-            manager=self.client.lavalink.node_manager if isinstance(self.client.lavalink, lavalink.Client) else None,
+            manager=self.client.lavalink.node_manager if self.client.lavalink else None,
         )
         await view.async_init()
         await ctx.respond(view=view)
@@ -339,5 +340,5 @@ class Info(commands.Cog):
             await ctx.respond(view=view, ephemeral=True)
 
 
-def setup(client: discord.Bot):
+def setup(client: Client):
     client.add_cog(Info(client))

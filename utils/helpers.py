@@ -4,8 +4,8 @@ import discord
 import re
 from attr import dataclass
 from babel.units import format_unit
+from core.view import View
 from utils.emoji import emoji
-from utils.view import View
 
 
 def parse_duration(duration: str, max_duration: str | None = None) -> datetime.timedelta:

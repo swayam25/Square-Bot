@@ -6,6 +6,8 @@ import lavalink
 import math
 import re
 from babel.dates import format_timedelta
+from core import Client
+from core.view import View
 from discord.commands import option, slash_command
 from discord.ext import commands, tasks
 from discord.ui import Button, Container, Section, TextDisplay, Thumbnail
@@ -14,18 +16,17 @@ from music.client import LavalinkVoiceClient
 from utils import config
 from utils.emoji import emoji
 from utils.helpers import parse_duration
-from utils.view import View
 
 # Regex
 url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
 
 
-async def update_play_msg(client: discord.Bot, guild_id: int):
+async def update_play_msg(client: Client, guild_id: int):
     """
     Updates the play message with the current player status.
 
     Parameters:
-        client (discord.Bot): The Discord bot client.
+        client (Client): The Discord bot client.
         guild_id (int): The ID of the guild to update the play message for.
     """
     player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(guild_id)
@@ -110,7 +111,7 @@ class MusicContainer(Container):
 
 
 class MusicView(View):
-    def __init__(self, client: discord.Bot, guild_id: int):
+    def __init__(self, client: Client, guild_id: int):
         super().__init__(timeout=None)
         self.client = client
         self.player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(guild_id)
@@ -261,7 +262,7 @@ class QueueContainer(discord.ui.Container):
 
 
 class QueueListView(View):
-    def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, page: int = 1):
+    def __init__(self, client: Client, ctx: discord.ApplicationContext, page: int = 1):
         super().__init__()
         self.client = client
         self.ctx = ctx
@@ -301,7 +302,7 @@ class QueueListView(View):
 
 
 class Disable:
-    def __init__(self, client: discord.Bot, guild_id: int):
+    def __init__(self, client: Client, guild_id: int):
         self.client = client
         self.guild_id = guild_id
 
@@ -320,7 +321,7 @@ class Disable:
 
 
 class Music(commands.Cog):
-    def __init__(self, client: discord.Bot):
+    def __init__(self, client: Client):
         self.client = client
         self.connection_loop.start()
 
@@ -337,7 +338,7 @@ class Music(commands.Cog):
     @tasks.loop(seconds=0)
     async def connection_loop(self):
         await self.client.wait_until_ready()
-        if not hasattr(self.client, "lavalink"):
+        if self.client.lavalink is None:
             self.client.lavalink = lavalink.Client(self.client.user.id)
             self.connect_lavalink()
         if self.client.lavalink._event_hooks:
@@ -1025,5 +1026,5 @@ class Music(commands.Cog):
                 await ctx.respond(view=error_view, ephemeral=True)
 
 
-def setup(client: discord.Bot):
+def setup(client: Client):
     client.add_cog(Music(client))

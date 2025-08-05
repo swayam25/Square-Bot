@@ -2,13 +2,13 @@ import aiohttp
 import asyncio
 import discord
 import random
+from core.view import View
 from discord import option, slash_command
 from discord.ext import commands
 from utils import config
 from utils.check import check_subreddit
 from utils.emoji import emoji
 from utils.helpers import meme_view
-from utils.view import View
 
 
 class Fun(commands.Cog):

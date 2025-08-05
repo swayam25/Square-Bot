@@ -1,13 +1,14 @@
 import discord
+from core import Client
+from core.view import View
 from db.funcs.guild import fetch_guild_settings, set_autorole
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
-from utils.view import View
 
 
 class AutoMod(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: Client):
         self.client = client
 
     # Media only channel
@@ -47,5 +48,5 @@ class AutoMod(commands.Cog):
                 await set_autorole(user.guild.id, None)
 
 
-def setup(client: discord.Bot):
+def setup(client: Client):
     client.add_cog(AutoMod(client))

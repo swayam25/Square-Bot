@@ -1,10 +1,11 @@
 import discord
+from core import Client
+from core.view import View
 from discord.commands import SlashCommandGroup, slash_command
 from discord.ext import commands
 from typing import TypedDict
 from utils import check, config
 from utils.emoji import emoji
-from utils.view import View
 
 
 # Typed dictionary for cogs
@@ -68,7 +69,7 @@ async def get_cogs(ctx: discord.ApplicationContext) -> list[CogDict]:
 
 
 class HelpView(View):
-    def __init__(self, client: discord.Bot, ctx: discord.ApplicationContext, cogs: list[CogDict]):
+    def __init__(self, client: Client, ctx: discord.ApplicationContext, cogs: list[CogDict]):
         super().__init__(ctx=ctx, check_author_interaction=True)
         self.client = client
         self.ctx = ctx
@@ -174,5 +175,5 @@ class Help(commands.Cog):
         )
 
 
-def setup(client: discord.Bot):
+def setup(client: Client):
     client.add_cog(Help(client))

@@ -1,19 +1,20 @@
 import discord
 import io
 import traceback
+from core import Client
+from core.view import View
 from discord.ext import commands
 from rich.console import Console
 from rich.traceback import Traceback
 from utils import check, config
 from utils.emoji import emoji
 from utils.helpers import fmt_perms
-from utils.view import View
 
 console = Console()
 
 
 class ErrorHandler(commands.Cog):
-    def __init__(self, client):
+    def __init__(self, client: Client):
         self.client = client
 
     # Slash cmd Error Handler
@@ -58,5 +59,5 @@ class ErrorHandler(commands.Cog):
         await ctx.respond(view=view, ephemeral=True)
 
 
-def setup(client: discord.Bot):
+def setup(client: Client):
     client.add_cog(ErrorHandler(client))

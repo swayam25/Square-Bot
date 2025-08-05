@@ -1,16 +1,17 @@
 import datetime
 import discord
 from babel.dates import format_timedelta
+from core import Client
+from core.view import View
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
 from utils.helpers import parse_duration
-from utils.view import View
 
 
 class Moderation(commands.Cog):
-    def __init__(self, client: discord.Bot):
+    def __init__(self, client: Client):
         self.client = client
 
     # Purge slash cmd group
@@ -535,5 +536,5 @@ class Moderation(commands.Cog):
         await ctx.respond(view=view)
 
 
-def setup(client: discord.Bot):
+def setup(client: Client):
     client.add_cog(Moderation(client))

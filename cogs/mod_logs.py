@@ -1,13 +1,14 @@
 import discord
+from core import Client
+from core.view import View
 from db.funcs.guild import fetch_guild_settings
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
-from utils.view import View
 
 
 class Logs(commands.Cog):
-    def __init__(self, client: discord.Bot):
+    def __init__(self, client: Client):
         self.client = client
         self.allowed_mentions = discord.AllowedMentions(
             users=False,
@@ -188,5 +189,5 @@ class Logs(commands.Cog):
                 await bulk_ch.send(view=view, allowed_mentions=self.allowed_mentions)
 
 
-def setup(client: discord.Bot):
+def setup(client: Client):
     client.add_cog(Logs(client))
