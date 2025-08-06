@@ -34,6 +34,7 @@ class Emoji:
     id_red: str = "🆔"
     user: str = "👤"
     user_red: str = "👤"
+    perms: str = "🔐"
     bot: str = "🤖"
     bot_white: str = "🤖"
     emoji: str = "😀"

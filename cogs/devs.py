@@ -622,6 +622,7 @@ class Devs(commands.Cog):
                     label="Delete Extra Emojis",
                     style=discord.ButtonStyle.grey,
                 ),
+                ctx=ctx,
                 check_author_interaction=True,
             )
             view.children[-1].callback = lambda i: self.delete_extra_emojis_callback(

@@ -36,6 +36,8 @@ class View(discord.ui.View):
         self.allowed_mentions = allowed_mentions
         self.ctx = ctx
         self.check_author_interaction = check_author_interaction
+        if self.check_author_interaction and not self.ctx:
+            raise ValueError("Context is required for author interaction check.")
 
     async def interaction_check(self, interaction: Interaction) -> bool:
         """
@@ -46,8 +48,6 @@ class View(discord.ui.View):
             interaction (Interaction): The interaction that occurred.
         """
         if self.check_author_interaction:
-            if not self.ctx:
-                raise ValueError("Context is required for author interaction check.")
             if interaction.user != self.ctx.author:
                 view = View(
                     Container(

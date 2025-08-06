@@ -245,29 +245,38 @@ class Info(commands.Cog):
     @option("user", description="Mention the member whom you will see info")
     async def user_info(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Shows info of the mentioned user."""
+        # Prepare info fields
+        info_lines = [
+            f"{emoji.mention} {user.mention}",
+            f"{emoji.id} **ID**: `{user.id}`",
+            f"{emoji.bot} **Bot?**: {user.bot}",
+            f"{emoji.link} **Avatar URL**: [Click Here]({user.avatar.url})",
+            f"{emoji.date} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}",
+        ]
+
+        if isinstance(user, discord.Member):
+            info_lines.extend(
+                [
+                    f"{emoji.description} **Status**: {user.status}",
+                    f"{emoji.user} **Nickname**: {user.nick}",
+                    f"{emoji.role} **Highest Role**: {user.top_role.mention}",
+                    f"{emoji.join} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}",
+                ]
+            )
+            # Exclude @everyone
+            other_roles = [role for role in user.roles if role != user.guild.default_role and role != user.top_role]
+            roles_str = " ".join(role.mention for role in other_roles)
+            if roles_str:
+                info_lines.append(f"{emoji.role} **Other Roles [{len(other_roles)}]**: {roles_str}")
+            perms = [f"`{perm.replace('_', ' ').title()}`" for perm, value in user.guild_permissions if value]
+            if perms:
+                info_lines.append(f"{emoji.perms} **Permissions**: {', '.join(perms)}")
+
         view = View(
             discord.ui.Container(
                 discord.ui.Section(
                     discord.ui.TextDisplay(f"## {user.display_name}'s Info"),
-                    discord.ui.TextDisplay(
-                        f"{emoji.mention} {user.mention}\n"
-                        f"{emoji.id} **ID**: `{user.id}`\n"
-                        f"{emoji.bot} **Bot?**: {user.bot}\n"
-                        f"{emoji.link} **Avatar URL**: [Click Here]({user.avatar.url})\n"
-                        + (
-                            f"{emoji.description} **Status**: {user.status}\n"
-                            f"{emoji.user} **Nickname**: {user.nick}\n"
-                            f"{emoji.role} **Highest Role**: {user.top_role.mention}\n"
-                            if isinstance(user, discord.Member) and user.nick and user.top_role
-                            else ""
-                        )
-                        + (f"{emoji.date} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n")
-                        + (
-                            f"{emoji.join} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}"
-                            if isinstance(user, discord.Member) and user.joined_at
-                            else ""
-                        )
-                    ),
+                    discord.ui.TextDisplay("\n".join(info_lines)),
                     accessory=discord.ui.Thumbnail(user.avatar.url),
                 ),
             )
