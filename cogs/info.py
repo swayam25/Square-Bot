@@ -247,7 +247,7 @@ class Info(commands.Cog):
         """Shows info of the mentioned user."""
         # Prepare info fields
         info_lines = [
-            f"{emoji.mention} {user.mention}",
+            f"{emoji.mention} {user.mention} {emoji.crown if user.guild.owner_id == user.id else ''}",
             f"{emoji.id} **ID**: `{user.id}`",
             f"{emoji.bot} **Bot?**: {user.bot}",
             f"{emoji.link} **Avatar URL**: [Click Here]({user.avatar.url})",
@@ -267,7 +267,7 @@ class Info(commands.Cog):
             other_roles = [role for role in user.roles if role != user.guild.default_role and role != user.top_role]
             roles_str = " ".join(role.mention for role in other_roles)
             if roles_str:
-                info_lines.append(f"{emoji.role} **Other Roles [{len(other_roles)}]**: {roles_str}")
+                info_lines.append(f"{emoji.role} **Other Roles (`{len(other_roles)}`)**: {roles_str}")
             perms = [f"`{perm.replace('_', ' ').title()}`" for perm, value in user.guild_permissions if value]
             if perms:
                 info_lines.append(f"{emoji.perms} **Permissions**: {', '.join(perms)}")
