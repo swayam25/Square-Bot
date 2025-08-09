@@ -235,7 +235,8 @@ class Moderation(commands.Cog):
                             f"Successfully kicked **{user}** from the server.\n{emoji.description_red} **Reason**: {reason}"
                         ),
                         accessory=discord.ui.Thumbnail(url=user.display_avatar.url),
-                    )
+                    ),
+                    color=config.color.red,
                 )
             )
             await ctx.respond(view=view)
@@ -289,14 +290,11 @@ class Moderation(commands.Cog):
                             f"{emoji.id_red} **ID**: `{user.id}`\n"
                             f"{emoji.user_red} **User**: `{user}`\n"
                             f"{emoji.description_red} **Reason**: {reason}\n"
-                            + (
-                                f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after)}`"
-                                if del_after
-                                else ""
-                            )
+                            f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after)}`"
                         ),
                         accessory=discord.ui.Thumbnail(url=user.display_avatar.url),
-                    )
+                    ),
+                    color=config.color.red,
                 )
             )
             await ctx.respond(view=view)

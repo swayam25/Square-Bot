@@ -146,14 +146,11 @@ class MassModeration(commands.Cog):
                         discord.ui.TextDisplay("## Mass Banned Users"),
                         discord.ui.TextDisplay(
                             f"Successfully banned {len(_users)} users.\n"
-                            f"{emoji.description} **Reason**: {reason}\n"
-                            f"{emoji.user} **Users**: {', '.join(_users)}"
-                            + (
-                                f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after)}`"
-                                if del_after
-                                else ""
-                            )
+                            f"{emoji.description_red} **Reason**: {reason}\n"
+                            f"{emoji.user_red} **Users**: {', '.join(_users)}"
+                            f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after)}`"
                         ),
+                        color=config.color.red,
                     )
                 )
                 await ctx.respond(view=view)
