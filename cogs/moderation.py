@@ -23,7 +23,7 @@ class Moderation(commands.Cog):
 
     # Purge any
     @purge.command(name="any")
-    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000)
+    @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
     async def purge_any(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages."""
         amount_condition = [amount < 1, amount > 1000]
@@ -31,7 +31,7 @@ class Moderation(commands.Cog):
         if any(amount_condition):
             view = View(
                 discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )
@@ -48,7 +48,7 @@ class Moderation(commands.Cog):
 
     # Purge humans
     @purge.command(name="humans")
-    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000)
+    @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
     async def purge_humans(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages sent by humans."""
         amount_condition = [amount < 1, amount > 1000]
@@ -56,7 +56,7 @@ class Moderation(commands.Cog):
         if any(amount_condition):
             view = View(
                 discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )
@@ -73,7 +73,7 @@ class Moderation(commands.Cog):
 
     # Purge bots
     @purge.command(name="bots")
-    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000)
+    @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
     async def purge_bots(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages sent by bots."""
         amount_condition = [amount < 1, amount > 1000]
@@ -81,7 +81,7 @@ class Moderation(commands.Cog):
         if any(amount_condition):
             view = View(
                 discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )
@@ -98,7 +98,7 @@ class Moderation(commands.Cog):
 
     # Purge user
     @purge.command(name="user")
-    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000)
+    @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
     @option("user", description="Mention the user whose messages you want to purge.")
     async def purge_user(self, ctx: discord.ApplicationContext, amount: int, user: discord.Member):
         """Purges the amount of given messages sent by the mentioned user."""
@@ -107,7 +107,7 @@ class Moderation(commands.Cog):
         if any(amount_condition):
             view = View(
                 discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )
@@ -126,7 +126,7 @@ class Moderation(commands.Cog):
 
     # Purge containing phrase
     @purge.command(name="contains")
-    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000)
+    @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
     @option("phrase", description="Enter the phrase to purge messages containing it.")
     async def purge_contains(self, ctx: discord.ApplicationContext, amount: int, phrase: str):
         """Purges the amount of given messages containing the given phrase."""
@@ -135,7 +135,7 @@ class Moderation(commands.Cog):
         if any(amount_condition):
             view = View(
                 discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )
@@ -155,7 +155,7 @@ class Moderation(commands.Cog):
     # Purge after
     @purge.command(name="after")
     @option("message_id", description="Enter the message ID after which you want to purge messages.")
-    @option("amount", description="Enter an integer between 1 to 1000.", min_value=1, max_value=1000, required=False)
+    @option("amount", description="Enter an integer.", min_value=1, max_value=1000, required=False)
     async def purge_after(self, ctx: discord.ApplicationContext, message_id: str, amount: int = 1000):
         """Purges the amount of given messages after the given message ID."""
         amount_condition = [amount < 1, amount > 1000]
@@ -175,7 +175,7 @@ class Moderation(commands.Cog):
         if any(amount_condition):
             view = View(
                 discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be between 1 to 1000."),
+                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )

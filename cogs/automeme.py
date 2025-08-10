@@ -14,8 +14,8 @@ class AutoMeme(commands.Cog):
         """Automatically posts memes in the configured channel."""
         guilds = self.client.guilds
         for guild in guilds:
-            settings = await fetch_guild_settings(guild.id)  # Fetch guild settings from the database
-            if settings.auto_meme["channel_id"]:  # Check if auto meme is enabled
+            settings = await fetch_guild_settings(guild.id)
+            if settings.auto_meme["channel_id"]:
                 channel = guild.get_channel(settings.auto_meme["channel_id"])
                 # Check if the channel exists and the bot has permission to send messages
                 if channel and channel.permissions_for(guild.me).send_messages:
@@ -29,7 +29,6 @@ class AutoMeme(commands.Cog):
                         except discord.HTTPException as e:
                             if e.status == 429:  # Rate limit error
                                 retry_after = e.retry_after if hasattr(e, "retry_after") else 60
-                                # Wait for the `retry_after` time before trying again
                                 await asyncio.sleep(retry_after)
                                 try:
                                     await channel.send(view=meme["view"])

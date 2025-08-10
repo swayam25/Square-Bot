@@ -8,10 +8,11 @@ import re
 from babel.dates import format_timedelta
 from core import Client
 from core.view import View
+from discord import SlashCommandGroup
 from discord.commands import option, slash_command
 from discord.ext import commands, tasks
 from discord.ui import Button, Container, Section, TextDisplay, Thumbnail
-from music import equalizer_presets, store
+from music import store
 from music.client import LavalinkVoiceClient
 from utils import config
 from utils.emoji import emoji
@@ -53,7 +54,7 @@ async def stop_player(player: lavalink.DefaultPlayer, guild: discord.Guild):
         player.set_loop(player.LOOP_NONE)
         player.set_shuffle(False)
         await player.clear_filters()
-        store.equalizer(guild.id, mode="clear")
+        await player.set_volume(100)
 
     asyncio.create_task(background_cleanup())
 
@@ -326,6 +327,7 @@ class Music(commands.Cog):
         self.connection_loop.start()
 
     # Connect to lavalink
+
     def connect_lavalink(self):
         self.client.lavalink.add_node(
             host=config.lavalink["host"],
@@ -663,7 +665,6 @@ class Music(commands.Cog):
                 bar = f"`{lavalink.format_time(player.position)}` {emoji.filled_bar * filled_length}{emoji.empty_bar * (bar_length - filled_length)} `{lavalink.format_time(player.current.duration)}`"
                 duration = datetime.timedelta(milliseconds=player.current.duration)
                 duration = format_timedelta(duration, locale="en_IN")
-            equalizer = store.equalizer(ctx.guild.id)
             loop = ""
             if player.loop == player.LOOP_NONE:
                 loop = "Disabled"
@@ -681,7 +682,7 @@ class Music(commands.Cog):
                             f"{emoji.volume} **Volume**: `{player.volume}%`\n"
                             f"{emoji.loop} **Loop**: {loop}\n"
                             f"{emoji.shuffle} **Shuffle**: {'Enabled' if player.shuffle else 'Disabled'}\n"
-                            f"{emoji.equalizer} **Equalizer**: `{equalizer}`"
+                            f"{emoji.equalizer} **Equalizer**: {', '.join([name.title() for name in player.filters]) if player.filters else 'None'}"
                             f"{f'\n\n {bar}' if bar else ''}"
                         ),
                         accessory=Thumbnail(url=player.current.artwork_url) if player.current.artwork_url else None,
@@ -692,36 +693,272 @@ class Music(commands.Cog):
                 view=view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
             )
 
-    # Equalizer
-    @slash_command(name="equalizer")
-    @option(
-        "equalizer", description="Choose your equalizer", choices=list(equalizer_presets.presets.keys()) + ["Reset"]
-    )
-    async def equalizer(self, ctx: discord.ApplicationContext, equalizer: str):
-        """Equalizer to change track quality."""
+    # Equalizer slash cmd group
+    eq = SlashCommandGroup(name="eq", description="Equalizer commands.")
+
+    @eq.command(name="reset")
+    async def reset(self, ctx: discord.ApplicationContext):
+        """Resets the equalizer to default."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
-            if equalizer == "Reset":
-                await player.clear_filters()
+            await player.clear_filters()
+            view = View(Container(TextDisplay(f"{emoji.equalizer} Reset equalizer to default settings.")))
+            await ctx.respond(view=view)
+
+    async def filter_autocomplete(self, ctx: discord.AutocompleteContext):
+        """Provides filter names for autocomplete."""
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.interaction.guild_id)
+        return [name.title() for name in player.filters if ctx.value.lower() in name.lower()]
+
+    @eq.command(name="remove")
+    @option("name", description="Name of the equalizer to remove.", autocomplete=filter_autocomplete)
+    async def remove_eq(self, ctx: discord.ApplicationContext, name: str):
+        """Removes an equalizer by name."""
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        if player:
+            if player.get_filter(name):
+                await player.remove_filter(name)
                 view = View(
                     Container(
-                        TextDisplay(f"{emoji.success} Reset the equalizer."),
-                        color=config.color.green,
+                        TextDisplay(f"{emoji.equalizer} Removed **{name.title()}** equalizer."),
                     )
                 )
-                store.equalizer(guild_id=ctx.guild.id, mode="clear")
+                await ctx.respond(view=view)
             else:
-                for eq_name, eq_gains in equalizer_presets.presets.items():
-                    if eq_name == equalizer:
-                        eq = lavalink.Equalizer()
-                        eq.update(bands=eq_gains)
-                        await player.set_filter(eq)
-                        view = View(
-                            Container(
-                                TextDisplay(f"{emoji.equalizer} Applied `{equalizer}` equalizer."),
-                            )
-                        )
-                        store.equalizer(guild_id=ctx.guild.id, name=equalizer, mode="set")
+                view = View(
+                    Container(
+                        TextDisplay(f"{emoji.error} **{name}** equalizer not found."),
+                        color=config.color.red,
+                    )
+                )
+                await ctx.respond(view=view, ephemeral=True)
+
+    @eq.command(name="karaoke")
+    @option("level", description="The level of the Karaoke effect.", required=False)
+    @option("mono_level", description="The mono level of the Karaoke effect.", required=False)
+    @option("filter_band", description="The frequency of the band to filter.", required=False)
+    @option("filter_width", description="The width of the filter.", required=False)
+    async def karaoke(
+        self,
+        ctx: discord.ApplicationContext,
+        level: float = 2.0,
+        mono_level: float = 1.0,
+        filter_band: float = 22.0,
+        filter_width: float = 100.0,
+    ):
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        if player:
+            eq = lavalink.Karaoke()
+            eq.update(
+                level=level,
+                mono_level=mono_level,
+                filter_band=filter_band,
+                filter_width=filter_width,
+            )
+            await player.set_filter(eq)
+            view = View(
+                Container(
+                    TextDisplay(f"{emoji.equalizer} Applied **Karaoke** equalizer."),
+                )
+            )
+            await ctx.respond(view=view)
+
+    @eq.command(name="timescale")
+    @option("speed", description="Playback speed.", required=False, min_value=0.1)
+    @option("pitch", description="Audio pitch.", required=False, min_value=0.1)
+    @option("rate", description="Playback rate.", required=False, min_value=0.1)
+    async def timescale(
+        self,
+        ctx: discord.ApplicationContext,
+        speed: float = 1.0,
+        pitch: float = 1.0,
+        rate: float = 1.0,
+    ):
+        """Applies a timescale filter to the player."""
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        if player:
+            eq = lavalink.Timescale()
+            eq.update(speed=speed, pitch=pitch, rate=rate)
+            await player.set_filter(eq)
+            view = View(
+                Container(
+                    TextDisplay(f"{emoji.equalizer} Applied **Timescale** equalizer."),
+                )
+            )
+            await ctx.respond(view=view)
+
+    @eq.command(name="tremolo")
+    @option("frequency", description="How frequently the effect should occur.", required=False, min_value=0.1)
+    @option("depth", description="The strength of the effect.", required=False, min_value=0.1, max_value=1)
+    async def tremolo(
+        self,
+        ctx: discord.ApplicationContext,
+        frequency: float = 2.0,
+        depth: float = 0.5,
+    ):
+        """Applies a tremolo filter to the player."""
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        if player:
+            eq = lavalink.Tremolo()
+            eq.update(frequency=frequency, depth=depth)
+            await player.set_filter(eq)
+            view = View(
+                Container(
+                    TextDisplay(f"{emoji.equalizer} Applied **Tremolo** equalizer."),
+                )
+            )
+            await ctx.respond(view=view)
+
+    @eq.command(name="vibrato")
+    @option(
+        "frequency",
+        description="How frequently the effect should occur.",
+        required=False,
+        min_value=0.1,
+        max_value=14,
+    )
+    @option("depth", description="The strength of the effect.", required=False, min_value=0.1, max_value=1)
+    async def vibrato(
+        self,
+        ctx: discord.ApplicationContext,
+        frequency: float = 2.0,
+        depth: float = 0.5,
+    ):
+        """Applies a vibrato filter to the player."""
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        if player:
+            eq = lavalink.Vibrato()
+            eq.update(frequency=frequency, depth=depth)
+            await player.set_filter(eq)
+            view = View(
+                Container(
+                    TextDisplay(f"{emoji.equalizer} Applied **Vibrato** equalizer."),
+                )
+            )
+            await ctx.respond(view=view)
+
+    @eq.command(name="rotation")
+    @option(
+        "rotation_hz",
+        description="How frequently the effect should occur.",
+        required=False,
+        min_value=0,
+    )
+    async def rotation(
+        self,
+        ctx: discord.ApplicationContext,
+        rotation_hz: float = 0.0,
+    ):
+        """Applies a rotation (8D audio) filter to the player."""
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        if player:
+            eq = lavalink.Rotation()
+            eq.update(rotation_hz=rotation_hz)
+            await player.set_filter(eq)
+            view = View(
+                Container(
+                    TextDisplay(f"{emoji.equalizer} Applied **Rotation** equalizer."),
+                )
+            )
+            await ctx.respond(view=view)
+
+    @eq.command(name="lowpass")
+    @option(
+        "smoothing",
+        description="The strength of the lowpass effect.",
+        required=False,
+        min_value=1.1,
+    )
+    async def lowpass(
+        self,
+        ctx: discord.ApplicationContext,
+        smoothing: float = 20.0,
+    ):
+        """Applies a low-pass filter to the player."""
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        if player:
+            eq = lavalink.LowPass()
+            eq.update(smoothing=smoothing)
+            await player.set_filter(eq)
+            view = View(
+                Container(
+                    TextDisplay(f"{emoji.equalizer} Applied **Lowpass** equalizer."),
+                )
+            )
+            await ctx.respond(view=view)
+
+    @eq.command(name="channelmix")
+    @option("left_to_left", description="Left to Left volume.", required=False, min_value=0.0, max_value=1.0)
+    @option("left_to_right", description="Left to Right volume.", required=False, min_value=0.0, max_value=1.0)
+    @option("right_to_left", description="Right to Left volume.", required=False, min_value=0.0, max_value=1.0)
+    @option("right_to_right", description="Right to Right volume.", required=False, min_value=0.0, max_value=1.0)
+    async def channelmix(
+        self,
+        ctx: discord.ApplicationContext,
+        left_to_left: float = 1.0,
+        left_to_right: float = 0.0,
+        right_to_left: float = 0.0,
+        right_to_right: float = 0.0,
+    ):
+        """Applies a channel mix filter to the player."""
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        if player:
+            eq = lavalink.ChannelMix()
+            eq.update(
+                left_to_left=left_to_left,
+                left_to_right=left_to_right,
+                right_to_left=right_to_left,
+                right_to_right=right_to_right,
+            )
+            await player.set_filter(eq)
+            view = View(
+                Container(
+                    TextDisplay(f"{emoji.equalizer} Applied **Channelmix** equalizer."),
+                )
+            )
+            await ctx.respond(view=view)
+
+    @eq.command(name="distortion")
+    @option("sin_offset", description="The sin offset.", required=False)
+    @option("sin_scale", description="The sin scale.", required=False)
+    @option("cos_offset", description="The cos offset.", required=False)
+    @option("cos_scale", description="The cos scale.", required=False)
+    @option("tan_offset", description="The tan offset.", required=False)
+    @option("tan_scale", description="The tan scale.", required=False)
+    @option("offset", description="The offset.", required=False)
+    @option("scale", description="The scale.", required=False)
+    async def distortion(
+        self,
+        ctx: discord.ApplicationContext,
+        sin_offset: float = 0.0,
+        sin_scale: float = 1.0,
+        cos_offset: float = 0.0,
+        cos_scale: float = 1.0,
+        tan_offset: float = 0.0,
+        tan_scale: float = 1.0,
+        offset: float = 0.0,
+        scale: float = 1.0,
+    ):
+        """Applies a distortion filter to the player."""
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        if player:
+            eq = lavalink.Distortion()
+            eq.update(
+                sin_offset=sin_offset,
+                sin_scale=sin_scale,
+                cos_offset=cos_offset,
+                cos_scale=cos_scale,
+                tan_offset=tan_offset,
+                tan_scale=tan_scale,
+                offset=offset,
+                scale=scale,
+            )
+            await player.set_filter(eq)
+            view = View(
+                Container(
+                    TextDisplay(f"{emoji.equalizer} Applied **Distortion** equalizer."),
+                )
+            )
             await ctx.respond(view=view)
 
     # Stop
@@ -881,7 +1118,7 @@ class Music(commands.Cog):
                 )
                 await ctx.respond(view=vol_view)
 
-    # Queue (new view style)
+    # Queue
     @slash_command(name="queue")
     @option("page", description="Enter queue page number", default=1, required=False)
     async def queue(self, ctx: discord.ApplicationContext, page: int = 1):
