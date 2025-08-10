@@ -682,7 +682,7 @@ class Music(commands.Cog):
                             f"{emoji.volume} **Volume**: `{player.volume}%`\n"
                             f"{emoji.loop} **Loop**: {loop}\n"
                             f"{emoji.shuffle} **Shuffle**: {'Enabled' if player.shuffle else 'Disabled'}\n"
-                            f"{emoji.equalizer} **Equalizer**: {', '.join([name.title() for name in player.filters]) if player.filters else 'None'}"
+                            f"{emoji.equalizer} **Equalizers**: {', '.join([name.title() for name in player.filters]) if player.filters else 'None'}"
                             f"{f'\n\n {bar}' if bar else ''}"
                         ),
                         accessory=Thumbnail(url=player.current.artwork_url) if player.current.artwork_url else None,
