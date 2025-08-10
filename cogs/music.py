@@ -232,7 +232,7 @@ class MusicView(View):
 
 
 class QueueContainer(discord.ui.Container):
-    def __init__(self, player, ctx, page=1, items_per_page=5):
+    def __init__(self, player: lavalink.DefaultPlayer, ctx: discord.ApplicationContext, page=1, items_per_page=5):
         super().__init__()
         pages = max(1, math.ceil(len(player.queue) / items_per_page))
         start = (page - 1) * items_per_page
