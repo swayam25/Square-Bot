@@ -24,12 +24,12 @@ class MassModeration(commands.Cog):
 
     # Mass kick
     @mass.command(name="kick")
-    @option("users", description='Mention the users whom you want to kick. Use "," to separate users.', required=True)
+    @option("users", description='Mention the users whom you want to kick. Use " " to separate users.', required=True)
     @option("reason", description="Enter the reason for kicking the user", required=False)
     async def mass_kick_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
         """Kicks mentioned users."""
         await ctx.defer()
-        users: list = users.split(",")
+        users: list = users.split()
         _users: list = []
         errors: list[tuple] = []
         if len(users) > 10:
@@ -98,7 +98,7 @@ class MassModeration(commands.Cog):
 
     # Mass ban
     @mass.command(name="ban")
-    @option("users", description='Mention the users whom you want to ban. Use "," to separate users.', required=True)
+    @option("users", description='Mention the users whom you want to ban. Use " " to separate users.', required=True)
     @option(
         "delete_messages",
         description="Enter the duration of messages to delete. Ex: 1m, 2h, 7d (default), 0 (disable) etc...",
@@ -110,7 +110,7 @@ class MassModeration(commands.Cog):
     ):
         """Bans mentioned users."""
         await ctx.defer()
-        users: list = users.split(",")
+        users: list = users.split()
         _users: list = []
         errors: list[tuple] = []
         dur, del_after = None, None
@@ -185,13 +185,13 @@ class MassModeration(commands.Cog):
     # Mass unban
     @mass.command(name="unban")
     @option(
-        "users", description='Enter the user IDs whom you want to unban. Use "," to separate user IDs.', required=True
+        "users", description='Enter the user IDs whom you want to unban. Use " " to separate user IDs.', required=True
     )
     @option("reason", description="Enter the reason for unbanning the user", required=False)
     async def mass_unban_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
         """Unbans mentioned users."""
         await ctx.defer()
-        users: list = users.split(",")
+        users: list = users.split()
         _users: list = []
         errors: list[tuple] = []
         if len(users) > 10:
@@ -254,14 +254,14 @@ class MassModeration(commands.Cog):
     # Mass timeout users
     @mass.command(name="timeout")
     @option(
-        "users", description='Mention the users whom you want to timeout. Use "," to separate users.', required=True
+        "users", description='Mention the users whom you want to timeout. Use " " to separate users.', required=True
     )
     @option("duration", description="Enter the duration of timeout. Ex: 1d, 2w etc...")
     @option("reason", description="Enter the reason for user timeout", required=False)
     async def mass_timeout_users(self, ctx: discord.ApplicationContext, users: str, duration: str, reason: str = None):
         """Timeouts mentioned users."""
         await ctx.defer()
-        users: list = users.split(",")
+        users: list = users.split()
         _users: list = []
         try:
             dur: datetime.timedelta = parse_duration(duration)
@@ -347,13 +347,13 @@ class MassModeration(commands.Cog):
     # Mass untimeout users
     @mass.command(name="untimeout")
     @option(
-        "users", description='Mention the users whom you want to untimeout. Use "," to separate users.', required=True
+        "users", description='Mention the users whom you want to untimeout. Use " " to separate users.', required=True
     )
     @option("reason", description="Enter the reason for user timeout", required=False)
     async def mass_untimeout_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
         """Untimeouts mentioned users."""
         await ctx.defer()
-        users: list = users.split(",")
+        users: list = users.split()
         _users: list = []
         errors: list[tuple] = []
         if len(users) > 10:
@@ -424,19 +424,19 @@ class MassModeration(commands.Cog):
     @mass.command(name="role-add")
     @option(
         "users",
-        description='Mention the users whom you want to add the role. Use "," to separate users.',
+        description='Mention the users whom you want to add the role. Use " " to separate users.',
         required=True,
     )
     @option(
         "roles",
-        description='Mention the roles which you will add to the users. Use "," to separate roles.',
+        description='Mention the roles which you will add to the users. Use " " to separate roles.',
         required=True,
     )
     async def mass_role_add(self, ctx: discord.ApplicationContext, users: str, roles: str):
         """Adds mentioned roles to mentioned users."""
         await ctx.defer()
-        users: list = users.split(",")
-        roles: list = roles.split(",")
+        users: list = users.split()
+        roles: list = roles.split()
         _users: list = []
         _roles: list = []
         role_errors: list[tuple] = []
@@ -521,19 +521,19 @@ class MassModeration(commands.Cog):
     @mass.command(name="role-remove")
     @option(
         "users",
-        description='Mention the users whom you want to remove the role. Use "," to separate users.',
+        description='Mention the users whom you want to remove the role. Use " " to separate users.',
         required=True,
     )
     @option(
         "roles",
-        description='Mention the roles which you will remove from the users. Use "," to separate roles.',
+        description='Mention the roles which you will remove from the users. Use " " to separate roles.',
         required=True,
     )
     async def mass_role_remove(self, ctx: discord.ApplicationContext, users: str, roles: str):
         """Removes mentioned roles from mentioned users."""
         await ctx.defer()
-        users: list = users.split(",")
-        roles: list = roles.split(",")
+        users: list = users.split()
+        roles: list = roles.split()
         _users: list = []
         _roles: list = []
         role_errors: list[tuple] = []
