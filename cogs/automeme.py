@@ -23,15 +23,15 @@ class AutoMeme(commands.Cog):
 
                     meme = await meme_view(settings.auto_meme["subreddit"])
                     # Check if the meme is valid, and if the meme is NSFW or the channel is NSFW
-                    if meme and (meme["nsfw"] is False or channel.is_nsfw()):
+                    if meme and (meme.nsfw is False or channel.is_nsfw()):
                         try:
-                            await channel.send(view=meme["view"])
+                            await channel.send(view=meme.view)
                         except discord.HTTPException as e:
                             if e.status == 429:  # Rate limit error
                                 retry_after = e.retry_after if hasattr(e, "retry_after") else 60
                                 await asyncio.sleep(retry_after)
                                 try:
-                                    await channel.send(view=meme["view"])
+                                    await channel.send(view=meme.view)
                                 except discord.HTTPException:
                                     pass
                         except Exception:

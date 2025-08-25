@@ -20,21 +20,16 @@ from utils.check import check_subreddit
 from utils.emoji import emoji
 
 
-class Settings(commands.Cog):
-    def __init__(self, client: Client):
-        self.client = client
+class SettingsCommand:
+    def __init__(self, ctx: discord.ApplicationCommand):
+        self.ctx = ctx
 
-    # Settings
-    @slash_command(name="settings")
-    @discord.default_permissions(manage_channels=True)
-    async def settings(self, ctx: discord.ApplicationContext):
-        """Shows server settings."""
-
+    async def show(self):
         # Fetch channel mention util func
         async def mention_ch(channel_id: int | None) -> str:
             return f"<#{channel_id}>" if channel_id else emoji.off
 
-        guild_settings = await fetch_guild_settings(ctx.guild.id)
+        guild_settings = await fetch_guild_settings(self.ctx.guild.id)
 
         mod_log_channel = await mention_ch(guild_settings.mod_log_channel_id)
         mod_log_cmd_channel = await mention_ch(guild_settings.mod_cmd_log_channel_id)
@@ -47,13 +42,15 @@ class Settings(commands.Cog):
             auto_meme_channel += f" ([`r/{guild_settings.auto_meme['subreddit']}`](https://reddit.com/r/{guild_settings.auto_meme['subreddit']}))"
 
         role_id = guild_settings.autorole
-        autorole = ctx.guild.get_role(role_id).mention if (role_id and ctx.guild.get_role(role_id)) else emoji.off
-        if role_id and not ctx.guild.get_role(role_id):
-            await set_autorole(ctx.guild.id, None)  # Reset autorole if role doesn't exist
+        autorole = (
+            self.ctx.guild.get_role(role_id).mention if (role_id and self.ctx.guild.get_role(role_id)) else emoji.off
+        )
+        if role_id and not self.ctx.guild.get_role(role_id):
+            await set_autorole(self.ctx.guild.id, None)  # Reset autorole if role doesn't exist
 
         view = View(
             discord.ui.Container(
-                discord.ui.TextDisplay(f"## {ctx.guild.name}'s Settings"),
+                discord.ui.TextDisplay(f"## {self.ctx.guild.name}'s Settings"),
                 discord.ui.TextDisplay(
                     f"{emoji.mod} **Mod Log Channel**: {mod_log_channel}\n"
                     f"{emoji.owner} **Mod Command Log Channel**: {mod_log_cmd_channel}\n"
@@ -66,19 +63,48 @@ class Settings(commands.Cog):
                 ),
             )
         )
-        await ctx.respond(view=view)
+        await self.ctx.respond(view=view)
 
-    # Settings slash cmd group
-    setting = SlashCommandGroup(
-        name="setting",
-        description="Server settings commands.",
-        default_member_permissions=discord.Permissions(manage_channels=True, moderate_members=True),
-    )
+    async def reset(self, setting: str):
+        """Resets server settings."""
+        if setting.lower() == "all":
+            await remove_guild(self.ctx.guild.id)
+        else:
+            match setting.lower():
+                case "mod log":
+                    await set_mod_log(self.ctx.guild.id, None)
+                case "mod command log":
+                    await set_mod_cmd_log(self.ctx.guild.id, None)
+                case "message log":
+                    await set_msg_log(self.ctx.guild.id, None)
+                case "ticket commands":
+                    await set_ticket_cmds(self.ctx.guild.id, False)
+                case "ticket log":
+                    await set_ticket_log(self.ctx.guild.id, None)
+                case "media only":
+                    await set_media_only(self.ctx.guild.id, None)
+                case "auto role":
+                    await set_autorole(self.ctx.guild.id, None)
+                case "auto meme":
+                    await set_auto_meme(self.ctx.guild.id, None)
+        view = View(
+            discord.ui.Container(
+                discord.ui.TextDisplay(f"{emoji.success} Successfully reset the {setting.lower()} settings."),
+                color=config.color.green,
+            )
+        )
+        await self.ctx.respond(view=view)
 
-    # Reset
-    @setting.command(name="reset")
+
+class Settings(commands.Cog):
+    def __init__(self, client: Client):
+        self.client = client
+
+    # Settings
+    @slash_command(name="settings")
+    @discord.default_permissions(manage_channels=True)
     @option(
-        "setting",
+        "reset",
         description="Setting to reset",
         choices=[
             "All",
@@ -91,36 +117,22 @@ class Settings(commands.Cog):
             "Auto Role",
             "Auto Meme",
         ],
+        required=False,
     )
-    async def reset_settings(self, ctx: discord.ApplicationContext, setting: str):
-        """Resets server settings."""
-        if setting.lower() == "all":
-            await remove_guild(ctx.guild.id)
+    async def settings(self, ctx: discord.ApplicationContext, reset: str):
+        """Shows server settings."""
+        settings = SettingsCommand(ctx)
+        if reset:
+            await settings.reset(reset)
         else:
-            match setting.lower():
-                case "mod log":
-                    await set_mod_log(ctx.guild.id, None)
-                case "mod command log":
-                    await set_mod_cmd_log(ctx.guild.id, None)
-                case "message log":
-                    await set_msg_log(ctx.guild.id, None)
-                case "ticket commands":
-                    await set_ticket_cmds(ctx.guild.id, False)
-                case "ticket log":
-                    await set_ticket_log(ctx.guild.id, None)
-                case "media only":
-                    await set_media_only(ctx.guild.id, None)
-                case "auto role":
-                    await set_autorole(ctx.guild.id, None)
-                case "auto meme":
-                    await set_auto_meme(ctx.guild.id, None)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Successfully reset the {setting.lower()} settings."),
-                color=config.color.green,
-            )
-        )
-        await ctx.respond(view=view)
+            await settings.show()
+
+    # Settings slash cmd group
+    setting = SlashCommandGroup(
+        name="set",
+        description="Server settings commands.",
+        default_member_permissions=discord.Permissions(manage_channels=True, moderate_members=True),
+    )
 
     # Set mod log
     @setting.command(name="mod-log")
