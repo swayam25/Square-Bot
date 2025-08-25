@@ -19,91 +19,68 @@ start_time = time.time()
 
 
 class Stats:
-    class BotStats:
-        def __init__(self, client: Client, ctx: discord.ApplicationContext):
-            self.client = client
-            self.ctx = ctx
+    def __init__(self, client: Client, ctx: discord.ApplicationContext):
+        self.client = client
+        self.ctx = ctx
 
-        async def get(self) -> list[discord.ui.Item]:
-            dur = datetime.timedelta(seconds=int(round(time.time() - start_time)))
-            dur = format_timedelta(dur)
-            is_dev: bool = await check.is_dev(self.ctx)
-            if is_dev:
-                mem = psutil.virtual_memory()
-                cpu_cores = psutil.cpu_count()
-                cpu_load = psutil.cpu_percent()
-                disk = psutil.disk_usage("/")
-            return [
-                discord.ui.TextDisplay(f"## {self.client.user.name} Stats"),
-                discord.ui.TextDisplay(
-                    f"{emoji.ping} **Bot's Latency**: `{round(self.client.latency * 1000)} ms`\n"
-                    f"{emoji.duration} **Bot's Uptime**: `{str(dur)}`\n"
-                    f"{emoji.server} **Total Servers**: `{str(len(self.client.guilds))}`\n"
-                    f"{emoji.members} **Total Members**: `{len(set(self.client.get_all_members()))}`\n"
-                    f"{emoji.channel} **Total Channels**: `{len(set(self.client.get_all_channels()))}`"
-                    + (
-                        f"\n{emoji.python} **Python Version**: `v{platform.python_version()}`\n"
-                        f"{emoji.pycord} **Pycord Version**: `v{discord.__version__}`\n"
-                        f"{emoji.memory} **Memory**: `{fmt_memory(mem.total)}`"
-                        f" `({fmt_memory(mem.used)} Used | {fmt_memory(mem.available)} Free)`\n"
-                        f"{emoji.storage} **Storage**: `{fmt_memory(disk.total)}`"
-                        f" `({fmt_memory(disk.used)} Used | {fmt_memory(disk.free)} Free)`\n"
-                        f"{emoji.cpu} **Total CPU Cores**: `{cpu_cores}`\n"
-                        f"{emoji.tasks} **CPU Load**: `{cpu_load}%`"
-                        if is_dev
-                        else ""
-                    )
-                ),
-            ]
+    async def _format_memory(self, total, used, free):
+        return f"`{fmt_memory(total)}` `({fmt_memory(used)} Used | {fmt_memory(free)} Free)`"
 
-    class LavaNode(lavalink.Node):
-        def __init__(self, client: Client, ctx: discord.ApplicationContext, manager: lavalink.NodeManager):
-            super().__init__(
-                host=config.lavalink["host"],
-                port=config.lavalink["port"],
-                password=config.lavalink["password"],
-                region=config.lavalink["region"],
-                ssl=config.lavalink["secure"],
-                manager=manager,
+    async def get_bot_stats(self) -> list[discord.ui.Item]:
+        dur = format_timedelta(datetime.timedelta(seconds=int(round(time.time() - start_time))))
+        is_dev = await check.is_dev(self.ctx)
+
+        stats = (
+            f"{emoji.ping} **Bot's Latency**: `{round(self.client.latency * 1000)} ms`\n"
+            f"{emoji.duration} **Bot's Uptime**: `{dur}`\n"
+            f"{emoji.server} **Total Servers**: `{len(self.client.guilds)}`\n"
+            f"{emoji.members} **Total Members**: `{len(set(self.client.get_all_members()))}`\n"
+            f"{emoji.channel} **Total Channels**: `{len(set(self.client.get_all_channels()))}`"
+        )
+
+        if is_dev:
+            mem = psutil.virtual_memory()
+            disk = psutil.disk_usage("/")
+            stats += (
+                f"\n{emoji.python} **Python Version**: `v{platform.python_version()}`\n"
+                f"{emoji.pycord} **Pycord Version**: `v{discord.__version__}`\n"
+                f"{emoji.memory} **Memory**: {await self._format_memory(mem.total, mem.used, mem.available)}\n"
+                f"{emoji.storage} **Storage**: {await self._format_memory(disk.total, disk.used, disk.free)}\n"
+                f"{emoji.cpu} **Total CPU Cores**: `{psutil.cpu_count()}`\n"
+                f"{emoji.tasks} **CPU Load**: `{psutil.cpu_percent()}%`"
             )
-            self.client = client
-            self.ctx = ctx
 
-        async def get(self) -> list[discord.ui.Item]:
-            dur = datetime.timedelta(milliseconds=self.stats.uptime)
-            dur = format_timedelta(dur)
-            is_dev: bool = await check.is_dev(self.ctx)
-            return [
-                discord.ui.TextDisplay(f"## {self.client.user.name} Lavalink Stats"),
-                discord.ui.TextDisplay(
-                    f"{emoji.ping} **Node Latency**: `{round(await self.get_rest_latency())} ms`\n"
-                    f"{emoji.duration} **Node Uptime**: `{str(dur)}`\n"
-                    f"{emoji.music} **Players Connected**: `{self.stats.players}`\n"
-                    f"{emoji.play} **Currently Playing**: `{self.stats.playing_players}`"
-                    + (
-                        f"\n{emoji.lavalink} **Lavalink Version**: `v{await self.get_version()}`\n"
-                        f"{emoji.memory} **Memory**: `{fmt_memory(self.stats.memory_allocated)}`"
-                        f" `({fmt_memory(self.stats.memory_used)} Used | {fmt_memory(self.stats.memory_free)} Free)`\n"
-                        f"{emoji.cpu} **Total CPU Cores**: `{self.stats.cpu_cores}`\n"
-                        f"{emoji.tasks} **CPU Load**: `{round(self.stats.system_load * 100)}% System | {round(self.stats.lavalink_load * 100)}% Lavalink `"
-                        if is_dev
-                        else ""
-                    )
-                ),
-            ]
+        return [discord.ui.TextDisplay(f"## {self.client.user.name} Stats"), discord.ui.TextDisplay(stats)]
+
+    async def get_lavalink_stats(self, node: lavalink.Node) -> list[discord.ui.Item]:
+        dur = format_timedelta(datetime.timedelta(milliseconds=node.stats.uptime))
+        is_dev = await check.is_dev(self.ctx)
+
+        stats = (
+            f"{emoji.ping} **Node Latency**: `{round(await node.get_rest_latency())} ms`\n"
+            f"{emoji.duration} **Node Uptime**: `{dur}`\n"
+            f"{emoji.music} **Players Connected**: `{node.stats.players}`\n"
+            f"{emoji.play} **Currently Playing**: `{node.stats.playing_players}`"
+        )
+
+        if is_dev:
+            stats += (
+                f"\n{emoji.lavalink} **Lavalink Version**: `v{await node.get_version()}`\n"
+                f"{emoji.memory} **Memory**: {await self._format_memory(node.stats.memory_allocated, node.stats.memory_used, node.stats.memory_free)}\n"
+                f"{emoji.cpu} **Total CPU Cores**: `{node.stats.cpu_cores}`\n"
+                f"{emoji.tasks} **CPU Load**: `{round(node.stats.system_load * 100)}% System | {round(node.stats.lavalink_load * 100)}% Lavalink`"
+            )
+
+        return [discord.ui.TextDisplay(f"## {self.client.user.name} Lavalink Stats"), discord.ui.TextDisplay(stats)]
 
 
 class StatsView(View):
-    def __init__(
-        self,
-        client: Client,
-        ctx: discord.ApplicationContext,
-        manager: lavalink.NodeManager | None,
-    ):
+    def __init__(self, client: Client, ctx: discord.ApplicationContext, manager: lavalink.NodeManager | None):
         super().__init__(ctx=ctx, check_author_interaction=True)
         self.client = client
         self.ctx = ctx
         self.manager = manager
+        self.stats = Stats(client, ctx)
 
     async def async_init(self):
         await self._build_bot_stats_view()
@@ -112,50 +89,51 @@ class StatsView(View):
         owner = await self.client.fetch_user(config.owner_id)
         return discord.ui.TextDisplay(f"-# Designed & Built by {owner.name}")
 
-    def _get_buttons(self, button: Literal["Bot Stats", "Lavalink Stats"]):
-        bot_btn = discord.ui.Button(
-            emoji=emoji.bot_white,
-            label="Bot Stats",
-            style=discord.ButtonStyle.blurple if button == "Bot Stats" else discord.ButtonStyle.gray,
-            disabled=bool(button == "Bot Stats"),
-        )
-        bot_btn.callback = self.bot_stats_callback
-        lava_btn = discord.ui.Button(
-            emoji=emoji.lavalink_white,
-            label="Lavalink Stats",
-            style=discord.ButtonStyle.blurple if button == "Lavalink Stats" else discord.ButtonStyle.grey,
-            disabled=not self.manager or bool(button == "Lavalink Stats"),
-        )
-        lava_btn.callback = self.lavalink_stats_callback
-        return [bot_btn, lava_btn]
+    def _get_button(self, button: Literal["Bot Stats", "Lavalink Stats"]):
+        match button:
+            case "Bot Stats":
+                btn = discord.ui.Button(
+                    emoji=emoji.lavalink_white, label="Lavalink Stats", style=discord.ButtonStyle.grey
+                )
+                btn.callback = self.lavalink_stats_callback
+            case "Lavalink Stats":
+                btn = discord.ui.Button(emoji=emoji.previous_white, label="Back", style=discord.ButtonStyle.gray)
+                btn.callback = self.bot_stats_callback
+        return btn
 
     async def _build_bot_stats_view(self):
         self.clear_items()
-        items = await Stats.BotStats(self.client, self.ctx).get()
-        btns = self._get_buttons("Bot Stats")
+        items = await self.stats.get_bot_stats()
         container = discord.ui.Container(*items)
         container.add_item(await self._get_footer())
         self.add_item(container)
-        for btn in btns:
-            self.add_item(btn)
+        self.add_item(self._get_button("Bot Stats"))
 
     async def _build_lavalink_stats_view(self):
         self.clear_items()
-        items = await Stats.LavaNode(self.client, self.ctx, self.manager).get()
-        btns = self._get_buttons("Lavalink Stats")
+        node = lavalink.Node(
+            host=config.lavalink["host"],
+            port=config.lavalink["port"],
+            password=config.lavalink["password"],
+            region=config.lavalink["region"],
+            ssl=config.lavalink["secure"],
+            manager=self.manager,
+        )
+        items = await self.stats.get_lavalink_stats(node)
         container = discord.ui.Container(*items)
         container.add_item(await self._get_footer())
         self.add_item(container)
-        for btn in btns:
-            self.add_item(btn)
+        self.add_item(self._get_button("Lavalink Stats"))
 
     async def lavalink_stats_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+        self.disable_all_items()
+        await interaction.edit(view=self)
         await self._build_lavalink_stats_view()
         await interaction.edit(view=self)
 
     async def bot_stats_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
+        self.disable_all_items()
+        await interaction.edit(view=self)
         await self._build_bot_stats_view()
         await interaction.edit(view=self)
 

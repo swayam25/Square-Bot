@@ -486,9 +486,8 @@ class Devs(commands.Cog):
 
     async def delete_extra_emojis_callback(self, view: View, interaction: discord.Interaction, emojis: list[str]):
         """Deletes extra emojis."""
-        await interaction.response.defer()
         view.disable_all_items()
-        await interaction.message.edit(view=view)
+        await interaction.edit(view=view)
         for e in emojis:
             obj = e.strip("<>").split(":")
             id = int(obj[-1]) if len(obj) > 1 else None
