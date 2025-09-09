@@ -469,7 +469,6 @@ class Moderation(commands.Cog):
     @option("role", description="Mention the role which you will add to the user")
     async def add_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Adds the mentioned role to the mentioned user."""
-        await user.add_roles(role)
         if user.top_role.position >= ctx.author.top_role.position:
             view = View(
                 discord.ui.Container(
@@ -488,6 +487,7 @@ class Moderation(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
             return
+        await user.add_roles(role)
         view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(
@@ -504,7 +504,6 @@ class Moderation(commands.Cog):
     @option("role", description="Mention the role which you will remove from the user")
     async def remove_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Removes the mentioned role from the mentioned user."""
-        await user.remove_roles(role)
         if user.top_role.position >= ctx.author.top_role.position:
             view = View(
                 discord.ui.Container(
@@ -523,6 +522,7 @@ class Moderation(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
             return
+        await user.remove_roles(role)
         view = View(
             discord.ui.Container(
                 discord.ui.TextDisplay(
