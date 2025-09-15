@@ -1,11 +1,11 @@
-import discord
 import lavalink
+from discord.ext import commands
 from rich.console import Console
 
 console = Console()
 
 
-class Client(discord.Bot):
+class Client(commands.Bot):
     def __init__(self, lavalink: lavalink.Client | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.lavalink = lavalink
