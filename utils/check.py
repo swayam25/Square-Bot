@@ -6,6 +6,12 @@ from discord.ext import commands
 from utils import config
 
 
+class NotAuthorized(commands.CheckFailure):
+    """Exception raised when a user is not authorized to use a command."""
+
+    pass
+
+
 def is_owner(_ctx: discord.ApplicationContext | None = None):
     """
     Check if the command invoker is the bot owner.
@@ -19,7 +25,7 @@ def is_owner(_ctx: discord.ApplicationContext | None = None):
             return True
         else:
             if _ctx is None:
-                raise commands.MissingPermissions(["Bot Owner"])
+                raise NotAuthorized()
             else:
                 return False
 
@@ -43,7 +49,7 @@ def is_dev(_ctx: discord.ApplicationContext | None = None):
             return True
         else:
             if _ctx is None:
-                raise commands.MissingPermissions(["Bot Developer"])
+                raise NotAuthorized()
             else:
                 return False
 

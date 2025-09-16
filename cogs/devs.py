@@ -22,7 +22,7 @@ class GuildContainer(discord.ui.Container):
         start = (page - 1) * items_per_page
         end = start + items_per_page
         page_guilds = guilds[start:end]
-        guilds_list = "\n".join(f"`{i + 1}.` **{g.name}** - `{g.id}`" for i, g in enumerate(page_guilds, start=start))
+        guilds_list = "\n".join(f"`{i + 1}.` **{g.name}**: `{g.id}`" for i, g in enumerate(page_guilds, start=start))
         self.add_item(discord.ui.TextDisplay("## Guilds List"))
         self.add_item(discord.ui.TextDisplay(guilds_list or "No guilds found."))
         if len(guilds) > items_per_page:
@@ -125,8 +125,8 @@ class Devs(commands.Cog):
 
     # Add dev
     @dev.command(name="add")
-    @option("user", description="Mention the user whom you want to add to dev")
     @check.is_owner()
+    @option("user", description="Mention the user whom you want to add to dev")
     async def add_dev(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Adds a bot dev."""
         await add_dev(user.id)
@@ -140,8 +140,8 @@ class Devs(commands.Cog):
 
     # Remove dev
     @dev.command(name="remove")
-    @option("user", description="Mention the user whom you want to remove from dev")
     @check.is_owner()
+    @option("user", description="Mention the user whom you want to remove from dev")
     async def remove_dev(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Removes a bot dev."""
         await remove_dev(user.id)
@@ -228,9 +228,9 @@ class Devs(commands.Cog):
 
     # Set status
     @slash_command(guild_ids=config.owner_guild_ids, name="status")
+    @check.is_dev()
     @option("type", description="Choose bot status type", choices=["Game", "Streaming", "Listening", "Watching"])
     @option("status", description="Enter new status of bot")
-    @check.is_dev()
     async def set_status(self, ctx: discord.ApplicationContext, type: str, status: str):
         """Sets custom bot status."""
         if type == "Game":
@@ -272,6 +272,7 @@ class Devs(commands.Cog):
 
     # Leave guild
     @guild.command(name="leave")
+    @check.is_owner()
     @option(
         "guild",
         description="Enter the guild name",
@@ -279,7 +280,6 @@ class Devs(commands.Cog):
             guild.name for guild in self.client.guilds if not any(guild.id == g for g in config.owner_guild_ids)
         ],
     )
-    @check.is_owner()
     async def leave_guild(self, ctx: discord.ApplicationContext, guild: discord.Guild):
         """Leaves a guild."""
         if any(guild.id == g for g in config.owner_guild_ids):
@@ -301,6 +301,7 @@ class Devs(commands.Cog):
 
     # Guild invite
     @guild.command(name="invite")
+    @check.is_owner()
     @option(
         "guild",
         description="Enter the guild name",
@@ -308,7 +309,6 @@ class Devs(commands.Cog):
             guild.name for guild in self.client.guilds if not any(guild.id == g for g in config.owner_guild_ids)
         ],
     )
-    @check.is_owner()
     async def guild_inv(self, ctx: discord.ApplicationContext, guild: discord.Guild):
         """Creates an invite link for the guild."""
         if any(guild.id == g for g in config.owner_guild_ids):
@@ -368,8 +368,8 @@ class Devs(commands.Cog):
 
     # Upload app emojis
     @emoji.command(name="upload")
-    @option("file", description="Upload emojis zip file or single png file.", type=discord.Attachment)
     @check.is_dev()
+    @option("file", description="Upload emojis zip file or single png file.", type=discord.Attachment)
     async def upload_app_emojis(self, ctx: discord.ApplicationContext, file: discord.Attachment):
         """Uploads all emojis to the app (supports .zip files with .png emojis or a single .png file)."""
         await ctx.defer()
@@ -503,8 +503,8 @@ class Devs(commands.Cog):
 
     # Check emoji zip file
     @emoji.command(name="check-zip")
-    @option("file", description="Upload emojis zip file.", type=discord.Attachment)
     @check.is_dev()
+    @option("file", description="Upload emojis zip file.", type=discord.Attachment)
     async def check_emoji_zip(self, ctx: discord.ApplicationContext, file: discord.Attachment):
         """Checks the uploaded zip file for emojis."""
         await ctx.defer()

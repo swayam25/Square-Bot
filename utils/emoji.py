@@ -115,6 +115,8 @@ class Emoji:
     restart_white: str = "🔄"
     shutdown: str = "🔴"
     console: str = "🖥️"
+    console_green: str = "🖥️"
+    enter_green: str = "✅"
     upload: str = "📤"
     bin_red: str = "🗑️"
     bin_white: str = "🗑️"

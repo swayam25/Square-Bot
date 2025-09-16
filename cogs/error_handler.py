@@ -18,12 +18,14 @@ class ErrorHandler(commands.Cog):
         self.client = client
 
     # Slash cmd Error Handler
-    @commands.Cog.listener()
-    async def on_application_command_error(self, ctx: discord.ApplicationContext, error: discord.DiscordException):
+    @commands.Cog.listener(name="on_application_command_error")
+    @commands.Cog.listener(name="on_command_error")
+    async def on_error(self, ctx: discord.ApplicationContext | commands.Context, error: discord.DiscordException):
         msg: str | None = None
+        is_app: bool = isinstance(ctx, discord.ApplicationContext)
 
         if isinstance(error, commands.CommandNotFound):
-            pass
+            return
 
         elif await check.is_dev(ctx):
             tb = Traceback.from_exception(type(error), error, error.__traceback__, show_locals=True)
@@ -35,7 +37,21 @@ class ErrorHandler(commands.Cog):
                 msg += f"\n```py\n{err}\n```"
             else:
                 file = discord.File(fp=io.BytesIO(tb.encode()), filename="error.txt")
-                await ctx.respond(file=file, ephemeral=True)
+                if is_app:
+                    await ctx.respond(file=file, ephemeral=True)
+                else:
+                    await ctx.reply(
+                        file=file,
+                        allowed_mentions=discord.AllowedMentions(
+                            users=False, roles=False, everyone=False, replied_user=False
+                        ),
+                    )
+                return
+
+        elif isinstance(error, check.NotAuthorized):
+            if is_app:
+                msg = f"{emoji.error} You are not authorized to use this command."
+            else:  # Because we don't want to send errors for normal commands
                 return
 
         elif isinstance(error, commands.CommandOnCooldown):
@@ -56,7 +72,15 @@ class ErrorHandler(commands.Cog):
         else:
             msg = f"{emoji.error} An unexpected error occurred. Please try again later."
         view = View(discord.ui.Container(discord.ui.TextDisplay(msg), color=config.color.red))
-        await ctx.respond(view=view, ephemeral=True)
+
+        if is_app:
+            await ctx.respond(view=view, ephemeral=True)
+        else:
+            await ctx.reply(
+                view=view,
+                delete_after=5,
+                allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False, replied_user=False),
+            )
 
 
 def setup(client: Client):
