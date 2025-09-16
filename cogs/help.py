@@ -1,7 +1,7 @@
 import discord
 from core import Client
 from core.view import View
-from discord.commands import SlashCommandGroup, slash_command
+from discord.commands import SlashCommand, SlashCommandGroup, slash_command
 from discord.ext import commands
 from typing import TypedDict
 from utils import check, config
@@ -127,18 +127,54 @@ class HelpView(View):
             self._build_home_view()
             return
         cmds = ""
+
+        # Util to build full command path including parent groups
+        def build_full_command_path(cmd: SlashCommand | SlashCommandGroup) -> str:
+            parts = [cmd.name]
+            parent = getattr(cmd, "parent", None)
+            # Walk up parent chain to root group
+            while parent:
+                parts.append(parent.name)
+                parent = getattr(parent, "parent", None)
+            return " ".join(reversed(parts))
+
+        # Attempt to resolve a usable prefix (may be empty if unset)
+        resolved_prefix = getattr(self.client, "command_prefix", "")
+        if callable(resolved_prefix):
+            try:
+                # Best‑effort resolution; ApplicationContext isn't a Message, so fall back to empty on error
+                resolved_prefix = resolved_prefix(self.client, getattr(self.ctx, "message", None)) or ""
+            except Exception:
+                resolved_prefix = ""
+
         for command in cog.get_commands():
             if isinstance(command, SlashCommandGroup):
                 for subcommand in command.walk_commands():
+                    if isinstance(subcommand, SlashCommandGroup):
+                        continue  # Skip intermediate groups
+                    full_path = build_full_command_path(subcommand)
+                    # Slash subcommands formatting
                     cmds += (
-                        f"</{command.name} {subcommand.name}:{command.id}>"
-                        if command.id
-                        else f"`/{command.name} {subcommand.name}`"
+                        f"</{full_path}:{command.id}>" if command.id else f"`/{full_path}`"
                     ) + f"\n{emoji.bullet} {subcommand.description}\n\n"
-            else:
+            elif isinstance(command, SlashCommand):
+                # Plain slash command
+                full_path = command.name
                 cmds += (
-                    f"</{command.name}:{command.id}>" if command.id else f"`/{command.name}`"
+                    f"</{full_path}:{command.id}>" if command.id else f"`/{full_path}`"
                 ) + f"\n{emoji.bullet} {command.description}\n\n"
+            elif isinstance(command, commands.Command):
+                if getattr(command, "hidden", False):
+                    continue  # Skip hidden commands
+                display = f"`{resolved_prefix}{command.name}`"
+                cmds += (
+                    display
+                    + f"\n{emoji.bullet} {command.help or command.description or 'No description provided.'}\n\n"
+                )
+            else:  # Fallback: unknown command type
+                cmds += f"`{getattr(command, 'name', 'unknown')}`\n{emoji.bullet} {getattr(command, 'description', 'No description provided.')}\n\n"
+        if not cmds:
+            cmds = "No command found."
         cog_emoji = next((cog["emoji"] for cog in self.cogs if cog["name"] == cog_name), "")
         container = discord.ui.Container(
             discord.ui.TextDisplay(f"## {cog_emoji} {cog_name} Commands"),
@@ -150,6 +186,7 @@ class HelpView(View):
     # Help callback
     async def help_callback(self, interaction: discord.Interaction) -> None:
         """The callback for the select menu that rebuilds the view."""
+        await interaction.response.defer()
         selected_value = interaction.data["values"][0]
         if selected_value == "Home":
             self._build_home_view()
