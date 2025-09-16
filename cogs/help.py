@@ -142,7 +142,7 @@ class HelpView(View):
         resolved_prefix = getattr(self.client, "command_prefix", "")
         if callable(resolved_prefix):
             try:
-                # Best‑effort resolution; ApplicationContext isn't a Message, so fall back to empty on error
+                # ApplicationContext isn't a Message, so fall back to empty on error
                 resolved_prefix = resolved_prefix(self.client, getattr(self.ctx, "message", None)) or ""
             except Exception:
                 resolved_prefix = ""
@@ -153,12 +153,10 @@ class HelpView(View):
                     if isinstance(subcommand, SlashCommandGroup):
                         continue  # Skip intermediate groups
                     full_path = build_full_command_path(subcommand)
-                    # Slash subcommands formatting
                     cmds += (
                         f"</{full_path}:{command.id}>" if command.id else f"`/{full_path}`"
                     ) + f"\n{emoji.bullet} {subcommand.description}\n\n"
             elif isinstance(command, SlashCommand):
-                # Plain slash command
                 full_path = command.name
                 cmds += (
                     f"</{full_path}:{command.id}>" if command.id else f"`/{full_path}`"
