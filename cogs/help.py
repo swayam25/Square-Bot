@@ -55,7 +55,11 @@ async def get_cogs(ctx: discord.ApplicationContext) -> list[CogDict]:
             "emoji": emoji.ticket,
             "description": "Need help? Create a ticket and ask.",
         },
-        {"name": "Fun", "emoji": emoji.fun, "description": "Fun commands to enjoy with friends."},
+        {
+            "name": "Fun",
+            "emoji": emoji.fun,
+            "description": "Fun commands to enjoy with friends.",
+        },
     ]
     if await check.is_dev(ctx):
         cogs.append(
@@ -190,9 +194,7 @@ class HelpView(View):
             self._build_home_view()
         else:
             self._build_cog_view(selected_value)
-        await interaction.edit(
-            view=self, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
-        )
+        await interaction.edit(view=self)
 
 
 class Help(commands.Cog):
@@ -205,9 +207,7 @@ class Help(commands.Cog):
         """Need bot's help? Use this!"""
         cogs = await get_cogs(ctx)
         helpView = HelpView(self.client, ctx, cogs)
-        helpView.msg = await ctx.respond(
-            view=helpView, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
-        )
+        helpView.msg = await ctx.respond(view=helpView)
 
 
 def setup(client: Client):

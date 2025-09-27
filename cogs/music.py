@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 import discord
-import discord.ui
 import lavalink
 import math
 import re
@@ -11,7 +10,7 @@ from core.view import View
 from discord import SlashCommandGroup
 from discord.commands import option, slash_command
 from discord.ext import commands, tasks
-from discord.ui import Button, Container, Section, TextDisplay, Thumbnail
+from discord.ui import Button, Container, Section, Separator, TextDisplay, Thumbnail
 from music import store
 from music.client import LavalinkVoiceClient
 from utils import config
@@ -20,6 +19,14 @@ from utils.helpers import parse_duration
 
 # Regex
 url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
+
+# Music sources
+sources = {
+    "spotify": {"emoji": emoji.spotify, "color": config.color.green},
+    "youtube": {"emoji": emoji.youtube, "color": config.color.red},
+    "soundcloud": {"emoji": emoji.soundcloud, "color": config.color.orange},
+    "_": {"emoji": emoji.music, "color": config.color.theme},
+}
 
 
 async def update_play_msg(client: Client, guild_id: int):
@@ -36,9 +43,7 @@ async def update_play_msg(client: Client, guild_id: int):
         if play_msg:
             view = MusicView(client, guild_id)
             try:
-                await play_msg.edit(
-                    view=view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
-                )
+                await play_msg.edit(view=view)
             except discord.NotFound:
                 store.play_msg(guild_id, "clear")
                 return
@@ -59,15 +64,17 @@ async def stop_player(player: lavalink.DefaultPlayer, guild: discord.Guild):
     asyncio.create_task(background_cleanup())
 
 
-async def music_interaction_check(player: lavalink.DefaultPlayer, interaction: discord.Interaction):
-    if not player.current:
+async def music_interaction_check(view: View, player: lavalink.DefaultPlayer, interaction: discord.Interaction):
+    if not player or not player.current:
         err_view = View(
             Container(
                 TextDisplay(f"{emoji.error} Nothing is being played at the current moment."),
                 color=config.color.red,
             )
         )
-        await interaction.response.send_message(view=err_view, ephemeral=True)
+        view.disable_all_items()
+        await interaction.edit(view=view)
+        await interaction.followup.send(view=err_view, ephemeral=True)
         return False
     elif not interaction.user.voice:
         err_view = View(
@@ -86,6 +93,7 @@ async def music_interaction_check(player: lavalink.DefaultPlayer, interaction: d
             )
         )
         await interaction.response.send_message(view=err_view, ephemeral=True)
+        return False
     else:
         return True
 
@@ -116,8 +124,9 @@ class MusicView(View):
         super().__init__(timeout=None)
         self.client = client
         self.player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(guild_id)
-        self.allowed_mentions = discord.AllowedMentions(users=False, roles=False, everyone=False)
-        self.interaction_check = lambda interaction: music_interaction_check(self.player, interaction)
+        self.interaction_check = lambda interaction: music_interaction_check(
+            player=self.player, interaction=interaction, view=self
+        )
         self.build()
 
     # Builder
@@ -155,8 +164,8 @@ class MusicView(View):
                 TextDisplay(f"{interaction.user.mention} {'Paused' if self.player.paused else 'Resumed'} the player."),
             )
         )
-        await interaction.edit(view=self, allowed_mentions=self.allowed_mentions)
-        await interaction.followup.send(view=view, delete_after=5, allowed_mentions=self.allowed_mentions)
+        await interaction.edit(view=self)
+        await interaction.followup.send(view=view, delete_after=5)
 
     # Stop
     async def stop_callback(self, interaction: discord.Interaction):
@@ -164,8 +173,8 @@ class MusicView(View):
 
         view = View(Container(TextDisplay(f"{interaction.user.mention} Destroyed the player.")))
         self.disable_all_items()
-        await interaction.edit(view=self, allowed_mentions=self.allowed_mentions)
-        await interaction.followup.send(view=view, delete_after=5, allowed_mentions=self.allowed_mentions)
+        await interaction.edit(view=self)
+        await interaction.followup.send(view=view, delete_after=5)
         store.play_msg(interaction.guild_id, mode="clear")
         await stop_player(self.player, guild)
 
@@ -173,13 +182,13 @@ class MusicView(View):
     async def skip_callback(self, interaction: discord.Interaction):
         await self.player.skip()
         self.disable_all_items()
-        await interaction.edit(view=self, allowed_mentions=self.allowed_mentions)
+        await interaction.edit(view=self)
         view = View(
             Container(
                 TextDisplay(f"{interaction.user.mention} Skipped the track."),
             )
         )
-        await interaction.followup.send(view=view, delete_after=5, allowed_mentions=self.allowed_mentions)
+        await interaction.followup.send(view=view, delete_after=5)
 
     # Loop
     async def loop_callback(self, interaction: discord.Interaction):
@@ -203,8 +212,8 @@ class MusicView(View):
                 ),
             )
         )
-        await interaction.edit(view=self, allowed_mentions=self.allowed_mentions)
-        await interaction.followup.send(view=view, delete_after=5, allowed_mentions=self.allowed_mentions)
+        await interaction.edit(view=self)
+        await interaction.followup.send(view=view, delete_after=5)
 
     # Shuffle
     async def shuffle_callback(self, interaction: discord.Interaction):
@@ -227,39 +236,200 @@ class MusicView(View):
                     ),
                 )
             )
-            await interaction.edit(view=self, allowed_mentions=self.allowed_mentions)
-            await interaction.followup.send(view=shuffle_view, delete_after=5, allowed_mentions=self.allowed_mentions)
+            await interaction.edit(view=self)
+            await interaction.followup.send(view=shuffle_view, delete_after=5)
 
 
-class QueueContainer(discord.ui.Container):
-    def __init__(self, player: lavalink.DefaultPlayer, ctx: discord.ApplicationContext, page=1, items_per_page=5):
+class QueueBtnCallback:
+    @staticmethod
+    async def queue_btn_callback(
+        i: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: "QueueListView"
+    ):
+        """
+        Callback for Queue button (for more options).
+        Toggles the visibility of action buttons for the specific track.
+
+        Parameters:
+            i (discord.Interaction): The interaction object.
+            player (lavalink.DefaultPlayer): The lavalink player instance.
+            track_index (int): The index of the track in the queue.
+            queue_view (QueueListView): The parent queue view for updating.
+        """
+        if not player or not player.queue or track_index >= len(player.queue):
+            return
+
+        # Toggle action buttons visibility for this track
+        queue_view.toggle_action_buttons(track_index)
+        queue_view.build()
+        await i.response.edit_message(view=queue_view)
+
+    @staticmethod
+    async def move_up_callback(
+        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: "QueueListView"
+    ):
+        """Move track up in the queue."""
+        if track_index <= 0:
+            return
+
+        # Store the new position after move
+        new_index = track_index - 1
+
+        player.queue[track_index], player.queue[new_index] = (
+            player.queue[new_index],
+            player.queue[track_index],
+        )
+
+        if track_index == queue_view.visible_action_button:
+            queue_view.visible_action_button = new_index
+
+        # Check if track moved out of current page view and adjust page if needed
+        current_page_start = (queue_view.page - 1) * queue_view.items_per_page
+
+        # If the new position is before the current page, go to the page containing the track
+        if new_index < current_page_start:
+            queue_view.page = (new_index // queue_view.items_per_page) + 1
+
+        await _update_queue_view(interaction, queue_view)
+
+    @staticmethod
+    async def move_down_callback(
+        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: "QueueListView"
+    ):
+        """Move track down in the queue."""
+        if track_index >= len(player.queue) - 1:
+            return
+
+        # Store the new position after move
+        new_index = track_index + 1
+
+        player.queue[track_index], player.queue[new_index] = (
+            player.queue[new_index],
+            player.queue[track_index],
+        )
+
+        if track_index == queue_view.visible_action_button:
+            queue_view.visible_action_button = new_index
+
+        # Check if track moved out of current page view and adjust page if needed
+        current_page_start = (queue_view.page - 1) * queue_view.items_per_page
+        current_page_end = current_page_start + queue_view.items_per_page - 1
+
+        # If the new position is after the current page, go to the page containing the track
+        if new_index > current_page_end:
+            queue_view.page = (new_index // queue_view.items_per_page) + 1
+
+        await _update_queue_view(interaction, queue_view)
+
+    @staticmethod
+    async def remove_callback(
+        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: "QueueListView"
+    ):
+        """Remove track from the queue."""
+        if track_index >= len(player.queue):
+            return
+
+        player.queue.pop(track_index)
+
+        # Remove from visible action buttons and adjust indices
+        queue_view.visible_action_button = None
+
+        queue_view.build()
+        await interaction.response.edit_message(view=queue_view)
+
+    @staticmethod
+    async def play_now_callback(
+        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: "QueueListView"
+    ):
+        """Skip to this track immediately."""
+        if track_index >= len(player.queue):
+            return
+
+        await player.play_track(player.queue.pop(track_index))
+
+        await _update_queue_view(interaction, queue_view)
+
+
+async def _update_queue_view(interaction: discord.Interaction, queue_view: "QueueListView"):
+    """Helper method to update queue view and respond."""
+    queue_view.build()
+    await interaction.response.edit_message(view=queue_view)
+
+
+class QueueContainer(Container):
+    def __init__(
+        self, player: lavalink.DefaultPlayer, ctx: discord.ApplicationContext, page=1, items_per_page=5, queue_view=None
+    ):
         super().__init__()
         pages = max(1, math.ceil(len(player.queue) / items_per_page))
         start = (page - 1) * items_per_page
         end = start + items_per_page
-        queue_list = ""
+        queue_list: list = []
+
         for index, track in enumerate(player.queue[start:end], start=start):
             requester = ctx.guild.get_member(track.requester)
-            queue_list += (
-                f"`{index + 1}.` **[{track.title}]({track.uri})** [{requester.mention if requester else 'Unknown'}]\n"
+            btn = Button(emoji=emoji.more_white)
+            # Create a closure that captures the current index value
+            btn.callback = lambda i, track_idx=index, qv=queue_view: QueueBtnCallback.queue_btn_callback(
+                i, player=player, track_index=track_idx, queue_view=qv
             )
+
+            # Add the section for the track
+            queue_list.append(
+                Section(
+                    TextDisplay(
+                        f"`{index + 1}.` **[{track.title}]({track.uri})** [{requester.mention if requester else 'Unknown'}]"
+                    ),
+                    accessory=btn,
+                )
+            )
+
+            # Add action buttons if this track's buttons are visible
+            if queue_view and index == queue_view.visible_action_button:
+                move_up_btn = Button(emoji=emoji.up_white, style=discord.ButtonStyle.grey, disabled=(index == 0))
+                move_up_btn.callback = (
+                    lambda i, track_idx=index, p=player, qv=queue_view: QueueBtnCallback.move_up_callback(
+                        i, p, track_idx, qv
+                    )
+                )
+                move_down_btn = Button(
+                    emoji=emoji.down_white, style=discord.ButtonStyle.grey, disabled=(index == len(player.queue) - 1)
+                )
+                move_down_btn.callback = (
+                    lambda i, track_idx=index, p=player, qv=queue_view: QueueBtnCallback.move_down_callback(
+                        i, p, track_idx, qv
+                    )
+                )
+                remove_btn = Button(emoji=emoji.bin_white, style=discord.ButtonStyle.grey)
+                remove_btn.callback = (
+                    lambda i, track_idx=index, p=player, qv=queue_view: QueueBtnCallback.remove_callback(
+                        i, p, track_idx, qv
+                    )
+                )
+                play_now_btn = Button(emoji=emoji.play_white, style=discord.ButtonStyle.grey)
+                play_now_btn.callback = (
+                    lambda i, track_idx=index, p=player, qv=queue_view: QueueBtnCallback.play_now_callback(
+                        i, p, track_idx, qv
+                    )
+                )
+                queue_list.extend([move_up_btn, move_down_btn, remove_btn, play_now_btn])
+
         current_requester = ctx.guild.get_member(player.current.requester) if player.current else None
-        self.add_item(discord.ui.TextDisplay(f"## {ctx.guild.name}'s Queue"))
+        self.add_item(TextDisplay(f"## {ctx.guild.name}'s Queue"))
         self.add_item(
-            discord.ui.TextDisplay(
+            TextDisplay(
                 f"`0.` **[{player.current.title}]({player.current.uri})** [{current_requester.mention if current_requester else 'Unknown'}]"
                 if player.current
                 else "No track playing."
             )
         )
-        self.add_item(
-            discord.ui.TextDisplay(
-                f"### Queued {len(player.queue)} Tracks\n{queue_list}" if queue_list else "Queue is empty."
-            )
-        )
+        if queue_list:
+            self.add_item(TextDisplay(f"### Queued {len(player.queue)} Tracks"))
+            self.items.extend(queue_list)
+        else:
+            self.add_item(TextDisplay("Queue is empty."))
         if len(player.queue) > items_per_page:
-            self.add_item(discord.ui.Separator())
-            self.add_item(discord.ui.TextDisplay(f"-# Viewing Page {page}/{pages}"))
+            self.add_item(Separator())
+            self.add_item(TextDisplay(f"-# Viewing Page {page}/{pages}"))
 
 
 class QueueListView(View):
@@ -270,19 +440,31 @@ class QueueListView(View):
         self.page = page
         self.items_per_page = 5
         self.player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(ctx.guild.id)
-        self.interaction_check = lambda interaction: music_interaction_check(self.player, interaction)
+        self.interaction_check = lambda interaction: music_interaction_check(
+            player=self.player, interaction=interaction, view=self
+        )
+        self.visible_action_button: int | None = None
         self.build()
+
+    def toggle_action_buttons(self, track_index: int):
+        """Toggle the visibility of action buttons for a specific track."""
+        if track_index == self.visible_action_button:
+            self.visible_action_button = None
+        else:
+            self.visible_action_button = track_index
 
     def build(self):
         self.clear_items()
-        self.add_item(QueueContainer(self.player, self.ctx, page=self.page, items_per_page=self.items_per_page))
+        self.add_item(
+            QueueContainer(self.player, self.ctx, page=self.page, items_per_page=self.items_per_page, queue_view=self)
+        )
         for btn_emoji, action in [
             (emoji.start_white, "start"),
             (emoji.previous_white, "previous"),
             (emoji.next_white, "next"),
             (emoji.end_white, "end"),
         ]:
-            btn = discord.ui.Button(emoji=btn_emoji, style=discord.ButtonStyle.grey)
+            btn = Button(emoji=btn_emoji, style=discord.ButtonStyle.grey)
             btn.callback = lambda i, action=action: self.interaction_callback(i, action=action)
             self.add_item(btn)
 
@@ -297,9 +479,7 @@ class QueueListView(View):
         elif action == "end":
             self.page = total_pages
         self.build()
-        await interaction.edit(
-            view=self, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
-        )
+        await interaction.edit(view=self)
 
 
 class Disable:
@@ -313,9 +493,7 @@ class Disable:
         if play_msg:
             play_view.disable_all_items()
             try:
-                await play_msg.edit(
-                    view=play_view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
-                )
+                await play_msg.edit(view=play_view)
             except discord.NotFound:
                 store.play_msg(self.guild_id, "clear")
                 return
@@ -327,7 +505,6 @@ class Music(commands.Cog):
         self.connection_loop.start()
 
     # Connect to lavalink
-
     def connect_lavalink(self):
         self.client.lavalink.add_node(
             host=config.lavalink["host"],
@@ -369,9 +546,7 @@ class Music(commands.Cog):
         if channel:
             view = MusicView(client=self.client, guild_id=event.player.guild_id)
             try:
-                play_msg = await channel.send(
-                    view=view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
-                )
+                play_msg = await channel.send(view=view)
             except discord.Forbidden:
                 store.play_ch(event.player.guild_id, "clear")
                 return
@@ -469,6 +644,8 @@ class Music(commands.Cog):
         """Searches a track from a given query."""
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.interaction.guild_id)
         tracks = []
+        if re.match(url_rx, ctx.value):
+            return tracks
         if ctx.value != "":
             result = await player.node.get_tracks(f"spsearch:{ctx.value}")
         else:
@@ -599,17 +776,11 @@ class Music(commands.Cog):
     async def play(self, ctx: discord.ApplicationContext, query: str):
         """Searches and plays a track from a given query."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
-        sources = {
-            "spotify": {"emoji": emoji.spotify, "color": config.color.green},
-            "youtube": {"emoji": emoji.youtube, "color": config.color.red},
-            "soundcloud": {"emoji": emoji.soundcloud, "color": config.color.orange},
-            "_": {"emoji": emoji.music, "color": config.color.theme},
-        }
         if player:
             await ctx.defer()
             query = query.strip("<>")
             # Remove durations like 00:00:00 from query
-            query = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b", "", query).strip()
+            query = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b|\s*-\s*\d{1,2}:\d{2}(?::\d{2})?\b", "", query)
             container = Container()
             if not url_rx.match(query):
                 query = f"spsearch:{query}"
@@ -678,6 +849,7 @@ class Music(commands.Cog):
                         TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
                         TextDisplay(
                             f"{emoji.user} **Requested By**: {requester.mention if requester else 'Unknown'}\n"
+                            f"{emoji.owner} **Artist**: {sources.get(player.current.source_name, sources['_'])['emoji']} {player.current.author}\n"
                             f"{emoji.duration} **Duration**: {duration}\n"
                             f"{emoji.volume} **Volume**: `{player.volume}%`\n"
                             f"{emoji.loop} **Loop**: {loop}\n"
@@ -689,9 +861,7 @@ class Music(commands.Cog):
                     )
                 )
             )
-            await ctx.respond(
-                view=view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
-            )
+            await ctx.respond(view=view)
 
     # Equalizer slash cmd group
     eq = SlashCommandGroup(name="eq", description="Equalizer commands.")
@@ -1124,37 +1294,58 @@ class Music(commands.Cog):
     async def queue(self, ctx: discord.ApplicationContext, page: int = 1):
         """Shows the player's queue."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
-        if not player or not player.queue:
-            error_view = View(
-                Container(
-                    TextDisplay(f"{emoji.error} Queue is empty"),
-                    color=config.color.red,
+        if player:
+            if not player.queue:
+                error_view = View(
+                    Container(
+                        TextDisplay(f"{emoji.error} Queue is empty"),
+                        color=config.color.red,
+                    )
                 )
-            )
-            await ctx.respond(view=error_view, ephemeral=True)
-            return
-        items_per_page = 5
-        pages = max(1, math.ceil(len(player.queue) / items_per_page))
-        if page > pages or page < 1:
-            error_view = View(
-                Container(
-                    TextDisplay(f"{emoji.error} Page has to be between `1` to `{pages}`"),
-                    color=config.color.red,
+                await ctx.respond(view=error_view, ephemeral=True)
+                return
+            items_per_page = 5
+            pages = max(1, math.ceil(len(player.queue) / items_per_page))
+            if page > pages or page < 1:
+                error_view = View(
+                    Container(
+                        TextDisplay(f"{emoji.error} Page has to be between `1` to `{pages}`"),
+                        color=config.color.red,
+                    )
                 )
-            )
-            await ctx.respond(view=error_view, ephemeral=True)
-            return
-        if pages > 1:
-            queue_view = QueueListView(client=self.client, ctx=ctx, page=page)
-            await ctx.respond(
-                view=queue_view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
-            )
-        else:
-            container = QueueContainer(player, ctx)
-            queue_view = View(container)
-            await ctx.respond(
-                view=queue_view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
-            )
+                await ctx.respond(view=error_view, ephemeral=True)
+                return
+            if pages > 1:
+                queue_view = QueueListView(client=self.client, ctx=ctx, page=page)
+                await ctx.respond(view=queue_view)
+            else:
+                container = QueueContainer(player, ctx)
+                queue_view = View(container)
+                await ctx.respond(view=queue_view)
+
+    # Clear queue
+    @slash_command(name="clear-queue")
+    async def clear_queue(self, ctx: discord.ApplicationContext):
+        """Clears the player's queue."""
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        if player:
+            if not player.queue:
+                error_view = View(
+                    Container(
+                        TextDisplay(f"{emoji.error} Queue is empty"),
+                        color=config.color.red,
+                    )
+                )
+                await ctx.respond(view=error_view, ephemeral=True)
+            else:
+                player.queue.clear()
+                clear_view = View(
+                    Container(
+                        TextDisplay(f"{emoji.success} Cleared the queue."),
+                        color=config.color.green,
+                    )
+                )
+                await ctx.respond(view=clear_view)
 
     # Shuffle
     @slash_command(name="shuffle")
@@ -1227,40 +1418,31 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             index: int = int(track.split(".")[0])  # Extract index from the selected track
-            if ctx.author.id == player.queue[index - 1].requester:
-                if not player.queue:
-                    error_view = View(
-                        Container(
-                            TextDisplay(f"{emoji.error} Queue is empty"),
-                            color=config.color.red,
-                        )
-                    )
-                    await ctx.respond(view=error_view, ephemeral=True)
-                elif index > len(player.queue) or index < 1:
-                    error_view = View(
-                        Container(
-                            TextDisplay(f"{emoji.error} Index has to be between `1` to `{len(player.queue)}`"),
-                            color=config.color.red,
-                        )
-                    )
-                    await ctx.respond(view=error_view, ephemeral=True)
-                else:
-                    removed = player.queue.pop(index - 1)
-                    remove_view = View(
-                        Container(
-                            TextDisplay(f"{emoji.leave} Removed **{removed.title}**."),
-                            color=config.color.red,
-                        )
-                    )
-                    await ctx.respond(view=remove_view)
-            else:
+            if not player.queue:
                 error_view = View(
                     Container(
-                        TextDisplay(f"{emoji.error} Only requester can remove from the list."),
+                        TextDisplay(f"{emoji.error} Queue is empty"),
                         color=config.color.red,
                     )
                 )
                 await ctx.respond(view=error_view, ephemeral=True)
+            elif index > len(player.queue) or index < 1:
+                error_view = View(
+                    Container(
+                        TextDisplay(f"{emoji.error} Index has to be between `1` to `{len(player.queue)}`"),
+                        color=config.color.red,
+                    )
+                )
+                await ctx.respond(view=error_view, ephemeral=True)
+            else:
+                removed = player.queue.pop(index - 1)
+                remove_view = View(
+                    Container(
+                        TextDisplay(f"{emoji.leave} Removed **{removed.title}**."),
+                        color=config.color.red,
+                    )
+                )
+                await ctx.respond(view=remove_view)
 
 
 def setup(client: Client):

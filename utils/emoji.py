@@ -19,6 +19,8 @@ class Emoji:
     previous_white: str = "⏮️"
     start_white: str = "⏪"
     end_white: str = "⏩"
+    up_white: str = "⬆️"
+    down_white: str = "⬇️"
     upvote: str = "👍"
     downvote: str = "👎"
 
@@ -81,6 +83,7 @@ class Emoji:
     cpu: str = "📡"
     lavalink: str = "🌋"
     lavalink_white: str = "🌋"
+    more_white: str = "⚙️"
 
     pycord: str = "🐍"
     spotify: str = "🟢"

@@ -179,7 +179,7 @@ class Devs(commands.Cog):
                     color=config.color.red,
                 )
             )
-        await ctx.respond(view=view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+        await ctx.respond(view=view)
 
     # Restart
     @slash_command(guild_ids=config.owner_guild_ids, name="restart")

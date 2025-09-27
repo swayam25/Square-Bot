@@ -40,12 +40,7 @@ class ErrorHandler(commands.Cog):
                 if is_app:
                     await ctx.respond(file=file, ephemeral=True)
                 else:
-                    await ctx.reply(
-                        file=file,
-                        allowed_mentions=discord.AllowedMentions(
-                            users=False, roles=False, everyone=False, replied_user=False
-                        ),
-                    )
+                    await ctx.reply(file=file)
                 return
 
         elif isinstance(error, check.NotAuthorized):
@@ -76,11 +71,7 @@ class ErrorHandler(commands.Cog):
         if is_app:
             await ctx.respond(view=view, ephemeral=True)
         else:
-            await ctx.reply(
-                view=view,
-                delete_after=5,
-                allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False, replied_user=False),
-            )
+            await ctx.reply(view=view, delete_after=5)
 
 
 def setup(client: Client):

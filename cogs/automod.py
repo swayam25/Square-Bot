@@ -21,7 +21,11 @@ class AutoMod(commands.Cog):
         media_only_channel_id = guild_settings.media_only_channel_id
 
         if msg.channel.id == media_only_channel_id:
-            if not msg.attachments and not msg.content.startswith("http"):
+            if (
+                not msg.attachments
+                and not msg.content.startswith("http")
+                and msg.author.guild_permissions.manage_messages is False
+            ):
                 await msg.delete()
                 try:
                     view = View(
@@ -32,7 +36,9 @@ class AutoMod(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await msg.channel.send(view=view, delete_after=10)
+                    await msg.channel.send(
+                        view=view, allowed_mentions=discord.AllowedMentions(users=True), delete_after=10
+                    )
                 except discord.Forbidden:
                     pass
 

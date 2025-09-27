@@ -89,7 +89,7 @@ class SettingsCommand:
                     await set_auto_meme(self.ctx.guild.id, None)
         view = View(
             discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Successfully reset the {setting.lower()} settings."),
+                discord.ui.TextDisplay(f"{emoji.success} Successfully reset {setting.lower()} settings."),
                 color=config.color.green,
             )
         )

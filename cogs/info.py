@@ -259,7 +259,7 @@ class Info(commands.Cog):
                 ),
             )
         )
-        await ctx.respond(view=view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+        await ctx.respond(view=view)
 
     # Server info
     @info.command(name="server")
@@ -300,7 +300,7 @@ class Info(commands.Cog):
             view.add_item(
                 discord.ui.Button(style=discord.ButtonStyle.link, label="Banner URL", url=ctx.guild.banner.url)
             )
-        await ctx.respond(view=view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+        await ctx.respond(view=view)
 
     # Emoji info
     @info.command(name="emoji")
@@ -328,9 +328,7 @@ class Info(commands.Cog):
                 ),
                 discord.ui.Button(label="URL", style=discord.ButtonStyle.link, url=_emoji.url),
             )
-            await ctx.respond(
-                view=view, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False)
-            )
+            await ctx.respond(view=view)
         except discord.errors.HTTPException:
             view = View(
                 discord.ui.Container(

@@ -31,8 +31,6 @@ class View(discord.ui.View):
         super().__init__(*items, timeout=timeout)
         self.timeout = timeout
         self.disable_on_timeout = disable_on_timeout
-        if allowed_mentions is None:  # Default to no mentions
-            allowed_mentions = AllowedMentions(users=False, roles=False, everyone=False)
         self.allowed_mentions = allowed_mentions
         self.ctx = ctx
         self.check_author_interaction = check_author_interaction
@@ -69,6 +67,6 @@ class View(discord.ui.View):
             else:
                 message = self.message
             if message:
-                m = await message.edit(view=self, allowed_mentions=self.allowed_mentions)
+                m = await message.edit(view=self)
                 if m:
                     self._message = m
