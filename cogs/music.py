@@ -333,6 +333,11 @@ class QueueBtnCallback:
         # Remove from visible action buttons and adjust indices
         queue_view.visible_action_button = None
 
+        # Check if current page becomes empty and navigate to previous page if needed
+        total_pages = max(1, math.ceil(len(player.queue) / queue_view.items_per_page))
+        if queue_view.page > total_pages and total_pages > 0:
+            queue_view.page = total_pages
+
         queue_view.build()
         await interaction.response.edit_message(view=queue_view)
 
@@ -345,6 +350,11 @@ class QueueBtnCallback:
             return
 
         await player.play_track(player.queue.pop(track_index))
+
+        # Check if current page becomes empty and navigate to previous page if needed
+        total_pages = max(1, math.ceil(len(player.queue) / queue_view.items_per_page))
+        if queue_view.page > total_pages and total_pages > 0:
+            queue_view.page = total_pages
 
         await _update_queue_view(interaction, queue_view)
 
