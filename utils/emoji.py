@@ -21,6 +21,7 @@ class Emoji:
     end_white: str = "⏩"
     up_white: str = "⬆️"
     down_white: str = "⬇️"
+    bottom_right: str = "↪️"
     upvote: str = "👍"
     downvote: str = "👎"
 
@@ -92,6 +93,7 @@ class Emoji:
     reddit: str = "🔴"
 
     music: str = "🎵"
+    mic: str = "🎤"
     duration: str = "⏱️"
     duration_red: str = "⏱️"
     live: str = "🔴"

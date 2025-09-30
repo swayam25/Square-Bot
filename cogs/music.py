@@ -111,8 +111,9 @@ class MusicContainer(Container):
             Section(
                 TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
                 TextDisplay(
-                    f"{emoji.user} **Requested By**: {requester if requester else 'Unknown'}"
-                    f"\n{emoji.duration} **Duration**: {duration}"
+                    f"{emoji.user} **Requested By**: {requester if requester else 'Unknown'}\n"
+                    f"{emoji.mic} **Artist**: {sources.get(player.current.source_name, sources['_'])['emoji']} {player.current.author}\n"
+                    f"{emoji.duration} **Duration**: {duration}"
                 ),
                 accessory=Thumbnail(url=player.current.artwork_url),
             )
@@ -387,7 +388,8 @@ class QueueContainer(Container):
             queue_list.append(
                 Section(
                     TextDisplay(
-                        f"`{index + 1}.` **[{track.title}]({track.uri})** [{requester.mention if requester else 'Unknown'}]"
+                        f"`{index + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) [`{lavalink.format_time(track.duration)}`]\n"
+                        f"-# {emoji.bottom_right} {requester.mention if requester else 'Unknown'}"
                     ),
                     accessory=btn,
                 )
@@ -427,7 +429,8 @@ class QueueContainer(Container):
         self.add_item(TextDisplay(f"## {ctx.guild.name}'s Queue"))
         self.add_item(
             TextDisplay(
-                f"`0.` **[{player.current.title}]({player.current.uri})** [{current_requester.mention if current_requester else 'Unknown'}]"
+                f"`0.` [**{player.current.title}** by **{player.current.author}**]({player.current.uri}) [`{lavalink.format_time(track.duration)}`]\n"
+                f"-# {emoji.bottom_right} {current_requester.mention if current_requester else 'Unknown'}"
                 if player.current
                 else "No track playing."
             )
@@ -563,7 +566,7 @@ class Music(commands.Cog):
             store.play_msg(event.player.guild_id, play_msg, view, "set")
 
     @lavalink.listener(lavalink.TrackEndEvent)
-    async def track_end_hook(self, event: lavalink.TrackStartEvent):
+    async def track_end_hook(self, event: lavalink.TrackEndEvent):
         """Hook for track end event."""
         vc: discord.VoiceChannel = self.client.get_channel(int(event.player.channel_id))
         if vc is not None:
@@ -824,7 +827,9 @@ class Music(commands.Cog):
                     dur = f"{emoji.live} LIVE"
                 else:
                     dur = format_timedelta(datetime.timedelta(milliseconds=track.duration))
-                container.add_text(f"{src_info['emoji']} Added **[{track.title}]({track.uri})** - {dur}.")
+                container.add_text(
+                    f"{src_info['emoji']} Added [**{track.title}** by **{track.author}**]({track.uri}) [`{dur}`]."
+                )
                 await ctx.respond(view=View(container))
             if not player.is_playing:
                 await player.play()
@@ -859,7 +864,7 @@ class Music(commands.Cog):
                         TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
                         TextDisplay(
                             f"{emoji.user} **Requested By**: {requester.mention if requester else 'Unknown'}\n"
-                            f"{emoji.owner} **Artist**: {sources.get(player.current.source_name, sources['_'])['emoji']} {player.current.author}\n"
+                            f"{emoji.mic} **Artist**: {sources.get(player.current.source_name, sources['_'])['emoji']} {player.current.author}\n"
                             f"{emoji.duration} **Duration**: {duration}\n"
                             f"{emoji.volume} **Volume**: `{player.volume}%`\n"
                             f"{emoji.loop} **Loop**: {loop}\n"
@@ -914,229 +919,298 @@ class Music(commands.Cog):
                 await ctx.respond(view=view, ephemeral=True)
 
     @eq.command(name="karaoke")
-    @option("level", description="The level of the Karaoke effect.", required=False)
-    @option("mono_level", description="The mono level of the Karaoke effect.", required=False)
-    @option("filter_band", description="The frequency of the band to filter.", required=False)
-    @option("filter_width", description="The width of the filter.", required=False)
+    @option(
+        "intensity",
+        description="Karaoke intensity: Light, Medium, or Strong",
+        choices=["Light", "Medium", "Strong"],
+        required=False,
+    )
     async def karaoke(
         self,
         ctx: discord.ApplicationContext,
-        level: float = 2.0,
-        mono_level: float = 1.0,
-        filter_band: float = 22.0,
-        filter_width: float = 100.0,
+        intensity: str = "Medium",
     ):
+        """Remove center vocals for karaoke effect."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
+            # Preset configurations optimized for vocal removal
+            presets = {
+                "Light": {"level": 1.5, "mono_level": 0.8, "filter_band": 220.0, "filter_width": 100.0},
+                "Medium": {"level": 2.0, "mono_level": 1.0, "filter_band": 220.0, "filter_width": 100.0},
+                "Strong": {"level": 3.0, "mono_level": 1.2, "filter_band": 220.0, "filter_width": 100.0},
+            }
+            config = presets[intensity]
             eq = lavalink.Karaoke()
             eq.update(
-                level=level,
-                mono_level=mono_level,
-                filter_band=filter_band,
-                filter_width=filter_width,
+                level=config["level"],
+                mono_level=config["mono_level"],
+                filter_band=config["filter_band"],
+                filter_width=config["filter_width"],
             )
             await player.set_filter(eq)
             view = View(
                 Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Karaoke** equalizer."),
+                    TextDisplay(f"{emoji.equalizer} Applied **Karaoke** ({intensity}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
 
     @eq.command(name="timescale")
-    @option("speed", description="Playback speed.", required=False, min_value=0.1)
-    @option("pitch", description="Audio pitch.", required=False, min_value=0.1)
-    @option("rate", description="Playback rate.", required=False, min_value=0.1)
+    @option(
+        "speed",
+        description="Playback speed multiplier",
+        choices=["0.5x", "1x", "1.5x", "2x", "3x", "4x", "5x", "6x", "10x", "Nightcore", "Daycore"],
+        required=False,
+    )
     async def timescale(
         self,
         ctx: discord.ApplicationContext,
-        speed: float = 1.0,
-        pitch: float = 1.0,
-        rate: float = 1.0,
+        speed: str = "1x",
     ):
-        """Applies a timescale filter to the player."""
+        """Change playback speed and pitch."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
-            eq = lavalink.Timescale()
-            eq.update(speed=speed, pitch=pitch, rate=rate)
+            presets = {
+                "Nightcore": {"speed": 1.3, "pitch": 1.3, "rate": 1.0},
+                "Daycore": {"speed": 0.7, "pitch": 0.7, "rate": 1.0},
+            }
+
+            if speed in presets:
+                config = presets[speed]
+                eq = lavalink.Timescale()
+                eq.update(speed=config["speed"], pitch=config["pitch"], rate=config["rate"])
+            else:
+                # Convert speed string to float (remove 'x' and convert)
+                speed_value = float(speed.replace("x", ""))
+                eq = lavalink.Timescale()
+                eq.update(speed=speed_value, pitch=speed_value, rate=1.0)
+
             await player.set_filter(eq)
             view = View(
                 Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Timescale** equalizer."),
+                    TextDisplay(f"{emoji.equalizer} Applied **Timescale** ({speed}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
 
     @eq.command(name="tremolo")
-    @option("frequency", description="How frequently the effect should occur.", required=False, min_value=0.1)
-    @option("depth", description="The strength of the effect.", required=False, min_value=0.1, max_value=1)
+    @option("intensity", description="Tremolo intensity", choices=["Subtle", "Medium", "Strong"], required=False)
     async def tremolo(
         self,
         ctx: discord.ApplicationContext,
-        frequency: float = 2.0,
-        depth: float = 0.5,
+        intensity: str = "Medium",
     ):
-        """Applies a tremolo filter to the player."""
+        """Apply volume trembling effect."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
+            presets = {
+                "Subtle": {"frequency": 1.5, "depth": 0.3},
+                "Medium": {"frequency": 2.0, "depth": 0.5},
+                "Strong": {"frequency": 3.0, "depth": 0.7},
+            }
+            config = presets[intensity]
             eq = lavalink.Tremolo()
-            eq.update(frequency=frequency, depth=depth)
+            eq.update(frequency=config["frequency"], depth=config["depth"])
             await player.set_filter(eq)
             view = View(
                 Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Tremolo** equalizer."),
+                    TextDisplay(f"{emoji.equalizer} Applied **Tremolo** ({intensity}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
 
     @eq.command(name="vibrato")
-    @option(
-        "frequency",
-        description="How frequently the effect should occur.",
-        required=False,
-        min_value=0.1,
-        max_value=14,
-    )
-    @option("depth", description="The strength of the effect.", required=False, min_value=0.1, max_value=1)
+    @option("intensity", description="Vibrato intensity", choices=["Light", "Medium", "Heavy"], required=False)
     async def vibrato(
         self,
         ctx: discord.ApplicationContext,
-        frequency: float = 2.0,
-        depth: float = 0.5,
+        intensity: str = "Medium",
     ):
-        """Applies a vibrato filter to the player."""
+        """Apply pitch wobbling effect."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
+            presets = {
+                "Light": {"frequency": 1.5, "depth": 0.3},
+                "Medium": {"frequency": 2.0, "depth": 0.5},
+                "Heavy": {"frequency": 3.5, "depth": 0.8},
+            }
+            config = presets[intensity]
             eq = lavalink.Vibrato()
-            eq.update(frequency=frequency, depth=depth)
+            eq.update(frequency=config["frequency"], depth=config["depth"])
             await player.set_filter(eq)
             view = View(
                 Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Vibrato** equalizer."),
+                    TextDisplay(f"{emoji.equalizer} Applied **Vibrato** ({intensity}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
 
     @eq.command(name="rotation")
-    @option(
-        "rotation_hz",
-        description="How frequently the effect should occur.",
-        required=False,
-        min_value=0,
-    )
+    @option("speed", description="8D rotation speed", choices=["Slow", "Medium", "Fast"], required=False)
     async def rotation(
         self,
         ctx: discord.ApplicationContext,
-        rotation_hz: float = 0.0,
+        speed: str = "Medium",
     ):
-        """Applies a rotation (8D audio) filter to the player."""
+        """Apply 8D audio rotation effect."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
+            presets = {
+                "Slow": 0.1,
+                "Medium": 0.2,
+                "Fast": 0.3,
+            }
+            rotation_hz = presets[speed]
             eq = lavalink.Rotation()
             eq.update(rotation_hz=rotation_hz)
             await player.set_filter(eq)
             view = View(
                 Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Rotation** equalizer."),
+                    TextDisplay(f"{emoji.equalizer} Applied **Rotation** ({speed}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
 
     @eq.command(name="lowpass")
-    @option(
-        "smoothing",
-        description="The strength of the lowpass effect.",
-        required=False,
-        min_value=1.1,
-    )
+    @option("strength", description="Low-pass filter strength", choices=["Light", "Medium", "Heavy"], required=False)
     async def lowpass(
         self,
         ctx: discord.ApplicationContext,
-        smoothing: float = 20.0,
+        strength: str = "Medium",
     ):
-        """Applies a low-pass filter to the player."""
+        """Apply muffled/underwater sound effect."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
+            # Presets for low-pass filter strengths
+            presets = {
+                "Light": 5.0,
+                "Medium": 20.0,
+                "Heavy": 50.0,
+            }
+            smoothing = presets[strength]
             eq = lavalink.LowPass()
             eq.update(smoothing=smoothing)
             await player.set_filter(eq)
             view = View(
                 Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Lowpass** equalizer."),
+                    TextDisplay(f"{emoji.equalizer} Applied **Lowpass** ({strength}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
 
     @eq.command(name="channelmix")
-    @option("left_to_left", description="Left to Left volume.", required=False, min_value=0.0, max_value=1.0)
-    @option("left_to_right", description="Left to Right volume.", required=False, min_value=0.0, max_value=1.0)
-    @option("right_to_left", description="Right to Left volume.", required=False, min_value=0.0, max_value=1.0)
-    @option("right_to_right", description="Right to Right volume.", required=False, min_value=0.0, max_value=1.0)
+    @option(
+        "mode",
+        description="Channel mixing mode",
+        choices=["Mono", "Left Only", "Right Only", "Swap", "Wide Stereo"],
+        required=False,
+    )
     async def channelmix(
         self,
         ctx: discord.ApplicationContext,
-        left_to_left: float = 1.0,
-        left_to_right: float = 0.0,
-        right_to_left: float = 0.0,
-        right_to_right: float = 0.0,
+        mode: str = "Mono",
     ):
-        """Applies a channel mix filter to the player."""
+        """Mix audio channels for different stereo effects."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
+            # Presets for different channel mixing modes
+            presets = {
+                "Mono": {"left_to_left": 0.5, "left_to_right": 0.5, "right_to_left": 0.5, "right_to_right": 0.5},
+                "Left Only": {"left_to_left": 1.0, "left_to_right": 1.0, "right_to_left": 0.0, "right_to_right": 0.0},
+                "Right Only": {"left_to_left": 0.0, "left_to_right": 0.0, "right_to_left": 1.0, "right_to_right": 1.0},
+                "Swap": {"left_to_left": 0.0, "left_to_right": 1.0, "right_to_left": 1.0, "right_to_right": 0.0},
+                "Wide Stereo": {"left_to_left": 1.0, "left_to_right": 0.3, "right_to_left": 0.3, "right_to_right": 1.0},
+            }
+            config = presets[mode]
             eq = lavalink.ChannelMix()
             eq.update(
-                left_to_left=left_to_left,
-                left_to_right=left_to_right,
-                right_to_left=right_to_left,
-                right_to_right=right_to_right,
+                left_to_left=config["left_to_left"],
+                left_to_right=config["left_to_right"],
+                right_to_left=config["right_to_left"],
+                right_to_right=config["right_to_right"],
             )
             await player.set_filter(eq)
             view = View(
                 Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Channelmix** equalizer."),
+                    TextDisplay(f"{emoji.equalizer} Applied **Channel Mix** ({mode}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
 
     @eq.command(name="distortion")
-    @option("sin_offset", description="The sin offset.", required=False)
-    @option("sin_scale", description="The sin scale.", required=False)
-    @option("cos_offset", description="The cos offset.", required=False)
-    @option("cos_scale", description="The cos scale.", required=False)
-    @option("tan_offset", description="The tan offset.", required=False)
-    @option("tan_scale", description="The tan scale.", required=False)
-    @option("offset", description="The offset.", required=False)
-    @option("scale", description="The scale.", required=False)
+    @option(
+        "type",
+        description="Distortion type",
+        choices=["Light Crunch", "Heavy Metal", "Vintage", "Digital Clip"],
+        required=False,
+    )
     async def distortion(
         self,
         ctx: discord.ApplicationContext,
-        sin_offset: float = 0.0,
-        sin_scale: float = 1.0,
-        cos_offset: float = 0.0,
-        cos_scale: float = 1.0,
-        tan_offset: float = 0.0,
-        tan_scale: float = 1.0,
-        offset: float = 0.0,
-        scale: float = 1.0,
+        type: str = "Light Crunch",
     ):
-        """Applies a distortion filter to the player."""
+        """Apply audio distortion effects."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
+            # Presets for different distortion types
+            presets = {
+                "Light Crunch": {
+                    "sin_offset": 0.0,
+                    "sin_scale": 1.2,
+                    "cos_offset": 0.0,
+                    "cos_scale": 1.1,
+                    "tan_offset": 0.0,
+                    "tan_scale": 1.0,
+                    "offset": 0.05,
+                    "scale": 1.0,
+                },
+                "Heavy Metal": {
+                    "sin_offset": 0.1,
+                    "sin_scale": 1.5,
+                    "cos_offset": 0.1,
+                    "cos_scale": 1.4,
+                    "tan_offset": 0.05,
+                    "tan_scale": 1.2,
+                    "offset": 0.1,
+                    "scale": 1.1,
+                },
+                "Vintage": {
+                    "sin_offset": 0.0,
+                    "sin_scale": 1.1,
+                    "cos_offset": 0.0,
+                    "cos_scale": 1.05,
+                    "tan_offset": 0.0,
+                    "tan_scale": 1.0,
+                    "offset": 0.02,
+                    "scale": 0.95,
+                },
+                "Digital Clip": {
+                    "sin_offset": 0.2,
+                    "sin_scale": 2.0,
+                    "cos_offset": 0.2,
+                    "cos_scale": 1.8,
+                    "tan_offset": 0.1,
+                    "tan_scale": 1.5,
+                    "offset": 0.15,
+                    "scale": 1.2,
+                },
+            }
+            config = presets[type]
             eq = lavalink.Distortion()
             eq.update(
-                sin_offset=sin_offset,
-                sin_scale=sin_scale,
-                cos_offset=cos_offset,
-                cos_scale=cos_scale,
-                tan_offset=tan_offset,
-                tan_scale=tan_scale,
-                offset=offset,
-                scale=scale,
+                sin_offset=config["sin_offset"],
+                sin_scale=config["sin_scale"],
+                cos_offset=config["cos_offset"],
+                cos_scale=config["cos_scale"],
+                tan_offset=config["tan_offset"],
+                tan_scale=config["tan_scale"],
+                offset=config["offset"],
+                scale=config["scale"],
             )
             await player.set_filter(eq)
             view = View(
                 Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Distortion** equalizer."),
+                    TextDisplay(f"{emoji.equalizer} Applied **Distortion** ({type}) equalizer."),
                 )
             )
             await ctx.respond(view=view)

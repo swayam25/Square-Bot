@@ -159,22 +159,22 @@ class HelpView(View):
                     full_path = build_full_command_path(subcommand)
                     cmds += (
                         f"</{full_path}:{command.id}>" if command.id else f"`/{full_path}`"
-                    ) + f"\n{emoji.bullet} {subcommand.description}\n\n"
+                    ) + f"\n{emoji.bottom_right} {subcommand.description}\n\n"
             elif isinstance(command, SlashCommand):
                 full_path = command.name
                 cmds += (
                     f"</{full_path}:{command.id}>" if command.id else f"`/{full_path}`"
-                ) + f"\n{emoji.bullet} {command.description}\n\n"
+                ) + f"\n{emoji.bottom_right} {command.description}\n\n"
             elif isinstance(command, commands.Command):
                 if getattr(command, "hidden", False):
                     continue  # Skip hidden commands
                 display = f"`{resolved_prefix}{command.name}`"
                 cmds += (
                     display
-                    + f"\n{emoji.bullet} {command.help or command.description or 'No description provided.'}\n\n"
+                    + f"\n{emoji.bottom_right} {command.help or command.description or 'No description provided.'}\n\n"
                 )
             else:  # Fallback: unknown command type
-                cmds += f"`{getattr(command, 'name', 'unknown')}`\n{emoji.bullet} {getattr(command, 'description', 'No description provided.')}\n\n"
+                cmds += f"`{getattr(command, 'name', 'unknown')}`\n{emoji.bottom_right} {getattr(command, 'description', 'No description provided.')}\n\n"
         if not cmds:
             cmds = "No command found."
         cog_emoji = next((cog["emoji"] for cog in self.cogs if cog["name"] == cog_name), "")
