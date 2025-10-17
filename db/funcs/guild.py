@@ -101,7 +101,7 @@ async def set_ticket_cmds(guild_id: int, enabled: bool) -> None:
     guild = await GuildTable.filter(guild_id=guild_id).first()
     if not guild:
         guild = await add_guild(guild_id)
-    guild.ticket = enabled
+    guild.ticket_cmds = enabled
     await guild.save()
 
 
