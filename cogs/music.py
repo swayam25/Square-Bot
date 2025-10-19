@@ -256,7 +256,7 @@ class QueueBtnCallback:
             track_index (int): The index of the track in the queue.
             queue_view (QueueListView): The parent queue view for updating.
         """
-        if not player or not player.queue or track_index >= len(player.queue):
+        if not player or not player.queue or track_index >= len(player.queue) or not queue_view:
             return
 
         # Toggle action buttons visibility for this track
@@ -380,8 +380,8 @@ class QueueContainer(Container):
             requester = ctx.guild.get_member(track.requester)
             btn = Button(emoji=emoji.more_white)
             # Create a closure that captures the current index value
-            btn.callback = lambda i, track_idx=index, qv=queue_view: QueueBtnCallback.queue_btn_callback(
-                i, player=player, track_index=track_idx, queue_view=qv
+            btn.callback = lambda i, track_idx=index, p=player, qv=queue_view: QueueBtnCallback.queue_btn_callback(
+                i, player=p, track_index=track_idx, queue_view=qv
             )
 
             # Add the section for the track
@@ -429,7 +429,7 @@ class QueueContainer(Container):
         self.add_item(TextDisplay(f"## {ctx.guild.name}'s Queue"))
         self.add_item(
             TextDisplay(
-                f"`0.` [**{player.current.title}** by **{player.current.author}**]({player.current.uri}) [`{lavalink.format_time(track.duration)}`]\n"
+                f"`0.` [**{player.current.title}** by **{player.current.author}**]({player.current.uri}) [`{lavalink.format_time(player.current.duration)}`]\n"
                 f"-# {emoji.bottom_right} {current_requester.mention if current_requester else 'Unknown'}"
                 if player.current
                 else "No track playing."
@@ -471,15 +471,17 @@ class QueueListView(View):
         self.add_item(
             QueueContainer(self.player, self.ctx, page=self.page, items_per_page=self.items_per_page, queue_view=self)
         )
-        for btn_emoji, action in [
-            (emoji.start_white, "start"),
-            (emoji.previous_white, "previous"),
-            (emoji.next_white, "next"),
-            (emoji.end_white, "end"),
-        ]:
-            btn = Button(emoji=btn_emoji, style=discord.ButtonStyle.grey)
-            btn.callback = lambda i, action=action: self.interaction_callback(i, action=action)
-            self.add_item(btn)
+        total_pages = max(1, math.ceil(len(self.player.queue) / self.items_per_page))
+        if total_pages > 1:
+            for btn_emoji, action in [
+                (emoji.start_white, "start"),
+                (emoji.previous_white, "previous"),
+                (emoji.next_white, "next"),
+                (emoji.end_white, "end"),
+            ]:
+                btn = Button(emoji=btn_emoji, style=discord.ButtonStyle.grey)
+                btn.callback = lambda i, action=action: self.interaction_callback(i, action=action)
+                self.add_item(btn)
 
     async def interaction_callback(self, interaction: discord.Interaction, action: str):
         total_pages = max(1, math.ceil(len(self.player.queue) / self.items_per_page))
@@ -1403,8 +1405,7 @@ class Music(commands.Cog):
                 queue_view = QueueListView(client=self.client, ctx=ctx, page=page)
                 await ctx.respond(view=queue_view)
             else:
-                container = QueueContainer(player, ctx)
-                queue_view = View(container)
+                queue_view = QueueListView(client=self.client, ctx=ctx, page=1)
                 await ctx.respond(view=queue_view)
 
     # Clear queue
