@@ -75,13 +75,20 @@ class TicketTranscript:
             return discord.File(file, filename=f"ticket_{self.channel.id}.txt")
 
 
+def get_ticket_view(interaction: discord.Interaction) -> "TicketView":
+    """Creates a TicketView from an interaction."""
+    return TicketView(
+        author_id=int(interaction.channel.name.split("-")[1]),
+        reason=str(interaction.channel.topic or "No reason provided"),
+    )
+
+
 class TicketView(DesignerView):
-    def __init__(self, ctx: discord.ApplicationContext | None = None, reason: str = "No reason provided"):
+    def __init__(self, author_id: int = None, reason: str = "No reason provided"):
         super().__init__(timeout=None)
-        self.ctx = ctx
+        self.author_id = author_id
         self.reason = reason
-        if ctx:
-            self.build()
+        self.build()
 
     # Interaction check
     async def interaction_check(self, interaction: discord.Interaction):
@@ -100,8 +107,8 @@ class TicketView(DesignerView):
     # Build
     def build(self):
         """Builds the ticket view."""
-        if self.ctx and hasattr(self.ctx, "author") and self.ctx.author:
-            author_mention = self.ctx.author.mention
+        if self.author_id:
+            author_mention = f"<@{self.author_id}>"
         else:
             author_mention = "Unknown"
         self.add_item(
@@ -130,27 +137,29 @@ class TicketView(DesignerView):
 
     # Ticket close button
     async def close_ticket(self, interaction: discord.Interaction):
-        self.disable_all_items()
-        await interaction.edit(view=self)
+        view = get_ticket_view(interaction)
+        view.disable_all_items()
+        await interaction.edit(view=view)
         await close_ticket(interaction.channel, interaction.user, interaction.followup.send, closed_by=interaction.user)
 
     # Ticket summary
     async def ticket_transcript(self, interaction: discord.Interaction):
-        button: ui.Button = self.get_item("ticket_transcript")
+        view = get_ticket_view(interaction)
+        button: ui.Button = view.get_item("ticket_transcript")
         button.disabled = True
-        await interaction.edit(view=self)
+        await interaction.edit(view=view)
         await interaction.channel.trigger_typing()
         file = await TicketTranscript(interaction.channel).create()
-        view = DesignerView(
+        transcript_view = DesignerView(
             ui.Container(
                 ui.File("attachment://" + file.filename),
                 ui.TextDisplay(f"{emoji.user} **Requested by**: {interaction.user.mention}"),
             ),
         )
-        await interaction.followup.send(view=view, file=file)
+        await interaction.followup.send(view=transcript_view, file=file)
         await asyncio.sleep(2)
         button.disabled = False
-        await interaction.message.edit(view=self)
+        await interaction.message.edit(view=view)
 
 
 class Tickets(commands.Cog):
@@ -181,7 +190,7 @@ class Tickets(commands.Cog):
                 category = await ctx.guild.create_category("Tickets")
                 await category.set_permissions(ctx.guild.default_role, view_channel=False)
                 await category.set_permissions(ctx.guild.me, view_channel=True)
-            create_ch = await category.create_text_channel(f"ticket-{ctx.author.id}")
+            create_ch = await category.create_text_channel(f"ticket-{ctx.author.id}", topic=reason)
             await create_ch.set_permissions(
                 ctx.author,
                 view_channel=True,
@@ -209,7 +218,7 @@ class Tickets(commands.Cog):
             )
 
             view = TicketView(
-                ctx=ctx,
+                author_id=ctx.author.id,
                 reason=reason,
             )
             await create_ch.send(view=view)
