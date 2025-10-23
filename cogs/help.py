@@ -1,6 +1,7 @@
 import discord
 from core import Client
-from core.view import View
+from core.view import DesignerView
+from discord import ui
 from discord.commands import SlashCommand, SlashCommandGroup, slash_command
 from discord.ext import commands
 from typing import TypedDict
@@ -72,7 +73,7 @@ async def get_cogs(ctx: discord.ApplicationContext) -> list[CogDict]:
     return cogs
 
 
-class HelpView(View):
+class HelpView(DesignerView):
     def __init__(self, client: Client, ctx: discord.ApplicationContext, cogs: list[CogDict]):
         super().__init__(ctx=ctx, check_author_interaction=True)
         self.client = client
@@ -85,20 +86,20 @@ class HelpView(View):
         """Clears the view and constructs the UI for the home page."""
         self.clear_items()
         category_list = "\n".join(f"{cog['emoji']} `:` **{cog['name']}**" for cog in self.cogs)
-        container = discord.ui.Container(
-            discord.ui.TextDisplay(f"## {self.client.user.name} Help Desk"),
-            discord.ui.TextDisplay(
+        container = ui.Container(
+            ui.TextDisplay(f"## {self.client.user.name} Help Desk"),
+            ui.TextDisplay(
                 f"Hello {self.ctx.author.mention}! I'm {self.client.user.name}, use the dropdown menu below to see the commands of each category. If you need help, feel free to ask in the [support server]({config.support_server_url})."
             ),
-            discord.ui.TextDisplay(f"### Categories\n{category_list}"),
+            ui.TextDisplay(f"### Categories\n{category_list}"),
         )
         self.add_item(container)
         self.add_item(self._build_select_menu())
 
     # Builder util for select menu component
-    def _build_select_menu(self) -> discord.ui.Select:
+    def _build_select_menu(self) -> ui.Select:
         """Build the select menu for the help view."""
-        select_menu = discord.ui.Select(
+        select_menu = ui.Select(
             placeholder="Choose a category",
             min_values=1,
             max_values=1,
@@ -178,9 +179,9 @@ class HelpView(View):
         if not cmds:
             cmds = "No command found."
         cog_emoji = next((cog["emoji"] for cog in self.cogs if cog["name"] == cog_name), "")
-        container = discord.ui.Container(
-            discord.ui.TextDisplay(f"## {cog_emoji} {cog_name} Commands"),
-            discord.ui.TextDisplay(cmds.strip()),
+        container = ui.Container(
+            ui.TextDisplay(f"## {cog_emoji} {cog_name} Commands"),
+            ui.TextDisplay(cmds.strip()),
         )
         self.add_item(container)
         self.add_item(self._build_select_menu())

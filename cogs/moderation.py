@@ -2,7 +2,8 @@ import datetime
 import discord
 from babel.dates import format_timedelta
 from core import Client
-from core.view import View
+from core.view import DesignerView
+from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from utils import config
@@ -29,18 +30,18 @@ class Moderation(commands.Cog):
         amount_condition = [amount < 1, amount > 1000]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages."),
                     color=config.color.green,
                 )
             )
@@ -54,18 +55,18 @@ class Moderation(commands.Cog):
         amount_condition = [amount < 1, amount > 1000]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: not m.author.bot)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages sent by humans"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages sent by humans"),
                     color=config.color.green,
                 )
             )
@@ -79,18 +80,18 @@ class Moderation(commands.Cog):
         amount_condition = [amount < 1, amount > 1000]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: m.author.bot)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages sent by bots"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages sent by bots"),
                     color=config.color.green,
                 )
             )
@@ -105,20 +106,18 @@ class Moderation(commands.Cog):
         amount_condition = [amount < 1, amount > 1000]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: m.author.id == user.id)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(
-                        f"{emoji.success} Successfully purged `{amount}` messages sent by {user.mention}"
-                    ),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages sent by {user.mention}"),
                     color=config.color.green,
                 )
             )
@@ -133,20 +132,18 @@ class Moderation(commands.Cog):
         amount_condition = [amount < 1, amount > 1000]
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
             await ctx.channel.purge(limit=amount, check=lambda m: phrase.lower() in m.content.lower())
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(
-                        f"{emoji.success} Successfully purged `{amount}` messages containing `{phrase}`"
-                    ),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages containing `{phrase}`"),
                     color=config.color.green,
                 )
             )
@@ -160,9 +157,9 @@ class Moderation(commands.Cog):
         """Purges the amount of given messages after the given message ID."""
         amount_condition = [amount < 1, amount > 1000]
         if not message_id.isdigit():
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Message ID must be a valid integer."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Message ID must be a valid integer."),
                     color=config.color.red,
                 )
             )
@@ -173,9 +170,9 @@ class Moderation(commands.Cog):
         )  # Discord uses Javascript and Python have different integer sizes, so we convert it to int.
         await ctx.defer(ephemeral=True)
         if any(amount_condition):
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Amount must be."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Amount must be."),
                     color=config.color.red,
                 )
             )
@@ -184,9 +181,9 @@ class Moderation(commands.Cog):
             try:
                 message = await ctx.channel.fetch_message(message_id)
                 await ctx.channel.purge(limit=amount, check=lambda m: m.id > message.id)
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay(
                             f"{emoji.success} Successfully purged `{amount}` messages after `{message.id}`."
                         ),
                         color=config.color.green,
@@ -194,9 +191,9 @@ class Moderation(commands.Cog):
                 )
                 await ctx.respond(view=view, ephemeral=True)
             except discord.NotFound:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay(f"{emoji.error} Message with ID `{message_id}` not found."),
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Message with ID `{message_id}` not found."),
                         color=config.color.red,
                     )
                 )
@@ -210,31 +207,31 @@ class Moderation(commands.Cog):
     async def kick(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Kicks the mentioned user."""
         if user == ctx.author:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} You cannot use it on yourself"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You cannot use it on yourself"),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         elif isinstance(user, discord.Member) and user.top_role.position >= ctx.author.top_role.position:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you"),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
             await user.kick(reason=reason)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.Section(
-                        discord.ui.TextDisplay("## Kicked User"),
-                        discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.Section(
+                        ui.TextDisplay("## Kicked User"),
+                        ui.TextDisplay(
                             f"Successfully kicked **{user}** from the server.\n{emoji.description_red} **Reason**: {reason}"
                         ),
-                        accessory=discord.ui.Thumbnail(url=user.display_avatar.url),
+                        accessory=ui.Thumbnail(url=user.display_avatar.url),
                     ),
                     color=config.color.red,
                 )
@@ -260,17 +257,17 @@ class Moderation(commands.Cog):
     ):
         """Bans the a user from the server."""
         if user == ctx.author:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} You cannot use it on yourself"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You cannot use it on yourself"),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         elif isinstance(user, discord.Member) and user.top_role.position >= ctx.author.top_role.position:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you"),
                     color=config.color.red,
                 )
             )
@@ -281,18 +278,18 @@ class Moderation(commands.Cog):
                 del_after = parse_duration(delete_messages, max_duration="7d")
                 dur = int(del_after.total_seconds()) if del_after else None
             await ctx.guild.ban(user, reason=reason, delete_message_seconds=dur)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.Section(
-                        discord.ui.TextDisplay("## Banned User"),
-                        discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.Section(
+                        ui.TextDisplay("## Banned User"),
+                        ui.TextDisplay(
                             f"Successfully banned **{user.display_name}** from the server.\n"
                             f"{emoji.id_red} **ID**: `{user.id}`\n"
                             f"{emoji.user_red} **User**: `{user}`\n"
                             f"{emoji.description_red} **Reason**: {reason}\n"
                             f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after)}`"
                         ),
-                        accessory=discord.ui.Thumbnail(url=user.display_avatar.url),
+                        accessory=ui.Thumbnail(url=user.display_avatar.url),
                     ),
                     color=config.color.red,
                 )
@@ -307,9 +304,9 @@ class Moderation(commands.Cog):
     async def unban(self, ctx: discord.ApplicationContext, user_id: str, reason: str = None):
         """Unbans the user with the given ID."""
         if not user_id.isdigit():
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} User ID must be a valid integer."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} User ID must be a valid integer."),
                     color=config.color.red,
                 )
             )
@@ -319,17 +316,17 @@ class Moderation(commands.Cog):
         try:
             user = await self.client.fetch_user(user_id)
             await ctx.guild.unban(user, reason=reason)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.success} Successfully unbanned {user.mention}."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.success} Successfully unbanned {user.mention}."),
                     color=config.color.green,
                 )
             )
             await ctx.respond(view=view)
         except discord.NotFound:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} User with ID `{user_id}` not found."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} User with ID `{user_id}` not found."),
                     color=config.color.red,
                 )
             )
@@ -346,17 +343,17 @@ class Moderation(commands.Cog):
     ):
         """Timeouts the mentioned user."""
         if user == ctx.author:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} You cannot use it on yourself."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You cannot use it on yourself."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you."),
                     color=config.color.red,
                 )
             )
@@ -365,19 +362,19 @@ class Moderation(commands.Cog):
             try:
                 dur: datetime.timedelta = parse_duration(duration)
             except ValueError as e:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay(f"{emoji.error} {e}"),
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} {e}"),
                         color=config.color.red,
                     )
                 )
                 await ctx.respond(view=view, ephemeral=True)
                 return
             await user.timeout_for(dur, reason=reason)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay("## Timed out User"),
-                    discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay("## Timed out User"),
+                    ui.TextDisplay(
                         f"Successfully timed out {user.mention}.\n"
                         f"{emoji.duration} **Duration**: `{format_timedelta(dur)}`\n"
                         f"{emoji.description} **Reason**: {reason}"
@@ -394,27 +391,27 @@ class Moderation(commands.Cog):
     async def untimeout_user(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Untimeouts the mentioned user."""
         if user == ctx.author:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} You cannot use it on yourself"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You cannot use it on yourself"),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         elif user.top_role.position >= ctx.author.top_role.position:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you"),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
             await user.timeout(None, reason=reason)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay("## Untimed out User"),
-                    discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay("## Untimed out User"),
+                    ui.TextDisplay(
                         f"Successfully untimed out {user.mention}.\n{emoji.description} **Reason**: {reason}"
                     ),
                 )
@@ -429,12 +426,10 @@ class Moderation(commands.Cog):
         """Locks the current channel."""
         await ctx.channel.set_permissions(ctx.author, send_messages=True)
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay("## Channel Locked"),
-                discord.ui.TextDisplay(
-                    f"Successfully locked {ctx.channel.mention}.\n{emoji.description} **Reason**: {reason}"
-                ),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay("## Channel Locked"),
+                ui.TextDisplay(f"Successfully locked {ctx.channel.mention}.\n{emoji.description} **Reason**: {reason}"),
             )
         )
         await ctx.respond(view=view)
@@ -446,9 +441,9 @@ class Moderation(commands.Cog):
         """Unlocks the current channel."""
         await ctx.channel.set_permissions(ctx.author, send_messages=True)
         await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(
                     f"{emoji.success} Successfully unlocked {ctx.channel.mention}.",
                 ),
                 color=config.color.green,
@@ -470,27 +465,27 @@ class Moderation(commands.Cog):
     async def add_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Adds the mentioned role to the mentioned user."""
         if user.top_role.position >= ctx.author.top_role.position:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
             return
         if role.position >= ctx.guild.me.top_role.position:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Given role position is same or higher than my role."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Given role position is same or higher than my role."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
             return
         await user.add_roles(role)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(
                     f"{emoji.success} Successfully added {role.mention} to {user.mention}.",
                 ),
                 color=config.color.green,
@@ -505,27 +500,27 @@ class Moderation(commands.Cog):
     async def remove_role(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Removes the mentioned role from the mentioned user."""
         if user.top_role.position >= ctx.author.top_role.position:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Given user has same role or higher role than you."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
             return
         if role.position >= ctx.guild.me.top_role.position:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Given role position is same or higher than my role."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Given role position is same or higher than my role."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
             return
         await user.remove_roles(role)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(
                     f"{emoji.success} Successfully removed {role.mention} from {user.mention}.",
                 ),
                 color=config.color.green,

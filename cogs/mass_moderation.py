@@ -2,8 +2,9 @@ import datetime
 import discord
 from babel.dates import format_timedelta
 from core import Client
-from core.view import View
+from core.view import DesignerView
 from db.funcs.guild import fetch_guild_settings
+from discord import ui
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
 from utils import config
@@ -33,9 +34,9 @@ class MassModeration(commands.Cog):
         _users: list = []
         errors: list[tuple] = []
         if len(users) > 10:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} You can only mass kick upto 10 users."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You can only mass kick upto 10 users."),
                     color=config.color.red,
                 )
             )
@@ -57,10 +58,10 @@ class MassModeration(commands.Cog):
                     _users.append(_user.mention)
                 await _user.kick(reason=reason)
             if len(_users) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Mass Kicked Users"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Mass Kicked Users"),
+                        ui.TextDisplay(
                             f"Successfully kicked {len(_users)} users.\n"
                             f"{emoji.description} **Reason**: {reason}\n"
                             f"{emoji.user} **Users**: {', '.join(_users)}"
@@ -71,10 +72,10 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay("## Mass Kicked Users"),
-                            discord.ui.TextDisplay(
+                    mod_view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay("## Mass Kicked Users"),
+                            ui.TextDisplay(
                                 f"Successfully kicked {len(_users)} users.\n"
                                 f"{emoji.description_red} **Reason**: {reason}\n"
                                 f"{emoji.user_red} **Users**: {', '.join(_users)}\n"
@@ -85,10 +86,10 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(errors) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Can't kick users"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Can't kick users"),
+                        ui.TextDisplay(
                             "\n".join([f"{emoji.bullet_red} **{user}**: {reason}" for user, reason in errors])
                         ),
                         color=config.color.red,
@@ -118,9 +119,9 @@ class MassModeration(commands.Cog):
             del_after = parse_duration(delete_messages, max_duration="7d")
             dur = int(del_after.total_seconds()) if del_after else None
         if len(users) > 10:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} You can only mass ban upto 10 users."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You can only mass ban upto 10 users."),
                     color=config.color.red,
                 )
             )
@@ -141,10 +142,10 @@ class MassModeration(commands.Cog):
                 _users.append(_user.mention)
                 await ctx.guild.ban(_user, reason=reason, delete_message_seconds=dur)
             if len(_users) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Mass Banned Users"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Mass Banned Users"),
+                        ui.TextDisplay(
                             f"Successfully banned {len(_users)} users.\n"
                             f"{emoji.description_red} **Reason**: {reason}\n"
                             f"{emoji.user_red} **Users**: {', '.join(_users)}"
@@ -157,10 +158,10 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay("## Mass Banned Users"),
-                            discord.ui.TextDisplay(
+                    mod_view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay("## Mass Banned Users"),
+                            ui.TextDisplay(
                                 f"Successfully banned {len(_users)} users.\n"
                                 f"{emoji.description_red} **Reason**: {reason}\n"
                                 f"{emoji.user_red} **Users**: {', '.join(_users)}\n"
@@ -171,10 +172,10 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(errors) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Can't ban users"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Can't ban users"),
+                        ui.TextDisplay(
                             "\n".join([f"{emoji.bullet_red} **{user}**: {reason}" for user, reason in errors])
                         ),
                         color=config.color.red,
@@ -195,9 +196,9 @@ class MassModeration(commands.Cog):
         _users: list = []
         errors: list[tuple] = []
         if len(users) > 10:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} You can only mass unban upto 10 users."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You can only mass unban upto 10 users."),
                     color=config.color.red,
                 )
             )
@@ -213,10 +214,10 @@ class MassModeration(commands.Cog):
                 _users.append(_user.mention)
                 await ctx.guild.unban(_user, reason=reason)
             if len(_users) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Mass Unbanned Users"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Mass Unbanned Users"),
+                        ui.TextDisplay(
                             f"Successfully unbanned {len(_users)} users.\n"
                             f"{emoji.description} **Reason**: {reason}\n"
                             f"{emoji.user} **Users**: {', '.join(_users)}"
@@ -227,10 +228,10 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay("## Mass Unbanned Users"),
-                            discord.ui.TextDisplay(
+                    mod_view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay("## Mass Unbanned Users"),
+                            ui.TextDisplay(
                                 f"Successfully unbanned {len(_users)} users.\n"
                                 f"{emoji.description} **Reason**: {reason}\n"
                                 f"{emoji.user} **Users**: {', '.join(_users)}\n"
@@ -240,10 +241,10 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(errors) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Can't unban users"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Can't unban users"),
+                        ui.TextDisplay(
                             "\n".join([f"{emoji.bullet_red} **{user}**: {reason}" for user, reason in errors])
                         ),
                         color=config.color.red,
@@ -266,9 +267,9 @@ class MassModeration(commands.Cog):
         try:
             dur: datetime.timedelta = parse_duration(duration)
         except ValueError as e:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} {e}"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} {e}"),
                     color=config.color.red,
                 )
             )
@@ -276,9 +277,9 @@ class MassModeration(commands.Cog):
             return
         errors: list[tuple] = []
         if len(users) > 10:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} You can only mass timeout upto 10 users."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You can only mass timeout upto 10 users."),
                     color=config.color.red,
                 )
             )
@@ -303,10 +304,10 @@ class MassModeration(commands.Cog):
                     _users.append(_user.mention)
                 await _user.timeout_for(dur, reason=reason)
             if len(_users) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Mass Timed out Users"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Mass Timed out Users"),
+                        ui.TextDisplay(
                             f"Successfully timed out {len(_users)} users.\n"
                             f"{emoji.duration} **Duration**: `{format_timedelta(dur)}`\n"
                             f"{emoji.description} **Reason**: {reason}\n"
@@ -318,10 +319,10 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay("## Mass Timed out Users"),
-                            discord.ui.TextDisplay(
+                    mod_view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay("## Mass Timed out Users"),
+                            ui.TextDisplay(
                                 f"Successfully timed out {len(_users)} users.\n"
                                 f"{emoji.duration_red} **Duration**: `{format_timedelta(dur)}`\n"
                                 f"{emoji.description_red} **Reason**: {reason}\n"
@@ -333,10 +334,10 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(errors) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Can't timeout users"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Can't timeout users"),
+                        ui.TextDisplay(
                             "\n".join([f"{emoji.bullet_red} **{user}**: {reason}" for user, reason in errors])
                         ),
                         color=config.color.red,
@@ -357,9 +358,9 @@ class MassModeration(commands.Cog):
         _users: list = []
         errors: list[tuple] = []
         if len(users) > 10:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} You can only mass untimeout upto 10 users."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You can only mass untimeout upto 10 users."),
                     color=config.color.red,
                 )
             )
@@ -381,10 +382,10 @@ class MassModeration(commands.Cog):
                     _users.append(_user.mention)
                 await _user.timeout(None, reason=reason)
             if len(_users) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Mass Untimed out Users"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Mass Untimed out Users"),
+                        ui.TextDisplay(
                             f"Successfully untimed out {len(_users)} users.\n"
                             f"{emoji.description} **Reason**: {reason}\n"
                             f"{emoji.user} **Users**: {', '.join(_users)}"
@@ -395,10 +396,10 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay("## Mass Untimed out Users"),
-                            discord.ui.TextDisplay(
+                    mod_view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay("## Mass Untimed out Users"),
+                            ui.TextDisplay(
                                 f"Successfully untimed out {len(_users)} users.\n"
                                 f"{emoji.description_red} **Reason**: {reason}\n"
                                 f"{emoji.user_red} **Users**: {', '.join(_users)}\n"
@@ -409,10 +410,10 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(errors) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Can't untimeout users"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Can't untimeout users"),
+                        ui.TextDisplay(
                             "\n".join([f"{emoji.bullet_red} **{user}**: {reason}" for user, reason in errors])
                         ),
                         color=config.color.red,
@@ -442,9 +443,9 @@ class MassModeration(commands.Cog):
         role_errors: list[tuple] = []
         user_errors: list[tuple] = []
         if len(users) > 10 or len(roles) > 10:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} You can only mass add 10 roles upto 10 users."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You can only mass add 10 roles upto 10 users."),
                     color=config.color.red,
                 )
             )
@@ -476,10 +477,10 @@ class MassModeration(commands.Cog):
                     for role in _roles:
                         await _user.add_roles(role)
             if len(_users) > 0 and len(_roles) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Mass Added Roles"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Mass Added Roles"),
+                        ui.TextDisplay(
                             f"Successfully added {len(_roles)} roles to {len(_users)} users.\n"
                             f"{emoji.user} **Users**: {', '.join(_users)}\n"
                             f"{emoji.role} **Roles**: {', '.join([role.mention for role in _roles])}"
@@ -490,10 +491,10 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay("## Mass Added Roles"),
-                            discord.ui.TextDisplay(
+                    mod_view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay("## Mass Added Roles"),
+                            ui.TextDisplay(
                                 f"Successfully added {len(_roles)} roles to {len(_users)} users.\n"
                                 f"{emoji.user_red} **Users**: {', '.join(_users)}\n"
                                 f"{emoji.role_red} **Roles**: {', '.join([role.mention for role in _roles])}\n"
@@ -504,10 +505,10 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(role_errors) > 0 or len(user_errors) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Can't add roles"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Can't add roles"),
+                        ui.TextDisplay(
                             "\n".join(
                                 [f"{emoji.bullet_red} **{obj}**: {reason}" for obj, reason in role_errors + user_errors]
                             )
@@ -539,9 +540,9 @@ class MassModeration(commands.Cog):
         role_errors: list[tuple] = []
         user_errors: list[tuple] = []
         if len(users) > 10 or len(roles) > 10:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} You can only mass remove 10 roles upto 10 users."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You can only mass remove 10 roles upto 10 users."),
                     color=config.color.red,
                 )
             )
@@ -573,10 +574,10 @@ class MassModeration(commands.Cog):
                     for role in _roles:
                         await _user.remove_roles(role)
             if len(_users) > 0 and len(_roles) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Mass Removed Roles"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Mass Removed Roles"),
+                        ui.TextDisplay(
                             f"Successfully removed {len(_roles)} roles from {len(_users)} users.\n"
                             f"{emoji.user} **Users**: {', '.join(_users)}\n"
                             f"{emoji.role} **Roles**: {', '.join([role.mention for role in _roles])}"
@@ -587,10 +588,10 @@ class MassModeration(commands.Cog):
                 channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
-                    mod_view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay("## Mass Removed Roles"),
-                            discord.ui.TextDisplay(
+                    mod_view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay("## Mass Removed Roles"),
+                            ui.TextDisplay(
                                 f"Successfully removed {len(_roles)} roles from {len(_users)} users.\n"
                                 f"{emoji.user_red} **Users**: {', '.join(_users)}\n"
                                 f"{emoji.role_red} **Roles**: {', '.join([role.mention for role in _roles])}\n"
@@ -601,10 +602,10 @@ class MassModeration(commands.Cog):
                     )
                     await log_ch.send(view=mod_view)
             if len(role_errors) > 0 or len(user_errors) > 0:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Can't remove roles"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Can't remove roles"),
+                        ui.TextDisplay(
                             "\n".join(
                                 [f"{emoji.bullet_red} **{obj}**: {reason}" for obj, reason in role_errors + user_errors]
                             )

@@ -5,7 +5,8 @@ import os
 import sys
 import textwrap
 from core import Client
-from core.view import View
+from core.view import DesignerView
+from discord import ActionRow, ui
 from discord.ext import commands
 from io import BytesIO, StringIO
 from utils import check, config
@@ -16,7 +17,7 @@ running_tasks = {}
 manual_cancels = set()
 
 
-class TaskManagerView(View):
+class TaskManagerView(DesignerView):
     """View for managing running eval tasks."""
 
     def __init__(self, eval_cog, ctx: commands.Context, page: int = 1):
@@ -32,15 +33,15 @@ class TaskManagerView(View):
         total_tasks = len(tasks_list)
 
         if total_tasks == 0:
-            container = discord.ui.Container()
-            container.add_item(discord.ui.TextDisplay(f"{emoji.error} No running eval tasks."))
+            container = ui.Container()
+            container.add_item(ui.TextDisplay(f"{emoji.error} No running eval tasks."))
             container.color = config.color.red
             self.add_item(container)
             return
 
         # Main container with tasks
-        container = discord.ui.Container()
-        container.add_item(discord.ui.TextDisplay("## Running Eval Tasks"))
+        container = ui.Container()
+        container.add_item(ui.TextDisplay("## Running Eval Tasks"))
 
         # Calculate pagination
         total_pages = max(1, (total_tasks + self.items_per_page - 1) // self.items_per_page)
@@ -50,21 +51,19 @@ class TaskManagerView(View):
 
         # Add task items
         for task_id, (task, task_ctx) in page_tasks:
-            sec = discord.ui.Section()
+            sec = ui.Section()
             status = "Starting" if task is None else ("Completed" if task.done() else "Running")
-            sec.add_item(discord.ui.TextDisplay(f"**Task `{task_id}`** [{status}]: {task_ctx.channel.mention}\n"))
+            sec.add_item(ui.TextDisplay(f"**Task `{task_id}`** [{status}]: {task_ctx.channel.mention}\n"))
 
             # Delete button
-            delete_btn = discord.ui.Button(
-                emoji=emoji.bin_white, style=discord.ButtonStyle.grey, custom_id=f"delete_{task_id}"
-            )
+            delete_btn = ui.Button(emoji=emoji.bin_white, style=discord.ButtonStyle.grey, custom_id=f"delete_{task_id}")
             delete_btn.callback = lambda i, tid=task_id: self._delete_task(i, tid)
             sec.set_accessory(delete_btn)
             container.add_item(sec)
 
         if total_pages > 1:
-            container.add_item(discord.ui.Separator())
-            container.add_item(discord.ui.TextDisplay(f"-# Viewing Page {self.page}/{total_pages}"))
+            container.add_item(ui.Separator())
+            container.add_item(ui.TextDisplay(f"-# Viewing Page {self.page}/{total_pages}"))
 
         self.add_item(container)
 
@@ -73,12 +72,22 @@ class TaskManagerView(View):
 
     def _add_control_buttons(self, total_pages):
         """Add pagination and control buttons."""
+        row1 = ActionRow()
+        row2 = ActionRow()
+
         # Pagination buttons (if needed)
         if total_pages > 1:
             for emoji_icon, action in [(emoji.start_white, "start"), (emoji.previous_white, "previous")]:
-                btn = discord.ui.Button(emoji=emoji_icon, style=discord.ButtonStyle.grey, row=1)
+                btn = ui.Button(emoji=emoji_icon, style=discord.ButtonStyle.grey, row=1)
                 btn.callback = lambda i, a=action: self._paginate(i, a)
-                self.add_item(btn)
+                row1.add_item(btn)
+
+        # More pagination buttons
+        if total_pages > 1:
+            for emoji_icon, action in [(emoji.next_white, "next"), (emoji.end_white, "end")]:
+                btn = ui.Button(emoji=emoji_icon, style=discord.ButtonStyle.grey, row=1)
+                btn.callback = lambda i, a=action: self._paginate(i, a)
+                row1.add_item(btn)
 
         # Control buttons
         for emoji_icon, label, callback, disabled in [
@@ -86,25 +95,19 @@ class TaskManagerView(View):
             (None, "‎ ", None, True),
             (emoji.restart_white, "Refresh", self._refresh, False),
         ]:
-            btn = discord.ui.Button(
-                emoji=emoji_icon, label=label, style=discord.ButtonStyle.grey, row=2, disabled=disabled
-            )
+            btn = ui.Button(emoji=emoji_icon, label=label, style=discord.ButtonStyle.grey, row=2, disabled=disabled)
             btn.callback = callback
-            self.add_item(btn)
+            row2.add_item(btn)
 
-        # More pagination buttons
-        if total_pages > 1:
-            for emoji_icon, action in [(emoji.next_white, "next"), (emoji.end_white, "end")]:
-                btn = discord.ui.Button(emoji=emoji_icon, style=discord.ButtonStyle.grey, row=1)
-                btn.callback = lambda i, a=action: self._paginate(i, a)
-                self.add_item(btn)
+        self.add_item(row1)
+        self.add_item(row2)
 
     async def _delete_task(self, interaction: discord.Interaction, task_id: int):
         """Delete a specific task."""
         success = self.eval_cog.stop_task(task_id)
-        embed_view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(
+        embed_view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(
                     f"{emoji.success} Task `{task_id}` stopped."
                     if success
                     else f"{emoji.error} Task `{task_id}` not found."
@@ -120,8 +123,8 @@ class TaskManagerView(View):
         """Stop all running tasks."""
         stopped_count = self.eval_cog.stop_all_tasks()
         self.clear_items()
-        container = discord.ui.Container(
-            discord.ui.TextDisplay(f"{emoji.success} Stopped `{stopped_count}` running eval task(s)."),
+        container = ui.Container(
+            ui.TextDisplay(f"{emoji.success} Stopped `{stopped_count}` running eval task(s)."),
             color=config.color.green,
         )
         self.add_item(container)
@@ -262,18 +265,18 @@ class Eval(commands.Cog):
             await self.send_task_result(ctx, task_id, output, result)
         except asyncio.CancelledError:
             if task_id not in manual_cancels:
-                embed_view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay(f"{emoji.error} Task `{task_id}` was cancelled."),
+                embed_view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Task `{task_id}` was cancelled."),
                         color=config.color.red,
                     )
                 )
                 await ctx.send(view=embed_view)
         except Exception as e:
-            embed_view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Task `{task_id}` failed."),
-                    discord.ui.TextDisplay(f"```\n{str(e)}\n```"),
+            embed_view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Task `{task_id}` failed."),
+                    ui.TextDisplay(f"```\n{str(e)}\n```"),
                     color=config.color.red,
                 )
             )
@@ -299,7 +302,7 @@ class Eval(commands.Cog):
             file = discord.File(BytesIO(full_content.encode()), filename=filename)
             return await ctx.send(file=file)
         else:
-            view = View(discord.ui.Container(discord.ui.TextDisplay(response), color=config.color.green))
+            view = DesignerView(ui.Container(ui.TextDisplay(response), color=config.color.green))
             return await ctx.send(view=view)
 
     # Command Handlers
@@ -309,18 +312,18 @@ class Eval(commands.Cog):
 
         if code_lower in ["stop", "cancel", "kill"]:
             if not running_tasks:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay(f"{emoji.error} No running eval tasks to stop."),
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} No running eval tasks to stop."),
                         color=config.color.red,
                     )
                 )
                 return await ctx.reply(view=view, mention_author=False)
 
             stopped_count = self.stop_all_tasks()
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.success} Stopped `{stopped_count}` running eval task(s)."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.success} Stopped `{stopped_count}` running eval task(s)."),
                     color=config.color.green,
                 )
             )
@@ -350,10 +353,10 @@ class Eval(commands.Cog):
         running_tasks[task_id] = (task, ctx)  # Update with actual task
         self.cleanup_completed_tasks()
 
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Started eval task `{task_id}`."),
-                discord.ui.TextDisplay("-# Use `eval list` to manage running tasks."),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Started eval task `{task_id}`."),
+                ui.TextDisplay("-# Use `eval list` to manage running tasks."),
                 color=config.color.green,
             )
         )

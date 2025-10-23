@@ -1,7 +1,8 @@
 import discord
 from core import Client
-from core.view import View
+from core.view import DesignerView
 from db.funcs.guild import fetch_guild_settings
+from discord import ui
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
@@ -17,15 +18,15 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             join_ch = await self.client.fetch_channel(channel_id)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.Section(
-                        discord.ui.TextDisplay("## Member Joined"),
-                        discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.Section(
+                        ui.TextDisplay("## Member Joined"),
+                        ui.TextDisplay(
                             f"{emoji.user} **Name**: {user.mention} (`{user.name}`)\n"
                             f"{emoji.duration} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}"
                         ),
-                        accessory=discord.ui.Thumbnail(user.avatar.url if user.avatar else ""),
+                        accessory=ui.Thumbnail(user.avatar.url if user.avatar else ""),
                     ),
                 )
             )
@@ -37,16 +38,16 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             leave_ch = await self.client.fetch_channel(channel_id)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.Section(
-                        discord.ui.TextDisplay("## Member Left"),
-                        discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.Section(
+                        ui.TextDisplay("## Member Left"),
+                        ui.TextDisplay(
                             f"{emoji.user_red} **Name**: {user.mention} (`{user.name}`)\n"
                             f"{emoji.duration_red} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n"
                             f"{emoji.join_red} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}"
                         ),
-                        accessory=discord.ui.Thumbnail(user.avatar.url if user.avatar else ""),
+                        accessory=ui.Thumbnail(user.avatar.url if user.avatar else ""),
                     ),
                     color=config.color.red,
                 )
@@ -59,16 +60,16 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             ban_ch = await self.client.fetch_channel(channel_id)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.Section(
-                        discord.ui.TextDisplay("## Member Banned"),
-                        discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.Section(
+                        ui.TextDisplay("## Member Banned"),
+                        ui.TextDisplay(
                             f"{emoji.user_red} **Name**: {user.mention} (`{user.name}`)\n"
                             f"{emoji.duration_red} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}\n"
                             f"{emoji.duration_red} **Server Joined**: {discord.utils.format_dt(user.joined_at, 'R')}"
                         ),
-                        accessory=discord.ui.Thumbnail(user.avatar.url if user.avatar else ""),
+                        accessory=ui.Thumbnail(user.avatar.url if user.avatar else ""),
                     ),
                     color=config.color.red,
                 )
@@ -81,15 +82,15 @@ class Logs(commands.Cog):
         channel_id = (await fetch_guild_settings(user.guild.id)).mod_log_channel_id
         if channel_id is not None:
             unban_ch = await self.client.fetch_channel(channel_id)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.Section(
-                        discord.ui.TextDisplay("## Member Unbanned"),
-                        discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.Section(
+                        ui.TextDisplay("## Member Unbanned"),
+                        ui.TextDisplay(
                             f"{emoji.user} **Name**: {user.mention} (`{user.name}`)\n"
                             f"{emoji.duration} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}"
                         ),
-                        accessory=discord.ui.Thumbnail(user.avatar.url if user.avatar else ""),
+                        accessory=ui.Thumbnail(user.avatar.url if user.avatar else ""),
                     ),
                 )
             )
@@ -112,9 +113,9 @@ class Logs(commands.Cog):
                 return
             elif channel_id is not None:
                 edit_ch = await self.client.fetch_channel(channel_id)
-                items: list[discord.ui.Item] = [
-                    discord.ui.TextDisplay("## Message Edited"),
-                    discord.ui.TextDisplay(
+                items: list[ui.Item] = [
+                    ui.TextDisplay("## Message Edited"),
+                    ui.TextDisplay(
                         f"{emoji.owner} **Author**: {msg_before.author.mention}\n"
                         f"{emoji.channel} **Channel**: {msg_before.channel.mention}\n"
                         f"{emoji.msg_red} **Original Message**: {msg_before.content}\n"
@@ -122,15 +123,15 @@ class Logs(commands.Cog):
                     ),
                 ]
                 if msg_before.attachments:
-                    items.append(discord.ui.TextDisplay(f"## Removed Attachment [`{len(msg_before.attachments)}`]"))
+                    items.append(ui.TextDisplay(f"## Removed Attachment [`{len(msg_before.attachments)}`]"))
                     items.append(
-                        discord.ui.MediaGallery(
-                            discord.MediaGalleryItem(url=media.url) for media in msg_before.attachments
-                        )
+                        ui.MediaGallery(discord.MediaGalleryItem(url=media.url) for media in msg_before.attachments)
                     )
-                view = View(
-                    discord.ui.Container(*items),
-                    discord.ui.Button(label="Jump to Message", url=msg_before.jump_url, style=discord.ButtonStyle.link),
+                view = DesignerView(
+                    ui.Container(*items),
+                    ui.ActionRow(
+                        ui.Button(label="Jump to Message", url=msg_before.jump_url, style=discord.ButtonStyle.link),
+                    ),
                 )
                 await edit_ch.send(view=view)
 
@@ -143,20 +144,18 @@ class Logs(commands.Cog):
                 return
             elif channel_id is not None:
                 del_ch = await self.client.fetch_channel(channel_id)
-                items: list[discord.ui.Item] = [
-                    discord.ui.TextDisplay("## Message Deleted"),
-                    discord.ui.TextDisplay(
+                items: list[ui.Item] = [
+                    ui.TextDisplay("## Message Deleted"),
+                    ui.TextDisplay(
                         f"{emoji.owner_red} **Author**: {msg.author.mention}\n"
                         f"{emoji.channel_red} **Channel**: {msg.channel.mention}\n"
                         f"{emoji.msg_red} **Message**: {msg.content}"
                     ),
                 ]
                 if msg.attachments:
-                    items.append(discord.ui.TextDisplay(f"## Deleted Attachment [`{len(msg.attachments)}`]"))
-                    items.append(
-                        discord.ui.MediaGallery(discord.MediaGalleryItem(url=media.url) for media in msg.attachments)
-                    )
-                view = View(discord.ui.Container(*items, color=config.color.red))
+                    items.append(ui.TextDisplay(f"## Deleted Attachment [`{len(msg.attachments)}`]"))
+                    items.append(ui.MediaGallery(discord.MediaGalleryItem(url=media.url) for media in msg.attachments))
+                view = DesignerView(ui.Container(*items, color=config.color.red))
                 await del_ch.send(view=view)
 
     # Bulk delete
@@ -170,10 +169,10 @@ class Logs(commands.Cog):
                 return
             elif channel_id is not None:
                 bulk_ch = await self.client.fetch_channel(channel_id)
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Bulk Message Deleted"),
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Bulk Message Deleted"),
+                        ui.TextDisplay(
                             f"{emoji.owner_red} **Author**: {msgs[0].author.mention}\n"
                             f"{emoji.channel_red} **Channel**: {msgs[0].channel.mention}\n"
                             f"{emoji.msg_red} **Messages Deleted**: {len(msgs)}"

@@ -1,6 +1,6 @@
 import asyncio
 import discord
-from core.view import View
+from core.view import DesignerView
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -49,9 +49,9 @@ def play_ch(
 def play_msg(
     guild_id: int,
     msg: Types.PlayerMessage | None = None,
-    view: View | None = None,
+    view: DesignerView | None = None,
     mode: Literal["get", "set", "clear"] = "get",
-) -> tuple[Types.PlayerMessage, View] | None:
+) -> tuple[Types.PlayerMessage, DesignerView] | None:
     """
     Gets or sets the play message for a guild.
 

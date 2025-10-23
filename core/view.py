@@ -1,14 +1,13 @@
-import discord
 from discord import AllowedMentions, ApplicationContext, Interaction
-from discord.ui import Container, Item, TextDisplay
+from discord.ui import Container, DesignerView, Item, TextDisplay
 from discord.ui.view import V
 from utils import config
 from utils.emoji import emoji
 
 
-class View(discord.ui.View):
+class DesignerView(DesignerView):
     """
-    A custom View class for Discord UI components derived from `View`.
+    A custom DesignerView class for Discord UI components derived from `DesignerView`.
 
     Parameters:
         *items (Item[V]): The items to be added to the view.
@@ -47,7 +46,7 @@ class View(discord.ui.View):
         """
         if self.check_author_interaction:
             if interaction.user != self.ctx.author:
-                view = View(
+                view = DesignerView(
                     Container(
                         TextDisplay(f"{emoji.error} You are not the author of this command."),
                         color=config.color.red,

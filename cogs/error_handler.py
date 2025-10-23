@@ -2,7 +2,8 @@ import discord
 import io
 import traceback
 from core import Client
-from core.view import View
+from core.view import DesignerView
+from discord import ui
 from discord.ext import commands
 from rich.console import Console
 from rich.traceback import Traceback
@@ -66,7 +67,7 @@ class ErrorHandler(commands.Cog):
 
         else:
             msg = f"{emoji.error} An unexpected error occurred. Please try again later."
-        view = View(discord.ui.Container(discord.ui.TextDisplay(msg), color=config.color.red))
+        view = DesignerView(ui.Container(ui.TextDisplay(msg), color=config.color.red))
 
         if is_app:
             await ctx.respond(view=view, ephemeral=True)

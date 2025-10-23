@@ -4,7 +4,8 @@ import discord
 import re
 from attr import dataclass
 from babel.units import format_unit
-from core.view import View
+from core.view import DesignerView
+from discord import ui
 from utils.emoji import emoji
 
 
@@ -84,7 +85,7 @@ def fmt_memory(bytes_value):
 @dataclass
 class MemeViewData:
     nsfw: bool
-    view: View
+    view: DesignerView
 
 
 async def meme_view(subreddit: str | None = None) -> MemeViewData | None:
@@ -102,14 +103,14 @@ async def meme_view(subreddit: str | None = None) -> MemeViewData | None:
             if response.status == 200:
                 data = await response.json()
                 if "url" in data:
-                    view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay(f"## [{data['title']}]({data['postLink']})"),
-                            discord.ui.TextDisplay(
+                    view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay(f"## [{data['title']}]({data['postLink']})"),
+                            ui.TextDisplay(
                                 f"{emoji.reddit} **Subreddit**: [`r/{data['subreddit']}`](https://reddit.com/r/{data['subreddit']})\n"
                                 f"{emoji.upvote} **Upvotes**: {data['ups']}"
                             ),
-                            discord.ui.MediaGallery(discord.MediaGalleryItem(url=data["url"])),
+                            ui.MediaGallery(discord.MediaGalleryItem(url=data["url"])),
                         )
                     )
                     return MemeViewData(

@@ -3,8 +3,9 @@ import datetime
 import discord
 import io
 from core import Client
-from core.view import View
+from core.view import DesignerView
 from db.funcs.guild import fetch_guild_settings
+from discord import ui
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
 from utils import config
@@ -18,9 +19,9 @@ async def close_ticket(
     closed_by: discord.User | discord.Member | None = None,
 ):
     """Helper function to close a ticket."""
-    view = View(
-        discord.ui.Container(
-            discord.ui.TextDisplay(
+    view = DesignerView(
+        ui.Container(
+            ui.TextDisplay(
                 f"Closing ticket {discord.utils.format_dt(datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=5), 'R')}\n"
                 f"{emoji.owner_red} **Author**: {author.mention}"
                 + (f"\n{emoji.user_red} **Closed By**: {closed_by.mention}" if closed_by else "")
@@ -36,11 +37,11 @@ async def close_ticket(
     log_ch_id = (await fetch_guild_settings(channel.guild.id)).ticket_log_channel_id
     if log_ch_id is not None:
         logging_ch = await channel.guild.fetch_channel(log_ch_id)
-        view = View(
-            discord.ui.Container(
-                discord.ui.Section(
-                    discord.ui.TextDisplay("## Ticket Closed"),
-                    discord.ui.TextDisplay(
+        view = DesignerView(
+            ui.Container(
+                ui.Section(
+                    ui.TextDisplay("## Ticket Closed"),
+                    ui.TextDisplay(
                         f"{emoji.owner_red} **Author**: <@{channel.name.split('-')[1]}>\n{emoji.user_red} **Closed By**: {author.mention}"
                     ),
                 ),
@@ -74,7 +75,7 @@ class TicketTranscript:
             return discord.File(file, filename=f"ticket_{self.channel.id}.txt")
 
 
-class TicketView(View):
+class TicketView(DesignerView):
     def __init__(self, ctx: discord.ApplicationContext | None = None, reason: str = "No reason provided"):
         super().__init__(timeout=None)
         self.ctx = ctx
@@ -87,11 +88,9 @@ class TicketView(View):
         if interaction.user.guild_permissions.manage_channels:
             return True
         else:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(
-                        f"{emoji.error} You don't have `Manage Channels` permission to use this command."
-                    ),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You don't have `Manage Channels` permission to use this command."),
                     color=config.color.red,
                 )
             )
@@ -106,27 +105,28 @@ class TicketView(View):
         else:
             author_mention = "Unknown"
         self.add_item(
-            discord.ui.Container(
-                discord.ui.TextDisplay(
+            ui.Container(
+                ui.TextDisplay(
                     "## Ticket Created\nThank you for creating the ticket. Your problem will be solved soon! Stay tuned!"
                 ),
-                discord.ui.TextDisplay(
+                ui.TextDisplay(
                     f"{emoji.user} **Author**: {author_mention}\n{emoji.description} **Reason**: {self.reason}"
                 ),
             )
         )
+        self.add_item(row := ui.ActionRow())
         for label, btn_emoji, callback in (
             ("Close", emoji.lock_white, self.close_ticket),
             ("Transcript", emoji.description_white, self.ticket_transcript),
         ):
-            btn = discord.ui.Button(
+            btn = ui.Button(
                 label=label,
                 emoji=btn_emoji,
                 style=discord.ButtonStyle.grey,
                 custom_id=f"ticket_{label.lower()}",
             )
             btn.callback = callback
-            self.add_item(btn)
+            row.add_item(btn)
 
     # Ticket close button
     async def close_ticket(self, interaction: discord.Interaction):
@@ -136,15 +136,16 @@ class TicketView(View):
 
     # Ticket summary
     async def ticket_transcript(self, interaction: discord.Interaction):
-        button: discord.ui.Button = self.get_item("ticket_transcript")
+        button: ui.Button = self.get_item("ticket_transcript")
         button.disabled = True
         await interaction.edit(view=self)
         await interaction.channel.trigger_typing()
         file = await TicketTranscript(interaction.channel).create()
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.user} **Requested by**: {interaction.user.mention}"),
-            )
+        view = DesignerView(
+            ui.Container(
+                ui.File("attachment://" + file.filename),
+                ui.TextDisplay(f"{emoji.user} **Requested by**: {interaction.user.mention}"),
+            ),
         )
         await interaction.followup.send(view=view, file=file)
         await asyncio.sleep(2)
@@ -166,9 +167,9 @@ class Tickets(commands.Cog):
         """Creates a ticket."""
         ticket_status = (await fetch_guild_settings(ctx.guild.id)).ticket_cmds
         if not ticket_status:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Ticket commands are disabled"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Ticket commands are disabled"),
                     color=config.color.red,
                 )
             )
@@ -212,9 +213,9 @@ class Tickets(commands.Cog):
                 reason=reason,
             )
             await create_ch.send(view=view)
-            done_view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(
+            done_view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(
                         f"{emoji.success} Successfully created {create_ch.mention}.",
                     ),
                     color=config.color.green,
@@ -225,11 +226,11 @@ class Tickets(commands.Cog):
             log_ch_id = (await fetch_guild_settings(ctx.guild.id)).ticket_log_channel_id
             if log_ch_id is not None:
                 logging_ch = await self.client.fetch_channel(log_ch_id)
-                log_view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay("## Ticket Created"),
-                        discord.ui.TextDisplay(f"{emoji.user} **Author**: {ctx.author.mention}"),
-                        discord.ui.TextDisplay(f"{emoji.description} **Reason**: {reason}"),
+                log_view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("## Ticket Created"),
+                        ui.TextDisplay(f"{emoji.user} **Author**: {ctx.author.mention}"),
+                        ui.TextDisplay(f"{emoji.description} **Reason**: {reason}"),
                     )
                 )
                 await logging_ch.send(view=log_view)
@@ -240,9 +241,9 @@ class Tickets(commands.Cog):
         """Closes a created ticket."""
         ticket_status = (await fetch_guild_settings(ctx.guild.id)).ticket_cmds
         if not ticket_status:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Ticket commands are disabled"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Ticket commands are disabled"),
                     color=config.color.red,
                 )
             )
@@ -254,9 +255,9 @@ class Tickets(commands.Cog):
                 await ctx.defer()
                 await close_ticket(ctx.channel, ctx.author, ctx.respond)
             else:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay(f"{emoji.error} This is not a ticket channel"),
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} This is not a ticket channel"),
                         color=config.color.red,
                     )
                 )
@@ -274,9 +275,9 @@ class Tickets(commands.Cog):
             file = await TicketTranscript(ctx.channel).create()
             await ctx.respond(file=file)
         else:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} This is not a ticket channel"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} This is not a ticket channel"),
                     color=config.color.red,
                 )
             )

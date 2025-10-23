@@ -6,7 +6,8 @@ import psutil
 import time
 from babel.dates import format_timedelta
 from core import Client
-from core.view import View
+from core.view import DesignerView
+from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from typing import Literal
@@ -26,7 +27,7 @@ class Stats:
     async def _format_memory(self, total, used, free):
         return f"`{fmt_memory(total)}` `({fmt_memory(used)} Used | {fmt_memory(free)} Free)`"
 
-    async def get_bot_stats(self) -> list[discord.ui.Item]:
+    async def get_bot_stats(self) -> list[ui.Item]:
         dur = format_timedelta(datetime.timedelta(seconds=int(round(time.time() - start_time))))
         is_dev = await check.is_dev(self.ctx)
 
@@ -50,9 +51,9 @@ class Stats:
                 f"{emoji.tasks} **CPU Load**: `{psutil.cpu_percent()}%`"
             )
 
-        return [discord.ui.TextDisplay(f"## {self.client.user.name} Stats"), discord.ui.TextDisplay(stats)]
+        return [ui.TextDisplay(f"## {self.client.user.name} Stats"), ui.TextDisplay(stats)]
 
-    async def get_lavalink_stats(self, node: lavalink.Node) -> list[discord.ui.Item]:
+    async def get_lavalink_stats(self, node: lavalink.Node) -> list[ui.Item]:
         dur = format_timedelta(datetime.timedelta(milliseconds=node.stats.uptime))
         is_dev = await check.is_dev(self.ctx)
 
@@ -71,10 +72,10 @@ class Stats:
                 f"{emoji.tasks} **CPU Load**: `{round(node.stats.system_load * 100)}% System | {round(node.stats.lavalink_load * 100)}% Lavalink`"
             )
 
-        return [discord.ui.TextDisplay(f"## {self.client.user.name} Lavalink Stats"), discord.ui.TextDisplay(stats)]
+        return [ui.TextDisplay(f"## {self.client.user.name} Lavalink Stats"), ui.TextDisplay(stats)]
 
 
-class StatsView(View):
+class StatsView(DesignerView):
     def __init__(self, client: Client, ctx: discord.ApplicationContext, manager: lavalink.NodeManager | None):
         super().__init__(ctx=ctx, check_author_interaction=True)
         self.client = client
@@ -85,29 +86,27 @@ class StatsView(View):
     async def async_init(self):
         await self._build_bot_stats_view()
 
-    async def _get_footer(self) -> discord.ui.Section:
+    async def _get_footer(self) -> ui.Section:
         owner = await self.client.fetch_user(config.owner_id)
-        return discord.ui.TextDisplay(f"-# Designed & Built by {owner.name}")
+        return ui.TextDisplay(f"-# Designed & Built by {owner.name}")
 
     def _get_button(self, button: Literal["Bot Stats", "Lavalink Stats"]):
         match button:
             case "Bot Stats":
-                btn = discord.ui.Button(
-                    emoji=emoji.lavalink_white, label="Lavalink Stats", style=discord.ButtonStyle.grey
-                )
+                btn = ui.Button(emoji=emoji.lavalink_white, label="Lavalink Stats", style=discord.ButtonStyle.grey)
                 btn.callback = self.lavalink_stats_callback
             case "Lavalink Stats":
-                btn = discord.ui.Button(emoji=emoji.previous_white, label="Back", style=discord.ButtonStyle.gray)
+                btn = ui.Button(emoji=emoji.previous_white, label="Back", style=discord.ButtonStyle.gray)
                 btn.callback = self.bot_stats_callback
         return btn
 
     async def _build_bot_stats_view(self):
         self.clear_items()
         items = await self.stats.get_bot_stats()
-        container = discord.ui.Container(*items)
+        container = ui.Container(*items)
         container.add_item(await self._get_footer())
         self.add_item(container)
-        self.add_item(self._get_button("Bot Stats"))
+        self.add_item(ui.ActionRow(self._get_button("Bot Stats")))
 
     async def _build_lavalink_stats_view(self):
         self.clear_items()
@@ -120,7 +119,7 @@ class StatsView(View):
             manager=self.manager,
         )
         items = await self.stats.get_lavalink_stats(node)
-        container = discord.ui.Container(*items)
+        container = ui.Container(*items)
         container.add_item(await self._get_footer())
         self.add_item(container)
         self.add_item(self._get_button("Lavalink Stats"))
@@ -146,9 +145,9 @@ class Info(commands.Cog):
     @slash_command(name="ping")
     async def ping(self, ctx: discord.ApplicationContext):
         """Shows heartbeats of the bot."""
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.ping} **Ping**: `{round(self.client.latency * 1000)} ms`"),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.ping} **Ping**: `{round(self.client.latency * 1000)} ms`"),
             )
         )
         await ctx.respond(view=view)
@@ -159,9 +158,9 @@ class Info(commands.Cog):
         """Shows bot's uptime."""
         dur = datetime.timedelta(seconds=int(round(time.time() - start_time)))
         dur = format_timedelta(dur)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.duration} **Bot's Uptime**: `{str(dur)}`"),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.duration} **Bot's Uptime**: `{str(dur)}`"),
             )
         )
         await ctx.respond(view=view)
@@ -186,31 +185,33 @@ class Info(commands.Cog):
         """Shows the avatar of the mentioned user."""
         if not user:
             user = ctx.author
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"## {user.display_name}'s Avatar"),
-                discord.ui.MediaGallery(discord.MediaGalleryItem(url=user.avatar.url)),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"## {user.display_name}'s Avatar"),
+                ui.MediaGallery(discord.MediaGalleryItem(url=user.avatar.url)),
             ),
-            discord.ui.Button(
-                label="PNG",
-                style=discord.ButtonStyle.link,
-                url=user.avatar.url
-                if user.avatar.with_format("png").url
-                else "https://cdn.discordapp.com/embed/avatars/0.png",
-            ),
-            discord.ui.Button(
-                label="JPG",
-                style=discord.ButtonStyle.link,
-                url=user.avatar.with_format("jpg").url
-                if user.avatar
-                else "https://cdn.discordapp.com/embed/avatars/0.png",
-            ),
-            discord.ui.Button(
-                label="WEBP",
-                style=discord.ButtonStyle.link,
-                url=user.avatar.with_format("webp").url
-                if user.avatar
-                else "https://cdn.discordapp.com/embed/avatars/0.png",
+            ui.ActionRow(
+                ui.Button(
+                    label="PNG",
+                    style=discord.ButtonStyle.link,
+                    url=user.avatar.url
+                    if user.avatar.with_format("png").url
+                    else "https://cdn.discordapp.com/embed/avatars/0.png",
+                ),
+                ui.Button(
+                    label="JPG",
+                    style=discord.ButtonStyle.link,
+                    url=user.avatar.with_format("jpg").url
+                    if user.avatar
+                    else "https://cdn.discordapp.com/embed/avatars/0.png",
+                ),
+                ui.Button(
+                    label="WEBP",
+                    style=discord.ButtonStyle.link,
+                    url=user.avatar.with_format("webp").url
+                    if user.avatar
+                    else "https://cdn.discordapp.com/embed/avatars/0.png",
+                ),
             ),
         )
         await ctx.respond(view=view)
@@ -250,12 +251,12 @@ class Info(commands.Cog):
             if perms:
                 info_lines.append(f"{emoji.perms} **Permissions**: {', '.join(perms)}")
 
-        view = View(
-            discord.ui.Container(
-                discord.ui.Section(
-                    discord.ui.TextDisplay(f"## {user.display_name}'s Info"),
-                    discord.ui.TextDisplay("\n".join(info_lines)),
-                    accessory=discord.ui.Thumbnail(user.avatar.url),
+        view = DesignerView(
+            ui.Container(
+                ui.Section(
+                    ui.TextDisplay(f"## {user.display_name}'s Info"),
+                    ui.TextDisplay("\n".join(info_lines)),
+                    accessory=ui.Thumbnail(user.avatar.url),
                 ),
             )
         )
@@ -271,11 +272,12 @@ class Info(commands.Cog):
         bot_roles = len([role for role in ctx.guild.roles if role.is_bot_managed()])
         user_roles = len(ctx.guild.roles) - bot_roles
 
-        view = View(
-            discord.ui.Container(
-                discord.ui.Section(
-                    discord.ui.TextDisplay(f"## {ctx.guild.name}'s Info"),
-                    discord.ui.TextDisplay(
+        row = ui.ActionRow()
+        view = DesignerView(
+            ui.Container(
+                ui.Section(
+                    ui.TextDisplay(f"## {ctx.guild.name}'s Info"),
+                    ui.TextDisplay(
                         f"{emoji.mention} **Name**: {ctx.guild.name}\n"
                         f"{emoji.id} **ID**: `{ctx.guild.id}`\n"
                         f"{emoji.owner} **Owner**: {ctx.guild.owner.mention}\n"
@@ -290,16 +292,16 @@ class Info(commands.Cog):
                         f" `({animated_emojis} Animated | {static_emojis} Static)`\n"
                         f"{emoji.date} **Server Created**: {discord.utils.format_dt(ctx.guild.created_at, 'R')}"
                     ),
-                    accessory=discord.ui.Thumbnail(ctx.guild.icon.url if ctx.guild.icon else ""),
+                    accessory=ui.Thumbnail(ctx.guild.icon.url if ctx.guild.icon else ""),
                 ),
             ),
+            row,
         )
+
         if ctx.guild.icon:
-            view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="Icon URL", url=ctx.guild.icon.url))
+            row.add_item(ui.Button(style=discord.ButtonStyle.link, label="Icon URL", url=ctx.guild.icon.url))
         if ctx.guild.banner:
-            view.add_item(
-                discord.ui.Button(style=discord.ButtonStyle.link, label="Banner URL", url=ctx.guild.banner.url)
-            )
+            row.add_item(ui.Button(style=discord.ButtonStyle.link, label="Banner URL", url=ctx.guild.banner.url))
         await ctx.respond(view=view)
 
     # Emoji info
@@ -309,11 +311,11 @@ class Info(commands.Cog):
         """Shows info of the given emoji."""
         try:
             _emoji = await ctx.guild.fetch_emoji(icon.id)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.Section(
-                        discord.ui.TextDisplay("## Emoji Info"),
-                        discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.Section(
+                        ui.TextDisplay("## Emoji Info"),
+                        ui.TextDisplay(
                             f"{emoji.mention} **Name**: `{_emoji.name}`\n"
                             f"{emoji.id} **ID**: `{_emoji.id}`\n"
                             f"{emoji.emoji} **Is Animated?**: {_emoji.animated}\n"
@@ -323,16 +325,18 @@ class Info(commands.Cog):
                             f"{emoji.owner} **Uploaded By**: {_emoji.user.mention if _emoji.user else 'Unknown'}\n"
                             f"{emoji.date} **Emoji Created**: {discord.utils.format_dt(_emoji.created_at, 'R')}"
                         ),
-                        accessory=discord.ui.Thumbnail(_emoji.url),
+                        accessory=ui.Thumbnail(_emoji.url),
                     ),
                 ),
-                discord.ui.Button(label="URL", style=discord.ButtonStyle.link, url=_emoji.url),
+                ui.ActionRow(
+                    ui.Button(label="URL", style=discord.ButtonStyle.link, url=_emoji.url),
+                ),
             )
             await ctx.respond(view=view)
         except discord.errors.HTTPException:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Invalid emoji provided. Please provide a valid emoji."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Invalid emoji provided. Please provide a valid emoji."),
                     color=config.color.red,
                 )
             )

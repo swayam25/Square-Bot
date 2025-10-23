@@ -1,7 +1,8 @@
 import discord
 from core import Client
-from core.view import View
+from core.view import DesignerView
 from db.funcs.guild import fetch_guild_settings, set_autorole
+from discord import ui
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
@@ -28,9 +29,9 @@ class AutoMod(commands.Cog):
             ):
                 await msg.delete()
                 try:
-                    view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay(
+                    view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay(
                                 f"{emoji.error} {msg.author.mention} This channel is for **media** only! Please do not send text messages here."
                             ),
                             color=config.color.red,

@@ -1,6 +1,6 @@
 import discord
 from core import Client
-from core.view import View
+from core.view import DesignerView
 from db.funcs.guild import (
     fetch_guild_settings,
     remove_guild,
@@ -13,6 +13,7 @@ from db.funcs.guild import (
     set_ticket_cmds,
     set_ticket_log,
 )
+from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from utils import config
@@ -48,10 +49,10 @@ class SettingsCommand:
         if role_id and not self.ctx.guild.get_role(role_id):
             await set_autorole(self.ctx.guild.id, None)  # Reset autorole if role doesn't exist
 
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"## {self.ctx.guild.name}'s Settings"),
-                discord.ui.TextDisplay(
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"## {self.ctx.guild.name}'s Settings"),
+                ui.TextDisplay(
                     f"{emoji.mod} **Mod Log Channel**: {mod_log_channel}\n"
                     f"{emoji.owner} **Mod Command Log Channel**: {mod_log_cmd_channel}\n"
                     f"{emoji.msg} **Message Log Channel**: {msg_log_channel}\n"
@@ -87,9 +88,9 @@ class SettingsCommand:
                     await set_autorole(self.ctx.guild.id, None)
                 case "auto meme":
                     await set_auto_meme(self.ctx.guild.id, None)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Successfully reset {setting.lower()} settings."),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Successfully reset {setting.lower()} settings."),
                 color=config.color.green,
             )
         )
@@ -140,9 +141,9 @@ class Settings(commands.Cog):
     async def set_mod_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets mod log channel."""
         await set_mod_log(ctx.guild.id, channel.id)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Successfully set mod log channel to {channel.mention}."),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Successfully set mod log channel to {channel.mention}."),
                 color=config.color.green,
             )
         )
@@ -154,11 +155,9 @@ class Settings(commands.Cog):
     async def set_mod_cmd_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets mod command log channel."""
         await set_mod_cmd_log(ctx.guild.id, channel.id)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(
-                    f"{emoji.success} Successfully set mod command log channel to {channel.mention}."
-                ),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Successfully set mod command log channel to {channel.mention}."),
                 color=config.color.green,
             )
         )
@@ -170,9 +169,9 @@ class Settings(commands.Cog):
     async def set_msg_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets message log channel."""
         await set_msg_log(ctx.guild.id, channel.id)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Successfully set message log channel to {channel.mention}."),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Successfully set message log channel to {channel.mention}."),
                 color=config.color.green,
             )
         )
@@ -188,9 +187,9 @@ class Settings(commands.Cog):
                 await set_ticket_cmds(ctx.guild.id, True)
             case "disable":
                 await set_ticket_cmds(ctx.guild.id, False)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Successfully {status.lower()}d ticket commands."),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Successfully {status.lower()}d ticket commands."),
                 color=config.color.green,
             )
         )
@@ -202,9 +201,9 @@ class Settings(commands.Cog):
     async def set_ticket_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets ticket log channel."""
         await set_ticket_log(ctx.guild.id, channel.id)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Successfully set ticket log channel to {channel.mention}."),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Successfully set ticket log channel to {channel.mention}."),
                 color=config.color.green,
             )
         )
@@ -216,22 +215,18 @@ class Settings(commands.Cog):
     async def set_image_only(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
         """Sets media only channel."""
         if not channel.permissions_for(ctx.guild.me).send_messages:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(
-                        f"{emoji.error} I don't have permission to send messages in {channel.mention}."
-                    ),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} I don't have permission to send messages in {channel.mention}."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
             await set_media_only(ctx.guild.id, channel.id)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(
-                        f"{emoji.success} Successfully set media only channel to {channel.mention}."
-                    ),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.success} Successfully set media only channel to {channel.mention}."),
                     color=config.color.green,
                 )
             )
@@ -243,26 +238,26 @@ class Settings(commands.Cog):
     async def set_auto_role(self, ctx: discord.ApplicationContext, role: discord.Role):
         """Sets autorole. The bot will assign this role to new members."""
         if role >= ctx.guild.me.top_role:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} I can't assign roles higher than my top role."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} I can't assign roles higher than my top role."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         elif role.name == "@everyone":
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} I can't assign the @everyone role."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} I can't assign the @everyone role."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
             await set_autorole(ctx.guild.id, role.id)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(
                         f"{emoji.success} Successfully set autorole to {role.mention}.\n-# This role will be assigned to members when they join the server."
                     ),
                     color=config.color.green,
@@ -277,11 +272,9 @@ class Settings(commands.Cog):
     async def set_auto_meme(self, ctx: discord.ApplicationContext, channel: discord.TextChannel, subreddit: str = ""):
         """Sets auto meme channel. Posts memes every 10 minutes."""
         if not channel.permissions_for(ctx.guild.me).send_messages:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(
-                        f"{emoji.error} I don't have permission to send messages in {channel.mention}."
-                    ),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} I don't have permission to send messages in {channel.mention}."),
                     color=config.color.red,
                 )
             )
@@ -291,9 +284,9 @@ class Settings(commands.Cog):
                 await ctx.defer()
                 check = await check_subreddit(subreddit)
                 if not check.exist:  # If subreddit is invalid
-                    view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay(
+                    view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay(
                                 f"{emoji.error} The subreddit `r/{check.display_name}` does not exist or is invalid."
                             ),
                             color=config.color.red,
@@ -303,9 +296,9 @@ class Settings(commands.Cog):
                     return
                 # Use the display name from the check so that it is formatted correctly
                 if check.nsfw and not channel.nsfw:  # If subreddit is NSFW and channel is not NSFW
-                    view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay(
+                    view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay(
                                 f"{emoji.error} The subreddit `r/{check.display_name}` is **NSFW**. Please enable **NSFW** in {channel.mention} or choose a different subreddit."
                             ),
                             color=config.color.red,
@@ -315,9 +308,9 @@ class Settings(commands.Cog):
                     return
             # Finally set the auto meme channel and subreddit
             await set_auto_meme(ctx.guild.id, channel.id, check.display_name if subreddit else None)
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(
                         f"{emoji.success} Successfully set auto meme channel to {channel.mention}{f' and subreddit to [`r/{check.display_name}`](https://reddit.com/r/{check.display_name})' if subreddit else ''}.\n"
                         f"-# The bot will post memes every `10 minutes`.\n"
                         f"-# Technically you can use any subreddit, but it is recommended to use subreddits that have memes."

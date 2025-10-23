@@ -1,21 +1,22 @@
 import discord
-import discord.ui
 import math
 import os
 import sys
 import zipfile
 from core import Client
-from core.view import View
+from core.view import DesignerView
 from db.funcs.dev import add_dev, fetch_dev_ids, remove_dev
 from db.funcs.guild import add_guild, remove_guild
+from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
+from discord.ui import ActionRow
 from io import BytesIO
 from utils import check, config
 from utils.emoji import Emoji, emoji
 
 
-class GuildContainer(discord.ui.Container):
+class GuildContainer(ui.Container):
     def __init__(self, guilds, page=1, items_per_page=10):
         super().__init__()
         total_pages = max(1, math.ceil(len(guilds) / items_per_page))
@@ -23,14 +24,14 @@ class GuildContainer(discord.ui.Container):
         end = start + items_per_page
         page_guilds = guilds[start:end]
         guilds_list = "\n".join(f"`{i + 1}.` **{g.name}**: `{g.id}`" for i, g in enumerate(page_guilds, start=start))
-        self.add_item(discord.ui.TextDisplay("## Guilds List"))
-        self.add_item(discord.ui.TextDisplay(guilds_list or "No guilds found."))
+        self.add_item(ui.TextDisplay("## Guilds List"))
+        self.add_item(ui.TextDisplay(guilds_list or "No guilds found."))
         if len(guilds) > items_per_page:
-            self.add_item(discord.ui.Separator())
-            self.add_item(discord.ui.TextDisplay(f"-# Viewing Page {page}/{total_pages}"))
+            self.add_item(ui.Separator())
+            self.add_item(ui.TextDisplay(f"-# Viewing Page {page}/{total_pages}"))
 
 
-class GuildListView(View):
+class GuildListView(DesignerView):
     def __init__(self, client: Client, ctx: discord.ApplicationContext, page: int = 1):
         super().__init__(ctx=ctx, check_author_interaction=True)
         self.client = client
@@ -42,15 +43,17 @@ class GuildListView(View):
         self.clear_items()
         guilds = self.client.guilds
         self.add_item(GuildContainer(guilds, page=self.page, items_per_page=self.items_per_page))
+        row = ActionRow()
         for btn_emoji, callback in [
             (emoji.start_white, "start"),
             (emoji.previous_white, "previous"),
             (emoji.next_white, "next"),
             (emoji.end_white, "end"),
         ]:
-            btn = discord.ui.Button(emoji=btn_emoji, style=discord.ButtonStyle.grey)
+            btn = ui.Button(emoji=btn_emoji, style=discord.ButtonStyle.grey)
             btn.callback = lambda i, action=callback: self.interaction_callback(i, action)
-            self.add_item(btn)
+            row.add_item(btn)
+        self.add_item(row)
 
     async def interaction_callback(self, interaction: discord.Interaction, action: str):
         guilds = self.client.guilds
@@ -75,11 +78,9 @@ class Devs(commands.Cog):
     @commands.Cog.listener("on_ready")
     async def when_bot_gets_ready(self):
         start_log_ch = await self.client.fetch_channel(config.system_channel_id)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(
-                    f"{emoji.success} Logged in as **{self.client.user}** with ID `{self.client.user.id}`"
-                ),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Logged in as **{self.client.user}** with ID `{self.client.user.id}`"),
                 color=config.color.green,
             )
         )
@@ -90,10 +91,10 @@ class Devs(commands.Cog):
     async def when_guild_joined(self, guild: discord.Guild):
         await add_guild(guild.id)
         join_log_ch = await self.client.fetch_channel(config.system_channel_id)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay("## Someone Added Me!"),
-                discord.ui.TextDisplay(
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay("## Someone Added Me!"),
+                ui.TextDisplay(
                     f"{emoji.server} **Name**: {guild.name}\n"
                     f"{emoji.id} **ID**: `{guild.id}`\n"
                     f"{emoji.members} **Total Members**: `{guild.member_count} ({len([m for m in guild.members if not m.bot])} Humans | {len([m for m in guild.members if m.bot])} Bots)`"
@@ -107,10 +108,10 @@ class Devs(commands.Cog):
     async def when_removed_from_guild(self, guild: discord.Guild):
         await remove_guild(guild.id)
         leave_log_ch = await self.client.fetch_channel(config.system_channel_id)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay("## Someone Removed Me!"),
-                discord.ui.TextDisplay(
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay("## Someone Removed Me!"),
+                ui.TextDisplay(
                     f"{emoji.server_red} **Name**: {guild.name}\n"
                     f"{emoji.id_red} **ID**: `{guild.id}`\n"
                     f"{emoji.members_red} **Total Members**: `{guild.member_count} ({len([m for m in guild.members if not m.bot])} Humans | {len([m for m in guild.members if m.bot])} Bots)`"
@@ -130,9 +131,9 @@ class Devs(commands.Cog):
     async def add_dev(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Adds a bot dev."""
         await add_dev(user.id)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Added {user.mention} to dev."),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Added {user.mention} to dev."),
                 color=config.color.green,
             ),
         )
@@ -145,9 +146,9 @@ class Devs(commands.Cog):
     async def remove_dev(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Removes a bot dev."""
         await remove_dev(user.id)
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Removed {user.mention} from dev"),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Removed {user.mention} from dev"),
                 color=config.color.green,
             )
         )
@@ -166,16 +167,16 @@ class Devs(commands.Cog):
             dev_mention = f"<@{ids}>"
             devs_list += f"`{num}.` {dev_mention}\n"
         if devs_list:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay("## Devs List"),
-                    discord.ui.TextDisplay(devs_list or "No devs found."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay("## Devs List"),
+                    ui.TextDisplay(devs_list or "No devs found."),
                 )
             )
         else:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} No devs found."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} No devs found."),
                     color=config.color.red,
                 )
             )
@@ -186,9 +187,9 @@ class Devs(commands.Cog):
     @check.is_dev()
     async def restart(self, ctx: discord.ApplicationContext):
         """Restarts the bot."""
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.restart} Restarting..."),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.restart} Restarting..."),
             )
         )
         await ctx.respond(view=view)
@@ -202,9 +203,9 @@ class Devs(commands.Cog):
     @check.is_dev()
     async def reload_cogs(self, ctx: discord.ApplicationContext):
         """Reloads the bot cogs."""
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.restart} Reloaded Cogs."),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.restart} Reloaded Cogs."),
             )
         )
         await ctx.respond(view=view, ephemeral=True, delete_after=2)
@@ -217,9 +218,9 @@ class Devs(commands.Cog):
     @check.is_owner()
     async def shutdown(self, ctx: discord.ApplicationContext):
         """Shutdowns the bot."""
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.shutdown} Bot shutdown."),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.shutdown} Bot shutdown."),
             )
         )
         await ctx.respond(view=view)
@@ -245,9 +246,9 @@ class Devs(commands.Cog):
             await self.client.change_presence(
                 activity=discord.Activity(type=discord.ActivityType.watching, name=status)
             )
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Status changed to **{type}** as `{status}`"),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Status changed to **{type}** as `{status}`"),
                 color=config.color.green,
             )
         )
@@ -267,7 +268,7 @@ class Devs(commands.Cog):
         else:
             guilds = self.client.guilds
             container = GuildContainer(guilds)
-            guild_list_view = View(container)
+            guild_list_view = DesignerView(container)
         await ctx.respond(view=guild_list_view)
 
     # Leave guild
@@ -283,18 +284,18 @@ class Devs(commands.Cog):
     async def leave_guild(self, ctx: discord.ApplicationContext, guild: discord.Guild):
         """Leaves a guild."""
         if any(guild.id == g for g in config.owner_guild_ids):
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} I can't leave the owner guild."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} I can't leave the owner guild."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
             await guild.leave()
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.success} Left the guild **{guild.name}** with ID `{guild.id}`"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.success} Left the guild **{guild.name}** with ID `{guild.id}`"),
                 )
             )
             await ctx.respond(view=view)
@@ -312,9 +313,9 @@ class Devs(commands.Cog):
     async def guild_inv(self, ctx: discord.ApplicationContext, guild: discord.Guild):
         """Creates an invite link for the guild."""
         if any(guild.id == g for g in config.owner_guild_ids):
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} I can't create an invite link for the owner guild"),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} I can't create an invite link for the owner guild"),
                     color=config.color.red,
                 )
             )
@@ -334,9 +335,9 @@ class Devs(commands.Cog):
         await ctx.defer()
         emojis: list[discord.AppEmoji] = await self.client.fetch_emojis()
         if not emojis:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} No emojis found in the app."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} No emojis found in the app."),
                     color=config.color.red,
                 )
             )
@@ -353,16 +354,14 @@ class Devs(commands.Cog):
         zip_buffer.seek(0)
         await ctx.respond(file=discord.File(fp=zip_buffer, filename="emojis.zip"))
 
-    def emoji_prog_view(self, total: int, completed: int = 0) -> View:
+    def emoji_prog_view(self, total: int, completed: int = 0) -> DesignerView:
         progress = (completed / total) * 100
         bar_length = 15
         filled_length = int(bar_length * completed // total)
         bar = f"{emoji.filled_bar * filled_length}{emoji.empty_bar * (bar_length - filled_length)}"
-        return View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(
-                    f"{emoji.upload} Uploading `{completed}/{total}` emojis.\n{bar} `{progress:.2f}%`"
-                ),
+        return DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.upload} Uploading `{completed}/{total}` emojis.\n{bar} `{progress:.2f}%`"),
             )
         )
 
@@ -386,11 +385,9 @@ class Devs(commands.Cog):
                     if len(parts) > 1 and parts[0]:
                         top_dirs.add(parts[0])
                 if len(top_dirs) > 1:
-                    view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay(
-                                f"{emoji.error} Zip file contains more than one top-level directory."
-                            ),
+                    view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay(f"{emoji.error} Zip file contains more than one top-level directory."),
                             color=config.color.red,
                         )
                     )
@@ -402,9 +399,9 @@ class Devs(commands.Cog):
                 else:
                     emoji_files = [f for f in file_entries if "/" not in f and f.endswith(".png")]
                 if not emoji_files:
-                    view = View(
-                        discord.ui.Container(
-                            discord.ui.TextDisplay(f"{emoji.error} No `.png` emoji files found in the zip."),
+                    view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay(f"{emoji.error} No `.png` emoji files found in the zip."),
                             color=config.color.red,
                         )
                     )
@@ -415,11 +412,9 @@ class Devs(commands.Cog):
                 for emoji_path in emoji_files:
                     _emoji = emoji_path.split("/")[-1][:-4]
                     if len(_emoji) > 32:
-                        view = View(
-                            discord.ui.Container(
-                                discord.ui.TextDisplay(
-                                    f"{emoji.error} Emoji name `{_emoji}` is too long (max 32 characters)."
-                                ),
+                        view = DesignerView(
+                            ui.Container(
+                                ui.TextDisplay(f"{emoji.error} Emoji name `{_emoji}` is too long (max 32 characters)."),
                                 color=config.color.red,
                             )
                         )
@@ -434,9 +429,9 @@ class Devs(commands.Cog):
                         await self.client.create_emoji(name=_emoji, image=zip_file.read(emoji_path))
                     await msg.edit(view=self.emoji_prog_view(len(emoji_files), emoji_files.index(emoji_path) + 1))
             zip_buffer.close()
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.success} Uploaded {len(emoji_files)} emojis."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.success} Uploaded {len(emoji_files)} emojis."),
                     color=config.color.green,
                 )
             )
@@ -444,9 +439,9 @@ class Devs(commands.Cog):
         elif file.filename.endswith(".png"):
             # Handle single PNG file upload
             if len(file.filename[:-4]) > 32:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay(
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay(
                             f"{emoji.error} Emoji name `{file.filename[:-4]}` is too long (max 32 characters)."
                         ),
                         color=config.color.red,
@@ -459,32 +454,34 @@ class Devs(commands.Cog):
             png_buffer.seek(0)
             try:
                 await self.client.create_emoji(name=file.filename[:-4], image=png_buffer.read())
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay(f"{emoji.success} Uploaded emoji `{file.filename[:-4]}`."),
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.success} Uploaded emoji `{file.filename[:-4]}`."),
                         color=config.color.green,
                     )
                 )
                 await ctx.respond(view=view)
             except Exception as e:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay(f"{emoji.error} Failed to upload emoji `{file.filename[:-4]}`.\n{e}"),
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Failed to upload emoji `{file.filename[:-4]}`.\n{e}"),
                         color=config.color.red,
                     )
                 )
                 await ctx.respond(view=view, ephemeral=True)
             png_buffer.close()
         else:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Please upload a valid zip file or a single png file."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Please upload a valid zip file or a single png file."),
                     color=config.color.red,
                 )
             )
             await ctx.respond(view=view, ephemeral=True)
 
-    async def delete_extra_emojis_callback(self, view: View, interaction: discord.Interaction, emojis: list[str]):
+    async def delete_extra_emojis_callback(
+        self, view: DesignerView, interaction: discord.Interaction, emojis: list[str]
+    ):
         """Deletes extra emojis."""
         view.disable_all_items()
         await interaction.edit(view=view)
@@ -493,9 +490,9 @@ class Devs(commands.Cog):
             id = int(obj[-1]) if len(obj) > 1 else None
             if id:
                 await self.client.delete_emoji(discord.Object(id=id))
-        view = View(
-            discord.ui.Container(
-                discord.ui.TextDisplay(f"{emoji.success} Deleted extra emojis."),
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Deleted extra emojis."),
                 color=config.color.green,
             )
         )
@@ -509,9 +506,9 @@ class Devs(commands.Cog):
         """Checks the uploaded zip file for emojis."""
         await ctx.defer()
         if not file.filename.endswith(".zip"):
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} Please upload a valid zip file."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Please upload a valid zip file."),
                     color=config.color.red,
                 )
             )
@@ -541,9 +538,9 @@ class Devs(commands.Cog):
                 emoji_names = [f[:-4] for f in emoji_files]
 
             if not emoji_files:
-                view = View(
-                    discord.ui.Container(
-                        discord.ui.TextDisplay(f"{emoji.error} No `.png` emoji files found in the zip."),
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} No `.png` emoji files found in the zip."),
                         color=config.color.red,
                     )
                 )
@@ -560,14 +557,14 @@ class Devs(commands.Cog):
 
             missing_list = "\n".join([f"{emoji.bullet} `{name}`" for name in sorted(missing_emojis)])
             extra_list = "\n".join([f"{emoji.bullet_red} `{name}`" for name in sorted(extra_emojis)])
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay("## Emoji Zip Check"),
-                    discord.ui.TextDisplay(
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay("## Emoji Zip Check"),
+                    ui.TextDisplay(
                         f"Found `{len(emoji_files)}` emoji files in the zip. Expected `{len(expected_emojis)}` emojis."
                     ),
-                    discord.ui.TextDisplay(missing_list if missing_list else "No missing emojis."),
-                    discord.ui.TextDisplay(extra_list if extra_list else "No extra emojis."),
+                    ui.TextDisplay(missing_list if missing_list else "No missing emojis."),
+                    ui.TextDisplay(extra_list if extra_list else "No extra emojis."),
                 )
             )
             await ctx.respond(view=view)
@@ -583,9 +580,9 @@ class Devs(commands.Cog):
         emojis: list[discord.AppEmoji] = await self.client.fetch_emojis()
         emoji_dict: dict = {}
         if not emojis:
-            view = View(
-                discord.ui.Container(
-                    discord.ui.TextDisplay(f"{emoji.error} No emojis found in the app."),
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} No emojis found in the app."),
                     color=config.color.red,
                 )
             )
@@ -602,24 +599,24 @@ class Devs(commands.Cog):
         default_emojis_used = resp.get("default_emojis_used", [])
         extra_keys_ignored = resp.get("extra_keys_ignored", [])
         view_items = [
-            discord.ui.TextDisplay(f"{emoji.restart} Synced {len(emojis)} emojis."),
+            ui.TextDisplay(f"{emoji.restart} Synced {len(emojis)} emojis."),
         ]
         if default_emojis_used:
-            view_items.append(discord.ui.TextDisplay("**Default Emojis Used**"))
-            view_items.append(discord.ui.Separator())
-            view_items.extend([discord.ui.TextDisplay(f"{getattr(emoji, i)} `{i}`") for i in default_emojis_used])
+            view_items.append(ui.TextDisplay("**Default Emojis Used**"))
+            view_items.append(ui.Separator())
+            view_items.extend([ui.TextDisplay(f"{getattr(emoji, i)} `{i}`") for i in default_emojis_used])
         if extra_keys_ignored:
-            view_items.append(discord.ui.TextDisplay("**Ignored Extra Emojis**"))
-            view_items.append(discord.ui.Separator())
-            view_items.extend(
-                [discord.ui.TextDisplay(f"{emoji_dict.get(i, emoji.bullet)} `{i}`") for i in extra_keys_ignored]
-            )
-            view = View(
-                discord.ui.Container(*view_items),
-                discord.ui.Button(
-                    emoji=emoji.bin_white,
-                    label="Delete Extra Emojis",
-                    style=discord.ButtonStyle.grey,
+            view_items.append(ui.TextDisplay("**Ignored Extra Emojis**"))
+            view_items.append(ui.Separator())
+            view_items.extend([ui.TextDisplay(f"{emoji_dict.get(i, emoji.bullet)} `{i}`") for i in extra_keys_ignored])
+            view = DesignerView(
+                ui.Container(*view_items),
+                ui.ActionRow(
+                    ui.Button(
+                        emoji=emoji.bin_white,
+                        label="Delete Extra Emojis",
+                        style=discord.ButtonStyle.grey,
+                    ),
                 ),
                 ctx=ctx,
                 check_author_interaction=True,
@@ -629,7 +626,7 @@ class Devs(commands.Cog):
             )
             await ctx.respond(view=view)
             return
-        view = View(discord.ui.Container(*view_items))
+        view = DesignerView(ui.Container(*view_items))
         await ctx.respond(view=view)
 
 
