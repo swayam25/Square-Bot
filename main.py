@@ -67,4 +67,4 @@ async def main():
 try:
     client.loop.run_until_complete(main())
 except Exception:
-    console.print_exception(show_locals=True)
+    console.print_exception()

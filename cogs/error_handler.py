@@ -29,7 +29,7 @@ class ErrorHandler(commands.Cog):
             return
 
         elif await check.is_dev(ctx):
-            tb = Traceback.from_exception(type(error), error, error.__traceback__, show_locals=True)
+            tb = Traceback.from_exception(type(error), error, error.__traceback__)
             console.print(tb)
             error = getattr(error, "original", None) or error
             err = "".join(traceback.format_exception(type(error), error, error.__traceback__))

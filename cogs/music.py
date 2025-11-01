@@ -381,8 +381,8 @@ class QueueContainer(Container):
             requester = ctx.guild.get_member(track.requester)
             btn = Button(emoji=emoji.more_white)
             # Create a closure that captures the current index value
-            btn.callback = lambda i, track_idx=index, p=player, qv=queue_view: QueueBtnCallback.queue_btn_callback(
-                i, player=p, track_index=track_idx, queue_view=qv
+            btn.callback = lambda i, track_idx=index: QueueBtnCallback.queue_btn_callback(
+                i, player=player, track_index=track_idx, queue_view=queue_view
             )
 
             # Add the section for the track
@@ -399,30 +399,22 @@ class QueueContainer(Container):
             # Add action buttons if this track's buttons are visible
             if queue_view and index == queue_view.visible_action_button:
                 move_up_btn = Button(emoji=emoji.up_white, style=discord.ButtonStyle.grey, disabled=(index == 0))
-                move_up_btn.callback = (
-                    lambda i, track_idx=index, p=player, qv=queue_view: QueueBtnCallback.move_up_callback(
-                        i, p, track_idx, qv
-                    )
+                move_up_btn.callback = lambda i, track_idx=index: QueueBtnCallback.move_up_callback(
+                    i, player=player, track_index=track_idx, queue_view=queue_view
                 )
                 move_down_btn = Button(
                     emoji=emoji.down_white, style=discord.ButtonStyle.grey, disabled=(index == len(player.queue) - 1)
                 )
-                move_down_btn.callback = (
-                    lambda i, track_idx=index, p=player, qv=queue_view: QueueBtnCallback.move_down_callback(
-                        i, p, track_idx, qv
-                    )
+                move_down_btn.callback = lambda i, track_idx=index: QueueBtnCallback.move_down_callback(
+                    i, player=player, track_index=track_idx, queue_view=queue_view
                 )
                 remove_btn = Button(emoji=emoji.bin_white, style=discord.ButtonStyle.grey)
-                remove_btn.callback = (
-                    lambda i, track_idx=index, p=player, qv=queue_view: QueueBtnCallback.remove_callback(
-                        i, p, track_idx, qv
-                    )
+                remove_btn.callback = lambda i, track_idx=index: QueueBtnCallback.remove_callback(
+                    i, player=player, track_index=track_idx, queue_view=queue_view
                 )
                 play_now_btn = Button(emoji=emoji.play_white, style=discord.ButtonStyle.grey)
-                play_now_btn.callback = (
-                    lambda i, track_idx=index, p=player, qv=queue_view: QueueBtnCallback.play_now_callback(
-                        i, p, track_idx, qv
-                    )
+                play_now_btn.callback = lambda i, track_idx=index: QueueBtnCallback.play_now_callback(
+                    i, player=player, track_index=track_idx, queue_view=queue_view
                 )
                 queue_list.append(ActionRow(move_up_btn, move_down_btn, remove_btn, play_now_btn))
 
@@ -472,9 +464,9 @@ class QueueListView(DesignerView):
         self.add_item(
             QueueContainer(self.player, self.ctx, page=self.page, items_per_page=self.items_per_page, queue_view=self)
         )
-        self.add_item(row := ActionRow())
         total_pages = max(1, math.ceil(len(self.player.queue) / self.items_per_page))
         if total_pages > 1:
+            self.add_item(row := ActionRow())
             for btn_emoji, action in [
                 (emoji.start_white, "start"),
                 (emoji.previous_white, "previous"),

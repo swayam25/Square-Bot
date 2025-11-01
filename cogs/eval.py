@@ -6,7 +6,7 @@ import sys
 import textwrap
 from core import Client
 from core.view import DesignerView
-from discord import ActionRow, ui
+from discord import ui
 from discord.ext import commands
 from io import BytesIO, StringIO
 from utils import check, config
@@ -72,20 +72,18 @@ class TaskManagerView(DesignerView):
 
     def _add_control_buttons(self, total_pages):
         """Add pagination and control buttons."""
-        row1 = ActionRow()
-        row2 = ActionRow()
+        row2 = ui.ActionRow()
 
-        # Pagination buttons (if needed)
         if total_pages > 1:
+            self.add_item(row1 := ui.ActionRow())
+            # Pagination buttons (if needed)
             for emoji_icon, action in [(emoji.start_white, "start"), (emoji.previous_white, "previous")]:
-                btn = ui.Button(emoji=emoji_icon, style=discord.ButtonStyle.grey, row=1)
+                btn = ui.Button(emoji=emoji_icon, style=discord.ButtonStyle.grey)
                 btn.callback = lambda i, a=action: self._paginate(i, a)
                 row1.add_item(btn)
-
-        # More pagination buttons
-        if total_pages > 1:
+            # More pagination buttons
             for emoji_icon, action in [(emoji.next_white, "next"), (emoji.end_white, "end")]:
-                btn = ui.Button(emoji=emoji_icon, style=discord.ButtonStyle.grey, row=1)
+                btn = ui.Button(emoji=emoji_icon, style=discord.ButtonStyle.grey)
                 btn.callback = lambda i, a=action: self._paginate(i, a)
                 row1.add_item(btn)
 
@@ -95,11 +93,9 @@ class TaskManagerView(DesignerView):
             (None, "‎ ", None, True),
             (emoji.restart_white, "Refresh", self._refresh, False),
         ]:
-            btn = ui.Button(emoji=emoji_icon, label=label, style=discord.ButtonStyle.grey, row=2, disabled=disabled)
+            btn = ui.Button(emoji=emoji_icon, label=label, style=discord.ButtonStyle.grey, disabled=disabled)
             btn.callback = callback
             row2.add_item(btn)
-
-        self.add_item(row1)
         self.add_item(row2)
 
     async def _delete_task(self, interaction: discord.Interaction, task_id: int):
