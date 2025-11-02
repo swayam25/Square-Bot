@@ -94,7 +94,7 @@ class HelpView(DesignerView):
             ui.TextDisplay(f"### Categories\n{category_list}"),
         )
         self.add_item(container)
-        self.add_item(self._build_select_menu())
+        self.add_item(ui.ActionRow(self._build_select_menu()))
 
     # Builder util for select menu component
     def _build_select_menu(self) -> ui.Select:
@@ -184,7 +184,7 @@ class HelpView(DesignerView):
             ui.TextDisplay(cmds.strip()),
         )
         self.add_item(container)
-        self.add_item(self._build_select_menu())
+        self.add_item(ui.ActionRow(self._build_select_menu()))
 
     # Help callback
     async def help_callback(self, interaction: discord.Interaction) -> None:
