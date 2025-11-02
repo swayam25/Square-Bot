@@ -11,7 +11,7 @@ from utils import config
 status = discord.Status.online
 activity = discord.Activity(type=discord.ActivityType.watching, name="Discord")
 intents = discord.Intents.all()
-client = Client(status=status, activity=activity, intents=intents, command_prefix="")
+client = Client(status=status, activity=activity, intents=intents, command_prefix="", help_command=None)
 console = Console()
 
 # Startup printing
