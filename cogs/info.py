@@ -222,11 +222,11 @@ class Info(commands.Cog):
     # User info
     @info.command(name="user")
     @option("user", description="Mention the member whom you will see info")
-    async def user_info(self, ctx: discord.ApplicationContext, user: discord.Member):
+    async def user_info(self, ctx: discord.ApplicationContext, user: discord.Member | discord.User):
         """Shows info of the mentioned user."""
         # Prepare info fields
         info_lines = [
-            f"{emoji.mention} {user.mention} {emoji.crown if user.guild.owner_id == user.id else ''}",
+            f"{emoji.mention} {user.mention} {(emoji.crown if user.guild.owner_id == user.id else '') if isinstance(user, discord.Member) else ''}",
             f"{emoji.id} **ID**: `{user.id}`",
             f"{emoji.bot} **Bot?**: {user.bot}",
             f"{emoji.link} **Avatar URL**: [Click Here]({user.avatar.url})",
