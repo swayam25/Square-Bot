@@ -38,7 +38,7 @@ class AutoMod(commands.Cog):
                         )
                     )
                     await msg.channel.send(
-                        view=view, allowed_mentions=discord.AllowedMentions(users=True), delete_after=10
+                        view=view, allowed_mentions=discord.AllowedMentions().users(), delete_after=10
                     )
                 except discord.Forbidden:
                     pass

@@ -9,7 +9,7 @@ console = Console()
 class Client(commands.Bot):
     def __init__(self, lavalink: lavalink.Client | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.allowed_mentions = AllowedMentions(users=False, roles=False, everyone=False, replied_user=False)
+        self.allowed_mentions = AllowedMentions().none()
         self.lavalink = lavalink
 
     async def on_ready(self):

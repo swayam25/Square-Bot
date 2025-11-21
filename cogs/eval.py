@@ -296,10 +296,10 @@ class Eval(commands.Cog):
             full_content = str(output or result) if output or result else ""
             filename = f"task_{task_id}_output.txt" if task_id else "eval_output.txt"
             file = discord.File(BytesIO(full_content.encode()), filename=filename)
-            return await ctx.send(file=file)
+            return await ctx.send(file=file, delete_after=0.5)
         else:
             view = DesignerView(ui.Container(ui.TextDisplay(response), color=config.color.green))
-            return await ctx.send(view=view)
+            return await ctx.send(view=view, delete_after=0.5)
 
     # Command Handlers
     async def handle_control_commands(self, ctx: commands.Context, code: str):
@@ -325,7 +325,7 @@ class Eval(commands.Cog):
             )
             return await ctx.reply(view=view, mention_author=False)
 
-        if code_lower in ["list", "tasks", "running"]:
+        elif code_lower in ["list", "tasks", "running"]:
             view = TaskManagerView(self, ctx)
             return await ctx.reply(view=view, mention_author=False)
 
@@ -342,7 +342,15 @@ class Eval(commands.Cog):
             return
         code = self.clean_code_block(code)
         if self.is_simple_message(code):
-            return await ctx.send(code)
+            await ctx.message.delete()  # Delete original message
+            if getattr(ctx.message, "reference", None) and getattr(ctx.message.reference, "message_id", None):
+                return await ctx.send(
+                    code,
+                    reference=ctx.message.reference,
+                    mention_author=True,
+                    allowed_mentions=discord.AllowedMentions().all(),
+                )
+            return await ctx.send(code, allowed_mentions=discord.AllowedMentions().all())
         env = self.create_execution_env(ctx)
         task_id = self.add_task(None, ctx)  # Reserve ID first
         task = asyncio.create_task(self.execute_background_task(code, env, ctx, task_id))
@@ -356,7 +364,7 @@ class Eval(commands.Cog):
                 color=config.color.green,
             )
         )
-        await ctx.reply(view=view, mention_author=False, delete_after=2)
+        await ctx.reply(view=view, mention_author=False, delete_after=0.5)
 
 
 def setup(client: Client):
