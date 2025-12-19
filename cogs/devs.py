@@ -349,7 +349,10 @@ class Devs(commands.Cog):
             for app_emoji in emojis:
                 async with self.client.http._HTTPClient__session.get(app_emoji.url) as response:
                     if response.status == 200:
-                        zip_file.writestr(f"{app_emoji.name}.png", await response.read())
+                        if app_emoji.animated:
+                            zip_file.writestr(f"{app_emoji.name}.gif", await response.read())
+                        else:
+                            zip_file.writestr(f"{app_emoji.name}.png", await response.read())
 
         zip_buffer.seek(0)
         await ctx.respond(file=discord.File(fp=zip_buffer, filename="emojis.zip"))
@@ -538,10 +541,10 @@ class Devs(commands.Cog):
 
             if len(top_dirs) == 1:
                 base_dir = list(top_dirs)[0]
-                emoji_files = [f for f in file_entries if f.startswith(base_dir + "/") and f.endswith(".png")]
+                emoji_files = [f for f in file_entries if f.startswith(base_dir + "/") and f.endswith((".png", ".gif"))]
                 emoji_names = [f.split("/")[-1][:-4] for f in emoji_files]
             else:
-                emoji_files = [f for f in file_entries if "/" not in f and f.endswith(".png")]
+                emoji_files = [f for f in file_entries if "/" not in f and f.endswith((".png", ".gif"))]
                 emoji_names = [f[:-4] for f in emoji_files]
 
             if not emoji_files:
