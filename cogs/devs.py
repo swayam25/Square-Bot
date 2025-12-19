@@ -368,9 +368,9 @@ class Devs(commands.Cog):
     # Upload app emojis
     @emoji.command(name="upload")
     @check.is_dev()
-    @option("file", description="Upload emojis zip file or single png file.", type=discord.Attachment)
+    @option("file", description="Upload emojis zip file or single png or gif file.", type=discord.Attachment)
     async def upload_app_emojis(self, ctx: discord.ApplicationContext, file: discord.Attachment):
-        """Uploads all emojis to the app (supports .zip files with .png emojis or a single .png file)."""
+        """Uploads emojis to the app from a .zip file or single .png/.gif file."""
         await ctx.defer()
         if file.filename.endswith(".zip"):
             zip_buffer = BytesIO()
@@ -395,13 +395,15 @@ class Devs(commands.Cog):
                     return
                 if len(top_dirs) == 1:
                     base_dir = list(top_dirs)[0]
-                    emoji_files = [f for f in file_entries if f.startswith(base_dir + "/") and f.endswith(".png")]
+                    emoji_files = [
+                        f for f in file_entries if f.startswith(base_dir + "/") and f.endswith((".png", ".gif"))
+                    ]
                 else:
-                    emoji_files = [f for f in file_entries if "/" not in f and f.endswith(".png")]
+                    emoji_files = [f for f in file_entries if "/" not in f and f.endswith((".png", ".gif"))]
                 if not emoji_files:
                     view = DesignerView(
                         ui.Container(
-                            ui.TextDisplay(f"{emoji.error} No `.png` emoji files found in the zip."),
+                            ui.TextDisplay(f"{emoji.error} No `.png` or `.gif` emoji files found in the zip."),
                             color=config.color.red,
                         )
                     )
@@ -436,8 +438,8 @@ class Devs(commands.Cog):
                 )
             )
             await msg.edit(view=view)
-        elif file.filename.endswith(".png"):
-            # Handle single PNG file upload
+        elif file.filename.endswith((".png", ".gif")):
+            # Handle single PNG or GIF file upload
             if len(file.filename[:-4]) > 32:
                 view = DesignerView(
                     ui.Container(
@@ -453,10 +455,15 @@ class Devs(commands.Cog):
             await file.save(png_buffer)
             png_buffer.seek(0)
             try:
-                await self.client.create_emoji(name=file.filename[:-4], image=png_buffer.read())
+                uploaded_emoji = await self.client.create_emoji(name=file.filename[:-4], image=png_buffer.read())
+                emoji_md = (
+                    f"<a:{uploaded_emoji.name}:{uploaded_emoji.id}>"
+                    if uploaded_emoji.animated
+                    else f"<:{uploaded_emoji.name}:{uploaded_emoji.id}>"
+                )
                 view = DesignerView(
                     ui.Container(
-                        ui.TextDisplay(f"{emoji.success} Uploaded emoji `{file.filename[:-4]}`."),
+                        ui.TextDisplay(f"{emoji.success} Uploaded emoji {emoji_md} `{file.filename[:-4]}`."),
                         color=config.color.green,
                     )
                 )
@@ -473,7 +480,7 @@ class Devs(commands.Cog):
         else:
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay(f"{emoji.error} Please upload a valid zip file or a single png file."),
+                    ui.TextDisplay(f"{emoji.error} Please upload a valid zip file or a single .png/.gif file."),
                     color=config.color.red,
                 )
             )

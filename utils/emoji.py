@@ -24,6 +24,8 @@ class Emoji:
     bottom_right: str = "↪️"
     upvote: str = "👍"
     downvote: str = "👎"
+    loading: str = "⏳"
+    loading_white: str = "⏳"
 
     settings: str = "⚙️"
     info: str = "ℹ️"
@@ -84,6 +86,7 @@ class Emoji:
     cpu: str = "📡"
     lavalink: str = "🌋"
     lavalink_white: str = "🌋"
+    more: str = "⚙️"
     more_white: str = "⚙️"
 
     pycord: str = "🐍"

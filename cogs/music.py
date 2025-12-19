@@ -369,7 +369,12 @@ async def _update_queue_view(interaction: discord.Interaction, queue_view: "Queu
 
 class QueueContainer(Container):
     def __init__(
-        self, player: lavalink.DefaultPlayer, ctx: discord.ApplicationContext, page=1, items_per_page=5, queue_view=None
+        self,
+        player: lavalink.DefaultPlayer,
+        ctx: discord.ApplicationContext,
+        page=1,
+        items_per_page=5,
+        queue_view=None,
     ):
         super().__init__()
         pages = max(1, math.ceil(len(player.queue) / items_per_page))
@@ -379,7 +384,10 @@ class QueueContainer(Container):
 
         for index, track in enumerate(player.queue[start:end], start=start):
             requester = ctx.guild.get_member(track.requester)
-            btn = Button(emoji=emoji.more_white)
+            btn = Button(
+                emoji=emoji.more if queue_view and index == queue_view.visible_action_button else emoji.more_white,
+                style=discord.ButtonStyle.grey,
+            )
             # Create a closure that captures the current index value
             btn.callback = lambda i, track_idx=index: QueueBtnCallback.queue_btn_callback(
                 i, player=player, track_index=track_idx, queue_view=queue_view
