@@ -143,6 +143,9 @@ Alternatively, you can manually create a `.cache/emoji.json` file with the follo
     - Keep the code clean and readable.
     - Make sure the bot is working as expected.
 
-- Code Formatting
-    - Run `ruff format` before committing your changes, or use [`Ruff`](https://docs.astral.sh/ruff/editors) extension in your code editor.
-    - Ensure the bot is working as expected. Run `ruff check` to check for any errors.
+- Use [`uv`](https://docs.astral.sh/uv) package manager for development.
+
+- Setup `pre-commit` hooks
+    ```sh
+    pre-commit install
+    ```

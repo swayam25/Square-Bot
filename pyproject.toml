@@ -42,4 +42,4 @@ location = "./migrations"
 src_folder = "./."
 
 [dependency-groups]
-dev = ["ruff>=0.11.12"]
+dev = ["pre-commit>=4.5.1", "ruff>=0.11.12"]
