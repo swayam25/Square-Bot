@@ -26,6 +26,7 @@ class Emoji:
     downvote: str = "👎"
     loading: str = "⏳"
     loading_white: str = "⏳"
+    copy_white: str = "📋"
 
     settings: str = "⚙️"
     info: str = "ℹ️"
@@ -38,6 +39,7 @@ class Emoji:
     id: str = "🆔"
     id_red: str = "🆔"
     user: str = "👤"
+    user_white: str = "👤"
     user_red: str = "👤"
     crown: str = "👑"
     perms: str = "🔐"
@@ -98,6 +100,7 @@ class Emoji:
     music: str = "🎵"
     mic: str = "🎤"
     duration: str = "⏱️"
+    duration_white: str = "⏱️"
     duration_red: str = "⏱️"
     live: str = "🔴"
     play: str = "▶️"
@@ -125,7 +128,6 @@ class Emoji:
     console: str = "🖥️"
     console_green: str = "🖥️"
     enter_green: str = "✅"
-    upload: str = "📤"
     bin_red: str = "🗑️"
     bin_white: str = "🗑️"
 

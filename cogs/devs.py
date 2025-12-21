@@ -70,6 +70,73 @@ class GuildListView(DesignerView):
         await interaction.edit(view=self)
 
 
+class SyncEmojiView(DesignerView):
+    def __init__(self, client: Client, ctx: discord.ApplicationContext):
+        super().__init__(ctx=ctx, check_author_interaction=True)
+        self.client = client
+
+    async def build(self) -> None:
+        self.clear_items()
+        emojis: list[discord.AppEmoji] = await self.client.fetch_emojis()
+        emoji_dict: dict = {}
+
+        for app_emoji in emojis:
+            if app_emoji.animated:
+                emoji_dict[app_emoji.name] = f"<a:{app_emoji.name}:{app_emoji.id}>"
+            else:
+                emoji_dict[app_emoji.name] = f"<:{app_emoji.name}:{app_emoji.id}>"
+        resp: dict = Emoji.create_custom_emoji_config(emoji_dict)
+        default_emojis_used: list[str] = resp.get("default_emojis_used", [])
+        extra_keys_ignored: list[str] = resp.get("extra_keys_ignored", [])
+        view_items = [
+            ui.TextDisplay(f"{emoji.restart} Synced {len(emojis)} emojis."),
+        ]
+        if default_emojis_used:
+            view_items.extend(
+                [
+                    ui.TextDisplay("**Default Emojis Used**"),
+                    ui.TextDisplay("".join(f"> {getattr(emoji, i)} `{i}`\n" for i in default_emojis_used)),
+                ]
+            )
+        if extra_keys_ignored:
+            view_items.extend(
+                [
+                    ui.TextDisplay("**Ignored Extra Emojis**"),
+                    ui.TextDisplay("".join(f"> {emoji_dict.get(i, emoji.bullet)} `{i}`\n" for i in extra_keys_ignored)),
+                ]
+            )
+            extra_btn = ui.Button(
+                emoji=emoji.bin_white,
+                label="Delete Extra Emojis",
+                style=discord.ButtonStyle.grey,
+                custom_id="delete_extra_emojis_btn",
+            )
+
+            async def extra_btn_callback(i: discord.Interaction):
+                await self.delete_extra_emojis_callback(i, [emoji_dict.get(e) for e in extra_keys_ignored])
+
+            extra_btn.callback = extra_btn_callback
+            self.add_item(ui.Container(*view_items))
+            self.add_item(ui.ActionRow(extra_btn))
+            return  # Early return to avoid re-adding view_items, button row must be at the end.
+        self.add_item(ui.Container(*view_items))
+
+    async def delete_extra_emojis_callback(self, interaction: discord.Interaction, emojis: list[str]):
+        """Deletes extra emojis."""
+        btn = self.get_item("delete_extra_emojis_btn")
+        btn.label = "Deleting..."
+        btn.emoji = emoji.loading_white
+        self.disable_all_items()
+        await interaction.edit(view=self)
+        for e in emojis:
+            obj = e.strip("<>").split(":")
+            id = int(obj[-1]) if len(obj) > 1 else None
+            if id:
+                await self.client.delete_emoji(discord.Object(id=id))
+        await self.build()
+        await interaction.edit(view=self)
+
+
 class Devs(commands.Cog):
     def __init__(self, client: Client):
         self.client = client
@@ -364,7 +431,7 @@ class Devs(commands.Cog):
         bar = f"{emoji.filled_bar * filled_length}{emoji.empty_bar * (bar_length - filled_length)}"
         return DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.upload} Uploading `{completed}/{total}` emojis.\n{bar} `{progress:.2f}%`"),
+                ui.TextDisplay(f"{emoji.loading} Uploading `{completed}/{total}` emojis.\n{bar} `{progress:.2f}%`"),
             )
         )
 
@@ -489,25 +556,6 @@ class Devs(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
 
-    async def delete_extra_emojis_callback(
-        self, view: DesignerView, interaction: discord.Interaction, emojis: list[str]
-    ):
-        """Deletes extra emojis."""
-        view.disable_all_items()
-        await interaction.edit(view=view)
-        for e in emojis:
-            obj = e.strip("<>").split(":")
-            id = int(obj[-1]) if len(obj) > 1 else None
-            if id:
-                await self.client.delete_emoji(discord.Object(id=id))
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"{emoji.success} Deleted extra emojis."),
-                color=config.color.green,
-            )
-        )
-        await interaction.followup.send(view=view, ephemeral=True)
-
     # Check emoji zip file
     @emoji.command(name="check-zip")
     @check.is_dev()
@@ -588,7 +636,6 @@ class Devs(commands.Cog):
         """Syncs all emojis from the app."""
         await ctx.defer()
         emojis: list[discord.AppEmoji] = await self.client.fetch_emojis()
-        emoji_dict: dict = {}
         if not emojis:
             view = DesignerView(
                 ui.Container(
@@ -598,46 +645,10 @@ class Devs(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
             return
-
-        for app_emoji in emojis:
-            if app_emoji.animated:
-                emoji_dict[app_emoji.name] = f"<a:{app_emoji.name}:{app_emoji.id}>"
-            else:
-                emoji_dict[app_emoji.name] = f"<:{app_emoji.name}:{app_emoji.id}>"
-
-        resp: dict = Emoji.create_custom_emoji_config(emoji_dict)
-        default_emojis_used = resp.get("default_emojis_used", [])
-        extra_keys_ignored = resp.get("extra_keys_ignored", [])
-        view_items = [
-            ui.TextDisplay(f"{emoji.restart} Synced {len(emojis)} emojis."),
-        ]
-        if default_emojis_used:
-            view_items.append(ui.TextDisplay("**Default Emojis Used**"))
-            view_items.append(ui.Separator())
-            view_items.extend([ui.TextDisplay(f"{getattr(emoji, i)} `{i}`") for i in default_emojis_used])
-        if extra_keys_ignored:
-            view_items.append(ui.TextDisplay("**Ignored Extra Emojis**"))
-            view_items.append(ui.Separator())
-            view_items.extend([ui.TextDisplay(f"{emoji_dict.get(i, emoji.bullet)} `{i}`") for i in extra_keys_ignored])
-            view = DesignerView(
-                ui.Container(*view_items),
-                ui.ActionRow(
-                    ui.Button(
-                        emoji=emoji.bin_white,
-                        label="Delete Extra Emojis",
-                        style=discord.ButtonStyle.grey,
-                    ),
-                ),
-                ctx=ctx,
-                check_author_interaction=True,
-            )
-            view.children[-1].callback = lambda i: self.delete_extra_emojis_callback(
-                view, i, [emoji_dict.get(e) for e in extra_keys_ignored]
-            )
+        else:
+            view = SyncEmojiView(self.client, ctx)
+            await view.build()
             await ctx.respond(view=view)
-            return
-        view = DesignerView(ui.Container(*view_items))
-        await ctx.respond(view=view)
 
 
 def setup(client: Client):

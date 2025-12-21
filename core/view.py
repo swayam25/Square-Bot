@@ -1,13 +1,14 @@
 from discord import AllowedMentions, ApplicationContext, Interaction
-from discord.ui import Container, DesignerView, Item, TextDisplay
+from discord.ui import Container, Item, TextDisplay
+from discord.ui import DesignerView as BaseDesignerView
 from discord.ui.view import V
 from utils import config
 from utils.emoji import emoji
 
 
-class DesignerView(DesignerView):
+class DesignerView(BaseDesignerView):
     """
-    A custom DesignerView class for Discord UI components derived from `DesignerView`.
+    A custom DesignerView class for Discord UI components derived from `discord.ui.DesignerView`.
 
     Parameters:
         *items (Item[V]): The items to be added to the view.
@@ -56,6 +57,7 @@ class DesignerView(DesignerView):
                 return False
             else:
                 return True
+        return True
 
     async def on_timeout(self) -> None:
         """A callback that is called when a view's timeout elapses without being explicitly stopped."""

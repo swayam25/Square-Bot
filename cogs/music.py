@@ -7,10 +7,9 @@ import re
 from babel.dates import format_timedelta
 from core import Client
 from core.view import DesignerView
-from discord import SlashCommandGroup
+from discord import SlashCommandGroup, ui
 from discord.commands import option, slash_command
 from discord.ext import commands, tasks
-from discord.ui import ActionRow, Button, Container, Section, Separator, TextDisplay, Thumbnail
 from music import store
 from music.client import LavalinkVoiceClient
 from utils import config
@@ -67,8 +66,8 @@ async def stop_player(player: lavalink.DefaultPlayer, guild: discord.Guild):
 async def music_interaction_check(view: DesignerView, player: lavalink.DefaultPlayer, interaction: discord.Interaction):
     if not player or not player.current:
         err_view = DesignerView(
-            Container(
-                TextDisplay(f"{emoji.error} Nothing is being played at the current moment."),
+            ui.Container(
+                ui.TextDisplay(f"{emoji.error} Nothing is being played at the current moment."),
                 color=config.color.red,
             )
         )
@@ -78,8 +77,8 @@ async def music_interaction_check(view: DesignerView, player: lavalink.DefaultPl
         return False
     elif not interaction.user.voice:
         err_view = DesignerView(
-            Container(
-                TextDisplay(f"{emoji.error} Join a voice channel first."),
+            ui.Container(
+                ui.TextDisplay(f"{emoji.error} Join a voice channel first."),
                 color=config.color.red,
             )
         )
@@ -87,8 +86,8 @@ async def music_interaction_check(view: DesignerView, player: lavalink.DefaultPl
         return False
     elif player.is_connected and interaction.user.voice.channel.id != int(player.channel_id):
         err_view = DesignerView(
-            Container(
-                TextDisplay(f"{emoji.error} You are not in my voice channel."),
+            ui.Container(
+                ui.TextDisplay(f"{emoji.error} You are not in my voice channel."),
                 color=config.color.red,
             )
         )
@@ -98,7 +97,7 @@ async def music_interaction_check(view: DesignerView, player: lavalink.DefaultPl
         return True
 
 
-class MusicContainer(Container):
+class MusicContainer(ui.Container):
     def __init__(self, player: lavalink.DefaultPlayer):
         super().__init__()
         requester = f"<@{player.current.requester}>"
@@ -108,14 +107,14 @@ class MusicContainer(Container):
             duration = datetime.timedelta(milliseconds=player.current.duration)
             duration = format_timedelta(duration)
         self.items = [
-            Section(
-                TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
-                TextDisplay(
+            ui.Section(
+                ui.TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
+                ui.TextDisplay(
                     f"{emoji.user} **Requested By**: {requester if requester else 'Unknown'}\n"
                     f"{emoji.mic} **Artist**: {sources.get(player.current.source_name, sources['_'])['emoji']} {player.current.author}\n"
                     f"{emoji.duration} **Duration**: {duration}"
                 ),
-                accessory=Thumbnail(url=player.current.artwork_url),
+                accessory=ui.Thumbnail(url=player.current.artwork_url),
             )
         ]
 
@@ -134,7 +133,7 @@ class MusicView(DesignerView):
     def build(self):
         self.clear_items()
         self.add_item(MusicContainer(self.player))
-        self.add_item(row := ActionRow())
+        self.add_item(row := ui.ActionRow())
         for btn_emoji, action in [
             (emoji.play_white if self.player.paused else emoji.pause_white, "pause"),
             (emoji.stop_white, "stop"),
@@ -149,21 +148,23 @@ class MusicView(DesignerView):
             ),
             (emoji.shuffle_white if not self.player.shuffle else emoji.shuffle, "shuffle"),
         ]:
-            btn = Button(emoji=btn_emoji, custom_id=action, style=discord.ButtonStyle.grey)
+            btn = ui.Button(emoji=btn_emoji, custom_id=action, style=discord.ButtonStyle.grey)
             btn.callback = getattr(self, f"{action}_callback")
             row.add_item(btn)
 
     # Pause / Resume
     async def pause_callback(self, interaction: discord.Interaction):
-        button: Button = self.get_item("pause")
+        button: ui.Button = self.get_item("pause")
         if not self.player.paused:
             await self.player.set_pause(True)
         elif self.player.paused:
             await self.player.set_pause(False)
         button.emoji = emoji.play_white if self.player.paused else emoji.pause_white
         view = DesignerView(
-            Container(
-                TextDisplay(f"{interaction.user.mention} {'Paused' if self.player.paused else 'Resumed'} the player."),
+            ui.Container(
+                ui.TextDisplay(
+                    f"{interaction.user.mention} {'Paused' if self.player.paused else 'Resumed'} the player."
+                ),
             )
         )
         await interaction.edit(view=self)
@@ -173,7 +174,7 @@ class MusicView(DesignerView):
     async def stop_callback(self, interaction: discord.Interaction):
         guild: discord.Guild = self.client.get_guild(int(interaction.guild_id))
 
-        view = DesignerView(Container(TextDisplay(f"{interaction.user.mention} Destroyed the player.")))
+        view = DesignerView(ui.Container(ui.TextDisplay(f"{interaction.user.mention} Destroyed the player.")))
         self.disable_all_items()
         await interaction.edit(view=self)
         await interaction.followup.send(view=view, delete_after=5)
@@ -186,15 +187,15 @@ class MusicView(DesignerView):
         self.disable_all_items()
         await interaction.edit(view=self)
         view = DesignerView(
-            Container(
-                TextDisplay(f"{interaction.user.mention} Skipped the track."),
+            ui.Container(
+                ui.TextDisplay(f"{interaction.user.mention} Skipped the track."),
             )
         )
         await interaction.followup.send(view=view, delete_after=5)
 
     # Loop
     async def loop_callback(self, interaction: discord.Interaction):
-        button: Button = self.get_item("loop")
+        button: ui.Button = self.get_item("loop")
         if self.player.loop == self.player.LOOP_NONE:
             self.player.set_loop(1)
             button.emoji = emoji.loop_one
@@ -208,8 +209,8 @@ class MusicView(DesignerView):
             button.emoji = emoji.loop_white
             mode = "Disable"
         view = DesignerView(
-            Container(
-                TextDisplay(
+            ui.Container(
+                ui.TextDisplay(
                     f"{interaction.user.mention} {'Enabled' if mode != 'Disable' else 'Disabled'} {mode} loop."
                 ),
             )
@@ -219,11 +220,11 @@ class MusicView(DesignerView):
 
     # Shuffle
     async def shuffle_callback(self, interaction: discord.Interaction):
-        button: Button = self.get_item("shuffle")
+        button: ui.Button = self.get_item("shuffle")
         if not self.player.queue:
             err_view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.error} Queue is empty."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Queue is empty."),
                     color=config.color.red,
                 )
             )
@@ -232,8 +233,8 @@ class MusicView(DesignerView):
             self.player.set_shuffle(not self.player.shuffle)
             button.emoji = emoji.shuffle if self.player.shuffle else emoji.shuffle_white
             shuffle_view = DesignerView(
-                Container(
-                    TextDisplay(
+                ui.Container(
+                    ui.TextDisplay(
                         f"{interaction.user.mention} {'Enabled' if self.player.shuffle else 'Disabled'} shuffle."
                     ),
                 )
@@ -367,7 +368,7 @@ async def _update_queue_view(interaction: discord.Interaction, queue_view: "Queu
     await interaction.response.edit_message(view=queue_view)
 
 
-class QueueContainer(Container):
+class QueueContainer(ui.Container):
     def __init__(
         self,
         player: lavalink.DefaultPlayer,
@@ -384,7 +385,7 @@ class QueueContainer(Container):
 
         for index, track in enumerate(player.queue[start:end], start=start):
             requester = ctx.guild.get_member(track.requester)
-            btn = Button(
+            btn = ui.Button(
                 emoji=emoji.more if queue_view and index == queue_view.visible_action_button else emoji.more_white,
                 style=discord.ButtonStyle.grey,
             )
@@ -395,8 +396,8 @@ class QueueContainer(Container):
 
             # Add the section for the track
             queue_list.append(
-                Section(
-                    TextDisplay(
+                ui.Section(
+                    ui.TextDisplay(
                         f"`{index + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) [`{lavalink.format_time(track.duration)}`]\n"
                         f"-# {emoji.bottom_right} {requester.mention if requester else 'Unknown'}"
                     ),
@@ -406,30 +407,30 @@ class QueueContainer(Container):
 
             # Add action buttons if this track's buttons are visible
             if queue_view and index == queue_view.visible_action_button:
-                move_up_btn = Button(emoji=emoji.up_white, style=discord.ButtonStyle.grey, disabled=(index == 0))
+                move_up_btn = ui.Button(emoji=emoji.up_white, style=discord.ButtonStyle.grey, disabled=(index == 0))
                 move_up_btn.callback = lambda i, track_idx=index: QueueBtnCallback.move_up_callback(
                     i, player=player, track_index=track_idx, queue_view=queue_view
                 )
-                move_down_btn = Button(
+                move_down_btn = ui.Button(
                     emoji=emoji.down_white, style=discord.ButtonStyle.grey, disabled=(index == len(player.queue) - 1)
                 )
                 move_down_btn.callback = lambda i, track_idx=index: QueueBtnCallback.move_down_callback(
                     i, player=player, track_index=track_idx, queue_view=queue_view
                 )
-                remove_btn = Button(emoji=emoji.bin_white, style=discord.ButtonStyle.grey)
+                remove_btn = ui.Button(emoji=emoji.bin_white, style=discord.ButtonStyle.grey)
                 remove_btn.callback = lambda i, track_idx=index: QueueBtnCallback.remove_callback(
                     i, player=player, track_index=track_idx, queue_view=queue_view
                 )
-                play_now_btn = Button(emoji=emoji.play_white, style=discord.ButtonStyle.grey)
+                play_now_btn = ui.Button(emoji=emoji.play_white, style=discord.ButtonStyle.grey)
                 play_now_btn.callback = lambda i, track_idx=index: QueueBtnCallback.play_now_callback(
                     i, player=player, track_index=track_idx, queue_view=queue_view
                 )
-                queue_list.append(ActionRow(move_up_btn, move_down_btn, remove_btn, play_now_btn))
+                queue_list.append(ui.ActionRow(move_up_btn, move_down_btn, remove_btn, play_now_btn))
 
         current_requester = ctx.guild.get_member(player.current.requester) if player.current else None
-        self.add_item(TextDisplay(f"## {ctx.guild.name}'s Queue"))
+        self.add_item(ui.TextDisplay(f"## {ctx.guild.name}'s Queue"))
         self.add_item(
-            TextDisplay(
+            ui.TextDisplay(
                 f"`0.` [**{player.current.title}** by **{player.current.author}**]({player.current.uri}) [`{lavalink.format_time(player.current.duration)}`]\n"
                 f"-# {emoji.bottom_right} {current_requester.mention if current_requester else 'Unknown'}"
                 if player.current
@@ -437,13 +438,13 @@ class QueueContainer(Container):
             )
         )
         if queue_list:
-            self.add_item(TextDisplay(f"### Queued {len(player.queue)} Tracks"))
+            self.add_item(ui.TextDisplay(f"### Queued {len(player.queue)} Tracks"))
             self.items.extend(queue_list)
-        else:
-            self.add_item(TextDisplay("Queue is empty."))
+        self.add_item(ui.Separator())
         if len(player.queue) > items_per_page:
-            self.add_item(Separator())
-            self.add_item(TextDisplay(f"-# Viewing Page {page}/{pages}"))
+            self.add_item(ui.TextDisplay(f"-# Viewing Page {page}/{pages}"))
+        elif not queue_list:
+            self.add_item(ui.TextDisplay("-# Queue is empty"))
 
 
 class QueueListView(DesignerView):
@@ -472,18 +473,128 @@ class QueueListView(DesignerView):
         self.add_item(
             QueueContainer(self.player, self.ctx, page=self.page, items_per_page=self.items_per_page, queue_view=self)
         )
+        if self.player.queue:
+            self.add_item(
+                ui.ActionRow(
+                    more_select := ui.Select(
+                        placeholder="More Actions",
+                        options=[
+                            discord.SelectOption(label="Clear Queue", emoji=emoji.bin_white, value="clear_queue"),
+                            discord.SelectOption(
+                                label="Reverse Queue", emoji=emoji.restart_white, value="reverse_queue"
+                            ),
+                            discord.SelectOption(
+                                label="Sort by Duration", emoji=emoji.duration_white, value="sort_by_duration"
+                            ),
+                            discord.SelectOption(
+                                label="Remove Duplicates", emoji=emoji.copy_white, value="remove_duplicates"
+                            ),
+                            discord.SelectOption(
+                                label="Remove songs by requester", emoji=emoji.user_white, value="remove_by_requester"
+                            ),
+                        ],
+                        custom_id="more_actions",
+                    )
+                )
+            )
+            more_select.callback = lambda i: self.more_select_callback(i)
         total_pages = max(1, math.ceil(len(self.player.queue) / self.items_per_page))
         if total_pages > 1:
-            self.add_item(row := ActionRow())
+            self.add_item(row := ui.ActionRow())
             for btn_emoji, action in [
                 (emoji.start_white, "start"),
                 (emoji.previous_white, "previous"),
                 (emoji.next_white, "next"),
                 (emoji.end_white, "end"),
             ]:
-                btn = Button(emoji=btn_emoji, style=discord.ButtonStyle.grey)
+                btn = ui.Button(emoji=btn_emoji, style=discord.ButtonStyle.grey)
                 btn.callback = lambda i, action=action: self.interaction_callback(i, action=action)
                 row.add_item(btn)
+
+    async def more_select_callback(self, interaction: discord.Interaction):
+        selected_value = interaction.data["values"][0]
+        if selected_value == "remove_by_requester":
+            await interaction.response.send_modal(
+                modal := ui.DesignerModal(
+                    ui.Label(
+                        "Select requester to remove their songs",
+                        item=ui.Select(
+                            discord.ComponentType.user_select, placeholder="Select a user", custom_id="requester_select"
+                        ),
+                    ),
+                    title="Remove Songs by Requester",
+                )
+            )
+            modal.callback = lambda i: self.requester_modal_callback(i, interaction)
+        else:
+            await interaction.response.defer()
+            self.visible_action_button = None
+            if selected_value == "clear_queue":
+                self.player.queue.clear()
+                view = DesignerView(ui.Container(ui.TextDisplay(f"{interaction.user.mention} Cleared the queue.")))
+                await interaction.followup.send(view=view, delete_after=5)
+            elif selected_value == "reverse_queue":
+                self.player.queue.reverse()
+                view = DesignerView(ui.Container(ui.TextDisplay(f"{interaction.user.mention} Reversed the queue.")))
+                await interaction.followup.send(view=view, delete_after=5)
+            elif selected_value == "sort_by_duration":
+                self.player.queue.sort(key=lambda track: track.duration)
+                view = DesignerView(
+                    ui.Container(ui.TextDisplay(f"{interaction.user.mention} Sorted the queue by duration."))
+                )
+                await interaction.followup.send(view=view, delete_after=5)
+            elif selected_value == "remove_duplicates":
+                seen = set()
+                original_length = len(self.player.queue)
+                self.player.queue = [
+                    track for track in self.player.queue if not (track.identifier in seen or seen.add(track.identifier))
+                ]
+                removed_count = original_length - len(self.player.queue)
+                if removed_count > 0:
+                    view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay(
+                                f"{interaction.user.mention} Removed `{removed_count}` duplicate track{'s' if removed_count != 1 else ''} from the queue."
+                            )
+                        )
+                    )
+                    await interaction.followup.send(view=view, delete_after=5)
+                else:
+                    err_view = DesignerView(
+                        ui.Container(
+                            ui.TextDisplay(f"{emoji.error} No duplicate tracks found in the queue."),
+                            color=config.color.red,
+                        )
+                    )
+                    await interaction.followup.send(view=err_view, ephemeral=True)
+            self.build()
+            await interaction.edit(view=self)
+
+    async def requester_modal_callback(self, interaction: discord.Interaction, view_interaction: discord.Interaction):
+        user_id = int(interaction.data["components"][0]["component"]["values"][0])
+        original_length = len(self.player.queue)
+        self.player.queue = [track for track in self.player.queue if track.requester != user_id]
+        removed_count = original_length - len(self.player.queue)
+        self.visible_action_button = None
+        if removed_count == 0:
+            err_view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} No tracks found requested by <@{user_id}> in the queue."),
+                    color=config.color.red,
+                )
+            )
+            await interaction.response.send_message(view=err_view, ephemeral=True)
+        else:
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(
+                        f"{interaction.user.mention} Removed `{removed_count}` track{'s' if removed_count > 1 else ''} requested by <@{user_id}> from the queue."
+                    )
+                )
+            )
+            self.build()
+            await view_interaction.edit(view=self)
+            await interaction.response.send_message(view=view, delete_after=5)
 
     async def interaction_callback(self, interaction: discord.Interaction, action: str):
         total_pages = max(1, math.ceil(len(self.player.queue) / self.items_per_page))
@@ -583,8 +694,8 @@ class Music(commands.Cog):
         channel = store.play_ch(event.player.guild_id)
         if channel:
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.error} Track is stuck or an error occurred while playing the track."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Track is stuck or an error occurred while playing the track."),
                     color=config.color.red,
                 )
             )
@@ -608,8 +719,8 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer | None = None
         if not ctx.author.voice or not ctx.author.voice.channel:
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.error} Join a voice channel first."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Join a voice channel first."),
                     color=config.color.red,
                 )
             )
@@ -624,8 +735,8 @@ class Music(commands.Cog):
                 if not permissions.connect or not permissions.speak:
                     player = None
                     view = DesignerView(
-                        Container(
-                            TextDisplay(f"{emoji.error} I need the `Connect` and `Speak` permissions."),
+                        ui.Container(
+                            ui.TextDisplay(f"{emoji.error} I need the `Connect` and `Speak` permissions."),
                             color=config.color.red,
                         )
                     )
@@ -639,8 +750,8 @@ class Music(commands.Cog):
             elif not player.current:
                 player = None
                 err_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} Nothing is being played at the current moment."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Nothing is being played at the current moment."),
                         color=config.color.red,
                     )
                 )
@@ -648,8 +759,8 @@ class Music(commands.Cog):
             elif ctx.author.voice.channel.id != int(player.channel_id):
                 player = None
                 err_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} You are not in my voice channel."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} You are not in my voice channel."),
                         color=config.color.red,
                     )
                 )
@@ -753,8 +864,10 @@ class Music(commands.Cog):
                         play_ch = store.play_ch(member.guild.id)
                         if play_ch:
                             view = DesignerView(
-                                Container(
-                                    TextDisplay(f"{emoji.leave} Left {bot_voice_channel.mention} due to inactivity."),
+                                ui.Container(
+                                    ui.TextDisplay(
+                                        f"{emoji.leave} Left {bot_voice_channel.mention} due to inactivity."
+                                    ),
                                     color=config.color.red,
                                 )
                             )
@@ -798,14 +911,14 @@ class Music(commands.Cog):
             query = query.strip("<>")
             # Remove durations like 00:00:00 from query
             query = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b|\s*-\s*\d{1,2}:\d{2}(?::\d{2})?\b", "", query)
-            container = Container()
+            container = ui.Container()
             if not url_rx.match(query):
                 query = f"spsearch:{query}"
             results = await player.node.get_tracks(query)
             if not results or not results.tracks:
                 view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} No track found from the given query."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} No track found from the given query."),
                         color=config.color.red,
                     )
                 )
@@ -863,10 +976,10 @@ class Music(commands.Cog):
             elif player.loop == player.LOOP_QUEUE:
                 loop = "Queue"
             view = DesignerView(
-                Container(
-                    Section(
-                        TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
-                        TextDisplay(
+                ui.Container(
+                    ui.Section(
+                        ui.TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
+                        ui.TextDisplay(
                             f"{emoji.user} **Requested By**: {requester.mention if requester else 'Unknown'}\n"
                             f"{emoji.mic} **Artist**: {sources.get(player.current.source_name, sources['_'])['emoji']} {player.current.author}\n"
                             f"{emoji.duration} **Duration**: {duration}\n"
@@ -876,7 +989,7 @@ class Music(commands.Cog):
                             f"{emoji.equalizer} **Equalizers**: {', '.join([name.title() for name in player.filters]) if player.filters else 'None'}"
                             f"{f'\n\n {bar}' if bar else ''}"
                         ),
-                        accessory=Thumbnail(url=player.current.artwork_url) if player.current.artwork_url else None,
+                        accessory=ui.Thumbnail(url=player.current.artwork_url) if player.current.artwork_url else None,
                     )
                 )
             )
@@ -891,7 +1004,7 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             await player.clear_filters()
-            view = DesignerView(Container(TextDisplay(f"{emoji.equalizer} Reset equalizer to default settings.")))
+            view = DesignerView(ui.Container(ui.TextDisplay(f"{emoji.equalizer} Reset equalizer to default settings.")))
             await ctx.respond(view=view)
 
     async def filter_autocomplete(self, ctx: discord.AutocompleteContext):
@@ -908,15 +1021,15 @@ class Music(commands.Cog):
             if player.get_filter(name):
                 await player.remove_filter(name)
                 view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.equalizer} Removed **{name.title()}** equalizer."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.equalizer} Removed **{name.title()}** equalizer."),
                     )
                 )
                 await ctx.respond(view=view)
             else:
                 view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} **{name}** equalizer not found."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} **{name}** equalizer not found."),
                         color=config.color.red,
                     )
                 )
@@ -953,8 +1066,8 @@ class Music(commands.Cog):
             )
             await player.set_filter(eq)
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Karaoke** ({intensity}) equalizer."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.equalizer} Applied **Karaoke** ({intensity}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
@@ -991,8 +1104,8 @@ class Music(commands.Cog):
 
             await player.set_filter(eq)
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Timescale** ({speed}) equalizer."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.equalizer} Applied **Timescale** ({speed}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
@@ -1017,8 +1130,8 @@ class Music(commands.Cog):
             eq.update(frequency=config["frequency"], depth=config["depth"])
             await player.set_filter(eq)
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Tremolo** ({intensity}) equalizer."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.equalizer} Applied **Tremolo** ({intensity}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
@@ -1043,8 +1156,8 @@ class Music(commands.Cog):
             eq.update(frequency=config["frequency"], depth=config["depth"])
             await player.set_filter(eq)
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Vibrato** ({intensity}) equalizer."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.equalizer} Applied **Vibrato** ({intensity}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
@@ -1069,8 +1182,8 @@ class Music(commands.Cog):
             eq.update(rotation_hz=rotation_hz)
             await player.set_filter(eq)
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Rotation** ({speed}) equalizer."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.equalizer} Applied **Rotation** ({speed}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
@@ -1096,8 +1209,8 @@ class Music(commands.Cog):
             eq.update(smoothing=smoothing)
             await player.set_filter(eq)
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Lowpass** ({strength}) equalizer."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.equalizer} Applied **Lowpass** ({strength}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
@@ -1135,8 +1248,8 @@ class Music(commands.Cog):
             )
             await player.set_filter(eq)
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Channel Mix** ({mode}) equalizer."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.equalizer} Applied **Channel Mix** ({mode}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
@@ -1213,8 +1326,8 @@ class Music(commands.Cog):
             )
             await player.set_filter(eq)
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.equalizer} Applied **Distortion** ({type}) equalizer."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.equalizer} Applied **Distortion** ({type}) equalizer."),
                 )
             )
             await ctx.respond(view=view)
@@ -1229,8 +1342,8 @@ class Music(commands.Cog):
             disable = Disable(self.client, ctx.guild.id)
             await disable.play_msg()
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.stop} Player destroyed."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.stop} Player destroyed."),
                 )
             )
             await ctx.respond(view=view)
@@ -1248,8 +1361,8 @@ class Music(commands.Cog):
             if track_time < player.current.duration:
                 await player.seek(track_time)
                 view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.seek} Moved track to `{lavalink.format_time(track_time)}`."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.seek} Moved track to `{lavalink.format_time(track_time)}`."),
                     )
                 )
                 await ctx.respond(view=view)
@@ -1263,8 +1376,8 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             view = DesignerView(
-                Container(
-                    TextDisplay(f"{emoji.skip} Skipped the track."),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.skip} Skipped the track."),
                 )
             )
             await Disable(self.client, ctx.guild.id).play_msg()
@@ -1282,8 +1395,8 @@ class Music(commands.Cog):
             index: int = int(track.split(".")[0])  # Extract index from the selected track
             if index < 1 or index > len(player.queue):
                 err_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} Track number must be between `1` and `{len(player.queue)}`"),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Track number must be between `1` and `{len(player.queue)}`"),
                         color=config.color.red,
                     )
                 )
@@ -1295,8 +1408,8 @@ class Music(commands.Cog):
                 await player.skip()
                 player.set_shuffle(shuffle_state)  # Restore shuffle state
                 skip_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.skip} Skipped to track `{index}`."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.skip} Skipped to track `{index}`."),
                     )
                 )
                 await ctx.respond(view=skip_view)
@@ -1309,8 +1422,8 @@ class Music(commands.Cog):
         if player:
             if player.paused:
                 err_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} Player is already paused."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Player is already paused."),
                         color=config.color.red,
                     )
                 )
@@ -1320,8 +1433,8 @@ class Music(commands.Cog):
                 await player.set_pause(True)
                 await update_play_msg(self.client, ctx.guild.id)
                 view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.pause} Player paused."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.pause} Player paused."),
                     )
                 )
                 await ctx.respond(view=view)
@@ -1337,15 +1450,15 @@ class Music(commands.Cog):
                 await player.set_pause(False)
                 await update_play_msg(self.client, ctx.guild.id)
                 resume_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.play} Player resumed."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.play} Player resumed."),
                     )
                 )
                 await ctx.respond(view=resume_view)
             else:
                 error_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} Player is not paused"),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Player is not paused"),
                         color=config.color.red,
                     )
                 )
@@ -1361,8 +1474,8 @@ class Music(commands.Cog):
             volume_condition = [volume < 1, volume > 100]
             if any(volume_condition):
                 error_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} Volume amount must be between `1` - `100`"),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Volume amount must be between `1` - `100`"),
                         color=config.color.red,
                     )
                 )
@@ -1370,8 +1483,8 @@ class Music(commands.Cog):
             else:
                 await player.set_volume(volume)
                 vol_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.volume} Volume changed to `{player.volume}%`."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.volume} Volume changed to `{player.volume}%`."),
                     )
                 )
                 await ctx.respond(view=vol_view)
@@ -1383,21 +1496,12 @@ class Music(commands.Cog):
         """Shows the player's queue."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
-            if not player.queue:
-                error_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} Queue is empty"),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=error_view, ephemeral=True)
-                return
             items_per_page = 5
             pages = max(1, math.ceil(len(player.queue) / items_per_page))
             if page > pages or page < 1:
                 error_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} Page has to be between `1` to `{pages}`"),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Page has to be between `1` to `{pages}`"),
                         color=config.color.red,
                     )
                 )
@@ -1418,8 +1522,8 @@ class Music(commands.Cog):
         if player:
             if not player.queue:
                 error_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} Queue is empty"),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Queue is empty"),
                         color=config.color.red,
                     )
                 )
@@ -1427,8 +1531,8 @@ class Music(commands.Cog):
             else:
                 player.queue.clear()
                 clear_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.success} Cleared the queue."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.success} Cleared the queue."),
                         color=config.color.green,
                     )
                 )
@@ -1442,8 +1546,8 @@ class Music(commands.Cog):
         if player:
             if not player.queue:
                 error_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} Queue is empty"),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Queue is empty"),
                         color=config.color.red,
                     )
                 )
@@ -1453,8 +1557,8 @@ class Music(commands.Cog):
                 player.set_shuffle(not player.shuffle)
                 await update_play_msg(self.client, ctx.guild.id)
                 shuffle_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.shuffle} {'Enabled' if player.shuffle else 'Disabled'} shuffle."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.shuffle} {'Enabled' if player.shuffle else 'Disabled'} shuffle."),
                     )
                 )
                 await ctx.respond(view=shuffle_view)
@@ -1477,8 +1581,8 @@ class Music(commands.Cog):
             elif mode == "Queue":
                 if not player.queue:
                     error_view = DesignerView(
-                        Container(
-                            TextDisplay(f"{emoji.error} Queue is empty."),
+                        ui.Container(
+                            ui.TextDisplay(f"{emoji.error} Queue is empty."),
                             color=config.color.red,
                         )
                     )
@@ -1489,8 +1593,8 @@ class Music(commands.Cog):
                     _emoji = emoji.loop
             await update_play_msg(self.client, ctx.guild.id)
             loop_view = DesignerView(
-                Container(
-                    TextDisplay(
+                ui.Container(
+                    ui.TextDisplay(
                         f"{_emoji} {'Enabled' if mode != 'Disable' else 'Disabled'} {mode if mode != 'Disable' else ''} Loop."
                     ),
                 )
@@ -1507,16 +1611,16 @@ class Music(commands.Cog):
             index: int = int(track.split(".")[0])  # Extract index from the selected track
             if not player.queue:
                 error_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} Queue is empty"),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Queue is empty"),
                         color=config.color.red,
                     )
                 )
                 await ctx.respond(view=error_view, ephemeral=True)
             elif index > len(player.queue) or index < 1:
                 error_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.error} Index has to be between `1` to `{len(player.queue)}`"),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.error} Index has to be between `1` to `{len(player.queue)}`"),
                         color=config.color.red,
                     )
                 )
@@ -1524,8 +1628,8 @@ class Music(commands.Cog):
             else:
                 removed = player.queue.pop(index - 1)
                 remove_view = DesignerView(
-                    Container(
-                        TextDisplay(f"{emoji.leave} Removed **{removed.title}**."),
+                    ui.Container(
+                        ui.TextDisplay(f"{emoji.leave} Removed **{removed.title}**."),
                         color=config.color.red,
                     )
                 )
