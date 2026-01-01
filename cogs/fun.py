@@ -21,7 +21,7 @@ class Fun(commands.Cog):
         result = random.choice(["heads", "tails"])
         view = DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.coin} Flipping coin..."),
+                ui.TextDisplay(f"{emoji.loading} Flipping coin..."),
             )
         )
         msg = await ctx.respond(view=view)
@@ -51,7 +51,7 @@ class Fun(commands.Cog):
         result = random.randint(1, sides)
         view = DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.dice} Rolling a {sides} sided die..."),
+                ui.TextDisplay(f"{emoji.loading} Rolling a {sides} sided die..."),
             )
         )
         msg = await ctx.respond(view=view)
@@ -82,7 +82,7 @@ class Fun(commands.Cog):
         result = random.randint(min, max)
         view = DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.numbers} Generating a random number between {min} and {max}..."),
+                ui.TextDisplay(f"{emoji.loading} Generating a random number between {min} and {max}..."),
             )
         )
         msg = await ctx.respond(view=view)
@@ -111,7 +111,7 @@ class Fun(commands.Cog):
         result = random.choice(options_list)
         view = DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.sparkles} Choosing from options: {', '.join(options_list)}..."),
+                ui.TextDisplay(f"{emoji.loading} Choosing from options: {', '.join(options_list)}..."),
             )
         )
         msg = await ctx.respond(view=view)
