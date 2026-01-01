@@ -6,6 +6,7 @@ from discord import ui
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
+from utils.helpers import create_dc_msgs_file
 
 
 class Logs(commands.Cog):
@@ -140,9 +141,7 @@ class Logs(commands.Cog):
     async def on_message_delete(self, msg: discord.Message):
         if msg.guild:
             channel_id = (await fetch_guild_settings(msg.guild.id)).msg_log_channel_id
-            if msg.author == self.client.user or msg.author.bot:
-                return
-            elif channel_id is not None:
+            if channel_id is not None:
                 del_ch = await self.client.fetch_channel(channel_id)
                 items: list[ui.Item] = [
                     ui.TextDisplay("## Message Deleted"),
@@ -163,11 +162,7 @@ class Logs(commands.Cog):
     async def on_bulk_message_delete(self, msgs: list[discord.Message]):
         if msgs[0].guild:
             channel_id = (await fetch_guild_settings(msgs[0].guild.id)).msg_log_channel_id
-            if msgs[0].author == self.client.user:
-                return
-            elif msgs[0].author.bot:
-                return
-            elif channel_id is not None:
+            if channel_id is not None:
                 bulk_ch = await self.client.fetch_channel(channel_id)
                 view = DesignerView(
                     ui.Container(
@@ -180,6 +175,7 @@ class Logs(commands.Cog):
                         color=config.color.red,
                     )
                 )
+                await bulk_ch.send(file=create_dc_msgs_file(msgs))
                 await bulk_ch.send(view=view)
 
 

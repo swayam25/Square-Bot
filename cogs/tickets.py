@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 import discord
-import io
 from core import Client
 from core.view import DesignerView
 from db.funcs.guild import fetch_guild_settings
@@ -10,6 +9,7 @@ from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
+from utils.helpers import create_dc_msgs_file
 
 
 async def close_ticket(
@@ -65,14 +65,7 @@ class TicketTranscript:
     async def create(self) -> discord.File:
         """Creates a transcript of the ticket channel."""
         messages = await self.channel.history(limit=500).flatten()
-        with io.StringIO() as file:
-            for message in reversed(messages):
-                if message.content:
-                    file.write(f"{message.author}: {message.content}\n")
-                else:
-                    file.write(f"{message.author}: Embed/Attachment\n")
-            file.seek(0)
-            return discord.File(file, filename=f"ticket_{self.channel.id}.txt")
+        return create_dc_msgs_file(messages)
 
 
 def get_ticket_view(interaction: discord.Interaction) -> "TicketView":

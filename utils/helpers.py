@@ -1,8 +1,10 @@
 import aiohttp
 import datetime
 import discord
+import io
 import re
 from attr import dataclass
+from babel.dates import format_datetime
 from babel.units import format_unit
 from core.view import DesignerView
 from discord import ui
@@ -80,6 +82,30 @@ def fmt_memory(bytes_value):
         return format_unit(gb, "digital-gigabyte", "short")
     else:
         return format_unit(mb, "digital-megabyte", "short")
+
+
+def create_dc_msgs_file(msgs: list[discord.Message]) -> discord.File:
+    """
+    Create a Discord file containing the provided messages.
+
+    Parameters:
+        msgs (list[discord.Message]): A list of Discord messages.
+
+    Returns:
+        discord.File: A Discord file object containing the messages.
+    """
+    with io.StringIO() as file:
+        for msg in msgs:
+            msg.content = msg.content or "Embed/Attachment"
+            lines = msg.content.split("\n")
+            if len(lines) > 1:
+                sanitized_content = "│" + "\n│ ".join(lines[:-1]) + f"\n╰ {lines[-1]}"
+            else:
+                sanitized_content = f"╰ {msg.content}"
+            file.write(f"[{format_datetime(msg.created_at)}] {msg.author} ({msg.author.id})\n{sanitized_content}\n\n")
+        file.seek(0)
+        dc_file = discord.File(fp=file, filename="messages.txt")
+    return dc_file
 
 
 @dataclass

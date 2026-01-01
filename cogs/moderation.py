@@ -38,10 +38,10 @@ class Moderation(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
-            await ctx.channel.purge(limit=amount)
+            msgs = await ctx.channel.purge(limit=amount)
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages."),
+                    ui.TextDisplay(f"{emoji.success} Successfully purged `{len(msgs)}` messages."),
                     color=config.color.green,
                 )
             )
@@ -63,10 +63,10 @@ class Moderation(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
-            await ctx.channel.purge(limit=amount, check=lambda m: not m.author.bot)
+            msgs = await ctx.channel.purge(limit=amount, check=lambda m: not m.author.bot)
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages sent by humans"),
+                    ui.TextDisplay(f"{emoji.success} Successfully purged `{len(msgs)}` messages sent by humans"),
                     color=config.color.green,
                 )
             )
@@ -88,10 +88,10 @@ class Moderation(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
-            await ctx.channel.purge(limit=amount, check=lambda m: m.author.bot)
+            msgs = await ctx.channel.purge(limit=amount, check=lambda m: m.author.bot)
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages sent by bots"),
+                    ui.TextDisplay(f"{emoji.success} Successfully purged `{len(msgs)}` messages sent by bots"),
                     color=config.color.green,
                 )
             )
@@ -114,10 +114,12 @@ class Moderation(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
-            await ctx.channel.purge(limit=amount, check=lambda m: m.author.id == user.id)
+            msgs = await ctx.channel.purge(limit=amount, check=lambda m: m.author.id == user.id)
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages sent by {user.mention}"),
+                    ui.TextDisplay(
+                        f"{emoji.success} Successfully purged `{len(msgs)}` messages sent by {user.mention}"
+                    ),
                     color=config.color.green,
                 )
             )
@@ -140,10 +142,10 @@ class Moderation(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
         else:
-            await ctx.channel.purge(limit=amount, check=lambda m: phrase.lower() in m.content.lower())
+            msgs = await ctx.channel.purge(limit=amount, check=lambda m: phrase.lower() in m.content.lower())
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay(f"{emoji.success} Successfully purged `{amount}` messages containing `{phrase}`"),
+                    ui.TextDisplay(f"{emoji.success} Successfully purged `{len(msgs)}` messages containing `{phrase}`"),
                     color=config.color.green,
                 )
             )
@@ -180,11 +182,11 @@ class Moderation(commands.Cog):
         else:
             try:
                 message = await ctx.channel.fetch_message(message_id)
-                await ctx.channel.purge(limit=amount, check=lambda m: m.id > message.id)
+                msgs = await ctx.channel.purge(limit=amount, check=lambda m: m.id > message.id)
                 view = DesignerView(
                     ui.Container(
                         ui.TextDisplay(
-                            f"{emoji.success} Successfully purged `{amount}` messages after `{message.id}`."
+                            f"{emoji.success} Successfully purged `{len(msgs)}` messages after `{message.id}`."
                         ),
                         color=config.color.green,
                     )
