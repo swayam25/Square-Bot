@@ -12,7 +12,7 @@ from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from discord.ui import ActionRow
 from io import BytesIO
-from utils import check, config
+from utils import check, config, temp
 from utils.emoji import Emoji, emoji
 
 
@@ -89,20 +89,25 @@ class SyncEmojiView(DesignerView):
         default_emojis_used: list[str] = resp.get("default_emojis_used", [])
         extra_keys_ignored: list[str] = resp.get("extra_keys_ignored", [])
         view_items = [
-            ui.TextDisplay(f"{emoji.restart} Synced {len(emojis)} emojis."),
+            ui.TextDisplay(f"## Synced {len(emojis)} emojis"),
+            ui.TextDisplay(
+                f"{emoji.emoji} **Total Emojis**: `{len(emojis)}`\n"
+                f"{emoji.bot} **Default Emojis**: `{len(default_emojis_used)}`\n"
+                f"{emoji.leave} **Extra Emojis**: `{len(extra_keys_ignored)}`\n"
+            ),
         ]
         if default_emojis_used:
             view_items.extend(
                 [
-                    ui.TextDisplay("**Default Emojis Used**"),
-                    ui.TextDisplay("".join(f"> {getattr(emoji, i)} `{i}`\n" for i in default_emojis_used)),
+                    ui.TextDisplay("### Default Emojis Used"),
+                    ui.TextDisplay("".join(f"{getattr(emoji, i)} `{i}`\n" for i in default_emojis_used)),
                 ]
             )
         if extra_keys_ignored:
             view_items.extend(
                 [
-                    ui.TextDisplay("**Ignored Extra Emojis**"),
-                    ui.TextDisplay("".join(f"> {emoji_dict.get(i, emoji.bullet)} `{i}`\n" for i in extra_keys_ignored)),
+                    ui.TextDisplay("### Ignored Extra Emojis"),
+                    ui.TextDisplay("".join(f"{emoji_dict.get(i, emoji.bullet)} `{i}`\n" for i in extra_keys_ignored)),
                 ]
             )
             extra_btn = ui.Button(
@@ -256,10 +261,11 @@ class Devs(commands.Cog):
         """Restarts the bot."""
         view = DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.restart} Restarting..."),
+                ui.TextDisplay(f"{emoji.loading} Restarting..."),
             )
         )
-        await ctx.respond(view=view)
+        msg = await ctx.respond(view=view)
+        temp.set("restart_msg", {"channel_id": msg.channel.id, "id": (await msg.original_message()).id})
         await self.client.wait_until_ready()
         await self.client.close()
         os.system("clear")
@@ -272,7 +278,7 @@ class Devs(commands.Cog):
         """Reloads the bot cogs."""
         view = DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.restart} Reloaded Cogs."),
+                ui.TextDisplay(f"{emoji.reload} Reloaded Cogs"),
             )
         )
         await ctx.respond(view=view, ephemeral=True, delete_after=2)
@@ -287,7 +293,7 @@ class Devs(commands.Cog):
         """Shutdowns the bot."""
         view = DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.shutdown} Bot shutdown."),
+                ui.TextDisplay(f"{emoji.shutdown} Bot is now shutdown."),
             )
         )
         await ctx.respond(view=view)
@@ -621,8 +627,15 @@ class Devs(commands.Cog):
                     ui.TextDisplay(
                         f"Found `{len(emoji_files)}` emoji files in the zip. Expected `{len(expected_emojis)}` emojis."
                     ),
-                    ui.TextDisplay(missing_list if missing_list else "No missing emojis."),
-                    ui.TextDisplay(extra_list if extra_list else "No extra emojis."),
+                    ui.TextDisplay(
+                        ("### Missing Emojis\n" + missing_list)
+                        if missing_list
+                        else f"{emoji.success} No missing emojis."
+                    ),
+                    ui.TextDisplay(
+                        ("### Extra Emojis\n" + extra_list) if extra_list else f"{emoji.success} No extra emojis."
+                    ),
+                    color=config.color.green if not missing_emojis and not extra_emojis else config.color.red,
                 )
             )
             await ctx.respond(view=view)

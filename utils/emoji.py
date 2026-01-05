@@ -122,12 +122,11 @@ class Emoji:
     empty_bar: str = "⬜"
     filled_bar: str = "🟥"
 
-    restart: str = "🔄"
-    restart_white: str = "🔄"
+    reload: str = "🔄"
+    reload_white: str = "🔄"
     shutdown: str = "🔴"
     console: str = "🖥️"
     console_green: str = "🖥️"
-    enter_green: str = "✅"
     bin_red: str = "🗑️"
     bin_white: str = "🗑️"
 
@@ -159,10 +158,8 @@ class Emoji:
             return Emoji(**emoji_data_final)
 
         except FileNotFoundError:
-            print(f"[yellow][bold]![/] Custom emoji file not found: {file_path}[/]")
-            print(
-                "[yellow][bold]![/] Falling back to default emojis. Use [cyan]/emoji upload[/] to add custom emojis.[/]"
-            )
+            print(f"[yellow]! Custom emoji file not found: {file_path}[/]")
+            print("[yellow]! Falling back to default emojis. Use [cyan]/emoji upload[/] to add custom emojis.[/]")
             return default_emoji
 
     @staticmethod

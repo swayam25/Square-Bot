@@ -481,7 +481,7 @@ class QueueListView(DesignerView):
                         options=[
                             discord.SelectOption(label="Clear Queue", emoji=emoji.bin_white, value="clear_queue"),
                             discord.SelectOption(
-                                label="Reverse Queue", emoji=emoji.restart_white, value="reverse_queue"
+                                label="Reverse Queue", emoji=emoji.reload_white, value="reverse_queue"
                             ),
                             discord.SelectOption(
                                 label="Sort by Duration", emoji=emoji.duration_white, value="sort_by_duration"

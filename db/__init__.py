@@ -16,7 +16,7 @@ class DB:
     async def init(self):
         """Initialize the database connection and generate schemas."""
         db_prog = Progress(
-            SpinnerColumn(style="yellow", finished_text="[green bold]✓[/]"),
+            SpinnerColumn(style="yellow", finished_text="[green]✓[/]"),
             "[progress.description]{task.description}",
         )
 

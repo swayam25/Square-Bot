@@ -91,7 +91,7 @@ class TaskManagerView(DesignerView):
         for emoji_icon, label, callback, disabled in [
             (emoji.bin_white, "Stop All", self._stop_all, False),
             (None, "‎ ", None, True),
-            (emoji.restart_white, "Refresh", self._refresh, False),
+            (emoji.reload_white, "Refresh", self._refresh, False),
         ]:
             btn = ui.Button(emoji=emoji_icon, label=label, style=discord.ButtonStyle.grey, disabled=disabled)
             btn.callback = callback
@@ -286,7 +286,7 @@ class Eval(commands.Cog):
         if output:
             response += f"{emoji.console_green} **Output**:\n```sh\n{output}\n```\n"
         if result is not None:
-            response += f"{emoji.enter_green} **Return Value**:\n```sh\n{result}\n```"
+            response += f"{emoji.on} **Return Value**:\n```sh\n{result}\n```"
 
         return await self.send_result(ctx, response, output, result, task_id)
 
