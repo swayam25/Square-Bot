@@ -119,14 +119,14 @@ class Logs(commands.Cog):
                     ui.TextDisplay(
                         f"{emoji.owner} **Author**: {msg_before.author.mention}\n"
                         f"{emoji.channel} **Channel**: {msg_before.channel.mention}\n"
-                        f"{emoji.msg_red} **Original Message**: {msg_before.content}\n"
-                        f"{emoji.msg_edit} **Edited Message**: {msg_after.content}"
+                        f"{emoji.msg_red} **Original Message**:\n```\n{msg_before.content}\n```\n"
+                        f"{emoji.msg_edit} **Edited Message**:\n```\n{msg_after.content}\n```"
                     ),
                 ]
                 if msg_before.attachments:
                     items.append(ui.TextDisplay(f"## Removed Attachment [`{len(msg_before.attachments)}`]"))
                     items.append(
-                        ui.MediaGallery(discord.MediaGalleryItem(url=media.url) for media in msg_before.attachments)
+                        ui.MediaGallery([discord.MediaGalleryItem(url=media.url) for media in msg_before.attachments])
                     )
                 view = DesignerView(
                     ui.Container(*items),
@@ -139,7 +139,7 @@ class Logs(commands.Cog):
     # Delete
     @commands.Cog.listener()
     async def on_message_delete(self, msg: discord.Message):
-        if msg.guild:
+        if msg.guild and not msg.author.bot:
             channel_id = (await fetch_guild_settings(msg.guild.id)).msg_log_channel_id
             if channel_id is not None:
                 del_ch = await self.client.fetch_channel(channel_id)
@@ -148,19 +148,36 @@ class Logs(commands.Cog):
                     ui.TextDisplay(
                         f"{emoji.owner_red} **Author**: {msg.author.mention}\n"
                         f"{emoji.channel_red} **Channel**: {msg.channel.mention}\n"
-                        f"{emoji.msg_red} **Message**: {msg.content}"
+                        f"{emoji.msg_red} **Message**: {f'\n```{msg.content}\n```' or '*No Text Content*'}"
                     ),
                 ]
-                if msg.attachments:
-                    items.append(ui.TextDisplay(f"## Deleted Attachment [`{len(msg.attachments)}`]"))
-                    items.append(ui.MediaGallery(discord.MediaGalleryItem(url=media.url) for media in msg.attachments))
                 view = DesignerView(ui.Container(*items, color=config.color.red))
+                if msg.stickers:
+                    view.add_item(
+                        ui.Container(
+                            ui.TextDisplay(
+                                f"## Deleted Sticker{'s' if len(msg.stickers) > 1 else ''} [`{len(msg.stickers)}`]"
+                            ),
+                            ui.MediaGallery(*[discord.MediaGalleryItem(url=sticker.url) for sticker in msg.stickers]),
+                            color=config.color.red,
+                        )
+                    )
+                if msg.attachments:
+                    view.add_item(
+                        ui.Container(
+                            ui.TextDisplay(
+                                f"## Deleted Attachment{'s' if len(msg.attachments) > 1 else ''} [`{len(msg.attachments)}`]"
+                            ),
+                            ui.MediaGallery(*[discord.MediaGalleryItem(url=media.url) for media in msg.attachments]),
+                            color=config.color.red,
+                        )
+                    )
                 await del_ch.send(view=view)
 
     # Bulk delete
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, msgs: list[discord.Message]):
-        if msgs[0].guild:
+        if msgs[0].guild and not msgs[0].author.bot:
             channel_id = (await fetch_guild_settings(msgs[0].guild.id)).msg_log_channel_id
             if channel_id is not None:
                 bulk_ch = await self.client.fetch_channel(channel_id)
