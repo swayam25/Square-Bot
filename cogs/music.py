@@ -440,10 +440,11 @@ class QueueContainer(ui.Container):
         if queue_list:
             self.add_item(ui.TextDisplay(f"### Queued {len(player.queue)} Tracks"))
             self.items.extend(queue_list)
-        self.add_item(ui.Separator())
         if len(player.queue) > items_per_page:
+            self.add_item(ui.Separator())
             self.add_item(ui.TextDisplay(f"-# Viewing Page {page}/{pages}"))
         elif not queue_list:
+            self.add_item(ui.Separator())
             self.add_item(ui.TextDisplay("-# Queue is empty"))
 
 
