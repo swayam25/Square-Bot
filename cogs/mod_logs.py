@@ -148,7 +148,7 @@ class Logs(commands.Cog):
                     ui.TextDisplay(
                         f"{emoji.owner_red} **Author**: {msg.author.mention}\n"
                         f"{emoji.channel_red} **Channel**: {msg.channel.mention}\n"
-                        f"{emoji.msg_red} **Message**: {f'\n```{msg.content}\n```' or '*No Text Content*'}"
+                        + (f"{emoji.msg_red} **Message**: \n```{msg.content}\n```" if msg.content else "")
                     ),
                 ]
                 view = DesignerView(ui.Container(*items, color=config.color.red))

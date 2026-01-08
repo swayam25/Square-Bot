@@ -9,7 +9,7 @@ from core import Client
 from core.view import DesignerView
 from discord import SlashCommandGroup, ui
 from discord.commands import option, slash_command
-from discord.ext import commands, tasks
+from discord.ext import commands
 from music import store
 from music.client import LavalinkVoiceClient
 from utils import config
@@ -631,7 +631,6 @@ class Disable:
 class Music(commands.Cog):
     def __init__(self, client: Client):
         self.client = client
-        self.connection_loop.start()
 
     # Connect to lavalink
     def connect_lavalink(self):
@@ -643,9 +642,8 @@ class Music(commands.Cog):
             ssl=config.lavalink["secure"],
         )
 
-    @tasks.loop(seconds=0)
-    async def connection_loop(self):
-        await self.client.wait_until_ready()
+    @commands.Cog.listener()
+    async def on_ready(self):
         if self.client.lavalink is None:
             self.client.lavalink = lavalink.Client(self.client.user.id)
             self.connect_lavalink()
