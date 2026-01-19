@@ -73,6 +73,7 @@ class Emoji:
     leave: str = "➖"
     server: str = "🖥️"
     server_red: str = "🖥️"
+    boost: str = "🚀"
 
     coin: str = "🪙"
     dice: str = "🎲"

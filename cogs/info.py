@@ -278,30 +278,35 @@ class Info(commands.Cog):
         user_roles = len(ctx.guild.roles) - bot_roles
 
         row = ui.ActionRow()
-        view = DesignerView(
-            ui.Container(
-                ui.Section(
-                    ui.TextDisplay(f"## {ctx.guild.name}'s Info"),
-                    ui.TextDisplay(
-                        f"{emoji.mention} **Name**: {ctx.guild.name}\n"
-                        f"{emoji.id} **ID**: `{ctx.guild.id}`\n"
-                        f"{emoji.owner} **Owner**: {ctx.guild.owner.mention}\n"
-                        f"{emoji.verification} **Verification Level**: `{ctx.guild.verification_level}`\n"
-                        f"{emoji.channel} **Total Channels**: `{len(ctx.guild.text_channels) + len(ctx.guild.voice_channels)}`"
-                        f" `({len(ctx.guild.categories)} Categories | {len(ctx.guild.text_channels)} Text | {len(ctx.guild.voice_channels)} Voice | {len(ctx.guild.stage_channels)} Stage)`\n"
-                        f"{emoji.members} **Total Members**: `{len(list(ctx.guild.members))}`"
-                        f" `({len([m for m in ctx.guild.members if not m.bot])} Humans | {len([m for m in ctx.guild.members if m.bot])} Bots)`\n"
-                        f"{emoji.role} **Roles**: `{len(ctx.guild.roles)}`"
-                        f" `({user_roles} User | {bot_roles} Bot)`\n"
-                        f"{emoji.emoji} **Emojis**: `{len(ctx.guild.emojis)}`"
-                        f" `({animated_emojis} Animated | {static_emojis} Static)`\n"
-                        f"{emoji.date} **Server Created**: {discord.utils.format_dt(ctx.guild.created_at, 'R')}"
-                    ),
-                    accessory=ui.Thumbnail(ctx.guild.icon.url if ctx.guild.icon else ""),
+        container = ui.Container(
+            ui.Section(
+                ui.TextDisplay(f"## {ctx.guild.name}'s Info"),
+                ui.TextDisplay(
+                    f"{emoji.mention} **Name**: {ctx.guild.name}\n"
+                    f"{emoji.id} **ID**: `{ctx.guild.id}`\n"
+                    f"{emoji.owner} **Owner**: {ctx.guild.owner.mention}\n"
+                    f"{emoji.verification} **Verification Level**: {ctx.guild.verification_level.name.title()}\n"
+                    f"{emoji.channel} **Total Channels**: `{len(ctx.guild.text_channels) + len(ctx.guild.voice_channels)}`"
+                    f" `({len(ctx.guild.categories)} Categories | {len(ctx.guild.text_channels)} Text | {len(ctx.guild.voice_channels)} Voice | {len(ctx.guild.stage_channels)} Stage)`\n"
+                    f"{emoji.members} **Total Members**: `{len(list(ctx.guild.members))}`"
+                    f" `({len([m for m in ctx.guild.members if not m.bot])} Humans | {len([m for m in ctx.guild.members if m.bot])} Bots)`\n"
+                    f"{emoji.role} **Roles**: `{len(ctx.guild.roles)}`"
+                    f" `({user_roles} User | {bot_roles} Bot)`\n"
+                    f"{emoji.boost} **Boosts**: `{ctx.guild.premium_subscription_count}`"
+                    f" `(Level {ctx.guild.premium_tier})`\n"
+                    f"{emoji.emoji} **Emojis**: `{len(ctx.guild.emojis)}`"
+                    f" `({animated_emojis} Animated | {static_emojis} Static)`\n"
+                    f"{emoji.date} **Server Created**: {discord.utils.format_dt(ctx.guild.created_at, 'R')}"
                 ),
+                accessory=ui.Thumbnail(ctx.guild.icon.url + "?" if ctx.guild.icon else ""),
             ),
-            row,
         )
+
+        if ctx.guild.banner:
+            container.add_item(
+                ui.MediaGallery(discord.MediaGalleryItem(url=ctx.guild.banner.url)),
+            )
+        view = DesignerView(container, row)
 
         if ctx.guild.icon:
             row.add_item(ui.Button(style=discord.ButtonStyle.link, label="Icon URL", url=ctx.guild.icon.url))
