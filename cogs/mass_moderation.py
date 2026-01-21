@@ -148,7 +148,7 @@ class MassModeration(commands.Cog):
                         ui.TextDisplay(
                             f"Successfully banned {len(_users)} users.\n"
                             f"{emoji.description_red} **Reason**: {reason}\n"
-                            f"{emoji.user_red} **Users**: {', '.join(_users)}"
+                            f"{emoji.user_red} **Users**: {', '.join(_users)}\n"
                             f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after)}`"
                         ),
                         color=config.color.red,
