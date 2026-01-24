@@ -316,8 +316,9 @@ class InfoView(DesignerView):
             perm_btn.callback = lambda interaction: self._handle_callback(interaction, "permissions")
             row.add_item(perm_btn)
 
+        url_row = ui.ActionRow()
         for url_btn in url_buttons:
-            row.add_item(url_btn)
+            url_row.add_item(url_btn)
 
         cont = ui.Container(
             ui.Section(
@@ -330,6 +331,9 @@ class InfoView(DesignerView):
         banner_url = self.user_info.get_banner_url(type)
         if banner_url:
             cont.add_item(ui.MediaGallery(discord.MediaGalleryItem(url=banner_url)))
+
+        if url_buttons:
+            cont.add_item(url_row)
 
         self.add_item(cont)
         self.add_item(row)
@@ -498,29 +502,46 @@ class Info(commands.Cog):
         """Shows the avatar of the mentioned user."""
         if not user:
             user = ctx.author
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"## {user.display_name}'s Avatar"),
-                ui.MediaGallery(discord.MediaGalleryItem(url=user.avatar.url)),
-            ),
-            ui.ActionRow(
-                ui.Button(
-                    label="PNG",
-                    style=discord.ButtonStyle.link,
-                    url=user.avatar.url if user.avatar.with_format("png").url else user.default_avatar.url,
+
+        async def profile_btn_callback(interaction: discord.Interaction):
+            await interaction.response.edit_message(
+                view=await get_view("main" if interaction.data["custom_id"] == "server_profile_btn" else "server")
+            )
+
+        async def get_view(type: Literal["main", "server"] = "server"):
+            avatar = (
+                user.guild_avatar if user.guild_avatar and type == "server" else (user.avatar or user.default_avatar)
+            )
+            profile_btn = ui.Button(
+                emoji=emoji.profile_white,
+                label=f"View {'Main' if type == 'server' else 'Server'} Avatar",
+                style=discord.ButtonStyle.grey,
+                custom_id=f"{type}_profile_btn",
+            )
+            profile_btn.callback = profile_btn_callback
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"## {user.display_name}'s Avatar"),
+                    ui.MediaGallery(discord.MediaGalleryItem(url=avatar.url)),
+                    ui.ActionRow(
+                        *[
+                            ui.Button(
+                                label=fmt.upper(),
+                                style=discord.ButtonStyle.link,
+                                url=avatar.with_format(fmt).url,
+                            )
+                            for fmt in ["png", "jpg", "webp"]
+                        ]
+                    ),
                 ),
-                ui.Button(
-                    label="JPG",
-                    style=discord.ButtonStyle.link,
-                    url=user.avatar.with_format("jpg").url if user.avatar else user.default_avatar.url,
-                ),
-                ui.Button(
-                    label="WEBP",
-                    style=discord.ButtonStyle.link,
-                    url=user.avatar.with_format("webp").url if user.avatar else user.default_avatar.url,
-                ),
-            ),
-        )
+                ctx=ctx,
+                check_author_interaction=True,
+            )
+            if user.guild_avatar:
+                view.add_item(ui.ActionRow(profile_btn))
+            return view
+
+        view = await get_view()
         await ctx.respond(view=view)
 
     # Info slash cmd group
