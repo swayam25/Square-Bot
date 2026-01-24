@@ -177,7 +177,7 @@ class UserInfo:
             other_roles = [
                 role for role in self.user.roles if role != self.user.guild.default_role and role != self.user.top_role
             ]
-            roles_str = " ".join(role.mention for role in other_roles)
+            roles_str = ", ".join(role.mention for role in other_roles)
             if roles_str:
                 info_lines.append(f"{emoji.role} **Other Roles (`{len(other_roles)}`)**: {roles_str}")
 
@@ -316,10 +316,6 @@ class InfoView(DesignerView):
             perm_btn.callback = lambda interaction: self._handle_callback(interaction, "permissions")
             row.add_item(perm_btn)
 
-        url_row = ui.ActionRow()
-        for url_btn in url_buttons:
-            url_row.add_item(url_btn)
-
         cont = ui.Container(
             ui.Section(
                 ui.TextDisplay(f"## {self.user_info.user.display_name}'s Info"),
@@ -333,10 +329,11 @@ class InfoView(DesignerView):
             cont.add_item(ui.MediaGallery(discord.MediaGalleryItem(url=banner_url)))
 
         if url_buttons:
-            cont.add_item(url_row)
+            cont.add_item(ui.ActionRow(*list(url_buttons)))
 
         self.add_item(cont)
-        self.add_item(row)
+        if row.children:
+            self.add_item(row)
 
     async def _build_permissions_view(self):
         """Build the permissions view with pagination."""
