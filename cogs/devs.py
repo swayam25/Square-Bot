@@ -297,7 +297,7 @@ class Devs(commands.Cog):
         """Shutdowns the bot."""
         await self.client.change_presence(
             status=discord.Status.dnd,
-            activity=discord.CustomActivity(name="Shutting down..."),
+            activity=None,
         )
         view = DesignerView(
             ui.Container(
