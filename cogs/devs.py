@@ -259,6 +259,10 @@ class Devs(commands.Cog):
     @check.is_dev()
     async def restart(self, ctx: discord.ApplicationContext):
         """Restarts the bot."""
+        await self.client.change_presence(
+            status=discord.Status.idle,
+            activity=discord.CustomActivity(name="Restarting..."),
+        )
         view = DesignerView(
             ui.Container(
                 ui.TextDisplay(f"{emoji.loading} Restarting..."),
@@ -291,6 +295,10 @@ class Devs(commands.Cog):
     @check.is_owner()
     async def shutdown(self, ctx: discord.ApplicationContext):
         """Shutdowns the bot."""
+        await self.client.change_presence(
+            status=discord.Status.dnd,
+            activity=discord.CustomActivity(name="Shutting down..."),
+        )
         view = DesignerView(
             ui.Container(
                 ui.TextDisplay(f"{emoji.shutdown} Bot is now shutdown."),
@@ -303,25 +311,19 @@ class Devs(commands.Cog):
     # Set status
     @slash_command(guild_ids=config.owner_guild_ids, name="status")
     @check.is_dev()
-    @option("type", description="Choose bot status type", choices=["Game", "Streaming", "Listening", "Watching"])
-    @option("status", description="Enter new status of bot")
-    async def set_status(self, ctx: discord.ApplicationContext, type: str, status: str):
-        """Sets custom bot status."""
-        if type == "Game":
-            await self.client.change_presence(activity=discord.Game(name=status))
-        elif type == "Streaming":
-            await self.client.change_presence(activity=discord.Streaming(name=status, url=config.support_server_url))
-        elif type == "Listening":
-            await self.client.change_presence(
-                activity=discord.Activity(type=discord.ActivityType.listening, name=status)
-            )
-        elif type == "Watching":
-            await self.client.change_presence(
-                activity=discord.Activity(type=discord.ActivityType.watching, name=status)
-            )
+    @option("status", description="Set the bot status", choices=["Online", "Idle", "DND", "Invisible"])
+    @option("activity", description="Set the bot activity", max_length=128)
+    async def set_status(self, ctx: discord.ApplicationContext, status: str, activity: str = None):
+        """Sets the bot status."""
+        await self.client.change_presence(
+            status=discord.Status[status.lower()],
+            activity=discord.CustomActivity(name=activity) if activity else self.client.activity,
+        )
         view = DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.success} Status changed to **{type}** as `{status}`"),
+                ui.TextDisplay(
+                    f"{emoji.success} Status updated to `{status}`\n" + (f"```\n{activity}\n```" if activity else "")
+                ),
                 color=config.color.green,
             )
         )

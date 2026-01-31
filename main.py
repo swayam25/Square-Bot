@@ -14,7 +14,7 @@ with open("pyproject.toml") as f:
 
 # Vars
 status = discord.Status.online
-activity = discord.CustomActivity(name="Helping users!")
+activity = discord.CustomActivity(name=f"/help | {data['project']['name'].title()} v{data['project']['version']}")
 intents = discord.Intents.all()
 client = Client(
     status=status,
