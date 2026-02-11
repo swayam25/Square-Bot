@@ -43,6 +43,7 @@ class Client(commands.Bot):
                         )
                     )
                 )
-                temp.delete("restart_msg")
             except Exception:
-                pass
+                console.print("[red bold]Failed to edit restart message[/]")
+                console.print_exception()
+            temp.delete("restart_msg")

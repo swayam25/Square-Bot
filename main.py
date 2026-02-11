@@ -6,7 +6,11 @@ from db import DB
 from pyfiglet import Figlet
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.traceback import install
 from utils import config
+
+# Install rich traceback handler for all exceptions
+install(console=Console())
 
 # Metadata
 with open("pyproject.toml") as f:
@@ -80,3 +84,5 @@ try:
     client.loop.run_until_complete(main())
 except Exception:
     console.print_exception()
+except KeyboardInterrupt:
+    console.print("\n[red]Keyboard interrupt received. Shutting down...[/]")

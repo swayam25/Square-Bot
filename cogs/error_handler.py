@@ -28,23 +28,27 @@ class ErrorHandler(commands.Cog):
         if isinstance(error, commands.CommandNotFound):
             return
 
-        elif await check.is_dev(ctx):
-            tb = Traceback.from_exception(type(error), error, error.__traceback__)
-            console.print(tb)
-            error = getattr(error, "original", None) or error
-            err = "".join(traceback.format_exception(type(error), error, error.__traceback__))
-            msg = f"{emoji.error} An unexpected error occurred: **`{error.__class__.__name__}`**"
+        err = getattr(error, "original", None) or error
+        console.print(f"[red bold]Command Error in [cyan]{ctx.command.name if ctx.command else 'unknown'}[/]")
+        tb = Traceback.from_exception(type(err), err, err.__traceback__)
+        console.print(tb)
+
+        # Send detailed error to devs
+        if await check.is_dev(ctx):
+            err = "".join(traceback.format_exception(type(err), err, err.__traceback__))
+            msg = f"{emoji.error} An unexpected error occurred: **`{err.__class__.__name__}`**"
             if len(err) < 4096:
                 msg += f"\n```py\n{err}\n```"
             else:
-                file = discord.File(fp=io.BytesIO(tb.encode()), filename="error.txt")
+                file = discord.File(fp=io.BytesIO(err.encode()), filename="error.txt")
                 if is_app:
                     await ctx.respond(file=file, ephemeral=True)
                 else:
                     await ctx.reply(file=file)
                 return
 
-        elif isinstance(error, check.NotAuthorized):
+        # User-facing error messages
+        if isinstance(error, check.NotAuthorized):
             if is_app:
                 msg = f"{emoji.error} You are not authorized to use this command."
             else:  # Because we don't want to send errors for normal commands
