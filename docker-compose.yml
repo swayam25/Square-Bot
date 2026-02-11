@@ -5,6 +5,59 @@ services:
     build: .
     container_name: "square"
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
       - ./.cache:/square/.cache
       - ./config.toml:/square/config.toml
+
+  db:
+    image: postgres:16-alpine
+    container_name: square_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: youcannotpass
+      POSTGRES_DB: square
+    ports:
+      - "127.0.0.1:5432:5432" # Bind to localhost for security
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d square"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  drizzle-gateway:
+    image: ghcr.io/drizzle-team/gateway:latest
+    container_name: square_drizzle
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+    volumes:
+      - drizzle_data:/app
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: square_caddy
+    restart: unless-stopped
+    depends_on:
+      - drizzle-gateway
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  postgres_data:
+  drizzle_data:
+  caddy_data:
+  caddy_config:

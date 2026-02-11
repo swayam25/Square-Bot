@@ -7,8 +7,9 @@
 Advanced multipurpose discord bot for all your needs.
 
 [![Python Version](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fswayam25%2FSquare-Bot%2Fmain%2Fpyproject.toml&style=for-the-badge&logo=python&logoColor=%23FFFFFF&labelColor=%233776AB&color=%23000000)](https://www.python.org/downloads)
-[![Pycord Version](https://img.shields.io/badge/pycord-master-%23000000?style=for-the-badge&logo=python&logoColor=%23FFFFFF&labelColor=%235865F2)](https://github.com/Pycord-Development/pycord)
+[![Pycord Version](https://img.shields.io/badge/pycord-v2.7.1-%23000000?style=for-the-badge&logo=python&logoColor=%23FFFFFF&labelColor=%235865F2)](https://github.com/Pycord-Development/pycord)
 [![GitHub Release](https://img.shields.io/github/v/release/swayam25/Square-Bot?style=for-the-badge&logo=github&logoColor=%23FFFFFF&labelColor=%230D1117&color=%23000000)](https://github.com/swayam25/Square-Bot/releases)
+[![GitHub License](https://img.shields.io/github/license/swayam25/Square-Bot?style=for-the-badge&logo=gnu&logoColor=%23FFFFFF&labelColor=%23A32D2A&color=%23000000)](https://github.com/swayam25/Square-Bot/blob/main/LICENSE)
 
 </div>
 
@@ -20,88 +21,126 @@ Advanced multipurpose discord bot for all your needs.
 - Clean & informative help menu.
 - Supports Discord Components v2.
 
-## 🚩 Installation
+## 💫 Prerequisites
 
-1. Clone this repository
+### 🧰 Tools
+
+| Tool                                                                                                                                    | Type                   | Version | Purpose                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------- | --------------------------------------------------- |
+| [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/) | Required               | 20.10+  | To run the bot in a containerized environment.      |
+| [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)             | Required               | 2.50+   | To clone the repository and manage version control. |
+| [![Python](https://img.shields.io/badge/Python-%233776AB?style=for-the-badge&logo=python&logoColor=%23FFFFFF)](https://www.python.org/) | Optional (Development) | 3.12+   | The programming language used to develop the bot.   |
+| [![UV](https://img.shields.io/badge/UV-%23DE5FE9?style=for-the-badge&logo=uv&logoColor=%23FFFFFF)](https://docs.astral.sh/uv/)          | Optional (Development) | 0.9+    | A modern Python package manager for development.    |
+
+### 🧲 VPS Specs
+
+| Component | Minimum Requirement | Recommended Requirement                   |
+| --------- | ------------------- | ----------------------------------------- |
+| CPU       | 2 vCPU              | 4 vCPU or more                            |
+| RAM       | 4 GB                | 8 GB or more                              |
+| Storage   | 10 GB               | 20 GB or more more if your database grows |
+| Network   | 100 Mbps            | 1 Gbps or more                            |
+
+## 🚀 Production
+
+1. Clone the repository
     ```sh
     git clone https://github.com/swayam25/Square-Bot square
     cd square
     ```
 
-2. Create `config.toml` from `example.config.toml` and fill in the required values.
-    <details>
-
-    <summary>Configuration</summary>
-
-    - `owner-id` (`int`)
-        - Owner's discord id.
-        - Gives access to all commands.
-
-    - `owner-guild-ids` (`list[int]`)
-        - List of guild ids.
-        - Developer commands will only work in these guilds.
-
-    - `system-channel-id` (`int`)
-        - System channel id.
-        - Bot will send logs in this channel.
-
-    - `support-server-url` (`str`)
-        - Support server url.
-        - Bot will use this url for support server.
-
-    - `bot-token` (`str`)
-        - Discord api token.
-        - Bot will use this token to connect to discord.
-
-    - `database-url` (`str`)
-        - Database url.
-        - Bot will use this url to connect to the database.
-        - Postgres database is supported.
-        - Example: `asyncpg://user:password@db.host:5432/square`.
-            - If your connection string starts with `postgresql://`, replace it with `asyncpg://`.
-            - Services like Supabase provide a `postgresql://` connection string, remember to change it to `asyncpg://`.
-
-    - `[colors]`
-        - `theme` (`str`)
-            - Theme color.
-        - `green` (`str`)
-            - Green color.
-        - `red` (`str`)
-            - Red color.
-        - `orange` (`str`)
-            - Orange color.
-
-    - `[lavalink]`
-        - `host` (`str`)
-            - Lavalink host.
-        - `port` (`int`)
-            - Lavalink port.
-        - `password` (`str`)
-            - Lavalink password.
-        - `region` (`str`)
-            - Lavalink region.
-        - `secure` (`bool`)
-            - Lavalink secure status
-
-    </details>
-
-3. Start the bot.
+2. Create `config.toml` file from the provided `config.example.toml` and fill in the required values.
     ```sh
-    uv run main.py
+    cp config.example.toml config.toml
     ```
 
-> [!IMPORTANT]
-> Make sure to have [uv](https://docs.astral.sh/uv) installed on your system to run the bot.
-> Learn more about installing uv [here](https://docs.astral.sh/uv/getting-started/installation/).
+> [!TIP]
+> Check [configuration](#-configuration) section for details on the configuration keys.
 
-## 🚀 Production
+3. Create `Caddyfile` from the provided `Caddyfile.example`.
+    ```sh
+    cp Caddyfile.example Caddyfile
+    ```
 
-1. Follow steps 1 & 2 from the [installation guide](#-installation). *Ignore if already done.*
+4. Replace the `<USERNAME>` and `<PASSWORD>` placeholders in the `Caddyfile` with your desired username and the hashed password generated by running the following command.
+    ```sh
+    docker run --rm caddy:2-alpine caddy hash-password --plaintext "<yourpassword>"
+    ```
 
-2. Run docker container (*via `docker compose`*)
+5. Example `Caddyfile` configuration for a domain `example.com`
+    ![Example Caddyfile](./assets/caddyfile.png)
+
+> [!NOTE]
+> If you don't have a domain, you can use `:80` to access the database panel via your server's IP address. However, this is not recommended for production use.
+>
+> Read [Caddy's documentation](https://caddyserver.com/docs/caddyfile) for more details.
+
+6. Docker Compose
     ```sh
     docker compose up -d
     ```
+
+7. Done! The bot should be up and running now. You can access the database panel at `http(s)://<your-domain-or-ip>/`. (*Refer to the [Database Panel](#-database-panel) section for usage instructions.*)
+
+## 🛸 Development
+
+1. Follow the first 4 steps of the [production](#-production) section.
+
+2. Install the dependencies using `uv`
+    ```sh
+    uv sync
+    ```
+
+3. Start the PostgreSQL database and Drizzle Studio using Docker Compose
+    ```sh
+    docker compose up db drizzle-gateway caddy -d
+    ```
+
+> [!IMPORTANT]
+> For development, configure the `Caddyfile` to use `:80` as the listening address.
+>
+> ![Example Caddyfile for Development](./assets/caddyfile_dev.png)
+>
+> This allows you to access the database panel via `http://127.0.0.1` without needing a domain or SSL certificate, which simplifies the development process.
+>
+> Make sure to set the `database-url` in `config.toml` to `asyncpg://postgres:youcannotpass@localhost:5432/square` for development.
+
+## 📚 Database Connection
+
+![Database](./assets/db.png)
+
+## 🗃️ Database Panel
+
+1. Visit `http(s)://<your-domain-or-ip>/` to access the database panel.
+
+2. Setup database
+    <video src="./assets/db_panel.mp4" controls />
+
+> [!NOTE]
+> Regardless of whether the database is deployed locally or remotely, you will always enter `postgresql://postgres:youcannotpass@db:5432/square` in the database panel because Caddy proxies requests to the actual database container.
+>
+> Remember, the connection string you enter in the panel starts with `postgresql://` and **not** `asyncpg://`.
+
+
+## 🔑 Configuration
+
+| Key                  | Type        | Description                                                                                                  |
+| -------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
+| `owner-id`           | `int`       | The Discord ID of the bot owner.                                                                             |
+| `owner-guild-ids`    | `list[int]` | A list of Discord IDs of the owner's guilds. Owner/Developer only commands are created only in these guilds. |
+| `system-channel-id`  | `int`       | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.      |
+| `support-server-url` | `str`       | The invite URL of the support server.                                                                        |
+| `bot-token`          | `str`       | Discord Bot Token. Get this from developer portal.                                                           |
+| `database-url`       | `str`       | The URL for the PostgreSQL database.                                                                         |
+| `colors.theme`       | `str`       | The color theme for the bot's view containers.                                                               |
+| `colors.green`       | `str`       | The color code for green color in view containers.                                                           |
+| `colors.red`         | `str`       | The color code for red color in view containers.                                                             |
+| `colors.orange`      | `str`       | The color code for orange color in view containers.                                                          |
+| `lavalink.host`      | `str`       | The host of the Lavalink server.                                                                             |
+| `lavalink.port`      | `int`       | The port of the Lavalink server.                                                                             |
+| `lavalink.password`  | `str`       | The password for the Lavalink server.                                                                        |
+| `lavalink.region`    | `str`       | The region of the Lavalink server.                                                                           |
+| `lavalink.secure`    | `bool`      | Whether to use secure connection (wss) for Lavalink.                                                         |
 
 ## ✨ Using Custom Emojis
 
@@ -142,8 +181,6 @@ Alternatively, you can manually create a `.cache/emoji.json` file with the follo
     - Write meaningful commit messages.
     - Keep the code clean and readable.
     - Make sure the bot is working as expected.
-
-- Use [`uv`](https://docs.astral.sh/uv) package manager for development.
 
 - Setup `pre-commit` hooks
     ```sh

@@ -1,10 +1,10 @@
 owner-id = 0
 owner-guild-ids = []
 system-channel-id = 0
-support-server-url = "https://discord.gg" # Replace this with your support server URL
+support-server-url = "https://discord.gg"
 
 bot-token = ""
-database-url = "asyncpg://..." # If it starts with "postgresql://", replace it with "asyncpg://".
+database-url = "asyncpg://postgres:youcannotpass@db:5432/square"
 
 [colors]
 theme = "#1FCEEC"
