@@ -109,7 +109,7 @@ Advanced multipurpose discord bot for all your needs.
 
 ![Database](./assets/db.png)
 
-## 🗃️ Database Panel
+## 🔮 Database Panel
 
 1. Visit `http(s)://<your-domain-or-ip>/` to access the database panel.
 
