@@ -114,7 +114,8 @@ Advanced multipurpose discord bot for all your needs.
 1. Visit `http(s)://<your-domain-or-ip>/` to access the database panel.
 
 2. Setup database
-    <video src="./assets/db_panel.mp4" controls />
+
+https://github.com/user-attachments/assets/b9302e6e-1b30-4350-a952-598c9ae39249
 
 > [!NOTE]
 > Regardless of whether the database is deployed locally or remotely, you will always enter `postgresql://postgres:youcannotpass@db:5432/square` in the database panel because Caddy proxies requests to the actual database container.
