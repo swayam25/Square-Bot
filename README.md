@@ -25,12 +25,12 @@ Advanced multipurpose discord bot for all your needs.
 
 ### 🧰 Tools
 
-| Tool                                                                                                                                    | Type                   | Version | Purpose                                             |
-| --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------- | --------------------------------------------------- |
-| [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/) | Required               | 20.10+  | To run the bot in a containerized environment.      |
-| [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)             | Required               | 2.50+   | To clone the repository and manage version control. |
-| [![Python](https://img.shields.io/badge/Python-%233776AB?style=for-the-badge&logo=python&logoColor=%23FFFFFF)](https://www.python.org/) | Optional (Development) | 3.12+   | The programming language used to develop the bot.   |
-| [![UV](https://img.shields.io/badge/UV-%23DE5FE9?style=for-the-badge&logo=uv&logoColor=%23FFFFFF)](https://docs.astral.sh/uv/)          | Optional (Development) | 0.9+    | A modern Python package manager for development.    |
+| Tool                                                                                                                                    | Type                     | Version | Purpose                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------- | --------------------------------------------------- |
+| [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/) | Required                 | 20.10+  | To run the bot in a containerized environment.      |
+| [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)             | Required                 | 2.50+   | To clone the repository and manage version control. |
+| [![Python](https://img.shields.io/badge/Python-%233776AB?style=for-the-badge&logo=python&logoColor=%23FFFFFF)](https://www.python.org/) | Optional (*Development*) | 3.12+   | The programming language used to develop the bot.   |
+| [![UV](https://img.shields.io/badge/UV-%23DE5FE9?style=for-the-badge&logo=uv&logoColor=%23FFFFFF)](https://docs.astral.sh/uv/)          | Optional (*Development*) | 0.9+    | A modern Python package manager for development.    |
 
 ### 🧲 VPS Specs
 
@@ -104,6 +104,11 @@ Advanced multipurpose discord bot for all your needs.
 > This allows you to access the database panel via `http://127.0.0.1` without needing a domain or SSL certificate, which simplifies the development process.
 >
 > Make sure to set the `database-url` in `config.toml` to `asyncpg://postgres:youcannotpass@localhost:5432/square` for development.
+
+4. Run the bot
+    ```sh
+    uv run main.py
+    ```
 
 ## 📚 Database Connection
 
