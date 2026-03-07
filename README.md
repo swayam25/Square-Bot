@@ -127,7 +127,7 @@ https://github.com/user-attachments/assets/94c7e57c-4183-4490-82be-615d9d0e94db
 | `system-channel-id`  | `int`       | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.      |
 | `support-server-url` | `str`       | The invite URL of the support server.                                                                        |
 | `bot-token`          | `str`       | Discord Bot Token. Get this from developer portal.                                                           |
-| `drizzle-pass`       | `str`       | The password for Drizzle Studio Gateway. This is used to access the database panel.                          |
+| `drizzle-password`   | `str`       | The password for Drizzle Studio Gateway. This is used to access the database panel.                          |
 | `database-url`       | `str`       | The URL for the PostgreSQL database.                                                                         |
 | `colors.theme`       | `str`       | The color theme for the bot's view containers.                                                               |
 | `colors.green`       | `str`       | The color code for green color in view containers.                                                           |
