@@ -5,6 +5,7 @@ support-server-url = "https://discord.gg"
 
 bot-token = ""
 database-url = "asyncpg://postgres:youcannotpass@db:5432/square"
+drizzle-pass = "YW7gowd%AB6QGltajVPmN_R_Q@r@@$H_"
 
 [colors]
 theme = "#1FCEEC"

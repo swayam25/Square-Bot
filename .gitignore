@@ -1,9 +1,6 @@
 # Config file
 config.toml
 
-# Caddyfile
-Caddyfile
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -2,7 +2,9 @@ name: square
 
 services:
   bot:
-    build: .
+    build:
+      context: .
+      dockerfile: containers/Dockerfile
     container_name: "square"
     restart: unless-stopped
     depends_on:
@@ -10,7 +12,7 @@ services:
         condition: service_healthy
     volumes:
       - ./.cache:/square/.cache
-      - ./config.toml:/square/config.toml
+      - ./config.toml:/square/config.toml:ro
 
   db:
     image: postgres:16-alpine
@@ -31,16 +33,17 @@ services:
       retries: 5
 
   drizzle-gateway:
-    image: ghcr.io/drizzle-team/gateway:latest
+    build:
+      context: .
+      dockerfile: containers/Dockerfile.drizzle
     container_name: square_drizzle
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      PORT: 8080
     volumes:
       - drizzle_data:/app
+      - ./config.toml:/square/config.toml:ro
 
   caddy:
     image: caddy:2-alpine

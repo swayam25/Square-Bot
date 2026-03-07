@@ -1,0 +1,3 @@
+:80 {
+	reverse_proxy drizzle-gateway:8080
+}

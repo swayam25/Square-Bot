@@ -1,7 +1,0 @@
-example.com {
-	basic_auth * {
-		<USERNAME> <PASSWORD>
-	}
-
-	reverse_proxy drizzle-gateway:8080
-}

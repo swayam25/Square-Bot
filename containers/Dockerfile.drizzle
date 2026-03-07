@@ -1,0 +1,9 @@
+FROM ghcr.io/drizzle-team/gateway:latest AS src
+
+FROM oven/bun:alpine
+WORKDIR /entry
+COPY --from=src /entry .
+
+ENV PORT=8080
+
+ENTRYPOINT ["/bin/sh", "-c", "MASTERPASS=$(awk -F'\"' '/^drizzle-pass/{print $2}' /square/config.toml) && export MASTERPASS && exec bun run index.js"]
