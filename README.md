@@ -110,6 +110,8 @@ Advanced multipurpose discord bot for all your needs.
 
 2. Setup database
 
+https://github.com/user-attachments/assets/94c7e57c-4183-4490-82be-615d9d0e94db
+
 > [!NOTE]
 > Regardless of whether the database is deployed locally or remotely, you will always enter `postgresql://postgres:youcannotpass@db:5432/square` in the database panel because Caddy proxies requests to the actual database container.
 >
