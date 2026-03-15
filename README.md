@@ -39,7 +39,6 @@ Advanced multipurpose discord bot for all your needs.
 | CPU       | 2 vCPU              | 4 vCPU or more                            |
 | RAM       | 4 GB                | 8 GB or more                              |
 | Storage   | 10 GB               | 20 GB or more more if your database grows |
-| Network   | 100 Mbps            | 1 Gbps or more                            |
 
 ## 🚀 Production
 
