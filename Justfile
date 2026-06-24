@@ -46,4 +46,3 @@ prod:
     @printf '\033[43m\033[30m BOOT \033[0m \033[33mDeploying services\033[0m\n'
     @docker compose up -d --remove-orphans
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDeployed\033[0m\n'
-    @printf '\033[46m\033[30m LINK \033[0m \033[36mDatabase panel → %s\033[0m\n' "$(docker inspect -f '{{{{with index .NetworkSettings.Ports "80/tcp"}}http://localhost:{{{{(index . 0).HostPort}}{{{{end}}' square_caddy)"
