@@ -29,16 +29,9 @@ Advanced multipurpose discord bot for all your needs.
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------- | --------------------------------------------------- |
 | [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/) | Required                 | 20.10+  | To run the bot in a containerized environment.      |
 | [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)             | Required                 | 2.50+   | To clone the repository and manage version control. |
+| [![Just](https://img.shields.io/badge/Just-%23EF4041?style=for-the-badge&logo=just&logoColor=%23FFFFFF)](https://github.com/casey/just) | Required                 | 1.27+   | A command runner for the project's recipes.         |
 | [![Python](https://img.shields.io/badge/Python-%233776AB?style=for-the-badge&logo=python&logoColor=%23FFFFFF)](https://www.python.org/) | Optional (*Development*) | 3.12+   | The programming language used to develop the bot.   |
 | [![UV](https://img.shields.io/badge/UV-%23DE5FE9?style=for-the-badge&logo=uv&logoColor=%23FFFFFF)](https://docs.astral.sh/uv/)          | Optional (*Development*) | 0.9+    | A modern Python package manager for development.    |
-
-### 🧲 VPS Specs
-
-| Component | Minimum Requirement | Recommended Requirement                   |
-| --------- | ------------------- | ----------------------------------------- |
-| CPU       | 2 vCPU              | 4 vCPU or more                            |
-| RAM       | 4 GB                | 8 GB or more                              |
-| Storage   | 10 GB               | 20 GB or more more if your database grows |
 
 ## 🚀 Production
 
@@ -57,65 +50,59 @@ Advanced multipurpose discord bot for all your needs.
 > Check [configuration](#-configuration) section for details on the configuration keys.
 
 3. Example `Caddyfile` configuration for a domain `example.com`
-    ![Example Caddyfile](./assets/caddyfile.png)
+    ```Caddyfile
+    example.com {
+        reverse_proxy drizzle-gateway:8080
+    }
+    ```
 
 > [!NOTE]
 > If you don't have a domain, you can use `:80` to access the database panel via your server's IP address. However, this is not recommended for production use.
 >
 > Read [Caddy's documentation](https://caddyserver.com/docs/caddyfile) for more details.
 
-4. Docker Compose
+4. Build the images and start everything
     ```sh
-    docker compose up -d
+    just prod
     ```
 
-5. Done! The bot should be up and running now. You can access the database panel at `http(s)://<your-domain-or-ip>/`. (*Refer to the [Database Panel](#-database-panel) section for usage instructions.*)
+5. Done! The bot should be up and running now. You can access the database panel at `http(s)://<your-domain-or-ip>/`.
 
 ## 🛸 Development
 
-1. Follow the first 4 steps of the [production](#-production) section.
+1. Follow the first 2 steps of the [production](#-production) section.
 
-2. Install the dependencies using `uv`
+2. Install the dependencies and set up pre-commit hooks
     ```sh
-    uv sync
+    just setup
     ```
 
-3. Start the PostgreSQL database and Drizzle Studio using Docker Compose
+3. Start the docker services
     ```sh
-    docker compose up db drizzle-gateway caddy -d
+    just start
     ```
-
-> [!IMPORTANT]
-> For development, configure the `Caddyfile` to use `:80` as the listening address.
->
-> ![Example Caddyfile for Development](./assets/caddyfile_dev.png)
->
-> This allows you to access the database panel via `http://127.0.0.1` without needing a domain or SSL certificate, which simplifies the development process.
->
-> Make sure to set the `database-url` in `config.toml` to `asyncpg://postgres:youcannotpass@localhost:5432/square` for development.
 
 4. Run the bot
     ```sh
-    uv run main.py
+    just dev
+    ```
+    > `just dev` auto-starts services if they aren't already running, so you can skip step 3 and run it directly.
+
+5. Stop the docker services when done
+    ```sh
+    just stop
     ```
 
-## 📚 Database Connection
-
-![Database](./assets/db.png)
-
-## 🔮 Database Panel
-
-1. Visit `http(s)://<your-domain-or-ip>/` to access the database panel.
-
-2. Setup database
-
-https://github.com/user-attachments/assets/94c7e57c-4183-4490-82be-615d9d0e94db
-
-> [!NOTE]
-> Regardless of whether the database is deployed locally or remotely, you will always enter `postgresql://postgres:youcannotpass@db:5432/square` in the database panel because Caddy proxies requests to the actual database container.
+> [!IMPORTANT]
+> For development Caddy is by-default configured to run on port `80`
 >
-> Remember, the connection string you enter in the panel starts with `postgresql://` and **not** `asyncpg://`.
-
+> ```Caddyfile
+> :80 {
+>     reverse_proxy drizzle-gateway:8080
+> }
+> ```
+>
+> This allows you to access the database panel via `http://localhost` without needing a domain or SSL certificate, which simplifies the development process.
 
 ## 🔑 Configuration
 
@@ -178,7 +165,7 @@ Alternatively, you can manually create a `.cache/emoji.json` file with the follo
     - Keep the code clean and readable.
     - Make sure the bot is working as expected.
 
-- Setup `pre-commit` hooks
+- Install dependencies and set up `pre-commit` hooks
     ```sh
-    pre-commit install
+    just setup
     ```

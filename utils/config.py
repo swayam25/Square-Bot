@@ -1,6 +1,8 @@
+import os
 import toml
 from attr import dataclass
 from typing import TypedDict
+from urllib.parse import urlparse, urlunparse
 
 config_file_path = "./config.toml"
 
@@ -15,7 +17,27 @@ owner_guild_ids: list[int] = data["owner-guild-ids"]
 system_channel_id: int = data["system-channel-id"]
 support_server_url: str = data["support-server-url"]
 bot_token: str = data["bot-token"]
-db_url: str = data["database-url"]
+
+
+def _resolve_db_url(url: str) -> str:
+    """Override the database host with the `DB_HOST` env var if set.
+
+    Lets `config.toml` stay on the production host (`db`) while local
+    development connects to the published port via `DB_HOST=localhost`.
+    """
+    host_override = os.getenv("DB_HOST")
+    if not host_override:
+        return url
+    parsed = urlparse(url)
+    userinfo, _, hostport = parsed.netloc.rpartition("@")
+    _, sep, port = hostport.partition(":")
+    new_netloc = f"{host_override}{sep}{port}"
+    if userinfo:
+        new_netloc = f"{userinfo}@{new_netloc}"
+    return urlunparse(parsed._replace(netloc=new_netloc))
+
+
+db_url: str = _resolve_db_url(data["database-url"])
 
 
 # Colors

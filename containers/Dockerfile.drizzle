@@ -6,4 +6,4 @@ COPY --from=src /entry .
 
 ENV PORT=8080
 
-ENTRYPOINT ["/bin/sh", "-c", "MASTERPASS=$(awk -F'\"' '/^drizzle-password/{print $2}' /square/config.toml) && export MASTERPASS && exec bun run index.js"]
+ENTRYPOINT ["/bin/sh", "-c", "export MASTERPASS=$(awk -F'\"' '/^drizzle-password/{print $2}' /square/config.toml); export DATABASE_URL_square=$(awk -F'\"' '/^database-url/{print $2}' /square/config.toml | sed 's#^asyncpg://#postgresql://#'); exec bun run index.js"]
