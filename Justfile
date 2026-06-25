@@ -39,30 +39,34 @@ dev:
 
 # ── Database ──────────────────────────────────────────────────────────────────
 
+[private]
+db-ensure-init:
+    @DB_HOST=localhost uv run aerich init-db --safe > /dev/null 2>&1 || true
+
 # Generate a new migration from schema changes
-db-migrate name="auto":
+db-migrate name="auto": db-ensure-init
     @printf '\033[43m\033[30m  DB  \033[0m \033[33mGenerating migration: {{name}}\033[0m\n'
     @DB_HOST=localhost uv run aerich migrate --name {{name}}
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mMigration created\033[0m\n'
 
 # Apply all pending migrations
-db-upgrade:
+db-upgrade: db-ensure-init
     @printf '\033[43m\033[30m  DB  \033[0m \033[33mApplying migrations\033[0m\n'
     @DB_HOST=localhost uv run aerich upgrade
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDatabase up to date\033[0m\n'
 
 # Roll back the last applied migration
-db-downgrade:
+db-downgrade: db-ensure-init
     @printf '\033[41m\033[30m  DB  \033[0m \033[31mRolling back last migration\033[0m\n'
     @DB_HOST=localhost uv run aerich downgrade -v -1
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mRolled back\033[0m\n'
 
 # Show applied migration history
-db-history:
+db-history: db-ensure-init
     @DB_HOST=localhost uv run aerich history
 
 # Show migrations not yet applied
-db-heads:
+db-heads: db-ensure-init
     @DB_HOST=localhost uv run aerich heads
 
 # ── Deploy ────────────────────────────────────────────────────────────────────
