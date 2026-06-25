@@ -4,7 +4,6 @@ from core.view import DesignerView
 from db.funcs.guild import (
     fetch_guild_settings,
     remove_guild,
-    set_auto_meme,
     set_autorole,
     set_media_only,
     set_mod_cmd_log,
@@ -17,7 +16,6 @@ from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from utils import config
-from utils.check import check_subreddit
 from utils.emoji import emoji
 
 
@@ -38,10 +36,6 @@ class SettingsCommand:
         ticket = emoji.on if guild_settings.ticket_cmds else emoji.off
         ticket_log_channel = await mention_ch(guild_settings.ticket_log_channel_id)
         media_only_channel = await mention_ch(guild_settings.media_only_channel_id)
-        auto_meme_channel = await mention_ch(guild_settings.auto_meme["channel_id"])
-        if guild_settings.auto_meme["subreddit"]:
-            auto_meme_channel += f" ([`r/{guild_settings.auto_meme['subreddit']}`](https://reddit.com/r/{guild_settings.auto_meme['subreddit']}))"
-
         role_id = guild_settings.autorole
         autorole = (
             self.ctx.guild.get_role(role_id).mention if (role_id and self.ctx.guild.get_role(role_id)) else emoji.off
@@ -60,7 +54,6 @@ class SettingsCommand:
                     f"{emoji.ticket} **Ticket Log Channel**: {ticket_log_channel}\n"
                     f"{emoji.img} **Media Only Channel**: {media_only_channel}\n"
                     f"{emoji.role} **Autorole**: {autorole}\n"
-                    f"{emoji.fun} **Auto Meme Channel**: {auto_meme_channel}\n"
                 ),
             )
         )
@@ -86,8 +79,6 @@ class SettingsCommand:
                     await set_media_only(self.ctx.guild.id, None)
                 case "auto role":
                     await set_autorole(self.ctx.guild.id, None)
-                case "auto meme":
-                    await set_auto_meme(self.ctx.guild.id, None)
         view = DesignerView(
             ui.Container(
                 ui.TextDisplay(f"{emoji.success} Successfully reset {setting.lower()} settings."),
@@ -116,7 +107,6 @@ class Settings(commands.Cog):
             "Ticket Log",
             "Media Only",
             "Auto Role",
-            "Auto Meme",
         ],
         required=False,
     )
@@ -259,61 +249,6 @@ class Settings(commands.Cog):
                 ui.Container(
                     ui.TextDisplay(
                         f"{emoji.success} Successfully set autorole to {role.mention}.\n-# This role will be assigned to members when they join the server."
-                    ),
-                    color=config.color.green,
-                )
-            )
-            await ctx.respond(view=view)
-
-    # Set auto meme
-    @setting.command(name="auto-meme")
-    @option("channel", description="Mention the auto meme channel.")
-    @option("subreddit", description="Subreddit to fetch memes from.", required=False)
-    async def set_auto_meme(self, ctx: discord.ApplicationContext, channel: discord.TextChannel, subreddit: str = ""):
-        """Sets auto meme channel. Posts memes every 10 minutes."""
-        if not channel.permissions_for(ctx.guild.me).send_messages:
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.error} I don't have permission to send messages in {channel.mention}."),
-                    color=config.color.red,
-                )
-            )
-            await ctx.respond(view=view, ephemeral=True)
-        else:
-            if subreddit:  # Check if subreddit is provided
-                await ctx.defer()
-                check = await check_subreddit(subreddit)
-                if not check.exist:  # If subreddit is invalid
-                    view = DesignerView(
-                        ui.Container(
-                            ui.TextDisplay(
-                                f"{emoji.error} The subreddit `r/{check.display_name}` does not exist or is invalid."
-                            ),
-                            color=config.color.red,
-                        )
-                    )
-                    await ctx.respond(view=view, ephemeral=True)
-                    return
-                # Use the display name from the check so that it is formatted correctly
-                if check.nsfw and not channel.nsfw:  # If subreddit is NSFW and channel is not NSFW
-                    view = DesignerView(
-                        ui.Container(
-                            ui.TextDisplay(
-                                f"{emoji.error} The subreddit `r/{check.display_name}` is **NSFW**. Please enable **NSFW** in {channel.mention} or choose a different subreddit."
-                            ),
-                            color=config.color.red,
-                        )
-                    )
-                    await ctx.respond(view=view, ephemeral=True)
-                    return
-            # Finally set the auto meme channel and subreddit
-            await set_auto_meme(ctx.guild.id, channel.id, check.display_name if subreddit else None)
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(
-                        f"{emoji.success} Successfully set auto meme channel to {channel.mention}{f' and subreddit to [`r/{check.display_name}`](https://reddit.com/r/{check.display_name})' if subreddit else ''}.\n"
-                        f"-# The bot will post memes every `10 minutes`.\n"
-                        f"-# Technically you can use any subreddit, but it is recommended to use subreddits that have memes."
                     ),
                     color=config.color.green,
                 )

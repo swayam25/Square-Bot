@@ -56,11 +56,6 @@ async def get_cogs(ctx: discord.ApplicationContext) -> list[CogDict]:
             "emoji": emoji.ticket,
             "description": "Need help? Create a ticket and ask.",
         },
-        {
-            "name": "Fun",
-            "emoji": emoji.fun,
-            "description": "Fun commands to enjoy with friends.",
-        },
     ]
     if await check.is_dev(ctx):
         cogs.append(

@@ -13,7 +13,7 @@ from discord.ext import commands
 from discord.ui import ActionRow
 from io import BytesIO
 from utils import check, config, temp
-from utils.emoji import Emoji, emoji
+from utils.emoji import Emoji, emoji, reload_emoji
 
 
 class GuildContainer(ui.Container):
@@ -24,11 +24,11 @@ class GuildContainer(ui.Container):
         end = start + items_per_page
         page_guilds = guilds[start:end]
         guilds_list = "\n".join(f"`{i + 1}.` **{g.name}**: `{g.id}`" for i, g in enumerate(page_guilds, start=start))
-        self.add_item(ui.TextDisplay("## Guilds List"))
+        self.add_item(ui.TextDisplay("## Guild List"))
         self.add_item(ui.TextDisplay(guilds_list or "No guilds found."))
         if len(guilds) > items_per_page:
             self.add_item(ui.Separator())
-            self.add_item(ui.TextDisplay(f"-# Viewing Page {page}/{total_pages}"))
+            self.add_item(ui.TextDisplay(f"-# Page {page} / {total_pages}"))
 
 
 class GuildListView(DesignerView):
@@ -86,19 +86,23 @@ class SyncEmojiView(DesignerView):
             else:
                 emoji_dict[app_emoji.name] = f"<:{app_emoji.name}:{app_emoji.id}>"
         resp: dict = Emoji.create_custom_emoji_config(emoji_dict)
+        reload_emoji()
         default_emojis_used: list[str] = resp.get("default_emojis_used", [])
         extra_keys_ignored: list[str] = resp.get("extra_keys_ignored", [])
+
+        color = config.color.orange if extra_keys_ignored else None
         view_items = [
             ui.TextDisplay(f"## Synced {len(emojis)} emojis"),
             ui.TextDisplay(
-                f"{emoji.emoji} **Total Emojis**: `{len(emojis)}`\n"
-                f"{emoji.bot} **Default Emojis**: `{len(default_emojis_used)}`\n"
-                f"{emoji.leave} **Extra Emojis**: `{len(extra_keys_ignored)}`\n"
+                f"{emoji.bullet} **Total Emojis**: `{len(emojis)}`\n"
+                f"{emoji.bullet} **Default Emojis**: `{len(default_emojis_used)}`\n"
+                f"{emoji.bullet} **Extra Emojis**: `{len(extra_keys_ignored)}`\n"
             ),
         ]
         if default_emojis_used:
             view_items.extend(
                 [
+                    ui.Separator(),
                     ui.TextDisplay("### Default Emojis Used"),
                     ui.TextDisplay("".join(f"{getattr(emoji, i)} `{i}`\n" for i in default_emojis_used)),
                 ]
@@ -106,7 +110,8 @@ class SyncEmojiView(DesignerView):
         if extra_keys_ignored:
             view_items.extend(
                 [
-                    ui.TextDisplay("### Ignored Extra Emojis"),
+                    ui.Separator(),
+                    ui.TextDisplay("### Extra Emojis"),
                     ui.TextDisplay("".join(f"{emoji_dict.get(i, emoji.bullet)} `{i}`\n" for i in extra_keys_ignored)),
                 ]
             )
@@ -121,10 +126,10 @@ class SyncEmojiView(DesignerView):
                 await self.delete_extra_emojis_callback(i, [emoji_dict.get(e) for e in extra_keys_ignored])
 
             extra_btn.callback = extra_btn_callback
-            self.add_item(ui.Container(*view_items))
+            self.add_item(ui.Container(*view_items, **({"color": color} if color else {})))
             self.add_item(ui.ActionRow(extra_btn))
             return  # Early return to avoid re-adding view_items, button row must be at the end.
-        self.add_item(ui.Container(*view_items))
+        self.add_item(ui.Container(*view_items, **({"color": color} if color else {})))
 
     async def delete_extra_emojis_callback(self, interaction: discord.Interaction, emojis: list[str]):
         """Deletes extra emojis."""
@@ -241,8 +246,8 @@ class Devs(commands.Cog):
         if devs_list:
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay("## Devs List"),
-                    ui.TextDisplay(devs_list or "No devs found."),
+                    ui.TextDisplay("## Dev List"),
+                    ui.TextDisplay(devs_list),
                 )
             )
         else:
@@ -263,11 +268,7 @@ class Devs(commands.Cog):
             status=discord.Status.idle,
             activity=discord.CustomActivity(name="Restarting..."),
         )
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"{emoji.loading} Restarting..."),
-            )
-        )
+        view = DesignerView(ui.Container(ui.TextDisplay(f"{emoji.loading} Restarting...")))
         msg = await ctx.respond(view=view)
         temp.set("restart_msg", {"channel_id": msg.channel.id, "id": (await msg.original_message()).id})
         await self.client.wait_until_ready()
@@ -302,6 +303,7 @@ class Devs(commands.Cog):
         view = DesignerView(
             ui.Container(
                 ui.TextDisplay(f"{emoji.shutdown} Bot is now shutdown."),
+                color=config.color.red,
             )
         )
         await ctx.respond(view=view)
@@ -371,6 +373,7 @@ class Devs(commands.Cog):
             view = DesignerView(
                 ui.Container(
                     ui.TextDisplay(f"{emoji.success} Left the guild **{guild.name}** with ID `{guild.id}`"),
+                    color=config.color.green,
                 )
             )
             await ctx.respond(view=view)
@@ -436,12 +439,21 @@ class Devs(commands.Cog):
         progress = (completed / total) * 100
         bar_length = 15
         filled_length = int(bar_length * completed // total)
-        bar = f"{emoji.filled_bar * filled_length}{emoji.empty_bar * (bar_length - filled_length)}"
+        bar = f"{'█' * filled_length}{'░' * (bar_length - filled_length)}"
         return DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.loading} Uploading `{completed}/{total}` emojis.\n{bar} `{progress:.2f}%`"),
+                ui.TextDisplay(f"⏳ Uploading `{completed}/{total}` emojis.\n`{bar}` `{progress:.2f}%`"),
             )
         )
+
+    async def _silent_sync(self) -> None:
+        """Fetch current app emojis, write the config, and refresh the in-memory emoji singleton."""
+        app_emojis: list[discord.AppEmoji] = await self.client.fetch_emojis()
+        emoji_dict: dict = {
+            e.name: (f"<a:{e.name}:{e.id}>" if e.animated else f"<:{e.name}:{e.id}>") for e in app_emojis
+        }
+        Emoji.create_custom_emoji_config(emoji_dict)
+        reload_emoji()
 
     # Upload app emojis
     @emoji.command(name="upload")
@@ -465,7 +477,7 @@ class Devs(commands.Cog):
                 if len(top_dirs) > 1:
                     view = DesignerView(
                         ui.Container(
-                            ui.TextDisplay(f"{emoji.error} Zip file contains more than one top-level directory."),
+                            ui.TextDisplay("❌ Zip file contains more than one top-level directory."),
                             color=config.color.red,
                         )
                     )
@@ -481,7 +493,7 @@ class Devs(commands.Cog):
                 if not emoji_files:
                     view = DesignerView(
                         ui.Container(
-                            ui.TextDisplay(f"{emoji.error} No `.png` or `.gif` emoji files found in the zip."),
+                            ui.TextDisplay("❌ No `.png` or `.gif` emoji files found in the zip."),
                             color=config.color.red,
                         )
                     )
@@ -494,7 +506,7 @@ class Devs(commands.Cog):
                     if len(_emoji) > 32:
                         view = DesignerView(
                             ui.Container(
-                                ui.TextDisplay(f"{emoji.error} Emoji name `{_emoji}` is too long (max 32 characters)."),
+                                ui.TextDisplay(f"❌ Emoji name `{_emoji}` is too long (max 32 characters)."),
                                 color=config.color.red,
                             )
                         )
@@ -504,14 +516,15 @@ class Devs(commands.Cog):
                         await self.client.create_emoji(name=_emoji, image=zip_file.read(emoji_path))
                     except Exception:
                         await self.client.delete_emoji(
-                            [emoji for emoji in await self.client.fetch_emojis() if emoji.name == _emoji][0]
+                            [e for e in await self.client.fetch_emojis() if e.name == _emoji][0]
                         )
                         await self.client.create_emoji(name=_emoji, image=zip_file.read(emoji_path))
                     await msg.edit(view=self.emoji_prog_view(len(emoji_files), emoji_files.index(emoji_path) + 1))
             zip_buffer.close()
+            await self._silent_sync()
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay(f"{emoji.success} Uploaded {len(emoji_files)} emojis."),
+                    ui.TextDisplay(f"✅ Uploaded {len(emoji_files)} emojis."),
                     color=config.color.green,
                 )
             )
@@ -521,9 +534,7 @@ class Devs(commands.Cog):
             if len(file.filename[:-4]) > 32:
                 view = DesignerView(
                     ui.Container(
-                        ui.TextDisplay(
-                            f"{emoji.error} Emoji name `{file.filename[:-4]}` is too long (max 32 characters)."
-                        ),
+                        ui.TextDisplay(f"❌ Emoji name `{file.filename[:-4]}` is too long (max 32 characters)."),
                         color=config.color.red,
                     )
                 )
@@ -539,9 +550,10 @@ class Devs(commands.Cog):
                     if uploaded_emoji.animated
                     else f"<:{uploaded_emoji.name}:{uploaded_emoji.id}>"
                 )
+                await self._silent_sync()
                 view = DesignerView(
                     ui.Container(
-                        ui.TextDisplay(f"{emoji.success} Uploaded emoji {emoji_md} `{file.filename[:-4]}`."),
+                        ui.TextDisplay(f"✅ Uploaded emoji {emoji_md} `{file.filename[:-4]}`."),
                         color=config.color.green,
                     )
                 )
@@ -549,7 +561,7 @@ class Devs(commands.Cog):
             except Exception as e:
                 view = DesignerView(
                     ui.Container(
-                        ui.TextDisplay(f"{emoji.error} Failed to upload emoji `{file.filename[:-4]}`.\n{e}"),
+                        ui.TextDisplay(f"❌ Failed to upload emoji `{file.filename[:-4]}`.\n{e}"),
                         color=config.color.red,
                     )
                 )
@@ -558,7 +570,7 @@ class Devs(commands.Cog):
         else:
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay(f"{emoji.error} Please upload a valid zip file or a single .png/.gif file."),
+                    ui.TextDisplay("❌ Please upload a valid zip file or a single `.png`/`.gif` file."),
                     color=config.color.red,
                 )
             )
@@ -613,31 +625,37 @@ class Devs(commands.Cog):
                 await ctx.respond(view=view, ephemeral=True)
                 return
 
-            # Get expected emoji names from Emoji class
             expected_emojis = set(Emoji.get_emoji_names())
             found_emojis = set(emoji_names)
-
-            # Find missing and extra emojis
             missing_emojis = expected_emojis - found_emojis
             extra_emojis = found_emojis - expected_emojis
 
             missing_list = "\n".join([f"{emoji.bullet} `{name}`" for name in sorted(missing_emojis)])
             extra_list = "\n".join([f"{emoji.bullet_red} `{name}`" for name in sorted(extra_emojis)])
+
+            if missing_emojis:
+                color = config.color.red
+            elif extra_emojis:
+                color = config.color.orange
+            else:
+                color = config.color.green
             view = DesignerView(
                 ui.Container(
                     ui.TextDisplay("## Emoji Zip Check"),
                     ui.TextDisplay(
                         f"Found `{len(emoji_files)}` emoji files in the zip. Expected `{len(expected_emojis)}` emojis."
                     ),
+                    ui.Separator(),
                     ui.TextDisplay(
                         ("### Missing Emojis\n" + missing_list)
                         if missing_list
                         else f"{emoji.success} No missing emojis."
                     ),
+                    ui.Separator(),
                     ui.TextDisplay(
                         ("### Extra Emojis\n" + extra_list) if extra_list else f"{emoji.success} No extra emojis."
                     ),
-                    color=config.color.green if not missing_emojis and not extra_emojis else config.color.red,
+                    color=color,
                 )
             )
             await ctx.respond(view=view)

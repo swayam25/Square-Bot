@@ -881,11 +881,7 @@ class Music(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """Marks the player as stale when unrelated chat arrives in its channel."""
-        if (
-            not message.guild
-            or message.author.id == self.client.user.id
-            or message.author.name == f"{self.client.user.name} - {logger.LogType.MUSIC}"
-        ):
+        if not message.guild or message.author.name == f"{self.client.user.name} - {logger.LogType.MUSIC}":
             return
         play_msg, _ = store.play_msg(message.guild.id)
         if play_msg and message.channel.id == play_msg.channel.id:

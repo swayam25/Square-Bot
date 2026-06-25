@@ -1,6 +1,5 @@
 from tortoise import fields
 from tortoise.models import Model
-from typing import TypedDict
 
 
 class DevTable(Model):
@@ -10,13 +9,6 @@ class DevTable(Model):
 
     class Meta:
         table = "dev"
-
-
-class AutomemeField(TypedDict):
-    # Stored as a string because Tortoise ORM does not support BigIntField for JSON
-    # This value gets converted to `int` when fetched using `fetch_guild_settings()`
-    channel_id: str | int | None
-    subreddit: str | None
 
 
 class GuildTable(Model):
@@ -29,7 +21,6 @@ class GuildTable(Model):
     ticket_log_channel_id = fields.BigIntField(null=True)
     media_only_channel_id = fields.BigIntField(null=True)
     autorole = fields.BigIntField(null=True)
-    auto_meme: AutomemeField = fields.JSONField(default={"channel_id": None, "subreddit": None})
 
     class Meta:
         table = "guild"

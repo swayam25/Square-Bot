@@ -16,7 +16,7 @@ Advanced multipurpose discord bot for all your needs.
 ## 🎯 Features
 
 - Advanced moderation system.
-- Lots of utility & fun commands.
+- Lots of utility commands.
 - Advanced music system with support for various sources (*depends on your Lavalink server*).
 - Clean & informative help menu.
 - Supports Discord Components v2.

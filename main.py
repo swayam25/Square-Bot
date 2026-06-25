@@ -32,7 +32,7 @@ client = Client(
 console = Console()
 
 # Startup printing
-figlted_txt = Figlet(font="standard").renderText(str(data["project"]["name"]).title())
+figlted_txt = Figlet(font="ansi_shadow").renderText(str(data["project"]["name"]).title())
 console.print(f"[cyan]{figlted_txt.removesuffix('\n')} [yellow bold]v{data['project']['version']}[/]\n")
 
 

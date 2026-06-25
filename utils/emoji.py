@@ -22,8 +22,6 @@ class Emoji:
     up_white: str = "⬆️"
     down_white: str = "⬇️"
     bottom_right: str = "↪️"
-    upvote: str = "👍"
-    downvote: str = "👎"
     loading: str = "⏳"
     loading_white: str = "⏳"
     copy_white: str = "📋"
@@ -33,7 +31,6 @@ class Emoji:
     mod: str = "🛠️"
     mass_mod: str = "👥"
     ticket: str = "🎫"
-    fun: str = "🤣"
 
     mention: str = "🔔"
     id: str = "🆔"
@@ -46,16 +43,13 @@ class Emoji:
     perms: str = "🔐"
     perms_white: str = "🔐"
     bot: str = "🤖"
-    bot_white: str = "🤖"
     emoji: str = "😀"
     keyboard: str = "⌨️"
     description: str = "📝"
     description_red: str = "📝"
     description_white: str = "📝"
     img: str = "🖼️"
-    img_red: str = "🖼️"
     date: str = "📅"
-    date_red: str = "📅"
     role: str = "🔖"
     lock_white: str = "🔒"
     channel: str = "📺"
@@ -67,8 +61,6 @@ class Emoji:
     msg: str = "💬"
     msg_red: str = "💬"
     msg_edit: str = "✏️"
-    msg_link: str = "🔗"
-    link: str = "🔗"
     verification: str = "🛡️"
     join: str = "➕"
     join_red: str = "➕"
@@ -76,12 +68,6 @@ class Emoji:
     server: str = "🖥️"
     server_red: str = "🖥️"
     boost: str = "🚀"
-
-    coin: str = "🪙"
-    dice: str = "🎲"
-    numbers: str = "🔢"
-    sparkles: str = "✨"
-    dog: str = "🐶"
 
     python: str = "🐍"
     ping: str = "🏓"
@@ -98,7 +84,6 @@ class Emoji:
     spotify: str = "🟢"
     youtube: str = "🔴"
     soundcloud: str = "🟠"
-    reddit: str = "🔴"
 
     music: str = "🎵"
     mic: str = "🎤"
@@ -205,3 +190,15 @@ def get_emoji_instance() -> Emoji:
 
 
 emoji = get_emoji_instance()
+
+
+def reload_emoji() -> None:
+    """Refresh the module-level emoji singleton in-place.
+
+    Updates every attribute on the existing object so all callers that hold
+    a reference to it (via `from utils.emoji import emoji`) see new values
+    without a bot restart.
+    """
+    new = get_emoji_instance()
+    for key in Emoji.__annotations__:
+        setattr(emoji, key, getattr(new, key))

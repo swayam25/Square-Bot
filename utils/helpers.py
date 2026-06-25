@@ -1,14 +1,9 @@
-import aiohttp
 import datetime
 import discord
 import io
 import re
-from attr import dataclass
 from babel.dates import format_datetime
 from babel.units import format_unit
-from core.view import DesignerView
-from discord import ui
-from utils.emoji import emoji
 
 
 def parse_duration(duration: str, max_duration: str | None = None) -> datetime.timedelta:
@@ -106,42 +101,3 @@ def create_dc_msgs_file(msgs: list[discord.Message]) -> discord.File:
         file.seek(0)
         dc_file = discord.File(fp=file, filename="messages.txt")
     return dc_file
-
-
-@dataclass
-class MemeViewData:
-    nsfw: bool
-    view: DesignerView
-
-
-async def meme_view(subreddit: str | None = None) -> MemeViewData | None:
-    """
-    Creates a meme view from a subreddit or a random meme.
-
-    Parameters:
-        subreddit (str): The subreddit to fetch a meme from. If empty, fetches from a random subreddit.
-    """
-    url = "https://meme-api.com/gimme"
-    if subreddit:
-        url += f"/{subreddit}"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            if response.status == 200:
-                data = await response.json()
-                if "url" in data:
-                    view = DesignerView(
-                        ui.Container(
-                            ui.TextDisplay(f"## [{data['title']}]({data['postLink']})"),
-                            ui.TextDisplay(
-                                f"{emoji.reddit} **Subreddit**: [`r/{data['subreddit']}`](https://reddit.com/r/{data['subreddit']})\n"
-                                f"{emoji.upvote} **Upvotes**: {data['ups']}"
-                            ),
-                            ui.MediaGallery(discord.MediaGalleryItem(url=data["url"])),
-                        )
-                    )
-                    return MemeViewData(
-                        nsfw=data.get("nsfw", False),
-                        view=view,
-                    )
-                else:
-                    return None
