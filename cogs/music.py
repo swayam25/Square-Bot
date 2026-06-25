@@ -12,7 +12,7 @@ from discord.commands import option, slash_command
 from discord.ext import commands
 from music import store
 from music.client import LavalinkVoiceClient
-from utils import config
+from utils import config, logger
 from utils.emoji import emoji
 from utils.helpers import parse_duration
 
@@ -28,24 +28,128 @@ sources = {
 }
 
 
-async def update_play_msg(client: Client, guild_id: int):
+def _container(content: str, color: int | None = None) -> DesignerView:
+    container = ui.Container(ui.TextDisplay(content))
+    if color is not None:
+        container.color = color
+    return DesignerView(container)
+
+
+async def _reply(
+    source: discord.ApplicationContext | discord.Interaction,
+    content: str,
+    *,
+    color: int | None = None,
+) -> None:
     """
-    Updates the play message with the current player status.
+    Sends an ephemeral confirmation or error to the command/button invoker.
+
+    Parameters:
+        source (ApplicationContext | Interaction): The invoking command or interaction.
+        content (str): The message text.
+        color (int | None): Optional container color.
+    """
+    view = _container(content, color)
+    interaction = source.interaction if isinstance(source, discord.ApplicationContext) else source
+    if interaction.response.is_done():
+        await interaction.followup.send(view=view, ephemeral=True)
+    else:
+        await interaction.response.send_message(view=view, ephemeral=True)
+
+
+async def music_log(client: Client, guild_id: int, content: str, *, color: int | None = None) -> None:
+    """
+    Logs a music event in the active player's channel via webhook, auto-deleting after 2 seconds.
+
+    Parameters:
+        client (Client): The bot client.
+        guild_id (int): The guild whose player channel receives the log.
+        content (str): The message text.
+        color (int | None): Optional container color.
+    """
+    channel = store.play_ch(guild_id)
+    if channel:
+        await logger.log(client, channel, logger.LogType.MUSIC, _container(content, color), delete_after=5)
+
+
+def _to_log_text(content: str) -> str:
+    """Strips the leading custom emoji (<:name:id> or <a:name:id>) or unicode emoji from content and lowercases the first letter."""
+    import re
+
+    stripped = re.sub(r"^(<a?:[^:]+:\d+>|[\U00010000-\U0010ffff]|[ -㌀]|©|®|[✂-➰])\s*", "", content.strip())
+    return stripped[0].lower() + stripped[1:] if stripped else content
+
+
+async def slash_log(
+    ctx: discord.ApplicationContext,
+    content: str,
+    *,
+    color: int | None = None,
+    render: bool = True,
+) -> None:
+    """
+    Acknowledges a state-changing slash command ephemerally and logs it publicly.
+    The log strips the leading emoji from content and prepends the user mention.
+    """
+    await _reply(ctx, content, color=color)
+    if render:
+        await render_player(ctx.bot, ctx.guild.id)
+    await music_log(ctx.bot, ctx.guild.id, f"{ctx.author.mention} {_to_log_text(content)}", color=color)
+
+
+async def render_player(client: Client, guild_id: int, *, force_new: bool = False) -> None:
+    """
+    Renders the single persistent player message.
+
+    Edits the player in place while it is still the latest message, otherwise deletes the stale player and posts a fresh one at the bottom of the channel.
 
     Parameters:
         client (Client): The Discord bot client.
-        guild_id (int): The ID of the guild to update the play message for.
+        guild_id (int): The guild to render the player for.
+        force_new (bool): Always send a new player message instead of editing.
     """
     player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(guild_id)
-    if player and player.is_connected:
-        play_msg, _ = store.play_msg(player.guild_id)
-        if play_msg:
-            view = MusicView(client, guild_id)
-            try:
-                await play_msg.edit(view=view)
-            except discord.NotFound:
-                store.play_msg(guild_id, "clear")
-                return
+    if not player or not player.is_connected or not player.current:
+        return
+    channel = store.play_ch(guild_id)
+    if not channel:
+        return
+    view = MusicView(client, guild_id)
+    play_msg, _ = store.play_msg(guild_id)
+    if play_msg and not force_new and not store.play_msg_dirty(guild_id):
+        try:
+            await play_msg.edit(view=view)
+            store.play_msg(guild_id, play_msg, view, "set")
+            return
+        except discord.NotFound:
+            pass
+    if play_msg:
+        try:
+            await play_msg.delete()
+        except discord.HTTPException:
+            pass
+    try:
+        new_msg = await channel.send(view=view)
+    except discord.Forbidden:
+        store.play_msg(guild_id, mode="clear")
+        return
+    store.play_msg(guild_id, new_msg, view, "set")
+
+
+async def clear_player(guild_id: int) -> None:
+    """
+    Deletes the persistent player message and clears its store entry.
+
+    Parameters:
+        guild_id (int): The guild whose player message should be removed.
+    """
+    play_msg, _ = store.play_msg(guild_id)
+    if play_msg:
+        try:
+            await play_msg.delete()
+        except discord.HTTPException:
+            pass
+    store.play_msg(guild_id, mode="clear")
 
 
 async def stop_player(player: lavalink.DefaultPlayer, guild: discord.Guild):
@@ -54,37 +158,27 @@ async def stop_player(player: lavalink.DefaultPlayer, guild: discord.Guild):
         await guild.me.voice.channel.set_status(status=None)
     if guild.voice_client:
         await guild.voice_client.disconnect(force=True)
+    await clear_player(guild.id)
 
 
 async def music_interaction_check(view: DesignerView, player: lavalink.DefaultPlayer, interaction: discord.Interaction):
     if not player or not player.current:
-        err_view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"{emoji.error} Nothing is being played at the current moment."),
-                color=config.color.red,
-            )
-        )
         view.disable_all_items()
-        await interaction.edit(view=view)
-        await interaction.followup.send(view=err_view, ephemeral=True)
+        await interaction.response.edit_message(view=view)
+        await interaction.followup.send(
+            view=_container(f"{emoji.error} Nothing is being played at the current moment.", config.color.red),
+            ephemeral=True,
+        )
         return False
     elif not interaction.user.voice:
-        err_view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"{emoji.error} Join a voice channel first."),
-                color=config.color.red,
-            )
+        await interaction.response.send_message(
+            view=_container(f"{emoji.error} Join a voice channel first.", config.color.red), ephemeral=True
         )
-        await interaction.response.send_message(view=err_view, ephemeral=True)
         return False
     elif player.is_connected and interaction.user.voice.channel.id != int(player.channel_id):
-        err_view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"{emoji.error} You are not in my voice channel."),
-                color=config.color.red,
-            )
+        await interaction.response.send_message(
+            view=_container(f"{emoji.error} You are not in my voice channel.", config.color.red), ephemeral=True
         )
-        await interaction.response.send_message(view=err_view, ephemeral=True)
         return False
     else:
         return True
@@ -147,93 +241,60 @@ class MusicView(DesignerView):
 
     # Pause / Resume
     async def pause_callback(self, interaction: discord.Interaction):
-        button: ui.Button = self.get_item("pause")
-        if not self.player.paused:
-            await self.player.set_pause(True)
-        elif self.player.paused:
-            await self.player.set_pause(False)
-        button.emoji = emoji.play_white if self.player.paused else emoji.pause_white
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(
-                    f"{interaction.user.mention} {'Paused' if self.player.paused else 'Resumed'} the player."
-                ),
-            )
+        await self.player.set_pause(not self.player.paused)
+        await interaction.response.defer()
+        await render_player(self.client, interaction.guild_id)
+        await music_log(
+            self.client,
+            interaction.guild_id,
+            f"{interaction.user.mention} {'paused' if self.player.paused else 'resumed'} the player.",
         )
-        await interaction.edit(view=self)
-        await interaction.followup.send(view=view, delete_after=5)
 
     # Stop
     async def stop_callback(self, interaction: discord.Interaction):
         guild: discord.Guild = self.client.get_guild(int(interaction.guild_id))
-
-        view = DesignerView(ui.Container(ui.TextDisplay(f"{interaction.user.mention} Destroyed the player.")))
-        self.disable_all_items()
-        await interaction.edit(view=self)
-        await interaction.followup.send(view=view, delete_after=5)
-        store.play_msg(interaction.guild_id, mode="clear")
+        await interaction.response.defer()
+        await music_log(self.client, interaction.guild_id, f"{interaction.user.mention} destroyed the player.")
         await stop_player(self.player, guild)
 
     # Skip
     async def skip_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
         await self.player.skip()
-        self.disable_all_items()
-        await interaction.edit(view=self)
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"{interaction.user.mention} Skipped the track."),
-            )
-        )
-        await interaction.followup.send(view=view, delete_after=5)
+        await music_log(self.client, interaction.guild_id, f"{interaction.user.mention} skipped the track.")
 
     # Loop
     async def loop_callback(self, interaction: discord.Interaction):
-        button: ui.Button = self.get_item("loop")
         if self.player.loop == self.player.LOOP_NONE:
             self.player.set_loop(1)
-            button.emoji = emoji.loop_one
             mode = "Track"
         elif self.player.loop == self.player.LOOP_SINGLE and self.player.queue:
             self.player.set_loop(2)
-            button.emoji = emoji.loop
             mode = "Queue"
         else:
             self.player.set_loop(0)
-            button.emoji = emoji.loop_white
             mode = "Disable"
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(
-                    f"{interaction.user.mention} {'Enabled' if mode != 'Disable' else 'Disabled'} {mode} loop."
-                ),
-            )
+        await interaction.response.defer()
+        await render_player(self.client, interaction.guild_id)
+        await music_log(
+            self.client,
+            interaction.guild_id,
+            f"{interaction.user.mention} {'enabled' if mode != 'Disable' else 'disabled'} {mode} loop.",
         )
-        await interaction.edit(view=self)
-        await interaction.followup.send(view=view, delete_after=5)
 
     # Shuffle
     async def shuffle_callback(self, interaction: discord.Interaction):
-        button: ui.Button = self.get_item("shuffle")
         if not self.player.queue:
-            err_view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.error} Queue is empty."),
-                    color=config.color.red,
-                )
-            )
-            await interaction.response.send_message(view=err_view, ephemeral=True)
-        else:
-            self.player.set_shuffle(not self.player.shuffle)
-            button.emoji = emoji.shuffle if self.player.shuffle else emoji.shuffle_white
-            shuffle_view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(
-                        f"{interaction.user.mention} {'Enabled' if self.player.shuffle else 'Disabled'} shuffle."
-                    ),
-                )
-            )
-            await interaction.edit(view=self)
-            await interaction.followup.send(view=shuffle_view, delete_after=5)
+            await _reply(interaction, f"{emoji.error} Queue is empty.", color=config.color.red)
+            return
+        self.player.set_shuffle(not self.player.shuffle)
+        await interaction.response.defer()
+        await render_player(self.client, interaction.guild_id)
+        await music_log(
+            self.client,
+            interaction.guild_id,
+            f"{interaction.user.mention} {'enabled' if self.player.shuffle else 'disabled'} shuffle.",
+        )
 
 
 class QueueBtnCallback:
@@ -353,6 +414,11 @@ class QueueBtnCallback:
             queue_view.page = total_pages
 
         await _update_queue_view(interaction, queue_view)
+        await music_log(
+            interaction.client,
+            interaction.guild_id,
+            f"{interaction.user.mention} is now playing track `{track_index + 1}` from the queue.",
+        )
 
 
 async def _update_queue_view(interaction: discord.Interaction, queue_view: QueueListView):
@@ -525,42 +591,20 @@ class QueueListView(DesignerView):
             self.visible_action_button = None
             if selected_value == "clear_queue":
                 self.player.queue.clear()
-                view = DesignerView(ui.Container(ui.TextDisplay(f"{interaction.user.mention} Cleared the queue.")))
-                await interaction.followup.send(view=view, delete_after=5)
             elif selected_value == "reverse_queue":
                 self.player.queue.reverse()
-                view = DesignerView(ui.Container(ui.TextDisplay(f"{interaction.user.mention} Reversed the queue.")))
-                await interaction.followup.send(view=view, delete_after=5)
             elif selected_value == "sort_by_duration":
                 self.player.queue.sort(key=lambda track: track.duration)
-                view = DesignerView(
-                    ui.Container(ui.TextDisplay(f"{interaction.user.mention} Sorted the queue by duration."))
-                )
-                await interaction.followup.send(view=view, delete_after=5)
             elif selected_value == "remove_duplicates":
                 seen = set()
                 original_length = len(self.player.queue)
                 self.player.queue = [
                     track for track in self.player.queue if not (track.identifier in seen or seen.add(track.identifier))
                 ]
-                removed_count = original_length - len(self.player.queue)
-                if removed_count > 0:
-                    view = DesignerView(
-                        ui.Container(
-                            ui.TextDisplay(
-                                f"{interaction.user.mention} Removed `{removed_count}` duplicate track{'s' if removed_count != 1 else ''} from the queue."
-                            )
-                        )
+                if original_length == len(self.player.queue):
+                    await _reply(
+                        interaction, f"{emoji.error} No duplicate tracks found in the queue.", color=config.color.red
                     )
-                    await interaction.followup.send(view=view, delete_after=5)
-                else:
-                    err_view = DesignerView(
-                        ui.Container(
-                            ui.TextDisplay(f"{emoji.error} No duplicate tracks found in the queue."),
-                            color=config.color.red,
-                        )
-                    )
-                    await interaction.followup.send(view=err_view, ephemeral=True)
             self.build()
             await interaction.edit(view=self)
 
@@ -571,24 +615,14 @@ class QueueListView(DesignerView):
         removed_count = original_length - len(self.player.queue)
         self.visible_action_button = None
         if removed_count == 0:
-            err_view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.error} No tracks found requested by <@{user_id}> in the queue."),
-                    color=config.color.red,
-                )
+            await _reply(
+                interaction,
+                f"{emoji.error} No tracks found requested by <@{user_id}> in the queue.",
+                color=config.color.red,
             )
-            await interaction.response.send_message(view=err_view, ephemeral=True)
         else:
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(
-                        f"{interaction.user.mention} Removed `{removed_count}` track{'s' if removed_count > 1 else ''} requested by <@{user_id}> from the queue."
-                    )
-                )
-            )
             self.build()
             await view_interaction.edit(view=self)
-            await interaction.response.send_message(view=view, delete_after=5)
 
     async def interaction_callback(self, interaction: discord.Interaction, action: str):
         total_pages = max(1, math.ceil(len(self.player.queue) / self.items_per_page))
@@ -602,23 +636,6 @@ class QueueListView(DesignerView):
             self.page = total_pages
         self.build()
         await interaction.edit(view=self)
-
-
-class Disable:
-    def __init__(self, client: Client, guild_id: int):
-        self.client = client
-        self.guild_id = guild_id
-
-    # Disable play message
-    async def play_msg(self) -> None:
-        play_msg, play_view = store.play_msg(self.guild_id)
-        if play_msg:
-            play_view.disable_all_items()
-            try:
-                await play_msg.edit(view=play_view)
-            except discord.NotFound:
-                store.play_msg(self.guild_id, "clear")
-                return
 
 
 class Music(commands.Cog):
@@ -658,45 +675,23 @@ class Music(commands.Cog):
     @lavalink.listener(lavalink.TrackStartEvent)
     async def track_start_hook(self, event: lavalink.TrackStartEvent):
         """Hook for track start event."""
-        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
+        guild_id = int(event.player.guild_id)
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(guild_id)
         vc: discord.VoiceChannel = self.client.get_channel(int(event.player.channel_id))
+        tasks = [render_player(self.client, guild_id)]
         if vc is not None:
-            await vc.set_status(status=f"Playing **{player.current.title}**")
-        channel = store.play_ch(event.player.guild_id)
-        if channel:
-            view = MusicView(client=self.client, guild_id=event.player.guild_id)
-            try:
-                play_msg = await channel.send(view=view)
-            except discord.Forbidden:
-                store.play_ch(event.player.guild_id, "clear")
-                return
-            store.play_msg(event.player.guild_id, play_msg, view, "set")
-
-    @lavalink.listener(lavalink.TrackEndEvent)
-    async def track_end_hook(self, event: lavalink.TrackEndEvent):
-        """Hook for track end event."""
-        vc: discord.VoiceChannel = self.client.get_channel(int(event.player.channel_id))
-        if vc is not None:
-            await vc.set_status(status=None)
-        await Disable(self.client, event.player.guild_id).play_msg()
+            tasks.append(vc.set_status(status=f"Playing **{player.current.title}**"))
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     @lavalink.listener(lavalink.TrackStuckEvent, lavalink.TrackExceptionEvent)
     async def track_stuck_or_exception_hook(self, event: lavalink.TrackExceptionEvent):
-        """Hook for track stuck event."""
-        channel = store.play_ch(event.player.guild_id)
-        if channel:
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.error} Track is stuck or an error occurred while playing the track."),
-                    color=config.color.red,
-                )
-            )
-            await Disable(self.client, event.player.guild_id).play_msg()
-            try:
-                await channel.send(view=view, delete_after=5)
-            except discord.Forbidden:
-                store.play_ch(event.player.guild_id, "clear")
-                return
+        """Hook for track stuck or exception event."""
+        await music_log(
+            self.client,
+            int(event.player.guild_id),
+            f"{emoji.error} Track is stuck or an error occurred while playing the track.",
+            color=config.color.red,
+        )
 
     @lavalink.listener(lavalink.QueueEndEvent)
     async def queue_end_hook(self, event: lavalink.QueueEndEvent):
@@ -767,9 +762,9 @@ class Music(commands.Cog):
         if re.match(url_rx, ctx.value):
             return tracks
         if ctx.value != "":
-            result = await player.node.get_tracks(f"spsearch:{ctx.value}")
+            result = await player.node.get_tracks(f"ytmsearch:{ctx.value}")
         else:
-            result = await player.node.get_tracks("spsearch:top tracks")
+            result = await player.node.get_tracks("ytmsearch:top tracks")
         for track in result.tracks:
             dur = lavalink.format_time(track.duration)
             # Format: "Author - Title... - 00:00:00", max 100 chars
@@ -850,23 +845,13 @@ class Music(commands.Cog):
                 async def inactivity_task():  # Inactivity task to stop and disconnect the player
                     async def stop_and_disconnect():
                         """Stops the player and disconnects from the voice channel gracefully."""
-                        disable = Disable(self.client, member.guild.id)
-                        await disable.play_msg()
+                        await music_log(
+                            self.client,
+                            member.guild.id,
+                            f"{emoji.leave} Left {bot_voice_channel.mention} due to inactivity.",
+                            color=config.color.red,
+                        )
                         await stop_player(player, bot_voice_channel.guild)
-                        play_ch = store.play_ch(member.guild.id)
-                        if play_ch:
-                            view = DesignerView(
-                                ui.Container(
-                                    ui.TextDisplay(
-                                        f"{emoji.leave} Left {bot_voice_channel.mention} due to inactivity."
-                                    ),
-                                    color=config.color.red,
-                                )
-                            )
-                            try:
-                                await play_ch.send(view=view)
-                            except discord.Forbidden:
-                                store.play_ch(member.guild.id, "clear")
 
                     is_paused_before = player.paused
                     await player.set_pause(True)  # Pause the player if no humans are in the voice channel
@@ -892,56 +877,65 @@ class Music(commands.Cog):
                     inactivity_task.cancel()
                     store.inactivity_task(member.guild.id, mode="clear")
 
+    # Track chat after the player so it can be relocated to the bottom
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        """Marks the player as stale when unrelated chat arrives in its channel."""
+        if (
+            not message.guild
+            or message.author.id == self.client.user.id
+            or message.author.name == f"{self.client.user.name} - {logger.LogType.MUSIC}"
+        ):
+            return
+        play_msg, _ = store.play_msg(message.guild.id)
+        if play_msg and message.channel.id == play_msg.channel.id:
+            store.play_msg_dirty(message.guild.id, value=True, mode="set")
+            pending = store.render_task(message.guild.id)
+            if pending and not pending.done():
+                pending.cancel()
+
+            async def _relocate(guild_id: int = message.guild.id):
+                await asyncio.sleep(4)
+                await render_player(self.client, guild_id)
+
+            store.render_task(message.guild.id, asyncio.create_task(_relocate()), mode="set")
+
     # Play
     @slash_command(name="play")
     @option("query", description="Enter your track name/link or playlist link", autocomplete=search)
     async def play(self, ctx: discord.ApplicationContext, query: str):
         """Searches and plays a track from a given query."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
-        if player:
-            await ctx.defer()
-            query = query.strip("<>")
-            # Remove durations like 00:00:00 from query
-            query = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b|\s*-\s*\d{1,2}:\d{2}(?::\d{2})?\b", "", query)
-            container = ui.Container()
-            if not url_rx.match(query):
-                query = f"spsearch:{query}"
-            results = await player.node.get_tracks(query)
-            if not results or not results.tracks:
-                view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} No track found from the given query."),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=view, ephemeral=True)
-            if results.load_type == lavalink.LoadType.PLAYLIST:
-                tracks = results.tracks
-                src = results.tracks[0].source_name
-                src_info = sources.get(src, sources["_"])
-                container.color = int(src_info["color"])
-                for track in tracks:
-                    player.add(requester=ctx.author.id, track=track)
-                container.add_text(
-                    f"{src_info['emoji']} Added **{results.playlist_info.name}** with `{len(tracks)}` tracks."
-                )
-                await ctx.respond(view=DesignerView(container))
-            elif results.tracks:
-                track = results.tracks[0]
+        if not player:
+            return
+        await ctx.defer()
+        query = query.strip("<>")
+        # Remove durations like 00:00:00 from query
+        query = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b|\s*-\s*\d{1,2}:\d{2}(?::\d{2})?\b", "", query)
+        if not url_rx.match(query):
+            query = f"ytmsearch:{query}"
+        results = await player.node.get_tracks(query)
+        if not results or not results.tracks:
+            await ctx.respond(view=_container(f"{emoji.error} No track found from the given query.", config.color.red))
+            return
+        if results.load_type == lavalink.LoadType.PLAYLIST:
+            tracks = results.tracks
+            src_info = sources.get(results.tracks[0].source_name, sources["_"])
+            for track in tracks:
                 player.add(requester=ctx.author.id, track=track)
-                src_info = sources.get(track.source_name, sources["_"])
-                container.color = int(src_info["color"])
-                dur: str
-                if track.stream:
-                    dur = f"{emoji.live} LIVE"
-                else:
-                    dur = format_timedelta(datetime.timedelta(milliseconds=track.duration))
-                container.add_text(
-                    f"{src_info['emoji']} Added [**{track.title}** by **{track.author}**]({track.uri}) [`{dur}`]."
-                )
-                await ctx.respond(view=DesignerView(container))
-            if not player.is_playing:
-                await player.play()
+            content = f"{src_info['emoji']} Added **{results.playlist_info.name}** with `{len(tracks)}` tracks."
+        else:
+            track = results.tracks[0]
+            player.add(requester=ctx.author.id, track=track)
+            src_info = sources.get(track.source_name, sources["_"])
+            if track.stream:
+                dur = f"{emoji.live} LIVE"
+            else:
+                dur = format_timedelta(datetime.timedelta(milliseconds=track.duration))
+            content = f"{src_info['emoji']} Added [**{track.title}** by **{track.author}**]({track.uri}) [`{dur}`]."
+        await ctx.respond(view=_container(content, int(src_info["color"])))
+        if not player.is_playing:
+            await player.play()
 
     # Now playing
     @slash_command(name="now-playing")
@@ -985,7 +979,7 @@ class Music(commands.Cog):
                     )
                 )
             )
-            await ctx.respond(view=view)
+            await ctx.respond(view=view, ephemeral=True)
 
     # Equalizer slash cmd group
     eq = SlashCommandGroup(name="eq", description="Equalizer commands.")
@@ -996,8 +990,7 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             await player.clear_filters()
-            view = DesignerView(ui.Container(ui.TextDisplay(f"{emoji.equalizer} Reset equalizer to default settings.")))
-            await ctx.respond(view=view)
+            await slash_log(ctx, f"{emoji.equalizer} Reset equalizer to default settings.")
 
     async def filter_autocomplete(self, ctx: discord.AutocompleteContext):
         """Provides filter names for autocomplete."""
@@ -1012,20 +1005,9 @@ class Music(commands.Cog):
         if player:
             if player.get_filter(name):
                 await player.remove_filter(name)
-                view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.equalizer} Removed **{name.title()}** equalizer."),
-                    )
-                )
-                await ctx.respond(view=view)
+                await slash_log(ctx, f"{emoji.equalizer} Removed **{name.title()}** equalizer.")
             else:
-                view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} **{name}** equalizer not found."),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=view, ephemeral=True)
+                await _reply(ctx, f"{emoji.error} **{name}** equalizer not found.", color=config.color.red)
 
     @eq.command(name="karaoke")
     @option(
@@ -1057,12 +1039,7 @@ class Music(commands.Cog):
                 filter_width=config["filter_width"],
             )
             await player.set_filter(eq)
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.equalizer} Applied **Karaoke** ({intensity}) equalizer."),
-                )
-            )
-            await ctx.respond(view=view)
+            await slash_log(ctx, f"{emoji.equalizer} Applied **Karaoke** ({intensity}) equalizer.")
 
     @eq.command(name="timescale")
     @option(
@@ -1095,12 +1072,7 @@ class Music(commands.Cog):
                 eq.update(speed=speed_value, pitch=speed_value, rate=1.0)
 
             await player.set_filter(eq)
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.equalizer} Applied **Timescale** ({speed}) equalizer."),
-                )
-            )
-            await ctx.respond(view=view)
+            await slash_log(ctx, f"{emoji.equalizer} Applied **Timescale** ({speed}) equalizer.")
 
     @eq.command(name="tremolo")
     @option("intensity", description="Tremolo intensity", choices=["Subtle", "Medium", "Strong"], required=False)
@@ -1121,12 +1093,7 @@ class Music(commands.Cog):
             eq = lavalink.Tremolo()
             eq.update(frequency=config["frequency"], depth=config["depth"])
             await player.set_filter(eq)
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.equalizer} Applied **Tremolo** ({intensity}) equalizer."),
-                )
-            )
-            await ctx.respond(view=view)
+            await slash_log(ctx, f"{emoji.equalizer} Applied **Tremolo** ({intensity}) equalizer.")
 
     @eq.command(name="vibrato")
     @option("intensity", description="Vibrato intensity", choices=["Light", "Medium", "Heavy"], required=False)
@@ -1147,12 +1114,7 @@ class Music(commands.Cog):
             eq = lavalink.Vibrato()
             eq.update(frequency=config["frequency"], depth=config["depth"])
             await player.set_filter(eq)
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.equalizer} Applied **Vibrato** ({intensity}) equalizer."),
-                )
-            )
-            await ctx.respond(view=view)
+            await slash_log(ctx, f"{emoji.equalizer} Applied **Vibrato** ({intensity}) equalizer.")
 
     @eq.command(name="rotation")
     @option("speed", description="8D rotation speed", choices=["Slow", "Medium", "Fast"], required=False)
@@ -1173,12 +1135,7 @@ class Music(commands.Cog):
             eq = lavalink.Rotation()
             eq.update(rotation_hz=rotation_hz)
             await player.set_filter(eq)
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.equalizer} Applied **Rotation** ({speed}) equalizer."),
-                )
-            )
-            await ctx.respond(view=view)
+            await slash_log(ctx, f"{emoji.equalizer} Applied **Rotation** ({speed}) equalizer.")
 
     @eq.command(name="lowpass")
     @option("strength", description="Low-pass filter strength", choices=["Light", "Medium", "Heavy"], required=False)
@@ -1200,12 +1157,7 @@ class Music(commands.Cog):
             eq = lavalink.LowPass()
             eq.update(smoothing=smoothing)
             await player.set_filter(eq)
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.equalizer} Applied **Lowpass** ({strength}) equalizer."),
-                )
-            )
-            await ctx.respond(view=view)
+            await slash_log(ctx, f"{emoji.equalizer} Applied **Lowpass** ({strength}) equalizer.")
 
     @eq.command(name="channelmix")
     @option(
@@ -1239,12 +1191,7 @@ class Music(commands.Cog):
                 right_to_right=config["right_to_right"],
             )
             await player.set_filter(eq)
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.equalizer} Applied **Channel Mix** ({mode}) equalizer."),
-                )
-            )
-            await ctx.respond(view=view)
+            await slash_log(ctx, f"{emoji.equalizer} Applied **Channel Mix** ({mode}) equalizer.")
 
     @eq.command(name="distortion")
     @option(
@@ -1317,28 +1264,16 @@ class Music(commands.Cog):
                 scale=config["scale"],
             )
             await player.set_filter(eq)
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.equalizer} Applied **Distortion** ({type}) equalizer."),
-                )
-            )
-            await ctx.respond(view=view)
+            await slash_log(ctx, f"{emoji.equalizer} Applied **Distortion** ({type}) equalizer.")
 
     # Stop
     @slash_command(name="stop")
     async def stop(self, ctx: discord.ApplicationContext):
         """Destroys the player."""
-        await ctx.defer()
+        await ctx.defer(ephemeral=True)
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
-            disable = Disable(self.client, ctx.guild.id)
-            await disable.play_msg()
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.stop} Player destroyed."),
-                )
-            )
-            await ctx.respond(view=view)
+            await slash_log(ctx, f"{emoji.stop} Destroyed player.", render=False)
             await stop_player(player, ctx.guild)
 
     # Seek
@@ -1352,12 +1287,7 @@ class Music(commands.Cog):
             track_time = int(player.position + timedelta.total_seconds() * 1000)
             if track_time < player.current.duration:
                 await player.seek(track_time)
-                view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.seek} Moved track to `{lavalink.format_time(track_time)}`."),
-                    )
-                )
-                await ctx.respond(view=view)
+                await slash_log(ctx, f"{emoji.seek} Moved track to `{lavalink.format_time(track_time)}`.")
             else:
                 await self.skip(ctx=ctx)
 
@@ -1367,14 +1297,8 @@ class Music(commands.Cog):
         """Skips the current playing track."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.skip} Skipped the track."),
-                )
-            )
-            await Disable(self.client, ctx.guild.id).play_msg()
             await player.skip()
-            await ctx.respond(view=view)
+            await slash_log(ctx, f"{emoji.skip} Skipped the track.", render=False)
 
     # Skip to
     @slash_command(name="skip-to")
@@ -1383,28 +1307,21 @@ class Music(commands.Cog):
         """Skips to a given track in the queue."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
-            await ctx.defer()
+            await ctx.defer(ephemeral=True)
             index: int = int(track.split(".")[0])  # Extract index from the selected track
             if index < 1 or index > len(player.queue):
-                err_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} Track number must be between `1` and `{len(player.queue)}`"),
-                        color=config.color.red,
-                    )
+                await _reply(
+                    ctx,
+                    f"{emoji.error} Track number must be between `1` and `{len(player.queue)}`",
+                    color=config.color.red,
                 )
-                await ctx.respond(view=err_view, ephemeral=True)
             else:
                 player.queue = player.queue[index - 1 :]
                 shuffle_state = player.shuffle
                 player.set_shuffle(False)  # Disable shuffle to ensure the skip works correctly
                 await player.skip()
                 player.set_shuffle(shuffle_state)  # Restore shuffle state
-                skip_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.skip} Skipped to track `{index}`."),
-                    )
-                )
-                await ctx.respond(view=skip_view)
+                await slash_log(ctx, f"{emoji.skip} Skipped to track `{index}`.", render=False)
 
     # Pause
     @slash_command(name="pause")
@@ -1413,23 +1330,11 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if player.paused:
-                err_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} Player is already paused."),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=err_view, ephemeral=True)
+                await _reply(ctx, f"{emoji.error} Player is already paused.", color=config.color.red)
             else:
-                await ctx.defer()
+                await ctx.defer(ephemeral=True)
                 await player.set_pause(True)
-                await update_play_msg(self.client, ctx.guild.id)
-                view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.pause} Player paused."),
-                    )
-                )
-                await ctx.respond(view=view)
+                await slash_log(ctx, f"{emoji.pause} Player paused.")
 
     # Resume
     @slash_command(name="resume")
@@ -1438,23 +1343,11 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if player.paused:
-                await ctx.defer()
+                await ctx.defer(ephemeral=True)
                 await player.set_pause(False)
-                await update_play_msg(self.client, ctx.guild.id)
-                resume_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.play} Player resumed."),
-                    )
-                )
-                await ctx.respond(view=resume_view)
+                await slash_log(ctx, f"{emoji.play} Player resumed.")
             else:
-                error_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} Player is not paused"),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=error_view, ephemeral=True)
+                await _reply(ctx, f"{emoji.error} Player is not paused", color=config.color.red)
 
     # Volume
     @slash_command(name="volume")
@@ -1463,23 +1356,11 @@ class Music(commands.Cog):
         """Changes the player's volume 1 - 100."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
-            volume_condition = [volume < 1, volume > 100]
-            if any(volume_condition):
-                error_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} Volume amount must be between `1` - `100`"),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=error_view, ephemeral=True)
+            if volume < 1 or volume > 100:
+                await _reply(ctx, f"{emoji.error} Volume amount must be between `1` - `100`", color=config.color.red)
             else:
                 await player.set_volume(volume)
-                vol_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.volume} Volume changed to `{player.volume}%`."),
-                    )
-                )
-                await ctx.respond(view=vol_view)
+                await slash_log(ctx, f"{emoji.volume} Volume changed to `{player.volume}%`.")
 
     # Queue
     @slash_command(name="queue")
@@ -1491,20 +1372,10 @@ class Music(commands.Cog):
             items_per_page = 5
             pages = max(1, math.ceil(len(player.queue) / items_per_page))
             if page > pages or page < 1:
-                error_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} Page has to be between `1` to `{pages}`"),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=error_view, ephemeral=True)
+                await _reply(ctx, f"{emoji.error} Page has to be between `1` to `{pages}`", color=config.color.red)
                 return
-            if pages > 1:
-                queue_view = QueueListView(client=self.client, ctx=ctx, page=page)
-                await ctx.respond(view=queue_view)
-            else:
-                queue_view = QueueListView(client=self.client, ctx=ctx, page=1)
-                await ctx.respond(view=queue_view)
+            queue_view = QueueListView(client=self.client, ctx=ctx, page=page if pages > 1 else 1)
+            await ctx.respond(view=queue_view, ephemeral=True)
 
     # Clear queue
     @slash_command(name="clear-queue")
@@ -1513,22 +1384,10 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if not player.queue:
-                error_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} Queue is empty"),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=error_view, ephemeral=True)
+                await _reply(ctx, f"{emoji.error} Queue is empty", color=config.color.red)
             else:
                 player.queue.clear()
-                clear_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.success} Cleared the queue."),
-                        color=config.color.green,
-                    )
-                )
-                await ctx.respond(view=clear_view)
+                await slash_log(ctx, f"{emoji.success} Cleared the queue.", color=config.color.green)
 
     # Shuffle
     @slash_command(name="shuffle")
@@ -1537,23 +1396,11 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if not player.queue:
-                error_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} Queue is empty"),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=error_view, ephemeral=True)
+                await _reply(ctx, f"{emoji.error} Queue is empty", color=config.color.red)
             else:
-                await ctx.defer()
+                await ctx.defer(ephemeral=True)
                 player.set_shuffle(not player.shuffle)
-                await update_play_msg(self.client, ctx.guild.id)
-                shuffle_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.shuffle} {'Enabled' if player.shuffle else 'Disabled'} shuffle."),
-                    )
-                )
-                await ctx.respond(view=shuffle_view)
+                await slash_log(ctx, f"{emoji.shuffle} {'Enabled' if player.shuffle else 'Disabled'} shuffle.")
 
     # Loop
     @slash_command(name="loop")
@@ -1562,7 +1409,7 @@ class Music(commands.Cog):
         """Loops the current queue until the command is invoked again or until a new track is enqueued."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
-            await ctx.defer()
+            await ctx.defer(ephemeral=True)
             _emoji = ""
             if mode == "Disable":
                 player.set_loop(0)
@@ -1572,26 +1419,15 @@ class Music(commands.Cog):
                 _emoji = emoji.loop_one
             elif mode == "Queue":
                 if not player.queue:
-                    error_view = DesignerView(
-                        ui.Container(
-                            ui.TextDisplay(f"{emoji.error} Queue is empty."),
-                            color=config.color.red,
-                        )
-                    )
-                    await ctx.respond(view=error_view, ephemeral=True)
+                    await _reply(ctx, f"{emoji.error} Queue is empty.", color=config.color.red)
                     return
                 else:
                     player.set_loop(2)
                     _emoji = emoji.loop
-            await update_play_msg(self.client, ctx.guild.id)
-            loop_view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(
-                        f"{_emoji} {'Enabled' if mode != 'Disable' else 'Disabled'} {mode if mode != 'Disable' else ''} Loop."
-                    ),
-                )
+            await slash_log(
+                ctx,
+                f"{_emoji} {'Enabled' if mode != 'Disable' else 'Disabled'} {mode if mode != 'Disable' else ''} Loop.",
             )
-            await ctx.respond(view=loop_view)
 
     # Remove
     @slash_command(name="remove")
@@ -1602,30 +1438,14 @@ class Music(commands.Cog):
         if player:
             index: int = int(track.split(".")[0])  # Extract index from the selected track
             if not player.queue:
-                error_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} Queue is empty"),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=error_view, ephemeral=True)
+                await _reply(ctx, f"{emoji.error} Queue is empty", color=config.color.red)
             elif index > len(player.queue) or index < 1:
-                error_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} Index has to be between `1` to `{len(player.queue)}`"),
-                        color=config.color.red,
-                    )
+                await _reply(
+                    ctx, f"{emoji.error} Index has to be between `1` to `{len(player.queue)}`", color=config.color.red
                 )
-                await ctx.respond(view=error_view, ephemeral=True)
             else:
                 removed = player.queue.pop(index - 1)
-                remove_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.leave} Removed **{removed.title}**."),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=remove_view)
+                await slash_log(ctx, f"{emoji.leave} Removed **{removed.title}**.", color=config.color.red)
 
 
 def setup(client: Client):

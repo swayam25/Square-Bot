@@ -28,7 +28,7 @@ class Client(commands.Bot):
         for i, (key, value) in enumerate(items):
             is_last = i == len(items) - 1
             prefix = "╰" if is_last else "├"
-            console.print(f"  [green]{prefix} [bold]{key}[/]: [cyan]{value}[/]")
+            console.print(f"  [green]{prefix} {key}[/]: [cyan]{value}[/]")
 
         restart_msg = temp.get("restart_msg")
         if restart_msg:

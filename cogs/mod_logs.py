@@ -4,7 +4,7 @@ from core.view import DesignerView
 from db.funcs.guild import fetch_guild_settings
 from discord import ui
 from discord.ext import commands
-from utils import config
+from utils import config, logger
 from utils.emoji import emoji
 from utils.helpers import create_dc_msgs_file
 
@@ -31,7 +31,7 @@ class Logs(commands.Cog):
                     ),
                 )
             )
-            await join_ch.send(view=view)
+            await logger.log(self.client, join_ch, logger.LogType.MOD, view)
 
     # Leave
     @commands.Cog.listener()
@@ -53,7 +53,7 @@ class Logs(commands.Cog):
                     color=config.color.red,
                 )
             )
-            await leave_ch.send(view=view)
+            await logger.log(self.client, leave_ch, logger.LogType.MOD, view)
 
     # Ban
     @commands.Cog.listener()
@@ -75,7 +75,7 @@ class Logs(commands.Cog):
                     color=config.color.red,
                 )
             )
-            await ban_ch.send(view=view)
+            await logger.log(self.client, ban_ch, logger.LogType.MOD, view)
 
     # Unban
     @commands.Cog.listener()
@@ -95,7 +95,7 @@ class Logs(commands.Cog):
                     ),
                 )
             )
-            await unban_ch.send(view=view)
+            await logger.log(self.client, unban_ch, logger.LogType.MOD, view)
 
     # Edit
     @commands.Cog.listener()
@@ -134,7 +134,7 @@ class Logs(commands.Cog):
                         ui.Button(label="Jump to Message", url=msg_before.jump_url, style=discord.ButtonStyle.link),
                     ),
                 )
-                await edit_ch.send(view=view)
+                await logger.log(self.client, edit_ch, logger.LogType.MESSAGE, view)
 
     # Delete
     @commands.Cog.listener()
@@ -172,7 +172,7 @@ class Logs(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                await del_ch.send(view=view)
+                await logger.log(self.client, del_ch, logger.LogType.MESSAGE, view)
 
     # Bulk delete
     @commands.Cog.listener()
@@ -192,8 +192,7 @@ class Logs(commands.Cog):
                         color=config.color.red,
                     )
                 )
-                await bulk_ch.send(file=create_dc_msgs_file(msgs))
-                await bulk_ch.send(view=view)
+                await logger.log(self.client, bulk_ch, logger.LogType.MESSAGE, view, file=create_dc_msgs_file(msgs))
 
 
 def setup(client: Client):

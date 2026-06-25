@@ -75,7 +75,8 @@ async def main():
     try:
         await DB().init()
         load_cogs()
-        await client.start(config.bot_token)
+        async with client:
+            await client.start(config.bot_token)
     finally:
         await shutdown()
 

@@ -7,7 +7,7 @@ from db.funcs.guild import fetch_guild_settings
 from discord import ui
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
-from utils import config
+from utils import config, logger
 from utils.emoji import emoji
 from utils.helpers import parse_duration
 
@@ -84,7 +84,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await log_ch.send(view=mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
             if len(errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -170,7 +170,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await log_ch.send(view=mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
             if len(errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -239,7 +239,7 @@ class MassModeration(commands.Cog):
                             ),
                         )
                     )
-                    await log_ch.send(view=mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
             if len(errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -332,7 +332,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await log_ch.send(view=mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
             if len(errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -408,7 +408,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await log_ch.send(view=mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
             if len(errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -503,7 +503,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await log_ch.send(view=mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
             if len(role_errors) > 0 or len(user_errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -600,7 +600,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await log_ch.send(view=mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
             if len(role_errors) > 0 or len(user_errors) > 0:
                 view = DesignerView(
                     ui.Container(

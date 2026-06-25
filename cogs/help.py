@@ -208,7 +208,7 @@ class Help(commands.Cog):
         """Need bot's help? Use this!"""
         cogs = await get_cogs(ctx)
         helpView = HelpView(self.client, ctx, cogs)
-        helpView.msg = await ctx.respond(view=helpView)
+        helpView.msg = await ctx.respond(view=helpView, ephemeral=True)
 
 
 def setup(client: Client):

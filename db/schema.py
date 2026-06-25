@@ -25,7 +25,7 @@ class GuildTable(Model):
     mod_log_channel_id = fields.BigIntField(null=True)
     mod_cmd_log_channel_id = fields.BigIntField(null=True)
     msg_log_channel_id = fields.BigIntField(null=True)
-    ticket_cmds = fields.BooleanField(default=True)
+    ticket_cmds = fields.BooleanField(default=False)
     ticket_log_channel_id = fields.BigIntField(null=True)
     media_only_channel_id = fields.BigIntField(null=True)
     autorole = fields.BigIntField(null=True)

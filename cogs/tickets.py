@@ -7,7 +7,7 @@ from db.funcs.guild import fetch_guild_settings
 from discord import ui
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
-from utils import config
+from utils import config, logger
 from utils.emoji import emoji
 from utils.helpers import create_dc_msgs_file
 
@@ -16,6 +16,7 @@ async def close_ticket(
     channel: discord.TextChannel,
     author: discord.Member,
     send_function,
+    client: Client,
     closed_by: discord.User | discord.Member | None = None,
 ):
     """Helper function to close a ticket."""
@@ -48,7 +49,7 @@ async def close_ticket(
                 color=config.color.red,
             )
         )
-        await logging_ch.send(view=view, file=file)
+        await logger.log(client, logging_ch, logger.LogType.TICKET, view, file=file)
 
 
 class TicketTranscript:
@@ -133,7 +134,13 @@ class TicketView(DesignerView):
         view = get_ticket_view(interaction)
         view.disable_all_items()
         await interaction.edit(view=view)
-        await close_ticket(interaction.channel, interaction.user, interaction.followup.send, closed_by=interaction.user)
+        await close_ticket(
+            interaction.channel,
+            interaction.user,
+            interaction.followup.send,
+            interaction.client,
+            closed_by=interaction.user,
+        )
 
     # Ticket summary
     async def ticket_transcript(self, interaction: discord.Interaction):
@@ -235,7 +242,7 @@ class Tickets(commands.Cog):
                         ui.TextDisplay(f"{emoji.description} **Reason**: {reason}"),
                     )
                 )
-                await logging_ch.send(view=log_view)
+                await logger.log(self.client, logging_ch, logger.LogType.TICKET, log_view)
 
     # Ticket close
     @ticket.command(name="close")
@@ -255,7 +262,7 @@ class Tickets(commands.Cog):
                 ctx.channel.name.startswith("ticket-") and ctx.author.guild_permissions.manage_channels
             ):
                 await ctx.defer()
-                await close_ticket(ctx.channel, ctx.author, ctx.respond)
+                await close_ticket(ctx.channel, ctx.author, ctx.respond, self.client)
             else:
                 view = DesignerView(
                     ui.Container(

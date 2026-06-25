@@ -1,5 +1,6 @@
+from aerich import Command
 from rich.progress import Progress, SpinnerColumn
-from tortoise import Tortoise
+from tortoise import Tortoise  # kept for close_connections
 from utils.config import db_url
 
 TORTOISE_ORM = {
@@ -22,8 +23,12 @@ class DB:
 
         with db_prog as prog:
             db_task = prog.add_task("Initializing Database", total=1)
-            await Tortoise.init(TORTOISE_ORM)
-            await Tortoise.generate_schemas()
+            command = Command(tortoise_config=TORTOISE_ORM, app="models", location="./migrations")
+            await command.init()
+            try:
+                await command.upgrade(run_in_transaction=True)
+            except Exception:
+                await command.init_db(safe=True)
             prog.update(db_task, description="[green]Initialized Database[/]", completed=1)
 
     async def close(self):

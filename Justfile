@@ -37,6 +37,36 @@ dev:
     printf '\n'
     DB_HOST=localhost uv run main.py
 
+# ── Database ──────────────────────────────────────────────────────────────────
+
+# Generate a new migration from schema changes
+db-migrate name="auto":
+    @printf '\033[43m\033[30m  DB  \033[0m \033[33mGenerating migration: {{name}}\033[0m\n'
+    @DB_HOST=localhost uv run aerich migrate --name {{name}}
+    @printf '\033[42m\033[30m  OK  \033[0m \033[32mMigration created\033[0m\n'
+
+# Apply all pending migrations
+db-upgrade:
+    @printf '\033[43m\033[30m  DB  \033[0m \033[33mApplying migrations\033[0m\n'
+    @DB_HOST=localhost uv run aerich upgrade
+    @printf '\033[42m\033[30m  OK  \033[0m \033[32mDatabase up to date\033[0m\n'
+
+# Roll back the last applied migration
+db-downgrade:
+    @printf '\033[41m\033[30m  DB  \033[0m \033[31mRolling back last migration\033[0m\n'
+    @DB_HOST=localhost uv run aerich downgrade -v -1
+    @printf '\033[42m\033[30m  OK  \033[0m \033[32mRolled back\033[0m\n'
+
+# Show applied migration history
+db-history:
+    @DB_HOST=localhost uv run aerich history
+
+# Show migrations not yet applied
+db-heads:
+    @DB_HOST=localhost uv run aerich heads
+
+# ── Deploy ────────────────────────────────────────────────────────────────────
+
 # Pull latest, rebuild, and deploy
 prod:
     @printf '\033[43m\033[30m PULL \033[0m \033[33mPulling latest\033[0m\n'

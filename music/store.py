@@ -63,18 +63,42 @@ def play_msg(
     match mode:
         case "get":
             guild = store.get(guild_id, {})
-            if guild:
-                return (guild.get("play_msg", None), guild.get("play_msg_view", None))
-            return None
+            return (guild.get("play_msg", None), guild.get("play_msg_view", None))
         case "set":
             if guild_id not in store:
                 store[guild_id] = {}
             store[guild_id]["play_msg"] = msg
             store[guild_id]["play_msg_view"] = view
+            store[guild_id]["play_msg_dirty"] = False
         case "clear":
             if guild_id in store and "play_msg" in store[guild_id]:
                 del store[guild_id]["play_msg"]
                 del store[guild_id]["play_msg_view"]
+                store[guild_id].pop("play_msg_dirty", None)
+
+
+# Play msg dirty flag
+def play_msg_dirty(
+    guild_id: int,
+    value: bool | None = None,
+    mode: Literal["get", "set"] = "get",
+) -> bool:
+    """
+    Gets or sets whether unrelated chat has appeared after the play message, meaning it is no longer the latest message.
+
+    Parameters:
+        guild_id (int): The ID of the guild.
+        value (bool | None): The dirty state to set.
+        mode (str): The operation mode, either "get" or "set".
+    """
+    match mode:
+        case "get":
+            return store.get(guild_id, {}).get("play_msg_dirty", False)
+        case "set":
+            if guild_id not in store:
+                store[guild_id] = {}
+            store[guild_id]["play_msg_dirty"] = bool(value)
+            return bool(value)
 
 
 # Inactivity Task
@@ -102,3 +126,18 @@ def inactivity_task(
         case "clear":
             if guild_id in store and "inactivity_task" in store[guild_id]:
                 del store[guild_id]["inactivity_task"]
+
+
+def render_task(
+    guild_id: int, task: asyncio.Task | None = None, mode: Literal["get", "set", "clear"] = "get"
+) -> asyncio.Task | None:
+    match mode:
+        case "get":
+            return store.get(guild_id, {}).get("render_task", None)
+        case "set":
+            if guild_id not in store:
+                store[guild_id] = {}
+            store[guild_id]["render_task"] = task
+        case "clear":
+            if guild_id in store and "render_task" in store[guild_id]:
+                del store[guild_id]["render_task"]
