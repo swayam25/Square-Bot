@@ -2,7 +2,7 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 
 [private]
 default:
-    @just --list --list-heading $'\n\033[1;96mSquare\033[0m \033[2m/ Discord Bot\033[0m\n' --list-prefix $'  \033[36m›\033[0m '
+    @just --list --list-heading $'\n\033[1;96mSquare\033[0m \033[2m/ Available Commands\033[0m\n' --list-prefix $'  \033[36m›\033[0m '
 
 # Sync dependencies and install hooks
 setup:
