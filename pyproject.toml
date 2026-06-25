@@ -5,14 +5,14 @@ description = "Advanced multipurpose discord bot for all your needs."
 license = "GPL-3.0"
 readme = "README.md"
 authors = [{ name = "Swayam" }]
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "aerich[toml]>=0.9.0",
     "aiohttp>=3.14.1",
     "babel>=2.17.0",
     "lavalink>=5.9.0",
     "psutil>=7.0.0",
-    "py-cord>=2.7.0rc1",
+    "py-cord[voice]>=2.7.0",
     "pyfiglet>=1.0.4",
     "requests>=2.32.3",
     "rich>=14.0.0",

@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import os
 import toml
@@ -81,8 +82,8 @@ async def main():
 
 # Execute the main func
 try:
-    client.loop.run_until_complete(main())
-except Exception:
-    console.print_exception()
+    asyncio.run(main())
 except KeyboardInterrupt:
     console.print("\n[red]Keyboard interrupt received. Shutting down...[/]")
+except Exception:
+    console.print_exception()

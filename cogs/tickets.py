@@ -68,7 +68,7 @@ class TicketTranscript:
         return create_dc_msgs_file(messages)
 
 
-def get_ticket_view(interaction: discord.Interaction) -> "TicketView":
+def get_ticket_view(interaction: discord.Interaction) -> TicketView:
     """Creates a TicketView from an interaction."""
     return TicketView(
         author_id=int(interaction.channel.name.split("-")[1]),

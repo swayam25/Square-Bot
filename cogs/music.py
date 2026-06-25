@@ -50,17 +50,10 @@ async def update_play_msg(client: Client, guild_id: int):
 
 async def stop_player(player: lavalink.DefaultPlayer, guild: discord.Guild):
     await player.stop()
-    await guild.me.voice.channel.set_status(status=None)
-    await guild.voice_client.disconnect(force=True)
-
-    async def background_cleanup():
-        player.queue.clear()
-        player.set_loop(player.LOOP_NONE)
-        player.set_shuffle(False)
-        await player.clear_filters()
-        await player.set_volume(100)
-
-    asyncio.create_task(background_cleanup())
+    if guild.me.voice and guild.me.voice.channel:
+        await guild.me.voice.channel.set_status(status=None)
+    if guild.voice_client:
+        await guild.voice_client.disconnect(force=True)
 
 
 async def music_interaction_check(view: DesignerView, player: lavalink.DefaultPlayer, interaction: discord.Interaction):
@@ -246,7 +239,7 @@ class MusicView(DesignerView):
 class QueueBtnCallback:
     @staticmethod
     async def queue_btn_callback(
-        i: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: "QueueListView"
+        i: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: QueueListView
     ):
         """
         Callback for Queue button (for more options).
@@ -268,7 +261,7 @@ class QueueBtnCallback:
 
     @staticmethod
     async def move_up_callback(
-        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: "QueueListView"
+        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: QueueListView
     ):
         """Move track up in the queue."""
         if track_index <= 0:
@@ -296,7 +289,7 @@ class QueueBtnCallback:
 
     @staticmethod
     async def move_down_callback(
-        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: "QueueListView"
+        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: QueueListView
     ):
         """Move track down in the queue."""
         if track_index >= len(player.queue) - 1:
@@ -325,7 +318,7 @@ class QueueBtnCallback:
 
     @staticmethod
     async def remove_callback(
-        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: "QueueListView"
+        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: QueueListView
     ):
         """Remove track from the queue."""
         if track_index >= len(player.queue):
@@ -346,7 +339,7 @@ class QueueBtnCallback:
 
     @staticmethod
     async def play_now_callback(
-        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: "QueueListView"
+        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: QueueListView
     ):
         """Skip to this track immediately."""
         if track_index >= len(player.queue):
@@ -362,7 +355,7 @@ class QueueBtnCallback:
         await _update_queue_view(interaction, queue_view)
 
 
-async def _update_queue_view(interaction: discord.Interaction, queue_view: "QueueListView"):
+async def _update_queue_view(interaction: discord.Interaction, queue_view: QueueListView):
     """Helper method to update queue view and respond."""
     queue_view.build()
     await interaction.response.edit_message(view=queue_view)

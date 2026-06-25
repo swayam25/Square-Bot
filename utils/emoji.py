@@ -134,7 +134,7 @@ class Emoji:
     bin_white: str = "🗑️"
 
     @staticmethod
-    def from_json(file_path: str) -> "Emoji":
+    def from_json(file_path: str) -> Emoji:
         """Load custom emojis and fall back to default emojis for missing ones."""
         default_emoji = Emoji()
 
