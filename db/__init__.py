@@ -25,11 +25,8 @@ class DB:
             db_task = prog.add_task("Initializing Database", total=1)
             command = Command(tortoise_config=TORTOISE_ORM, app="models", location="./migrations")
             await command.init()
-            try:
-                await command.upgrade(run_in_transaction=True)
-            except Exception:
-                await command.init_db(safe=True)
-                await command.upgrade(run_in_transaction=True)
+            await command.upgrade(run_in_transaction=True)
+            await Tortoise.init(config=TORTOISE_ORM)
             prog.update(db_task, description="[green]Initialized Database[/]", completed=1)
 
     async def close(self):
