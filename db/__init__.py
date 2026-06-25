@@ -29,6 +29,7 @@ class DB:
                 await command.upgrade(run_in_transaction=True)
             except Exception:
                 await command.init_db(safe=True)
+                await command.upgrade(run_in_transaction=True)
             prog.update(db_task, description="[green]Initialized Database[/]", completed=1)
 
     async def close(self):
