@@ -27,6 +27,7 @@ class DB:
             await command.init()
             await command.upgrade(run_in_transaction=True)
             await Tortoise.init(config=TORTOISE_ORM)
+            await Tortoise.generate_schemas(safe=True)
             prog.update(db_task, description="[green]Initialized Database[/]", completed=1)
 
     async def close(self):
