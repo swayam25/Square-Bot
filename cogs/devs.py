@@ -14,6 +14,7 @@ from discord.ui import ActionRow
 from io import BytesIO
 from utils import check, config, temp
 from utils.emoji import Emoji, emoji, reload_emoji
+from utils.logger import cleanup_guild
 
 
 class GuildContainer(ui.Container):
@@ -184,6 +185,7 @@ class Devs(commands.Cog):
     @commands.Cog.listener("on_guild_remove")
     async def when_removed_from_guild(self, guild: discord.Guild):
         await remove_guild(guild.id)
+        await cleanup_guild(guild.id, {c.id for c in guild.channels})
         leave_log_ch = await self.client.fetch_channel(config.system_channel_id)
         view = DesignerView(
             ui.Container(

@@ -35,6 +35,12 @@ async def _webhook(client: Client, channel: discord.abc.GuildChannel, log_type: 
     return _webhook_cache[key]
 
 
+async def cleanup_guild(guild_id: int, channel_ids: set[int]) -> None:
+    """Removes all cached webhooks belonging to the given guild's channels."""
+    for key in [k for k in _webhook_cache if k[0] in channel_ids]:
+        _webhook_cache.pop(key, None)
+
+
 async def log(
     client: Client,
     channel: discord.abc.Messageable,
