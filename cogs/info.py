@@ -28,7 +28,7 @@ class Stats:
         return f"`{fmt_memory(total)}` `({fmt_memory(used)} Used | {fmt_memory(free)} Free)`"
 
     async def get_bot_stats(self) -> list[ui.Item]:
-        dur = format_timedelta(datetime.timedelta(seconds=int(time.time() - start_time)))
+        dur = format_timedelta(datetime.timedelta(seconds=int(time.time() - start_time)), locale="en")
         is_dev = await check.is_dev(self.ctx)
 
         stats_parts = [
@@ -56,7 +56,7 @@ class Stats:
         return [ui.TextDisplay(f"## {self.client.user.name} Stats"), ui.TextDisplay("\n".join(stats_parts))]
 
     async def get_lavalink_stats(self, node: lavalink.Node) -> list[ui.Item]:
-        dur = format_timedelta(datetime.timedelta(milliseconds=node.stats.uptime))
+        dur = format_timedelta(datetime.timedelta(milliseconds=node.stats.uptime), locale="en")
         is_dev = await check.is_dev(self.ctx)
         latency = round(await node.get_rest_latency())
 
@@ -471,7 +471,7 @@ class Info(commands.Cog):
     async def uptime(self, ctx: discord.ApplicationContext):
         """Shows bot's uptime."""
         dur = datetime.timedelta(seconds=int(round(time.time() - start_time)))
-        dur = format_timedelta(dur)
+        dur = format_timedelta(dur, locale="en")
         view = DesignerView(
             ui.Container(
                 ui.TextDisplay(f"{emoji.duration} **Bot's Uptime**: `{str(dur)}`"),

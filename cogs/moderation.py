@@ -289,7 +289,7 @@ class Moderation(commands.Cog):
                             f"{emoji.id_red} **ID**: `{user.id}`\n"
                             f"{emoji.user_red} **User**: `{user}`\n"
                             f"{emoji.description_red} **Reason**: {reason}\n"
-                            f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after)}`"
+                            f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after, locale='en')}`"
                         ),
                         accessory=ui.Thumbnail(url=user.display_avatar.url),
                     ),
@@ -378,7 +378,7 @@ class Moderation(commands.Cog):
                     ui.TextDisplay("## Timed out User"),
                     ui.TextDisplay(
                         f"Successfully timed out {user.mention}.\n"
-                        f"{emoji.duration} **Duration**: `{format_timedelta(dur)}`\n"
+                        f"{emoji.duration} **Duration**: `{format_timedelta(dur, locale='en')}`\n"
                         f"{emoji.description} **Reason**: {reason}"
                     ),
                 )

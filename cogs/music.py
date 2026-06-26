@@ -192,7 +192,7 @@ class MusicContainer(ui.Container):
             duration = f"{emoji.live} LIVE"
         else:
             duration = datetime.timedelta(milliseconds=player.current.duration)
-            duration = format_timedelta(duration)
+            duration = format_timedelta(duration, locale="en")
         self.items = [
             ui.Section(
                 ui.TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
@@ -677,7 +677,9 @@ class Music(commands.Cog):
         """Hook for track start event."""
         guild_id = int(event.player.guild_id)
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(guild_id)
-        vc: discord.VoiceChannel = self.client.get_channel(int(event.player.channel_id))
+        vc: discord.VoiceChannel | None = (
+            self.client.get_channel(int(event.player.channel_id)) if event.player.channel_id else None
+        )
         tasks = [render_player(self.client, guild_id)]
         if vc is not None:
             tasks.append(vc.set_status(status=f"Playing **{player.current.title}**"))
@@ -703,55 +705,55 @@ class Music(commands.Cog):
     # Ensures voice parameters
     async def ensure_voice(self, ctx: discord.ApplicationContext):
         """Checks all the voice parameters."""
-        player: lavalink.DefaultPlayer | None = None
+
+        def _err(text: str) -> DesignerView:
+            return DesignerView(ui.Container(ui.TextDisplay(text), color=config.color.red))
+
+        # Every music command requires the invoker to be in a voice channel.
         if not ctx.author.voice or not ctx.author.voice.channel:
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.error} Join a voice channel first."),
-                    color=config.color.red,
-                )
-            )
-            await ctx.respond(view=view, ephemeral=True)
-        else:
-            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
-            permissions = ctx.author.voice.channel.permissions_for(ctx.me)
-            if ctx.command.name in ("play",) and (
-                self.current_voice_channel(ctx) is None
-                or (self.current_voice_channel(ctx) is not None and not player.current)
-            ):
+            await ctx.respond(view=_err(f"{emoji.error} Join a voice channel first."), ephemeral=True)
+            return None
+
+        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
+        bot_channel = self.current_voice_channel(ctx)  # None when bot is not in any VC
+
+        if ctx.command.name == "play":
+            needs_connect = bot_channel is None or not player.is_connected
+            if needs_connect:
+                if bot_channel is not None and ctx.author.voice.channel != bot_channel:
+                    # Bot is in a different VC and lavalink lost state — can't reconnect to user's channel.
+                    await ctx.respond(view=_err(f"{emoji.error} You are not in my voice channel."), ephemeral=True)
+                    return None
+                permissions = ctx.author.voice.channel.permissions_for(ctx.me)
                 if not permissions.connect or not permissions.speak:
-                    player = None
-                    view = DesignerView(
-                        ui.Container(
-                            ui.TextDisplay(f"{emoji.error} I need the `Connect` and `Speak` permissions."),
-                            color=config.color.red,
-                        )
+                    await ctx.respond(
+                        view=_err(f"{emoji.error} I need the `Connect` and `Speak` permissions."), ephemeral=True
                     )
-                    await ctx.respond(view=view, ephemeral=True)
-                else:
-                    if not self.client.lavalink.node_manager.available_nodes:
-                        self.connect_lavalink()
-                    await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
-                    player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
-                    store.play_ch(ctx.guild.id, ctx.channel, "set")
-            elif not player.current:
-                player = None
-                err_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} Nothing is being played at the current moment."),
-                        color=config.color.red,
-                    )
+                    return None
+                if not self.client.lavalink.node_manager.available_nodes:
+                    self.connect_lavalink()
+                # If Discord still has a stale voice client (post-restart), drop it first.
+                if ctx.guild.voice_client:
+                    await ctx.guild.voice_client.disconnect(force=True)
+                await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
+                player = self.client.lavalink.player_manager.create(ctx.guild.id)
+                store.play_ch(ctx.guild.id, ctx.channel, "set")
+            elif ctx.author.voice.channel != bot_channel:
+                # Bot is connected and in a different VC.
+                await ctx.respond(view=_err(f"{emoji.error} You are not in my voice channel."), ephemeral=True)
+                return None
+            # Bot connected and in same VC as user — proceed.
+        else:
+            # All other commands require the bot to be active and something to be playing, except /stop which only needs the bot to be in a VC.
+            if bot_channel is None or (not player.current and ctx.command.name != "stop"):
+                await ctx.respond(
+                    view=_err(f"{emoji.error} Nothing is being played at the current moment."), ephemeral=True
                 )
-                await ctx.respond(view=err_view, ephemeral=True)
-            elif ctx.author.voice.channel.id != int(player.channel_id):
-                player = None
-                err_view = DesignerView(
-                    ui.Container(
-                        ui.TextDisplay(f"{emoji.error} You are not in my voice channel."),
-                        color=config.color.red,
-                    )
-                )
-                await ctx.respond(view=err_view, ephemeral=True)
+                return None
+            if ctx.author.voice.channel != bot_channel:
+                await ctx.respond(view=_err(f"{emoji.error} You are not in my voice channel."), ephemeral=True)
+                return None
+
         return player
 
     # Search autocomplete
@@ -761,10 +763,13 @@ class Music(commands.Cog):
         tracks = []
         if re.match(url_rx, ctx.value):
             return tracks
-        if ctx.value != "":
-            result = await player.node.get_tracks(f"ytmsearch:{ctx.value}")
-        else:
-            result = await player.node.get_tracks("ytmsearch:top tracks")
+        try:
+            if ctx.value != "":
+                result = await player.node.get_tracks(f"ytmsearch:{ctx.value}")
+            else:
+                result = await player.node.get_tracks("ytmsearch:top tracks")
+        except lavalink.errors.ClientError:
+            return tracks
         for track in result.tracks:
             dur = lavalink.format_time(track.duration)
             # Format: "Author - Title... - 00:00:00", max 100 chars
@@ -884,6 +889,8 @@ class Music(commands.Cog):
         if not message.guild or message.author.name == f"{self.client.user.name} - {logger.LogType.MUSIC}":
             return
         play_msg, _ = store.play_msg(message.guild.id)
+        if play_msg and message.id == play_msg.id:
+            return
         if play_msg and message.channel.id == play_msg.channel.id:
             store.play_msg_dirty(message.guild.id, value=True, mode="set")
             pending = store.render_task(message.guild.id)
@@ -905,33 +912,43 @@ class Music(commands.Cog):
         if not player:
             return
         await ctx.defer()
-        query = query.strip("<>")
-        # Remove durations like 00:00:00 from query
-        query = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b|\s*-\s*\d{1,2}:\d{2}(?::\d{2})?\b", "", query)
-        if not url_rx.match(query):
-            query = f"ytmsearch:{query}"
-        results = await player.node.get_tracks(query)
-        if not results or not results.tracks:
-            await ctx.respond(view=_container(f"{emoji.error} No track found from the given query.", config.color.red))
-            return
-        if results.load_type == lavalink.LoadType.PLAYLIST:
-            tracks = results.tracks
-            src_info = sources.get(results.tracks[0].source_name, sources["_"])
-            for track in tracks:
-                player.add(requester=ctx.author.id, track=track)
-            content = f"{src_info['emoji']} Added **{results.playlist_info.name}** with `{len(tracks)}` tracks."
-        else:
-            track = results.tracks[0]
-            player.add(requester=ctx.author.id, track=track)
-            src_info = sources.get(track.source_name, sources["_"])
-            if track.stream:
-                dur = f"{emoji.live} LIVE"
+        just_connected = not player.current and not player.queue
+        try:
+            query = query.strip("<>")
+            # Remove durations like 00:00:00 from query
+            query = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b|\s*-\s*\d{1,2}:\d{2}(?::\d{2})?\b", "", query)
+            if not url_rx.match(query):
+                query = f"ytmsearch:{query}"
+            results = await player.node.get_tracks(query)
+            if not results or not results.tracks:
+                await ctx.respond(
+                    view=_container(f"{emoji.error} No track found from the given query.", config.color.red)
+                )
+                if just_connected:
+                    await stop_player(player, ctx.guild)
+                return
+            if results.load_type == lavalink.LoadType.PLAYLIST:
+                tracks = results.tracks
+                src_info = sources.get(results.tracks[0].source_name, sources["_"])
+                for track in tracks:
+                    player.add(requester=ctx.author.id, track=track)
+                content = f"{src_info['emoji']} Added **{results.playlist_info.name}** with `{len(tracks)}` tracks."
             else:
-                dur = format_timedelta(datetime.timedelta(milliseconds=track.duration))
-            content = f"{src_info['emoji']} Added [**{track.title}** by **{track.author}**]({track.uri}) [`{dur}`]."
-        await ctx.respond(view=_container(content, int(src_info["color"])))
-        if not player.is_playing:
-            await player.play()
+                track = results.tracks[0]
+                player.add(requester=ctx.author.id, track=track)
+                src_info = sources.get(track.source_name, sources["_"])
+                if track.stream:
+                    dur = f"{emoji.live} LIVE"
+                else:
+                    dur = format_timedelta(datetime.timedelta(milliseconds=track.duration), locale="en")
+                content = f"{src_info['emoji']} Added [**{track.title}** by **{track.author}**]({track.uri}) [`{dur}`]."
+            await ctx.respond(view=_container(content, int(src_info["color"])))
+            if not player.is_playing:
+                await player.play()
+        except Exception:
+            if just_connected:
+                await stop_player(player, ctx.guild)
+            raise
 
     # Now playing
     @slash_command(name="now-playing")

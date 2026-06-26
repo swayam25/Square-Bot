@@ -149,7 +149,7 @@ class MassModeration(commands.Cog):
                             f"Successfully banned {len(_users)} users.\n"
                             f"{emoji.description_red} **Reason**: {reason}\n"
                             f"{emoji.user_red} **Users**: {', '.join(_users)}\n"
-                            f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after)}`"
+                            f"{emoji.bin_red} **Delete Message Duration**: `{format_timedelta(del_after, locale='en')}`"
                         ),
                         color=config.color.red,
                     )
@@ -309,7 +309,7 @@ class MassModeration(commands.Cog):
                         ui.TextDisplay("## Mass Timed out Users"),
                         ui.TextDisplay(
                             f"Successfully timed out {len(_users)} users.\n"
-                            f"{emoji.duration} **Duration**: `{format_timedelta(dur)}`\n"
+                            f"{emoji.duration} **Duration**: `{format_timedelta(dur, locale='en')}`\n"
                             f"{emoji.description} **Reason**: {reason}\n"
                             f"{emoji.user} **Users**: {', '.join(_users)}"
                         ),
@@ -324,7 +324,7 @@ class MassModeration(commands.Cog):
                             ui.TextDisplay("## Mass Timed out Users"),
                             ui.TextDisplay(
                                 f"Successfully timed out {len(_users)} users.\n"
-                                f"{emoji.duration_red} **Duration**: `{format_timedelta(dur)}`\n"
+                                f"{emoji.duration_red} **Duration**: `{format_timedelta(dur, locale='en')}`\n"
                                 f"{emoji.description_red} **Reason**: {reason}\n"
                                 f"{emoji.user_red} **Users**: {', '.join(_users)}\n"
                                 f"{emoji.owner_red} **Moderator**: {ctx.author.mention}"
