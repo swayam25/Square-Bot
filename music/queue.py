@@ -4,6 +4,7 @@ import math
 from core import Client
 from core.view import DesignerView
 from discord import ui
+from music import store
 from music.utils import music_interaction_check, music_log, reply
 from utils import config
 from utils.emoji import emoji
@@ -118,6 +119,7 @@ class QueueContainer(ui.Container):
         page=1,
         items_per_page=5,
         queue_view=None,
+        autoplay_enabled: bool = False,
     ):
         super().__init__()
         pages = max(1, math.ceil(len(player.queue) / items_per_page))
@@ -180,16 +182,19 @@ class QueueContainer(ui.Container):
         if len(player.queue) > items_per_page:
             self.add_item(ui.Separator())
             self.add_item(ui.TextDisplay(f"-# Viewing Page {page}/{pages}"))
-        elif not queue_list:
+        if autoplay_enabled:
             self.add_item(ui.Separator())
-            self.add_item(ui.TextDisplay("-# Queue is empty"))
+            self.add_item(
+                ui.TextDisplay(
+                    f"-# {emoji.autoplay} **Autoplay Enabled**\n"
+                    f"-# Related tracks will be added automatically when the queue ends."
+                )
+            )
 
 
 class QueueListView(DesignerView):
     """
     Interactive queue view with pagination, bulk actions, and per-track controls.
-
-    Renders a QueueContainer for the current page, a More Actions dropdown (clear, reverse, sort, deduplicate, remove by requester), and pagination buttons when the queue spans multiple pages.
 
     Parameters:
         client (Client): The bot client used to fetch the player.
@@ -218,8 +223,16 @@ class QueueListView(DesignerView):
 
     def build(self):
         self.clear_items()
+        autoplay_enabled = store.autoplay(self.ctx.guild.id)
         self.add_item(
-            QueueContainer(self.player, self.ctx, page=self.page, items_per_page=self.items_per_page, queue_view=self)
+            QueueContainer(
+                self.player,
+                self.ctx,
+                page=self.page,
+                items_per_page=self.items_per_page,
+                queue_view=self,
+                autoplay_enabled=autoplay_enabled,
+            )
         )
         if self.player.queue:
             self.add_item(

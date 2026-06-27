@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import lavalink
 from core.view import DesignerView
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -69,36 +70,10 @@ def play_msg(
                 store[guild_id] = {}
             store[guild_id]["play_msg"] = msg
             store[guild_id]["play_msg_view"] = view
-            store[guild_id]["play_msg_dirty"] = False
         case "clear":
             if guild_id in store and "play_msg" in store[guild_id]:
                 del store[guild_id]["play_msg"]
                 del store[guild_id]["play_msg_view"]
-                store[guild_id].pop("play_msg_dirty", None)
-
-
-# Play msg dirty flag
-def play_msg_dirty(
-    guild_id: int,
-    value: bool | None = None,
-    mode: Literal["get", "set"] = "get",
-) -> bool:
-    """
-    Gets or sets whether unrelated chat has appeared after the play message, meaning it is no longer the latest message.
-
-    Parameters:
-        guild_id (int): The ID of the guild.
-        value (bool | None): The dirty state to set.
-        mode (str): The operation mode, either "get" or "set".
-    """
-    match mode:
-        case "get":
-            return store.get(guild_id, {}).get("play_msg_dirty", False)
-        case "set":
-            if guild_id not in store:
-                store[guild_id] = {}
-            store[guild_id]["play_msg_dirty"] = bool(value)
-            return bool(value)
 
 
 # Inactivity Task
@@ -141,3 +116,90 @@ def render_task(
         case "clear":
             if guild_id in store and "render_task" in store[guild_id]:
                 del store[guild_id]["render_task"]
+
+
+# Autoplay toggle
+def autoplay(
+    guild_id: int,
+    value: bool | None = None,
+    mode: Literal["get", "set", "clear"] = "get",
+) -> bool:
+    """
+    Gets or sets the autoplay flag for a guild.
+
+    Parameters:
+        guild_id (int): The ID of the guild.
+        value (bool | None): The value to set, or None to get the current value.
+        mode (str): The operation mode, either "get" or "set".
+    """
+    match mode:
+        case "get":
+            return store.get(guild_id, {}).get("autoplay", False)
+        case "set":
+            if guild_id not in store:
+                store[guild_id] = {}
+            store[guild_id]["autoplay"] = bool(value)
+            return bool(value)
+        case "clear":
+            if guild_id in store:
+                store[guild_id].pop("autoplay", None)
+
+
+# Last played track (used by autoplay to seed related-track search)
+def last_track(
+    guild_id: int,
+    track: lavalink.AudioTrack | None = None,
+    mode: Literal["get", "set", "clear"] = "get",
+) -> lavalink.AudioTrack | None:
+    """
+    Gets, sets, or clears the last played track for a guild.
+
+    Parameters:
+        guild_id (int): The ID of the guild.
+        track: The track to store, or None to retrieve/clear.
+        mode (str): The operation mode, either "get", "set", or "clear".
+    """
+    match mode:
+        case "get":
+            return store.get(guild_id, {}).get("last_track", None)
+        case "set":
+            if guild_id not in store:
+                store[guild_id] = {}
+            store[guild_id]["last_track"] = track
+        case "clear":
+            if guild_id in store:
+                store[guild_id].pop("last_track", None)
+
+
+# Autoplay history (recently played identifiers, used to filter recommendations)
+def autoplay_history(
+    guild_id: int,
+    identifier: str | None = None,
+    mode: Literal["get", "add", "clear"] = "get",
+    max_size: int = 30,
+) -> list[str]:
+    match mode:
+        case "get":
+            return store.get(guild_id, {}).get("autoplay_history", [])
+        case "add":
+            if guild_id not in store:
+                store[guild_id] = {}
+            history: list[str] = store[guild_id].get("autoplay_history", [])
+            if identifier and identifier not in history:
+                history.append(identifier)
+                if len(history) > max_size:
+                    history = history[-max_size:]
+            store[guild_id]["autoplay_history"] = history
+        case "clear":
+            if guild_id in store:
+                store[guild_id].pop("autoplay_history", None)
+
+
+_MUSIC_KEYS = {"autoplay", "autoplay_history", "last_track", "play_ch", "play_msg", "play_msg_view"}
+
+
+def flush_store(guild_id: int) -> None:
+    """Removes all music-related keys for a guild from the store."""
+    if guild_id in store:
+        for key in _MUSIC_KEYS:
+            store[guild_id].pop(key, None)

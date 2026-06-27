@@ -85,6 +85,6 @@ async def main():
 try:
     asyncio.run(main())
 except KeyboardInterrupt:
-    console.print("\n[red]Keyboard interrupt received. Shutting down...[/]")
+    console.print("\n[on red][black] STOP [/on red] [red]Keyboard interrupt received.[/]")
 except Exception:
     console.print_exception()

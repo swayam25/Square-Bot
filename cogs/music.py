@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import discord
 import lavalink
+import logging
 import math
 import re
 from babel.dates import format_timedelta
@@ -10,14 +11,23 @@ from core.view import DesignerView
 from discord import SlashCommandGroup, ui
 from discord.commands import option, slash_command
 from discord.ext import commands
-from music import store
+from music import recommend, store
 from music.client import LavalinkVoiceClient
-from music.player import _get_render_lock, _render_locks, render_player, slash_log, stop_player
+from music.player import _get_render_lock, cleanup_guild, render_player, slash_log, stop_player
 from music.queue import QueueListView
 from music.utils import container, music_log, reply, sources
+from rich.console import Console
+from rich.live import Live
+from rich.spinner import Spinner
+from rich.text import Text
 from utils import config, logger
 from utils.emoji import emoji
 from utils.helpers import parse_duration
+
+logging.getLogger("lavalink").setLevel(logging.ERROR)
+
+console = Console()
+_lavalink_live: Live | None = None
 
 # Regex
 url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
@@ -33,18 +43,75 @@ class Music(commands.Cog):
             host=config.lavalink["host"],
             port=config.lavalink["port"],
             password=config.lavalink["password"],
-            region=config.lavalink["region"],
+            region="auto",
             ssl=config.lavalink["secure"],
         )
 
     @commands.Cog.listener()
     async def on_ready(self):
+        global _lavalink_live
         if self.client.lavalink is None:
             self.client.lavalink = lavalink.Client(self.client.user.id)
             self.connect_lavalink()
+            if _lavalink_live is None or not _lavalink_live.is_started:
+                _lavalink_live = Live(
+                    Spinner("dots", text="[yellow]Connecting to Lavalink...[/]", style="yellow"),
+                    console=console,
+                    refresh_per_second=10,
+                    transient=False,
+                )
+                _lavalink_live.start()
         if self.client.lavalink._event_hooks:
             self.client.lavalink._event_hooks.clear()
         self.client.lavalink.add_event_hooks(self)
+
+    @lavalink.listener(lavalink.NodeReadyEvent)
+    async def node_ready_hook(self, event: lavalink.NodeReadyEvent):
+        global _lavalink_live
+        latency = round(await event.node.get_rest_latency())
+        text = Text()
+        text.append("✓ Connected to Lavalink ", style="green")
+        text.append(event.node.name, style="cyan")
+        text.append("\n  ├ Latency", style="green")
+        text.append(": ")
+        text.append(f"{latency}ms", style="cyan")
+        text.append("\n  ╰ Resumed", style="green")
+        text.append(": ")
+        text.append(str(event.resumed), style="cyan")
+        if _lavalink_live and _lavalink_live.is_started:
+            _lavalink_live.update(text)
+            _lavalink_live.stop()
+            _lavalink_live = None
+        else:
+            console.print(text)
+
+    @lavalink.listener(lavalink.NodeDisconnectedEvent)
+    async def node_disconnected_hook(self, event: lavalink.NodeDisconnectedEvent):
+        global _lavalink_live
+        items = [("Reason", event.reason or "Connection lost")]
+        if event.code:
+            items.append(("Code", str(event.code)))
+        text = Text()
+        text.append("✗ Disconnected from Lavalink ", style="red")
+        text.append(event.node.name, style="cyan")
+        for i, (key, value) in enumerate(items):
+            prefix = "╰" if i == len(items) - 1 else "├"
+            text.append(f"\n  {prefix} {key}", style="red")
+            text.append(": ")
+            text.append(value, style="cyan")
+        if _lavalink_live and _lavalink_live.is_started:
+            _lavalink_live.update(text)
+            _lavalink_live.stop()
+            _lavalink_live = None
+        else:
+            console.print(text)
+        _lavalink_live = Live(
+            Spinner("dots", text="[yellow]Reconnecting to Lavalink...[/]", style="yellow"),
+            console=console,
+            refresh_per_second=10,
+            transient=False,
+        )
+        _lavalink_live.start()
 
     # Current voice
     def current_voice_channel(self, ctx: discord.ApplicationContext):
@@ -54,22 +121,27 @@ class Music(commands.Cog):
 
     # Unloading cog
     def cog_unload(self):
+        global _lavalink_live
+        if _lavalink_live and _lavalink_live.is_started:
+            _lavalink_live.stop()
+            _lavalink_live = None
         self.client.lavalink._event_hooks.clear()
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
-        _render_locks.pop(guild.id, None)
+        cleanup_guild(guild.id)
         for task_fn in (store.inactivity_task, store.render_task):
             task = task_fn(guild.id, mode="get")
             if task is not None:
                 task.cancel()
         store.store.pop(guild.id, None)
 
-    # Hooks
     @lavalink.listener(lavalink.TrackStartEvent)
     async def track_start_hook(self, event: lavalink.TrackStartEvent):
         guild_id = int(event.player.guild_id)
         player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(guild_id)
+        store.last_track(guild_id, player.current, "set")
+        store.autoplay_history(guild_id, player.current.identifier, "add")
         vc: discord.VoiceChannel | None = (
             self.client.get_channel(int(event.player.channel_id)) if event.player.channel_id else None
         )
@@ -89,9 +161,31 @@ class Music(commands.Cog):
 
     @lavalink.listener(lavalink.QueueEndEvent)
     async def queue_end_hook(self, event: lavalink.QueueEndEvent):
-        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(int(event.player.guild_id))
-        guild: discord.Guild = self.client.get_guild(int(event.player.guild_id))
-        await stop_player(player, guild)
+        guild_id = int(event.player.guild_id)
+        if not store.autoplay(guild_id):
+            return
+        lock = recommend.get_lock(guild_id)
+        if lock.locked():
+            return
+        async with lock:
+            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(guild_id)
+            guild: discord.Guild = self.client.get_guild(guild_id)
+            pool = await recommend.fetch_recommendations(player, guild_id)
+            if pool:
+                track = pool[0]
+                player.add(requester=self.client.user.id, track=track)
+                try:
+                    await player.play()
+                except Exception:
+                    await stop_player(player, guild)
+                    return
+                await music_log(
+                    self.client,
+                    guild_id,
+                    f"{emoji.autoplay} Autoplay queued [**{track.title}** by **{track.author}**]({track.uri}).",
+                )
+                return
+            await stop_player(player, guild)
 
     # Ensures voice parameters
     async def ensure_voice(self, ctx: discord.ApplicationContext):
@@ -119,7 +213,7 @@ class Music(commands.Cog):
                         view=_err(f"{emoji.error} I need the `Connect` and `Speak` permissions."), ephemeral=True
                     )
                     return None
-                if not self.client.lavalink.node_manager.available_nodes:
+                if not self.client.lavalink.node_manager.nodes:
                     self.connect_lavalink()
                 if ctx.guild.voice_client:
                     await ctx.guild.voice_client.disconnect(force=True)
@@ -361,6 +455,7 @@ class Music(commands.Cog):
                             f"{emoji.volume} **Volume**: `{player.volume}%`\n"
                             f"{emoji.loop} **Loop**: {loop}\n"
                             f"{emoji.shuffle} **Shuffle**: {'Enabled' if player.shuffle else 'Disabled'}\n"
+                            f"{emoji.autoplay} **Autoplay**: {'Enabled' if store.autoplay(ctx.guild.id) else 'Disabled'}\n"
                             f"{emoji.equalizer} **Equalizers**: {', '.join([name.title() for name in player.filters]) if player.filters else 'None'}"
                             f"{f'\n\n {bar}' if bar else ''}"
                         ),
@@ -742,7 +837,7 @@ class Music(commands.Cog):
     # Shuffle
     @slash_command(name="shuffle")
     async def shuffle(self, ctx: discord.ApplicationContext):
-        """Shuffles the player's queue."""
+        """Toggle shuffle for the player's queue."""
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             if not player.queue:
@@ -751,6 +846,19 @@ class Music(commands.Cog):
                 await ctx.defer(ephemeral=True)
                 player.set_shuffle(not player.shuffle)
                 await slash_log(ctx, f"{emoji.shuffle} {'Enabled' if player.shuffle else 'Disabled'} shuffle.")
+
+    # Autoplay
+    @slash_command(name="autoplay")
+    async def autoplay(self, ctx: discord.ApplicationContext):
+        """Toggles autoplay"""
+        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        if player:
+            enabled = store.autoplay(ctx.guild.id)
+            store.autoplay(ctx.guild.id, not enabled, "set")
+            await slash_log(
+                ctx,
+                f"{emoji.autoplay} {'Enabled' if not enabled else 'Disabled'} autoplay.",
+            )
 
     # Loop
     @slash_command(name="loop")

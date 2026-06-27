@@ -6,7 +6,7 @@ from babel.dates import format_timedelta
 from core import Client
 from core.view import DesignerView
 from discord import ui
-from music import store
+from music import recommend, store
 from music.utils import music_interaction_check, music_log, reply, sources, to_log_text
 from utils import config
 from utils.emoji import emoji
@@ -75,6 +75,12 @@ async def render_player(client: Client, guild_id: int, *, force_new: bool = Fals
         store.play_msg(guild_id, new_msg, view, "set")
 
 
+def cleanup_guild(guild_id: int) -> None:
+    """Releases all per-guild in-memory state: render lock and recommendation lock."""
+    _render_locks.pop(guild_id, None)
+    recommend.cleanup(guild_id)
+
+
 async def clear_player(guild_id: int) -> None:
     """
     Deletes the persistent player message and clears its store entry.
@@ -88,7 +94,8 @@ async def clear_player(guild_id: int) -> None:
             await play_msg.delete()
         except discord.HTTPException:
             pass
-    store.play_msg(guild_id, mode="clear")
+    store.flush_store(guild_id)
+    cleanup_guild(guild_id)
 
 
 async def stop_player(player: lavalink.DefaultPlayer, guild: discord.Guild) -> None:
@@ -167,7 +174,7 @@ class MusicView(DesignerView):
     """
     Persistent now-playing card with playback control buttons.
 
-    Displays a `MusicContainer` and an action row with pause/resume, stop, skip, loop cycle, and shuffle toggle buttons.
+    Displays a `MusicContainer` and two action rows: the first with pause/resume, stop, skip, loop cycle, and shuffle toggle; the second with an autoplay toggle.
     The view has no timeout and re-checks interaction eligibility on every button press.
 
     Parameters:
@@ -178,6 +185,7 @@ class MusicView(DesignerView):
     def __init__(self, client: Client, guild_id: int):
         super().__init__(timeout=None)
         self.client = client
+        self.guild_id = guild_id
         self.player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(guild_id)
         self.interaction_check = lambda interaction: music_interaction_check(
             player=self.player, interaction=interaction, view=self
@@ -205,6 +213,10 @@ class MusicView(DesignerView):
             btn = ui.Button(emoji=btn_emoji, custom_id=action, style=discord.ButtonStyle.grey)
             btn.callback = getattr(self, f"{action}_callback")
             row.add_item(btn)
+        autoplay_on = store.autoplay(self.guild_id)
+        autoplay_btn = ui.Button(emoji=emoji.autoplay if autoplay_on else emoji.autoplay_white, custom_id="autoplay")
+        autoplay_btn.callback = self.autoplay_callback
+        self.add_item(ui.ActionRow(autoplay_btn))
 
     async def pause_callback(self, interaction: discord.Interaction):
         await self.player.set_pause(not self.player.paused)
@@ -256,4 +268,15 @@ class MusicView(DesignerView):
             self.client,
             interaction.guild_id,
             f"{interaction.user.mention} {'enabled' if self.player.shuffle else 'disabled'} shuffle.",
+        )
+
+    async def autoplay_callback(self, interaction: discord.Interaction):
+        enabled = store.autoplay(interaction.guild_id)
+        store.autoplay(interaction.guild_id, not enabled, "set")
+        await interaction.response.defer()
+        await render_player(self.client, interaction.guild_id)
+        await music_log(
+            self.client,
+            interaction.guild_id,
+            f"{interaction.user.mention} {'enabled' if not enabled else 'disabled'} autoplay.",
         )

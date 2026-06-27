@@ -19,7 +19,7 @@ class LavalinkVoiceClient(VoiceProtocol):
                 host=config.lavalink["host"],
                 port=config.lavalink["port"],
                 password=config.lavalink["password"],
-                region=config.lavalink["region"],
+                region="auto",
                 ssl=config.lavalink["secure"],
             )
         self.lavalink = self.client.lavalink
