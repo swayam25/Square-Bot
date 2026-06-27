@@ -74,9 +74,9 @@ def fmt_memory(bytes_value):
     gb = round(bytes_value / 1024 / 1024 / 1024, 2)
     mb = round(bytes_value / 1024 / 1024, 2)
     if gb >= 1:
-        return format_unit(gb, "digital-gigabyte", "short")
+        return format_unit(gb, "digital-gigabyte", "short", locale="en")
     else:
-        return format_unit(mb, "digital-megabyte", "short")
+        return format_unit(mb, "digital-megabyte", "short", locale="en")
 
 
 def create_dc_msgs_file(msgs: list[discord.Message]) -> discord.File:

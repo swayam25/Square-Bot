@@ -436,7 +436,7 @@ class Music(commands.Cog):
                 filled_length = int(bar_length * player.position // float(player.current.duration))
                 bar = f"`{lavalink.format_time(player.position)}` {emoji.filled_bar * filled_length}{emoji.empty_bar * (bar_length - filled_length)} `{lavalink.format_time(player.current.duration)}`"
                 duration = datetime.timedelta(milliseconds=player.current.duration)
-                duration = format_timedelta(duration, locale="en_IN")
+                duration = format_timedelta(duration, locale="en")
             loop = ""
             if player.loop == player.LOOP_NONE:
                 loop = "Disabled"
