@@ -7,6 +7,7 @@ from db import DB
 from pyfiglet import Figlet
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 from rich.traceback import install
 from utils import config
 
@@ -32,8 +33,17 @@ client = Client(
 console = Console()
 
 # Startup printing
-figlted_txt = Figlet(font="ansi_shadow").renderText(str(data["project"]["name"]).title())
-console.print(f"[cyan]{figlted_txt.removesuffix('\n')} [yellow bold]v{data['project']['version']}[/]\n")
+with open("assets/ascii.txt") as f:
+    ascii_art = f.read().strip("\n")
+figlted_txt = Figlet().renderText(str(data["project"]["name"]).title())
+banner = Table.grid(padding=(0, 4))
+banner.add_column(vertical="middle")
+banner.add_column(vertical="middle")
+banner.add_row(
+    f"[cyan]{ascii_art}[/]", f"[cyan]{figlted_txt.rstrip()}[/] [yellow bold]v{data['project']['version']}[/]"
+)
+console.print(banner)
+console.print()
 
 
 # Loading all files
