@@ -13,6 +13,14 @@ Advanced multipurpose discord bot for all your needs.
 
 </div>
 
+## 🎯 Features
+
+- Music with player controls, multi-node failover, smart autoplay & audio filters.
+- Auto-mod, mass moderation, tickets & detailed logging.
+- Custom emojis synced from a simple `.zip` upload.
+- Browser-based database panel.
+- Fully dockerized, deploys with a single `just prod` command.
+
 ## 💫 Prerequisites
 
 ### 🧰 Tools
