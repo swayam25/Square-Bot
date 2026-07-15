@@ -351,7 +351,7 @@ class Music(commands.Cog):
                         await music_log(
                             self.client,
                             member.guild.id,
-                            f"{emoji.leave} Left {bot_voice_channel.mention} due to inactivity.",
+                            f"{emoji.remove} Left {bot_voice_channel.mention} due to inactivity.",
                             color=config.color.red,
                         )
                         await stop_player(player, bot_voice_channel.guild)
@@ -482,7 +482,7 @@ class Music(commands.Cog):
                             f"{emoji.user} **Requested By**: {requester.mention if requester else 'Unknown'}\n"
                             f"{emoji.mic} **Artist**: {sources.get(player.current.source_name, sources['_'])['emoji']} {player.current.author}\n"
                             f"{emoji.duration} **Duration**: {duration}\n"
-                            f"{emoji.volume} **Volume**: `{player.volume}%`\n"
+                            f"{emoji.voice} **Volume**: `{player.volume}%`\n"
                             f"{emoji.loop} **Loop**: {loop}\n"
                             f"{emoji.shuffle} **Shuffle**: {'Enabled' if player.shuffle else 'Disabled'}\n"
                             f"{emoji.autoplay} **Autoplay**: {'Enabled' if store.autoplay(ctx.guild.id) else 'Disabled'}\n"
@@ -835,7 +835,7 @@ class Music(commands.Cog):
                 await reply(ctx, f"{emoji.error} Volume amount must be between `1` - `100`", color=config.color.red)
             else:
                 await player.set_volume(volume)
-                await slash_log(ctx, f"{emoji.volume} Volume changed to `{player.volume}%`.")
+                await slash_log(ctx, f"{emoji.voice} Volume changed to `{player.volume}%`.")
 
     # Queue
     @slash_command(name="queue")
@@ -933,7 +933,7 @@ class Music(commands.Cog):
                 )
             else:
                 removed = player.queue.pop(index - 1)
-                await slash_log(ctx, f"{emoji.leave} Removed **{removed.title}**.", color=config.color.red)
+                await slash_log(ctx, f"{emoji.remove} Removed **{removed.title}**.", color=config.color.red)
 
 
 def setup(client: Client):

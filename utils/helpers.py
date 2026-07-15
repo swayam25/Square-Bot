@@ -79,9 +79,83 @@ def fmt_memory(bytes_value):
         return format_unit(mb, "digital-megabyte", "short", locale="en")
 
 
+def _fmt_bytes(size: float) -> str:
+    """Formats a byte count into a short human-readable size."""
+    for unit in ("B", "KB", "MB"):
+        if size < 1024 or unit == "MB":
+            return f"{size:.1f} {unit}" if unit != "B" else f"{int(size)} B"
+        size /= 1024
+
+
+def _table(rows: list[tuple[str, str]]) -> list[str]:
+    """
+    Renders key/value rows as an aligned two-column table.
+
+    Multi-line values continue in the value column, e.g.:
+    ```
+      Title       │ Hello
+      Description │ line one
+                  │ line two
+    ```
+    """
+    if not rows:
+        return []
+    width = max(len(key) for key, _ in rows)
+    lines = []
+    for key, value in rows:
+        value_lines = str(value).splitlines() or [""]
+        lines.append(f"  {key.ljust(width)} │ {value_lines[0]}")
+        lines.extend(f"  {' ' * width} │ {value_line}" for value_line in value_lines[1:])
+    return lines
+
+
+def _embed_rows(embed: discord.Embed) -> list[tuple[str, str]]:
+    """Extracts the set parts of an embed as table rows."""
+    rows = []
+    if name := getattr(embed.author, "name", None):
+        rows.append(("Author", name))
+    if embed.title:
+        rows.append(("Title", embed.title))
+    if embed.url:
+        rows.append(("URL", embed.url))
+    if embed.description:
+        rows.append(("Description", embed.description))
+    for field in embed.fields:
+        rows.append((f"Field · {field.name}", field.value))
+    if url := getattr(embed.image, "url", None):
+        rows.append(("Image", url))
+    if url := getattr(embed.thumbnail, "url", None):
+        rows.append(("Thumbnail", url))
+    if text := getattr(embed.footer, "text", None):
+        rows.append(("Footer", text))
+    return rows
+
+
+def _component_rows(components: list) -> list[tuple[str, str]]:
+    """Flattens message components (incl. nested rows, sections & containers) into table rows."""
+    rows = []
+    for comp in components:
+        children = getattr(comp, "children", None) or getattr(comp, "components", None)
+        if children:
+            rows += _component_rows(children)
+            continue
+        detail = (
+            getattr(comp, "label", None)
+            or getattr(comp, "content", None)
+            or getattr(comp, "placeholder", None)
+            or getattr(comp, "url", None)
+            or ""
+        )
+        rows.append((type(comp).__name__, str(detail)))
+    return rows
+
+
 def create_dc_msgs_file(msgs: list[discord.Message]) -> discord.File:
     """
     Create a Discord file containing the provided messages.
+
+    Each message shows its content, followed by a table block per embed &
+    for its attachments & components, all inside the `│ … ╰` tree.
 
     Parameters:
         msgs (list[discord.Message]): A list of Discord messages.
@@ -91,15 +165,19 @@ def create_dc_msgs_file(msgs: list[discord.Message]) -> discord.File:
     """
     with io.StringIO() as file:
         for msg in msgs:
-            msg.content = msg.content or "Embed/Attachment"
-            lines = msg.content.split("\n")
-            if len(lines) > 1:
-                sanitized_content = "│" + "\n│ ".join(lines[:-1]) + f"\n╰ {lines[-1]}"
-            else:
-                sanitized_content = f"╰ {msg.content}"
-            file.write(
-                f"[{format_datetime(msg.created_at, locale='en')}] {msg.author} ({msg.author.id})\n{sanitized_content}\n\n"
-            )
+            lines = msg.content.splitlines() if msg.content else []
+            for num, embed in enumerate(msg.embeds, start=1):
+                if rows := _embed_rows(embed):
+                    lines += ["", f"Embed {num}" if len(msg.embeds) > 1 else "Embed"] + _table(rows)
+            if msg.attachments:
+                rows = [(media.filename, f"{_fmt_bytes(media.size)} · {media.url}") for media in msg.attachments]
+                lines += ["", f"Attachment{'s' if len(msg.attachments) > 1 else ''}"] + _table(rows)
+            if rows := _component_rows(msg.components):
+                lines += ["", "Components"] + _table(rows)
+            if not lines:
+                lines = ["(no content)"]
+            body = "".join(f"│ {line}".rstrip() + "\n" for line in lines[:-1]) + f"╰ {lines[-1]}"
+            file.write(f"[{format_datetime(msg.created_at, locale='en')}] {msg.author} ({msg.author.id})\n{body}\n\n")
         file.seek(0)
         dc_file = discord.File(fp=file, filename="messages.txt")
     return dc_file

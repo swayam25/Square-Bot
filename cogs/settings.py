@@ -6,17 +6,15 @@ from db.funcs.guild import (
     remove_guild,
     set_autorole,
     set_media_only,
-    set_mod_cmd_log,
-    set_mod_log,
-    set_msg_log,
     set_ticket_cmds,
-    set_ticket_log,
 )
+from db.funcs.logs import fetch_log_channels, remove_log_channel, set_all_log_channels, set_log_channel
 from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from utils import config
 from utils.emoji import emoji
+from utils.logger import LogType
 
 
 class SettingsCommand:
@@ -25,17 +23,14 @@ class SettingsCommand:
 
     async def show(self):
         # Fetch channel mention util func
-        async def mention_ch(channel_id: int | None) -> str:
+        def mention_ch(channel_id: int | None) -> str:
             return f"<#{channel_id}>" if channel_id else emoji.off
 
         guild_settings = await fetch_guild_settings(self.ctx.guild.id)
+        log_channels = await fetch_log_channels(self.ctx.guild.id)
 
-        mod_log_channel = await mention_ch(guild_settings.mod_log_channel_id)
-        mod_log_cmd_channel = await mention_ch(guild_settings.mod_cmd_log_channel_id)
-        msg_log_channel = await mention_ch(guild_settings.msg_log_channel_id)
         ticket = emoji.on if guild_settings.ticket_cmds else emoji.off
-        ticket_log_channel = await mention_ch(guild_settings.ticket_log_channel_id)
-        media_only_channel = await mention_ch(guild_settings.media_only_channel_id)
+        media_only_channel = mention_ch(guild_settings.media_only_channel_id)
         role_id = guild_settings.autorole
         autorole = (
             self.ctx.guild.get_role(role_id).mention if (role_id and self.ctx.guild.get_role(role_id)) else emoji.off
@@ -47,13 +42,17 @@ class SettingsCommand:
             ui.Container(
                 ui.TextDisplay(f"## {self.ctx.guild.name}'s Settings"),
                 ui.TextDisplay(
-                    f"{emoji.mod} **Mod Log Channel**: {mod_log_channel}\n"
-                    f"{emoji.owner} **Mod Command Log Channel**: {mod_log_cmd_channel}\n"
-                    f"{emoji.msg} **Message Log Channel**: {msg_log_channel}\n"
+                    f"### General\n"
                     f"{emoji.ticket} **Ticket Commands**: {ticket}\n"
-                    f"{emoji.ticket} **Ticket Log Channel**: {ticket_log_channel}\n"
                     f"{emoji.img} **Media Only Channel**: {media_only_channel}\n"
-                    f"{emoji.role} **Autorole**: {autorole}\n"
+                    f"{emoji.role} **Autorole**: {autorole}"
+                ),
+                ui.TextDisplay("### Logs"),
+                ui.TextDisplay(
+                    "\n".join(
+                        f"{emoji.bullet} **{log_type.label}**: {mention_ch(log_channels.get(log_type.key))}"
+                        for log_type in LogType.configurable()
+                    )
                 ),
             )
         )
@@ -61,24 +60,19 @@ class SettingsCommand:
 
     async def reset(self, setting: str):
         """Resets server settings."""
-        if setting.lower() == "all":
-            await remove_guild(self.ctx.guild.id)
-        else:
-            match setting.lower():
-                case "mod log":
-                    await set_mod_log(self.ctx.guild.id, None)
-                case "mod command log":
-                    await set_mod_cmd_log(self.ctx.guild.id, None)
-                case "message log":
-                    await set_msg_log(self.ctx.guild.id, None)
-                case "ticket commands":
-                    await set_ticket_cmds(self.ctx.guild.id, False)
-                case "ticket log":
-                    await set_ticket_log(self.ctx.guild.id, None)
-                case "media only":
-                    await set_media_only(self.ctx.guild.id, None)
-                case "auto role":
-                    await set_autorole(self.ctx.guild.id, None)
+        match setting.lower():
+            case "all":
+                await remove_guild(self.ctx.guild.id)
+            case "all logs":
+                await remove_log_channel(self.ctx.guild.id)
+            case "ticket commands":
+                await set_ticket_cmds(self.ctx.guild.id, False)
+            case "media only":
+                await set_media_only(self.ctx.guild.id, None)
+            case "auto role":
+                await set_autorole(self.ctx.guild.id, None)
+            case _:
+                await remove_log_channel(self.ctx.guild.id, LogType.from_label(setting).key)
         view = DesignerView(
             ui.Container(
                 ui.TextDisplay(f"{emoji.success} Successfully reset {setting.lower()} settings."),
@@ -98,16 +92,8 @@ class Settings(commands.Cog):
     @option(
         "reset",
         description="Setting to reset",
-        choices=[
-            "All",
-            "Mod Log",
-            "Mod Command Log",
-            "Message Log",
-            "Ticket Commands",
-            "Ticket Log",
-            "Media Only",
-            "Auto Role",
-        ],
+        choices=["All", "All Logs", "Ticket Commands", "Media Only", "Auto Role"]
+        + [log_type.label for log_type in LogType.configurable()],
         required=False,
     )
     async def settings(self, ctx: discord.ApplicationContext, reset: str):
@@ -125,43 +111,23 @@ class Settings(commands.Cog):
         default_member_permissions=discord.Permissions(manage_channels=True, moderate_members=True),
     )
 
-    # Set mod log
-    @setting.command(name="mod-log")
-    @option("channel", description="Mention the mod log channel")
-    async def set_mod_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
-        """Sets mod log channel."""
-        await set_mod_log(ctx.guild.id, channel.id)
+    # Set log channel
+    @setting.command(name="log")
+    @option(
+        "type",
+        description="Log type to set",
+        choices=["All Logs"] + [log_type.label for log_type in LogType.configurable()],
+    )
+    @option("channel", description="Mention the log channel")
+    async def set_log(self, ctx: discord.ApplicationContext, type: str, channel: discord.TextChannel):
+        """Sets a log channel for the given log type."""
+        if type == "All Logs":
+            await set_all_log_channels(ctx.guild.id, [log_type.key for log_type in LogType.configurable()], channel.id)
+        else:
+            await set_log_channel(ctx.guild.id, LogType.from_label(type).key, channel.id)
         view = DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.success} Successfully set mod log channel to {channel.mention}."),
-                color=config.color.green,
-            )
-        )
-        await ctx.respond(view=view)
-
-    # Set mod cmd log
-    @setting.command(name="mod-command-log")
-    @option("channel", description="Mention the mod command log channel")
-    async def set_mod_cmd_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
-        """Sets mod command log channel."""
-        await set_mod_cmd_log(ctx.guild.id, channel.id)
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"{emoji.success} Successfully set mod command log channel to {channel.mention}."),
-                color=config.color.green,
-            )
-        )
-        await ctx.respond(view=view)
-
-    # Set message log
-    @setting.command(name="message-log")
-    @option("channel", description="Mention the message log channel")
-    async def set_msg_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
-        """Sets message log channel."""
-        await set_msg_log(ctx.guild.id, channel.id)
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"{emoji.success} Successfully set message log channel to {channel.mention}."),
+                ui.TextDisplay(f"{emoji.success} Successfully set {type.lower()} channel to {channel.mention}."),
                 color=config.color.green,
             )
         )
@@ -180,20 +146,6 @@ class Settings(commands.Cog):
         view = DesignerView(
             ui.Container(
                 ui.TextDisplay(f"{emoji.success} Successfully {status.lower()}d ticket commands."),
-                color=config.color.green,
-            )
-        )
-        await ctx.respond(view=view)
-
-    # Set ticket log
-    @setting.command(name="ticket-log")
-    @option("channel", description="Mention the ticket log channel")
-    async def set_ticket_log(self, ctx: discord.ApplicationContext, channel: discord.TextChannel):
-        """Sets ticket log channel."""
-        await set_ticket_log(ctx.guild.id, channel.id)
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"{emoji.success} Successfully set ticket log channel to {channel.mention}."),
                 color=config.color.green,
             )
         )

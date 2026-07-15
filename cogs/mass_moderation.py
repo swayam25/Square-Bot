@@ -3,7 +3,7 @@ import discord
 from babel.dates import format_timedelta
 from core import Client
 from core.view import DesignerView
-from db.funcs.guild import fetch_guild_settings
+from db.funcs.logs import fetch_log_channel
 from discord import ui
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
@@ -69,7 +69,7 @@ class MassModeration(commands.Cog):
                     )
                 )
                 await ctx.respond(view=view)
-                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                channel_id = await fetch_log_channel(ctx.guild.id, logger.LogType.MODERATION.key)
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
                     mod_view = DesignerView(
@@ -84,7 +84,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MODERATION, mod_view)
             if len(errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -155,7 +155,7 @@ class MassModeration(commands.Cog):
                     )
                 )
                 await ctx.respond(view=view)
-                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                channel_id = await fetch_log_channel(ctx.guild.id, logger.LogType.MODERATION.key)
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
                     mod_view = DesignerView(
@@ -170,7 +170,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MODERATION, mod_view)
             if len(errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -225,7 +225,7 @@ class MassModeration(commands.Cog):
                     )
                 )
                 await ctx.respond(view=view)
-                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                channel_id = await fetch_log_channel(ctx.guild.id, logger.LogType.MODERATION.key)
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
                     mod_view = DesignerView(
@@ -239,7 +239,7 @@ class MassModeration(commands.Cog):
                             ),
                         )
                     )
-                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MODERATION, mod_view)
             if len(errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -316,7 +316,7 @@ class MassModeration(commands.Cog):
                     )
                 )
                 await ctx.respond(view=view)
-                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                channel_id = await fetch_log_channel(ctx.guild.id, logger.LogType.MODERATION.key)
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
                     mod_view = DesignerView(
@@ -332,7 +332,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MODERATION, mod_view)
             if len(errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -393,7 +393,7 @@ class MassModeration(commands.Cog):
                     )
                 )
                 await ctx.respond(view=view)
-                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                channel_id = await fetch_log_channel(ctx.guild.id, logger.LogType.MODERATION.key)
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
                     mod_view = DesignerView(
@@ -408,7 +408,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MODERATION, mod_view)
             if len(errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -488,7 +488,7 @@ class MassModeration(commands.Cog):
                     )
                 )
                 await ctx.respond(view=view)
-                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                channel_id = await fetch_log_channel(ctx.guild.id, logger.LogType.MODERATION.key)
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
                     mod_view = DesignerView(
@@ -503,7 +503,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MODERATION, mod_view)
             if len(role_errors) > 0 or len(user_errors) > 0:
                 view = DesignerView(
                     ui.Container(
@@ -585,7 +585,7 @@ class MassModeration(commands.Cog):
                     )
                 )
                 await ctx.respond(view=view)
-                channel_id = (await fetch_guild_settings(ctx.guild.id)).mod_cmd_log_channel_id
+                channel_id = await fetch_log_channel(ctx.guild.id, logger.LogType.MODERATION.key)
                 if channel_id:
                     log_ch = await self.client.fetch_channel(channel_id)
                     mod_view = DesignerView(
@@ -600,7 +600,7 @@ class MassModeration(commands.Cog):
                             color=config.color.red,
                         )
                     )
-                    await logger.log(self.client, log_ch, logger.LogType.MOD_CMD, mod_view)
+                    await logger.log(self.client, log_ch, logger.LogType.MODERATION, mod_view)
             if len(role_errors) > 0 or len(user_errors) > 0:
                 view = DesignerView(
                     ui.Container(

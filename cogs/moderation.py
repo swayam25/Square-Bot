@@ -201,6 +201,52 @@ class Moderation(commands.Cog):
                 )
                 await ctx.respond(view=view, ephemeral=True)
 
+    # Purge from-to
+    @purge.command(name="from-to")
+    @option(
+        "from",
+        description="Enter the message ID from which you want to purge messages.",
+        parameter_name="from_message_id",
+    )
+    @option(
+        "to", description="Enter the message ID to which you want to purge messages.", parameter_name="to_message_id"
+    )
+    async def purge_from_to(self, ctx: discord.ApplicationContext, from_message_id: str, to_message_id: str):
+        """Purges the messages between the given message IDs."""
+        if not from_message_id.isdigit() or not to_message_id.isdigit():
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} Message IDs must be valid integers."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+            return
+        from_message_id = int(from_message_id)
+        to_message_id = int(to_message_id)
+        await ctx.defer(ephemeral=True)
+        try:
+            from_message = await ctx.channel.fetch_message(from_message_id)
+            to_message = await ctx.channel.fetch_message(to_message_id)
+            msgs = await ctx.channel.purge(limit=1000, check=lambda m: from_message.id < m.id < to_message.id)
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(
+                        f"{emoji.success} Successfully purged `{len(msgs)}` messages between `{from_message.id}` and `{to_message.id}`."
+                    ),
+                    color=config.color.green,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+        except discord.NotFound:
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} One or both of the message IDs were not found."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+
     # Kick
     @slash_command(name="kick")
     @discord.default_permissions(kick_members=True)

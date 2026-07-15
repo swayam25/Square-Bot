@@ -123,7 +123,7 @@ class StatsView(DesignerView):
     def _get_button(self, button: Literal["Bot Stats", "Lavalink Stats"]):
         if button == "Bot Stats":
             btn = ui.Button(
-                emoji=emoji.lavalink_white,
+                emoji=emoji.server_white,
                 label="Lavalink Stats",
                 style=discord.ButtonStyle.grey,
                 custom_id="lavalink_btn",
@@ -193,7 +193,7 @@ class UserInfo:
                     f"{emoji.description} **Status**: {self.user.status.name.title()}",
                     f"{emoji.user} **Nickname**: {self.user.nick}",
                     f"{emoji.role} **Highest Role**: {self.user.top_role.mention}",
-                    f"{emoji.join} **Server Joined**: {discord.utils.format_dt(self.user.joined_at, 'R')}",
+                    f"{emoji.add} **Server Joined**: {discord.utils.format_dt(self.user.joined_at, 'R')}",
                     f"{emoji.boost} **Boosting Since**: {discord.utils.format_dt(self.user.premium_since, 'R') if self.user.premium_since else 'Not Boosting'}",
                 ]
             )
@@ -605,7 +605,7 @@ class Info(commands.Cog):
                     f" `({user_roles} User | {bot_roles} Bot)`\n"
                     f"{emoji.boost} **Boosts**: `{ctx.guild.premium_subscription_count}`"
                     f" `(Level {ctx.guild.premium_tier})`\n"
-                    f"{emoji.emoji} **Emojis**: `{len(ctx.guild.emojis)}`"
+                    f"{emoji.img} **Emojis**: `{len(ctx.guild.emojis)}`"
                     f" `({animated_emojis} Animated | {static_emojis} Static)`\n"
                     f"{emoji.date} **Server Created**: {discord.utils.format_dt(ctx.guild.created_at, 'R')}"
                 ),
@@ -639,7 +639,7 @@ class Info(commands.Cog):
                         ui.TextDisplay(
                             f"{emoji.mention} **Name**: `{_emoji.name}`\n"
                             f"{emoji.id} **ID**: `{_emoji.id}`\n"
-                            f"{emoji.emoji} **Is Animated?**: {_emoji.animated}\n"
+                            f"{emoji.img} **Is Animated?**: {_emoji.animated}\n"
                             f"{emoji.bot} **Is Managed?**: {_emoji.managed}\n"
                             f"{emoji.keyboard} **Is Usuable?**: {_emoji.is_usable()}\n"
                             f"{emoji.description} **Usage**: `{icon}`\n"

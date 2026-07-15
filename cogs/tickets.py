@@ -4,6 +4,7 @@ import discord
 from core import Client
 from core.view import DesignerView
 from db.funcs.guild import fetch_guild_settings
+from db.funcs.logs import fetch_log_channel
 from discord import ui
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
@@ -35,7 +36,7 @@ async def close_ticket(
     await asyncio.sleep(5)
     file = await transcript_task
     await channel.delete()
-    log_ch_id = (await fetch_guild_settings(channel.guild.id)).ticket_log_channel_id
+    log_ch_id = await fetch_log_channel(channel.guild.id, logger.LogType.TICKETS.key)
     if log_ch_id is not None:
         logging_ch = await channel.guild.fetch_channel(log_ch_id)
         view = DesignerView(
@@ -49,7 +50,7 @@ async def close_ticket(
                 color=config.color.red,
             )
         )
-        await logger.log(client, logging_ch, logger.LogType.TICKET, view, file=file)
+        await logger.log(client, logging_ch, logger.LogType.TICKETS, view, file=file)
 
 
 class TicketTranscript:
@@ -232,7 +233,7 @@ class Tickets(commands.Cog):
             )
             await ctx.respond(view=done_view)
 
-            log_ch_id = (await fetch_guild_settings(ctx.guild.id)).ticket_log_channel_id
+            log_ch_id = await fetch_log_channel(ctx.guild.id, logger.LogType.TICKETS.key)
             if log_ch_id is not None:
                 logging_ch = await self.client.fetch_channel(log_ch_id)
                 log_view = DesignerView(
@@ -242,7 +243,7 @@ class Tickets(commands.Cog):
                         ui.TextDisplay(f"{emoji.description} **Reason**: {reason}"),
                     )
                 )
-                await logger.log(self.client, logging_ch, logger.LogType.TICKET, log_view)
+                await logger.log(self.client, logging_ch, logger.LogType.TICKETS, log_view)
 
     # Ticket close
     @ticket.command(name="close")

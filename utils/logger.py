@@ -1,62 +1,69 @@
 import discord
+import enum
 from core import Client
 from core.view import DesignerView
-
-# Webhooks are cached per (channel, name) so each log avoids refetching them.
-_webhook_cache: dict[tuple[int, str], discord.Webhook] = {}
+from utils import webhook
 
 
-class LogType:
-    """Log categories used to name the webhook (`{bot} - {log type}`)."""
-
-    MOD = "Mod Log"
-    MOD_CMD = "Mod Command Log"
-    MESSAGE = "Message Log"
-    MUSIC = "Music Log"
-    TICKET = "Ticket Log"
-
-
-async def _webhook(client: Client, channel: discord.abc.GuildChannel, log_type: str) -> discord.Webhook:
+class LogType(enum.Enum):
     """
-    Gets the cached webhook for a channel and log type, creating it if needed.
+    Log categories.
 
-    Parameters:
-        client (Client): The bot client.
-        channel (discord.abc.GuildChannel): The channel to own the webhook.
-        log_type (str): The log category, used in the webhook name.
+    Each member holds a `key` (stored in the database) and a `label`
+    (shown as the webhook sender name suffix).
     """
-    name = f"{client.user.name} - {log_type}"
-    key = (channel.id, name)
-    if key not in _webhook_cache:
-        hook = discord.utils.get(await channel.webhooks(), name=name)
-        if hook is None:
-            hook = await channel.create_webhook(name=name, avatar=await client.user.display_avatar.read())
-        _webhook_cache[key] = hook
-    return _webhook_cache[key]
+
+    MODERATION = ("moderation", "Moderation Log")
+    MEMBERS = ("members", "Member Log")
+    MESSAGES = ("messages", "Message Log")
+    CHANNELS = ("channels", "Channel Log")
+    ROLES = ("roles", "Role Log")
+    SERVER = ("server", "Server Log")
+    VOICE = ("voice", "Voice Log")
+    INVITES = ("invites", "Invite Log")
+    AUTOMOD = ("automod", "AutoMod Log")
+    TICKETS = ("tickets", "Ticket Log")
+    MUSIC = ("music", "Music Log")  # Logs to the player channel, not configurable via /set log
+
+    def __init__(self, key: str, label: str):
+        self.key = key
+        self.label = label
+
+    def __str__(self) -> str:
+        return self.label
+
+    @classmethod
+    def configurable(cls) -> list[LogType]:
+        """Log types that can be assigned a channel via settings."""
+        return [log_type for log_type in cls if log_type is not cls.MUSIC]
+
+    @classmethod
+    def from_label(cls, label: str) -> LogType:
+        """Resolves a log type from its label (e.g. "Moderation Log")."""
+        return next(log_type for log_type in cls if log_type.label == label)
 
 
 async def cleanup_guild(guild_id: int, channel_ids: set[int]) -> None:
     """Removes all cached webhooks belonging to the given guild's channels."""
-    for key in [k for k in _webhook_cache if k[0] in channel_ids]:
-        _webhook_cache.pop(key, None)
+    webhook.cleanup(channel_ids)
 
 
 async def log(
     client: Client,
     channel: discord.abc.Messageable,
-    log_type: str,
+    log_type: LogType,
     view: DesignerView | None = None,
     *,
     file: discord.File | None = None,
     delete_after: float | None = None,
 ) -> None:
     """
-    Sends a log message through a per-channel webhook named `{bot} - {log type}`.
+    Sends a log message through the channel's single shared webhook, renamed per message to `{bot} - {log type}`.
 
     Parameters:
         client (Client): The bot client.
         channel (discord.abc.Messageable): The channel to log in (threads log via their parent).
-        log_type (str): The log category, used in the webhook name.
+        log_type (LogType): The log category, shown as the sender name.
         view (DesignerView | None): The components view to send.
         file (discord.File | None): Optional file attachment, sent on its own to stay valid alongside components.
         delete_after (float | None): Seconds before the log auto-deletes.
@@ -67,15 +74,30 @@ async def log(
         thread, target = channel, channel.parent
     if target is None:
         return
-    try:
-        hook = await _webhook(client, target, log_type)
+
+    async def send(hook: discord.Webhook) -> None:
+        username = f"{client.user.name} - {log_type}"
         if file is not None:
-            msg = await hook.send(file=file, thread=thread, wait=True)
+            msg = await hook.send(file=file, thread=thread, username=username, wait=True)
             if delete_after is not None:
                 await msg.delete(delay=delete_after)
         if view is not None:
-            msg = await hook.send(view=view, thread=thread, wait=True)
+            msg = await hook.send(view=view, thread=thread, username=username, wait=True)
             if delete_after is not None:
                 await msg.delete(delay=delete_after)
+
+    hook = await webhook.get_webhook(client, target)
+    if hook is None:
+        return
+    try:
+        await send(hook)
     except discord.NotFound:
-        _webhook_cache.pop((target.id, f"{client.user.name} - {log_type}"), None)
+        # Webhook was deleted externally, recreate & retry once
+        webhook.invalidate(target.id)
+        hook = await webhook.get_webhook(client, target)
+        if hook is None:
+            return
+        try:
+            await send(hook)
+        except discord.HTTPException:
+            pass
