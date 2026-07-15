@@ -467,15 +467,11 @@ class Logging(commands.Cog):
         view = log_view(
             "AutoMod Action",
             f"{emoji.user_red} **Member**: <@{payload.user_id}>\n"
-            f"{emoji.verification} **Action**: {str(payload.action.type.name).replace('_', ' ').title()}\n"
+            f"{emoji.mod_red} **Action**: {str(payload.action.type.name).replace('_', ' ').title()}\n"
             f"{emoji.description_red} **Trigger**: {str(payload.rule_trigger_type.name).replace('_', ' ').title()}\n"
             + (f"{emoji.channel_red} **Channel**: <#{payload.channel_id}>\n" if payload.channel_id else "")
             + (f"{emoji.keyboard_red} **Matched**: `{payload.matched_keyword}`\n" if payload.matched_keyword else "")
-            + (
-                f"{emoji.description_red} **Content**:\n```\n{clip(payload.content, 512)}\n```"
-                if payload.content
-                else ""
-            ),
+            + (f"{emoji.description_red} **Content**:\n{clip(payload.content, 512)}" if payload.content else ""),
             color=config.color.red,
         )
         await self.send_log(guild, logger.LogType.AUTOMOD, view)

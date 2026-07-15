@@ -28,7 +28,8 @@ class Emoji:
 
     settings: str = "⚙️"
     info: str = "ℹ️"
-    mod: str = "🛠️"
+    mod: str = "🔨"
+    mod_red: str = "🔨"
     mass_mod: str = "👥"
     ticket: str = "🎫"
 
@@ -71,7 +72,6 @@ class Emoji:
     remove: str = "➖"
     server: str = "🖥️"
     server_red: str = "🖥️"
-    server_white: str = "🖥️"
     boost: str = "🚀"
 
     ping: str = "🏓"
@@ -87,6 +87,7 @@ class Emoji:
     soundcloud: str = "🟠"
 
     music: str = "🎵"
+    music_white: str = "🎵"
     mic: str = "🎤"
     duration: str = "⏱️"
     duration_white: str = "⏱️"
@@ -194,12 +195,21 @@ def get_emoji_instance() -> Emoji:
 emoji = get_emoji_instance()
 
 
-def reload_emoji() -> None:
-    """Refresh the module-level emoji singleton in-place.
+def update_emoji(name: str, value: str) -> None:
+    """
+    Update a single emoji on the module-level singleton in-place.
 
-    Updates every attribute on the existing object so all callers that hold
-    a reference to it (via `from utils.emoji import emoji`) see new values
-    without a bot restart.
+    Used during uploads so views rendered mid-upload never reference a deleted emoji ID: as soon as an emoji is re-created, callers can patch the new markdown here and every subsequent render picks it up.
+    """
+    if name in Emoji.__annotations__:
+        setattr(emoji, name, value)
+
+
+def reload_emoji() -> None:
+    """
+    Refresh the module-level emoji singleton in-place.
+
+    Updates every attribute on the existing object so all callers that hold a reference to it (via `from utils.emoji import emoji`) see new values without a bot restart.
     """
     new = get_emoji_instance()
     for key in Emoji.__annotations__:

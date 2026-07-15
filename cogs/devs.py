@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import math
 import os
@@ -13,7 +14,7 @@ from discord.ext import commands
 from discord.ui import ActionRow
 from io import BytesIO
 from utils import check, config, temp
-from utils.emoji import Emoji, emoji, reload_emoji
+from utils.emoji import Emoji, emoji, reload_emoji, update_emoji
 from utils.logger import cleanup_guild
 
 
@@ -441,10 +442,10 @@ class Devs(commands.Cog):
         progress = (completed / total) * 100
         bar_length = 15
         filled_length = int(bar_length * completed // total)
-        bar = f"{'█' * filled_length}{'░' * (bar_length - filled_length)}"
+        bar = f"{emoji.filled_bar * filled_length}{emoji.empty_bar * (bar_length - filled_length)}"
         return DesignerView(
             ui.Container(
-                ui.TextDisplay(f"⏳ Uploading `{completed}/{total}` emojis.\n`{bar}` `{progress:.2f}%`"),
+                ui.TextDisplay(f"{emoji.loading} Uploading `{completed}/{total}` emojis.\n{bar} `{progress:.2f}%`"),
             )
         )
 
@@ -456,6 +457,12 @@ class Devs(commands.Cog):
         }
         Emoji.create_custom_emoji_config(emoji_dict)
         reload_emoji()
+
+    async def _sync_emoji_view(self, ctx: discord.ApplicationContext) -> SyncEmojiView:
+        """Runs a full emoji sync and returns the summary view with the delete extra emojis button."""
+        view = SyncEmojiView(self.client, ctx)
+        await view.build()
+        return view
 
     # Upload app emojis
     @emoji.command(name="upload")
@@ -479,7 +486,7 @@ class Devs(commands.Cog):
                 if len(top_dirs) > 1:
                     view = DesignerView(
                         ui.Container(
-                            ui.TextDisplay("❌ Zip file contains more than one top-level directory."),
+                            ui.TextDisplay(f"{emoji.error} Zip file contains more than one top-level directory."),
                             color=config.color.red,
                         )
                     )
@@ -495,48 +502,93 @@ class Devs(commands.Cog):
                 if not emoji_files:
                     view = DesignerView(
                         ui.Container(
-                            ui.TextDisplay("❌ No `.png` or `.gif` emoji files found in the zip."),
+                            ui.TextDisplay(f"{emoji.error} No `.png` or `.gif` emoji files found in the zip."),
                             color=config.color.red,
                         )
                     )
                     await ctx.respond(view=view, ephemeral=True)
                     return
-                view = self.emoji_prog_view(len(emoji_files))
-                msg = await ctx.respond(view=view)
+                emoji_images: dict[str, bytes] = {}
                 for emoji_path in emoji_files:
                     _emoji = emoji_path.split("/")[-1][:-4]
                     if len(_emoji) > 32:
                         view = DesignerView(
                             ui.Container(
-                                ui.TextDisplay(f"❌ Emoji name `{_emoji}` is too long (max 32 characters)."),
+                                ui.TextDisplay(f"{emoji.error} Emoji name `{_emoji}` is too long (max 32 characters)."),
                                 color=config.color.red,
                             )
                         )
                         await ctx.respond(view=view, ephemeral=True)
                         return
-                    try:
-                        await self.client.create_emoji(name=_emoji, image=zip_file.read(emoji_path))
-                    except Exception:
-                        await self.client.delete_emoji(
-                            [e for e in await self.client.fetch_emojis() if e.name == _emoji][0]
-                        )
-                        await self.client.create_emoji(name=_emoji, image=zip_file.read(emoji_path))
-                    await msg.edit(view=self.emoji_prog_view(len(emoji_files), emoji_files.index(emoji_path) + 1))
+                    emoji_images[_emoji] = zip_file.read(emoji_path)
             zip_buffer.close()
-            await self._silent_sync()
+
+            view = self.emoji_prog_view(len(emoji_images))
+            msg = await ctx.respond(view=view)
+
+            existing = {e.name: e for e in await self.client.fetch_emojis()}
+            semaphore = asyncio.Semaphore(5)
+            completed = 0
+            failed: dict[str, str] = {}
+
+            async def upload_one(name: str, image: bytes) -> None:
+                nonlocal completed
+                async with semaphore:
+                    try:
+                        try:
+                            uploaded = await self.client.create_emoji(name=name, image=image)
+                        except Exception:
+                            if name not in existing:
+                                raise
+                            await self.client.delete_emoji(existing[name])
+                            uploaded = await self.client.create_emoji(name=name, image=image)
+                        # Patch the singleton immediately so progress edits never render a deleted emoji ID
+                        update_emoji(
+                            uploaded.name,
+                            f"<a:{uploaded.name}:{uploaded.id}>"
+                            if uploaded.animated
+                            else f"<:{uploaded.name}:{uploaded.id}>",
+                        )
+                    except Exception as e:
+                        failed[name] = str(e)
+                    finally:
+                        completed += 1
+
+            uploads = asyncio.gather(*(upload_one(name, image) for name, image in emoji_images.items()))
+            last_shown = 0
+            while not uploads.done():
+                if completed != last_shown:
+                    last_shown = completed
+                    await msg.edit(view=self.emoji_prog_view(len(emoji_images), completed))
+                await asyncio.sleep(1)
+            await uploads
+
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay(f"✅ Uploaded {len(emoji_files)} emojis."),
-                    color=config.color.green,
+                    ui.TextDisplay(f"{emoji.loading} Uploaded {len(emoji_images) - len(failed)} emojis. *Syncing...*"),
                 )
             )
             await msg.edit(view=view)
+            await msg.edit(view=await self._sync_emoji_view(ctx))
+            if failed:
+                view = DesignerView(
+                    ui.Container(
+                        ui.TextDisplay("### Failed Emojis"),
+                        ui.TextDisplay(
+                            "".join(f"{emoji.bullet_red} `{name}`: {err}\n" for name, err in failed.items())
+                        ),
+                        color=config.color.red,
+                    )
+                )
+                await ctx.respond(view=view, ephemeral=True)
         elif file.filename.endswith((".png", ".gif")):
             # Handle single PNG or GIF file upload
             if len(file.filename[:-4]) > 32:
                 view = DesignerView(
                     ui.Container(
-                        ui.TextDisplay(f"❌ Emoji name `{file.filename[:-4]}` is too long (max 32 characters)."),
+                        ui.TextDisplay(
+                            f"{emoji.error} Emoji name `{file.filename[:-4]}` is too long (max 32 characters)."
+                        ),
                         color=config.color.red,
                     )
                 )
@@ -555,7 +607,7 @@ class Devs(commands.Cog):
                 await self._silent_sync()
                 view = DesignerView(
                     ui.Container(
-                        ui.TextDisplay(f"✅ Uploaded emoji {emoji_md} `{file.filename[:-4]}`."),
+                        ui.TextDisplay(f"{emoji.success} Uploaded emoji {emoji_md} `{file.filename[:-4]}`."),
                         color=config.color.green,
                     )
                 )
@@ -563,7 +615,7 @@ class Devs(commands.Cog):
             except Exception as e:
                 view = DesignerView(
                     ui.Container(
-                        ui.TextDisplay(f"❌ Failed to upload emoji `{file.filename[:-4]}`.\n{e}"),
+                        ui.TextDisplay(f"{emoji.error} Failed to upload emoji `{file.filename[:-4]}`.\n{e}"),
                         color=config.color.red,
                     )
                 )
@@ -572,7 +624,7 @@ class Devs(commands.Cog):
         else:
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay("❌ Please upload a valid zip file or a single `.png`/`.gif` file."),
+                    ui.TextDisplay(f"{emoji.error} Please upload a valid zip file or a single `.png`/`.gif` file."),
                     color=config.color.red,
                 )
             )
@@ -681,9 +733,7 @@ class Devs(commands.Cog):
             await ctx.respond(view=view, ephemeral=True)
             return
         else:
-            view = SyncEmojiView(self.client, ctx)
-            await view.build()
-            await ctx.respond(view=view)
+            await ctx.respond(view=await self._sync_emoji_view(ctx))
 
 
 def setup(client: Client):

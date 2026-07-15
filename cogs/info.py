@@ -123,7 +123,7 @@ class StatsView(DesignerView):
     def _get_button(self, button: Literal["Bot Stats", "Lavalink Stats"]):
         if button == "Bot Stats":
             btn = ui.Button(
-                emoji=emoji.server_white,
+                emoji=emoji.music_white,
                 label="Lavalink Stats",
                 style=discord.ButtonStyle.grey,
                 custom_id="lavalink_btn",
