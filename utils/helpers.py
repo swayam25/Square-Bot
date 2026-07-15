@@ -97,7 +97,9 @@ def create_dc_msgs_file(msgs: list[discord.Message]) -> discord.File:
                 sanitized_content = "│" + "\n│ ".join(lines[:-1]) + f"\n╰ {lines[-1]}"
             else:
                 sanitized_content = f"╰ {msg.content}"
-            file.write(f"[{format_datetime(msg.created_at)}] {msg.author} ({msg.author.id})\n{sanitized_content}\n\n")
+            file.write(
+                f"[{format_datetime(msg.created_at, locale='en')}] {msg.author} ({msg.author.id})\n{sanitized_content}\n\n"
+            )
         file.seek(0)
         dc_file = discord.File(fp=file, filename="messages.txt")
     return dc_file
