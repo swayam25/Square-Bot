@@ -150,34 +150,63 @@ def _component_rows(components: list) -> list[tuple[str, str]]:
     return rows
 
 
-def create_dc_msgs_file(msgs: list[discord.Message]) -> discord.File:
+def _fmt_timestamp(dt: datetime.datetime) -> str:
+    """Formats a datetime as an explicit UTC timestamp for message logs."""
+    return format_datetime(dt, "dd MMM yyyy, HH:mm:ss zzz", tzinfo=datetime.UTC, locale="en")
+
+
+def create_dc_msgs_file(
+    msgs: list[discord.Message],
+    uncached_ids: set[int] | None = None,
+    *,
+    guild_id: int | None = None,
+    channel_id: int | None = None,
+) -> discord.File:
     """
-    Create a Discord file containing the provided messages.
+    Create a Discord file containing the provided messages, oldest first.
 
     Each message shows its content, followed by a table block per embed &
     for its attachments & components, all inside the `│ … ╰` tree.
+    Uncached IDs get a minimal entry (only the ID & sent time are known),
+    shown as a jump link when guild_id & channel_id are provided.
 
     Parameters:
         msgs (list[discord.Message]): A list of Discord messages.
+        uncached_ids (set[int] | None): IDs of deleted messages that weren't cached.
+        guild_id (int | None): Guild ID used to build jump links for uncached IDs.
+        channel_id (int | None): Channel ID used to build jump links for uncached IDs.
 
     Returns:
         discord.File: A Discord file object containing the messages.
     """
+    entries: list[tuple[datetime.datetime, str]] = []
+    for msg in msgs:
+        lines = msg.content.splitlines() if msg.content else []
+        for num, embed in enumerate(msg.embeds, start=1):
+            if rows := _embed_rows(embed):
+                lines += ["", f"Embed {num}" if len(msg.embeds) > 1 else "Embed"] + _table(rows)
+        if msg.attachments:
+            rows = [(media.filename, f"{_fmt_bytes(media.size)} · {media.url}") for media in msg.attachments]
+            lines += ["", f"Attachment{'s' if len(msg.attachments) > 1 else ''}"] + _table(rows)
+        if rows := _component_rows(msg.components):
+            lines += ["", "Components"] + _table(rows)
+        if not lines:
+            lines = ["(no content)"]
+        body = "".join(f"│ {line}".rstrip() + "\n" for line in lines[:-1]) + f"╰ {lines[-1]}"
+        entries.append(
+            (msg.created_at, f"[{_fmt_timestamp(msg.created_at)}] {msg.author} ({msg.author.id})\n{body}\n\n")
+        )
+    for msg_id in uncached_ids or ():
+        created_at = discord.utils.snowflake_time(msg_id)
+        ref = (
+            f"https://discord.com/channels/{guild_id}/{channel_id}/{msg_id}"
+            if guild_id and channel_id
+            else f"Message ID: {msg_id}"
+        )
+        entries.append((created_at, f"[{_fmt_timestamp(created_at)}] Unknown\n╰ [Unknown Content • {ref}]\n\n"))
+    entries.sort(key=lambda entry: entry[0])
     with io.StringIO() as file:
-        for msg in msgs:
-            lines = msg.content.splitlines() if msg.content else []
-            for num, embed in enumerate(msg.embeds, start=1):
-                if rows := _embed_rows(embed):
-                    lines += ["", f"Embed {num}" if len(msg.embeds) > 1 else "Embed"] + _table(rows)
-            if msg.attachments:
-                rows = [(media.filename, f"{_fmt_bytes(media.size)} · {media.url}") for media in msg.attachments]
-                lines += ["", f"Attachment{'s' if len(msg.attachments) > 1 else ''}"] + _table(rows)
-            if rows := _component_rows(msg.components):
-                lines += ["", "Components"] + _table(rows)
-            if not lines:
-                lines = ["(no content)"]
-            body = "".join(f"│ {line}".rstrip() + "\n" for line in lines[:-1]) + f"╰ {lines[-1]}"
-            file.write(f"[{format_datetime(msg.created_at, locale='en')}] {msg.author} ({msg.author.id})\n{body}\n\n")
+        file.writelines(text for _, text in entries)
         file.seek(0)
         dc_file = discord.File(fp=file, filename="messages.txt")
     return dc_file

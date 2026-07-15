@@ -62,7 +62,7 @@ class Logging(commands.Cog):
                 return
         await logger.log(self.client, channel, log_type, view, file=file)
 
-    # ———————————————————— MEMBERS ————————————————————
+    # ── Members ──────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -114,7 +114,7 @@ class Logging(commands.Cog):
                 "Member Roles Updated",
                 f"{emoji.user} **Name**: {after.mention} (`{after.name}`)\n"
                 + (f"{emoji.add} **Added**: {clip(', '.join(added), 512)}\n" if added else "")
-                + (f"{emoji.role_red} **Removed**: {clip(', '.join(removed), 512)}" if removed else ""),
+                + (f"{emoji.remove} **Removed**: {clip(', '.join(removed), 512)}" if removed else ""),
                 thumbnail=after.display_avatar.url,
             )
             await self.send_log(after.guild, logger.LogType.MEMBERS, view)
@@ -137,7 +137,7 @@ class Logging(commands.Cog):
                 )
             await self.send_log(after.guild, logger.LogType.MODERATION, view)
 
-    # ———————————————————— MODERATION ————————————————————
+    # ── Moderation ──────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.User | discord.Member):
@@ -162,7 +162,7 @@ class Logging(commands.Cog):
         )
         await self.send_log(guild, logger.LogType.MODERATION, view)
 
-    # ———————————————————— MESSAGES ————————————————————
+    # ── Messages ──────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
@@ -188,8 +188,27 @@ class Logging(commands.Cog):
         await self.send_log(before.guild, logger.LogType.MESSAGES, view)
 
     @commands.Cog.listener()
-    async def on_message_delete(self, msg: discord.Message):
-        if not msg.guild or msg.author.bot:
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
+        if payload.guild_id is None:
+            return
+        guild = self.client.get_guild(payload.guild_id)
+        if guild is None:
+            return
+        msg = payload.cached_message
+        if msg is None:  # Uncached: only IDs are known, content is unrecoverable
+            view = log_view(
+                "Message Deleted",
+                f"{emoji.channel_red} **Channel**: <#{payload.channel_id}>\n"
+                f"{emoji.duration_red} **Sent**: "
+                f"{discord.utils.format_dt(discord.utils.snowflake_time(payload.message_id), 'R')}\n"
+                f"{emoji.description_red} **Message**: "
+                f"[`{payload.message_id}`](https://discord.com/channels/{payload.guild_id}/{payload.channel_id}/{payload.message_id})"
+                f" (*unknown content*)",
+                color=config.color.red,
+            )
+            await self.send_log(guild, logger.LogType.MESSAGES, view)
+            return
+        if msg.author.bot:
             return
         extra: list[ui.Item] = []
         if msg.stickers:
@@ -208,26 +227,37 @@ class Logging(commands.Cog):
             "Message Deleted",
             f"{emoji.owner_red} **Author**: {msg.author.mention}\n"
             f"{emoji.channel_red} **Channel**: {msg.channel.mention} (`{msg.channel.name}`)\n"
-            f"{emoji.duration_red} **Sent**: {discord.utils.format_dt(msg.created_at, 'R')}\n"
+            f"{emoji.duration_red} **Sent**: {discord.utils.format_dt(msg.created_at, 'R')}"
             + (f"\n{emoji.description_red} **Message**:\n{clip(msg.content)}" if msg.content else ""),
             color=config.color.red,
             extra=extra,
         )
-        await self.send_log(msg.guild, logger.LogType.MESSAGES, view)
+        await self.send_log(guild, logger.LogType.MESSAGES, view)
 
     @commands.Cog.listener()
-    async def on_bulk_message_delete(self, msgs: list[discord.Message]):
-        if not msgs or not msgs[0].guild:
+    async def on_raw_bulk_message_delete(self, payload: discord.RawBulkMessageDeleteEvent):
+        if payload.guild_id is None:
             return
+        guild = self.client.get_guild(payload.guild_id)
+        if guild is None:
+            return
+        # Only cached messages still carry their content, the rest are logged by ID
+        msgs = list(payload.cached_messages)
+        uncached_ids = set(payload.message_ids) - {msg.id for msg in msgs}
         view = log_view(
             "Bulk Message Deleted",
-            f"{emoji.channel_red} **Channel**: {msgs[0].channel.mention} (`{msgs[0].channel.name}`)\n"
-            f"{emoji.description_red} **Messages Deleted**: {len(msgs)}",
+            f"{emoji.channel_red} **Channel**: <#{payload.channel_id}>\n"
+            f"{emoji.description_red} **Messages Deleted**: {len(payload.message_ids)}",
             color=config.color.red,
         )
-        await self.send_log(msgs[0].guild, logger.LogType.MESSAGES, view, file=create_dc_msgs_file(msgs))
+        await self.send_log(
+            guild,
+            logger.LogType.MESSAGES,
+            view,
+            file=create_dc_msgs_file(msgs, uncached_ids, guild_id=payload.guild_id, channel_id=payload.channel_id),
+        )
 
-    # ———————————————————— CHANNELS & THREADS ————————————————————
+    # ── Channel & Threads ──────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
@@ -284,7 +314,7 @@ class Logging(commands.Cog):
         )
         await self.send_log(thread.guild, logger.LogType.CHANNELS, view)
 
-    # ———————————————————— ROLES ————————————————————
+    # ── Roles ──────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_guild_role_create(self, role: discord.Role):
@@ -317,7 +347,7 @@ class Logging(commands.Cog):
         view = log_view("Role Updated", f"{emoji.role} **Role**: {after.mention}\n" + "\n".join(lines))
         await self.send_log(after.guild, logger.LogType.ROLES, view)
 
-    # ———————————————————— SERVER ————————————————————
+    # ── Guild ──────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_guild_update(self, before: discord.Guild, after: discord.Guild):
@@ -365,7 +395,7 @@ class Logging(commands.Cog):
         view = log_view("Stickers Updated", clip("\n".join(lines)))
         await self.send_log(guild, logger.LogType.SERVER, view)
 
-    # ———————————————————— VOICE ————————————————————
+    # ── Voice ──────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_voice_state_update(
@@ -393,7 +423,7 @@ class Logging(commands.Cog):
             )
         await self.send_log(member.guild, logger.LogType.VOICE, view)
 
-    # ———————————————————— INVITES ————————————————————
+    # ── Invites ──────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite):
@@ -427,7 +457,7 @@ class Logging(commands.Cog):
         )
         await self.send_log(guild, logger.LogType.INVITES, view)
 
-    # ———————————————————— AUTOMOD ————————————————————
+    # ── Automod ──────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_auto_moderation_action_execution(self, payload: discord.AutoModActionExecutionEvent):
