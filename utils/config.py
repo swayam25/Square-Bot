@@ -68,4 +68,13 @@ class LavalinkConfig(TypedDict):
     secure: bool
 
 
-lavalink: LavalinkConfig = data["lavalink"]
+def _lavalink_nodes() -> list[LavalinkConfig]:
+    """Returns the configured lavalink nodes.
+
+    Supports both a single `[lavalink]` table and a `[[lavalink]]` array of tables.
+    """
+    nodes = data["lavalink"]
+    return nodes if isinstance(nodes, list) else [nodes]
+
+
+lavalink: list[LavalinkConfig] = _lavalink_nodes()

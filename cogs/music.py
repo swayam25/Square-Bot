@@ -10,9 +10,9 @@ from core import Client
 from core.view import DesignerView
 from discord import SlashCommandGroup, ui
 from discord.commands import option, slash_command
-from discord.ext import commands
+from discord.ext import commands, tasks
 from music import recommend, store
-from music.client import LavalinkVoiceClient
+from music.client import LavalinkVoiceClient, add_nodes
 from music.player import _get_render_lock, cleanup_guild, render_player, slash_log, stop_player
 from music.queue import QueueListView
 from music.utils import container, music_log, reply, sources
@@ -36,16 +36,12 @@ url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
 class Music(commands.Cog):
     def __init__(self, client: Client):
         self.client = client
+        self._node_reconnects: dict[str, asyncio.Task] = {}
+        self._node_down_ticks: dict[str, int] = {}
 
     # Connect to lavalink
     def connect_lavalink(self):
-        self.client.lavalink.add_node(
-            host=config.lavalink["host"],
-            port=config.lavalink["port"],
-            password=config.lavalink["password"],
-            region="auto",
-            ssl=config.lavalink["secure"],
-        )
+        add_nodes(self.client.lavalink)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -64,6 +60,39 @@ class Music(commands.Cog):
         if self.client.lavalink._event_hooks:
             self.client.lavalink._event_hooks.clear()
         self.client.lavalink.add_event_hooks(self)
+        if not self.revive_nodes.is_running():
+            self.revive_nodes.start()
+
+    @tasks.loop(minutes=2)
+    async def revive_nodes(self):
+        """Reconnects dead nodes"""
+        if self.client.lavalink is None:
+            return
+        for node in self.client.lavalink.nodes:
+            await self._revive_node(node)
+
+    async def _revive_node(self, node: lavalink.Node):
+        if node.available:
+            self._node_down_ticks.pop(node.name, None)
+            return
+        prev = self._node_reconnects.get(node.name)
+        if prev is not None and not prev.done():
+            return  # An earlier revive attempt is still retrying
+        try:
+            reachable = await node.get_rest_latency() >= 0
+        except Exception:  # Raw aiohttp errors escape lavalink's REST layer
+            reachable = False
+        if not reachable or node.available:
+            self._node_down_ticks.pop(node.name, None)
+            return
+        ticks = self._node_down_ticks.get(node.name, 0) + 1
+        if ticks < 2:
+            self._node_down_ticks[node.name] = ticks
+            return
+        self._node_down_ticks.pop(node.name, None)
+        task = await node.connect()
+        if task is not None:
+            self._node_reconnects[node.name] = task
 
     @lavalink.listener(lavalink.NodeReadyEvent)
     async def node_ready_hook(self, event: lavalink.NodeReadyEvent):
@@ -122,6 +151,7 @@ class Music(commands.Cog):
     # Unloading cog
     def cog_unload(self):
         global _lavalink_live
+        self.revive_nodes.cancel()
         if _lavalink_live and _lavalink_live.is_started:
             _lavalink_live.stop()
             _lavalink_live = None
@@ -145,10 +175,10 @@ class Music(commands.Cog):
         vc: discord.VoiceChannel | None = (
             self.client.get_channel(int(event.player.channel_id)) if event.player.channel_id else None
         )
-        tasks = [render_player(self.client, guild_id)]
+        coros = [render_player(self.client, guild_id)]
         if vc is not None:
-            tasks.append(vc.set_status(status=f"Playing **{player.current.title}**"))
-        await asyncio.gather(*tasks, return_exceptions=True)
+            coros.append(vc.set_status(status=f"Playing **{player.current.title}**"))
+        await asyncio.gather(*coros, return_exceptions=True)
 
     @lavalink.listener(lavalink.TrackStuckEvent, lavalink.TrackExceptionEvent)
     async def track_stuck_or_exception_hook(self, event: lavalink.TrackExceptionEvent):

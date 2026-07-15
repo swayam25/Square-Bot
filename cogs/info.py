@@ -4,6 +4,7 @@ import lavalink
 import platform
 import psutil
 import time
+import toml
 from babel.dates import format_timedelta
 from core import Client
 from core.view import DesignerView
@@ -40,45 +41,68 @@ class Stats:
         ]
 
         if is_dev:
+            with open("pyproject.toml") as f:
+                toml_data = toml.load(f)
             mem = psutil.virtual_memory()
             disk = psutil.disk_usage("/")
             stats_parts.extend(
                 [
-                    f"{emoji.python} **Python Version**: `v{platform.python_version()}`",
-                    f"{emoji.pycord} **Pycord Version**: `v{discord.__version__}`",
+                    f"{emoji.version} **Version**: `v{toml_data['project']['version']}` `(Python v{platform.python_version()} | Pycord v{discord.__version__})`",
                     f"{emoji.memory} **Memory**: {self._format_memory(mem.total, mem.used, mem.available)}",
                     f"{emoji.storage} **Storage**: {self._format_memory(disk.total, disk.used, disk.free)}",
-                    f"{emoji.cpu} **Total CPU Cores**: `{psutil.cpu_count()}`",
-                    f"{emoji.tasks} **CPU Load**: `{psutil.cpu_percent()}%`",
+                    f"{emoji.cpu} **CPU**: `{psutil.cpu_count()} Cores` `({round(psutil.cpu_freq().current)} MHz | {psutil.cpu_percent()}% Usage)`",
                 ]
             )
 
         return [ui.TextDisplay(f"## {self.client.user.name} Stats"), ui.TextDisplay("\n".join(stats_parts))]
 
-    async def get_lavalink_stats(self, node: lavalink.Node) -> list[ui.Item]:
+    async def get_lavalink_stats(self, manager: lavalink.NodeManager | None) -> list[ui.Item]:
+        header = ui.TextDisplay(f"## {self.client.user.name} Lavalink Stats")
+        nodes = manager.nodes if manager else []
+        if not nodes:
+            return [header, ui.TextDisplay(f"{emoji.error} No Lavalink nodes are configured.")]
+
+        online = [n for n in nodes if n.available and n.stats]
+        node = online[0] if online else None
+        node_parts = []
+        for i, n in enumerate(nodes, start=1):
+            part = f"{emoji.on if n.available else emoji.off} Node {i}"
+            if n is node:
+                part = f"**{part}**"
+            node_parts.append(part)
+        node_status = ui.TextDisplay(f"-# {' • '.join(node_parts)}")
+
+        if node is None:
+            return [header, node_status]
+
         dur = format_timedelta(datetime.timedelta(milliseconds=node.stats.uptime), locale="en")
         is_dev = await check.is_dev(self.ctx)
-        latency = round(await node.get_rest_latency())
+        try:
+            latency = round(await node.get_rest_latency())
+        except Exception:  # Raw aiohttp errors escape lavalink's REST layer
+            latency = -1
 
         stats_parts = [
             f"{emoji.ping} **Node Latency**: `{latency} ms`",
             f"{emoji.duration} **Node Uptime**: `{dur}`",
-            f"{emoji.music} **Players Connected**: `{node.stats.players}`",
-            f"{emoji.play} **Currently Playing**: `{node.stats.playing_players}`",
+            f"{emoji.music} **Players Connected**: `{sum(n.stats.players for n in online)}`",
+            f"{emoji.play} **Currently Playing**: `{sum(n.stats.playing_players for n in online)}`",
         ]
 
         if is_dev:
-            version = await node.get_version()
+            try:
+                version = f"v{await node.get_version()}"
+            except Exception:
+                version = "Unknown"
             stats_parts.extend(
                 [
-                    f"{emoji.lavalink} **Lavalink Version**: `v{version}`",
+                    f"{emoji.version} **Lavalink Version**: `{version}`",
                     f"{emoji.memory} **Memory**: {self._format_memory(node.stats.memory_allocated, node.stats.memory_used, node.stats.memory_free)}",
-                    f"{emoji.cpu} **Total CPU Cores**: `{node.stats.cpu_cores}`",
-                    f"{emoji.tasks} **CPU Load**: `{round(node.stats.system_load * 100)}% System | {round(node.stats.lavalink_load * 100)}% Lavalink`",
+                    f"{emoji.cpu} **CPU**: `{node.stats.cpu_cores} Cores` `({round(node.stats.system_load * 100)}% System | {round(node.stats.lavalink_load * 100)}% Lavalink)`",
                 ]
             )
 
-        return [ui.TextDisplay(f"## {self.client.user.name} Lavalink Stats"), ui.TextDisplay("\n".join(stats_parts))]
+        return [header, node_status, ui.TextDisplay("\n".join(stats_parts))]
 
 
 class StatsView(DesignerView):
@@ -121,7 +145,7 @@ class StatsView(DesignerView):
             items = await self.stats.get_bot_stats()
             button = self._get_button("Bot Stats")
         else:
-            items = await self.stats.get_lavalink_stats(self.client.lavalink.nodes[0])
+            items = await self.stats.get_lavalink_stats(self.manager)
             button = self._get_button("Lavalink Stats")
 
         container = ui.Container(*items)

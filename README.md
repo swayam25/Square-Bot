@@ -13,14 +13,6 @@ Advanced multipurpose discord bot for all your needs.
 
 </div>
 
-## 🎯 Features
-
-- Advanced moderation system.
-- Lots of utility commands.
-- Advanced music system with support for various sources (*depends on your Lavalink server*).
-- Clean & informative help menu.
-- Supports Discord Components v2.
-
 ## 💫 Prerequisites
 
 ### 🧰 Tools
@@ -106,23 +98,24 @@ Advanced multipurpose discord bot for all your needs.
 
 ## 🔑 Configuration
 
-| Key                  | Type        | Description                                                                                                  |
-| -------------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
-| `owner-id`           | `int`       | The Discord ID of the bot owner.                                                                             |
-| `owner-guild-ids`    | `list[int]` | A list of Discord IDs of the owner's guilds. Owner/Developer only commands are created only in these guilds. |
-| `system-channel-id`  | `int`       | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.      |
-| `support-server-url` | `str`       | The invite URL of the support server.                                                                        |
-| `bot-token`          | `str`       | Discord Bot Token. Get this from developer portal.                                                           |
-| `drizzle-password`   | `str`       | The password for Drizzle Studio Gateway. This is used to access the database panel.                          |
-| `database-url`       | `str`       | The URL for the PostgreSQL database.                                                                         |
-| `colors.theme`       | `str`       | The color theme for the bot's view containers.                                                               |
-| `colors.green`       | `str`       | The color code for green color in view containers.                                                           |
-| `colors.red`         | `str`       | The color code for red color in view containers.                                                             |
-| `colors.orange`      | `str`       | The color code for orange color in view containers.                                                          |
-| `lavalink.host`      | `str`       | The host of the Lavalink server.                                                                             |
-| `lavalink.port`      | `int`       | The port of the Lavalink server.                                                                             |
-| `lavalink.password`  | `str`       | The password for the Lavalink server.                                                                        |
-| `lavalink.secure`    | `bool`      | Whether to use secure connection (wss) for Lavalink.                                                         |
+| Key                  | Type        | Description                                                                                                       |
+| -------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| `owner-id`           | `int`       | The Discord ID of the bot owner.                                                                                  |
+| `owner-guild-ids`    | `list[int]` | A list of Discord IDs of the owner's guilds. Owner/Developer only commands are created only in these guilds.      |
+| `system-channel-id`  | `int`       | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.           |
+| `support-server-url` | `str`       | The invite URL of the support server.                                                                             |
+| `bot-token`          | `str`       | Discord Bot Token. Get this from developer portal.                                                                |
+| `drizzle-password`   | `str`       | The password for Drizzle Studio Gateway. This is used to access the database panel.                               |
+| `database-url`       | `str`       | The URL for the PostgreSQL database.                                                                              |
+| `colors.theme`       | `str`       | The color theme for the bot's view containers.                                                                    |
+| `colors.green`       | `str`       | The color code for green color in view containers.                                                                |
+| `colors.red`         | `str`       | The color code for red color in view containers.                                                                  |
+| `colors.orange`      | `str`       | The color code for orange color in view containers.                                                               |
+| `[[lavalink]]`       | `table`     | A Lavalink node. Multiple `[[lavalink]]` tables can be configured, players fail over to another node if one dies. |
+| `lavalink.host`      | `str`       | The host of the Lavalink server.                                                                                  |
+| `lavalink.port`      | `int`       | The port of the Lavalink server.                                                                                  |
+| `lavalink.password`  | `str`       | The password for the Lavalink server.                                                                             |
+| `lavalink.secure`    | `bool`      | Whether to use secure connection (wss) for Lavalink.                                                              |
 
 ## ✨ Using Custom Emojis
 

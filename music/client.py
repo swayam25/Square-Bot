@@ -6,6 +6,19 @@ from lavalink.errors import ClientError
 from utils import config
 
 
+def add_nodes(client: lavalink.Client):
+    """Registers every configured lavalink node with the client."""
+    for node in config.lavalink:
+        client.add_node(
+            host=node["host"],
+            port=node["port"],
+            password=node["password"],
+            region="auto",
+            ssl=node["secure"],
+            name=node["host"],
+        )
+
+
 class LavalinkVoiceClient(VoiceProtocol):
     def __init__(self, client: Client, channel: discord.abc.Connectable):
         self.client = client
@@ -15,13 +28,7 @@ class LavalinkVoiceClient(VoiceProtocol):
 
         if self.client.lavalink is None:
             self.client.lavalink = lavalink.Client(client.user.id)
-            self.client.lavalink.add_node(
-                host=config.lavalink["host"],
-                port=config.lavalink["port"],
-                password=config.lavalink["password"],
-                region="auto",
-                ssl=config.lavalink["secure"],
-            )
+            add_nodes(self.client.lavalink)
         self.lavalink = self.client.lavalink
 
     async def on_voice_server_update(self, data):
