@@ -41,7 +41,7 @@ dev:
 
 [private]
 db-ensure-init:
-    @DB_HOST=localhost uv run aerich init-db --safe > /dev/null 2>&1 || true
+    -@DB_HOST=localhost uv run aerich init-db > /dev/null 2>&1
 
 # Generate a new migration from schema changes
 db-migrate name="auto": db-ensure-init
