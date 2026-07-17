@@ -91,7 +91,6 @@ class QueueBtnCallback:
             queue_view.page = total_pages
         await _update_queue_view(interaction, queue_view)
         await music_log(
-            interaction.client,
             interaction.guild_id,
             f"{interaction.user.mention} is now playing track `{track_index + 1}` from the queue.",
         )

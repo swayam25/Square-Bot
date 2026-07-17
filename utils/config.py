@@ -65,6 +65,7 @@ class LavalinkConfig(TypedDict):
     host: str
     port: int
     password: str
+    region: str
     secure: bool
 
 

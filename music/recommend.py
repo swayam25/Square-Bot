@@ -2,6 +2,7 @@ import asyncio
 import lavalink
 import random
 from music import store
+from music.client import load_tracks
 
 _MIN_POOL = 5  # Fetch fallbacks only when primary yields fewer than this
 
@@ -22,7 +23,7 @@ def cleanup(guild_id: int) -> None:
 
 async def _fetch(player: lavalink.DefaultPlayer, query: str) -> list[lavalink.AudioTrack]:
     try:
-        result = await player.node.get_tracks(query)
+        result = await load_tracks(player, query)
     except Exception:
         return []
     if not result or not result.tracks:

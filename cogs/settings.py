@@ -51,7 +51,7 @@ class SettingsCommand:
                 ui.TextDisplay(
                     "\n".join(
                         f"{emoji.bullet} **{log_type.label}**: {mention_ch(log_channels.get(log_type.key))}"
-                        for log_type in LogType.configurable()
+                        for log_type in LogType
                     )
                 ),
             )
@@ -93,7 +93,7 @@ class Settings(commands.Cog):
         "reset",
         description="Setting to reset",
         choices=["All", "All Logs", "Ticket Commands", "Media Only", "Auto Role"]
-        + [log_type.label for log_type in LogType.configurable()],
+        + [log_type.label for log_type in LogType],
         required=False,
     )
     async def settings(self, ctx: discord.ApplicationContext, reset: str):
@@ -116,13 +116,13 @@ class Settings(commands.Cog):
     @option(
         "type",
         description="Log type to set",
-        choices=["All Logs"] + [log_type.label for log_type in LogType.configurable()],
+        choices=["All Logs"] + [log_type.label for log_type in LogType],
     )
     @option("channel", description="Mention the log channel")
     async def set_log(self, ctx: discord.ApplicationContext, type: str, channel: discord.TextChannel):
         """Sets a log channel for the given log type."""
         if type == "All Logs":
-            await set_all_log_channels(ctx.guild.id, [log_type.key for log_type in LogType.configurable()], channel.id)
+            await set_all_log_channels(ctx.guild.id, [log_type.key for log_type in LogType], channel.id)
         else:
             await set_log_channel(ctx.guild.id, LogType.from_label(type).key, channel.id)
         view = DesignerView(

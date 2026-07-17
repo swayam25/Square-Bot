@@ -1,9 +1,17 @@
 import asyncio
+import datetime
 import discord
+import lavalink
 import math
 import os
+import platform
+import psutil
 import sys
+import time
+import toml
 import zipfile
+from babel.dates import format_timedelta
+from collections import defaultdict, deque
 from core import Client
 from core.view import DesignerView
 from db.funcs.dev import add_dev, fetch_dev_ids, remove_dev
@@ -13,9 +21,17 @@ from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from discord.ui import ActionRow
 from io import BytesIO
+from typing import Literal
 from utils import check, config, temp
 from utils.emoji import Emoji, emoji, reload_emoji, update_emoji
+from utils.helpers import fmt_memory
 from utils.logger import cleanup_guild
+from utils.term import Term
+
+
+def _has_stats(node: lavalink.Node) -> bool:
+    """Whether a node has reported real stats."""
+    return bool(node.available and not node.stats.is_fake)
 
 
 class GuildContainer(ui.Container):
@@ -70,6 +86,322 @@ class GuildListView(DesignerView):
             self.page = total_pages
         self.build()
         await interaction.edit(view=self)
+
+
+class StatsView(DesignerView):
+    """A terminal-style report of bot, host & lavalink node stats, split across two pages."""
+
+    process = psutil.Process()
+
+    BAR_WIDTH = 10
+    CHART_HEIGHT = 4
+    REPORT_LIMIT = 3900
+    HISTORY_LEN = 40
+    AUTO_REFRESH_INTERVAL = 2
+    VIEW_TIMEOUT = 120
+
+    def __init__(self, client: Client, ctx: discord.ApplicationContext):
+        super().__init__(ctx=ctx, check_author_interaction=True, timeout=self.VIEW_TIMEOUT)
+        self.client = client
+        self.history: defaultdict[str, deque[float]] = defaultdict(lambda: deque(maxlen=self.HISTORY_LEN))
+        self.page: Literal["main", "lavalink"] = "main"
+        self.auto = False
+        self.auto_task: asyncio.Task | None = None
+        self.build_lock = asyncio.Lock()
+
+    def _track(self, key: str, value: float) -> list[float]:
+        """Appends a sample and returns the series so far."""
+        self.history[key].append(value)
+        return list(self.history[key])
+
+    def _bar(self, percent: float) -> str:
+        """Renders a percentage as a fixed-width ASCII meter, e.g. `[####------]  42.1%`."""
+        percent = min(max(percent, 0.0), 100.0)
+        filled = int(round(self.BAR_WIDTH * percent / 100))
+        return f"[{'#' * filled}{'-' * (self.BAR_WIDTH - filled)}] {percent:5.1f}%"
+
+    def _axis(self, low: float, high: float) -> list[str]:
+        """Formats the y-axis labels, top row first."""
+        values = [high - (high - low) * r / self.CHART_HEIGHT for r in range(self.CHART_HEIGHT + 1)]
+        labels = [f"{v:.0f}" for v in values]
+        for decimals in range(1, 4):
+            if len(set(labels)) == len(labels):
+                break
+            labels = [f"{v:.{decimals}f}" for v in values]
+        return labels
+
+    def _chart(self, title: str, series: list[float]) -> list[str]:
+        """Plots a series as a line chart; renders only while auto-refresh is running."""
+        caption = f"     last {len(series)} samples"
+        if not self.auto or len(series) < 2:
+            return []
+
+        low, high = min(series), max(series)
+        if high - low < 1e-9:
+            return [title, f"  {Term.num(low)} ┼{'─' * len(series)}", caption, ""]
+
+        def row_of(value: float) -> int:
+            return round((value - low) / (high - low) * self.CHART_HEIGHT)
+
+        labels = self._axis(low, high)
+        label_width = max(len(label) for label in labels)
+        grid = [[" "] * len(series) for _ in range(self.CHART_HEIGHT + 1)]
+
+        for x in range(len(series) - 1):
+            start, end = row_of(series[x]), row_of(series[x + 1])
+            if start == end:
+                grid[self.CHART_HEIGHT - start][x] = "─"
+            else:
+                grid[self.CHART_HEIGHT - end][x] = "╰" if start > end else "╭"
+                grid[self.CHART_HEIGHT - start][x] = "╮" if start > end else "╯"
+                for y in range(min(start, end) + 1, max(start, end)):
+                    grid[self.CHART_HEIGHT - y][x] = "│"
+        grid[self.CHART_HEIGHT - row_of(series[-1])][-1] = "─"
+
+        origin = self.CHART_HEIGHT - row_of(series[0])
+        lines = [
+            f"  {label.rjust(label_width)} {'┼' if r == origin else '┤'}{''.join(row)}".rstrip()
+            for r, (label, row) in enumerate(zip(labels, grid, strict=True))
+        ]
+        return [title, *lines, caption, ""]
+
+    async def build(self) -> None:
+        # Serialize rebuilds and keep the clear/add mutation free of awaits: a concurrent
+        # build (auto-refresh tick vs button click) would otherwise interleave and leave the
+        # view empty or with duplicated components.
+        async with self.build_lock:
+            sections, omitted = await (self._main_sections() if self.page == "main" else self._lavalink_sections())
+
+            self.clear_items()
+            container = ui.Container()
+            for section in sections:
+                container.add_item(ui.TextDisplay(Term.fence(section)))
+            if omitted:
+                container.add_item(
+                    ui.TextDisplay(f"-# {omitted} node section{'s' if omitted > 1 else ''} omitted: report too long.")
+                )
+            container.add_item(
+                ui.TextDisplay(f"-# Updated {discord.utils.format_dt(datetime.datetime.now(datetime.UTC), 'R')}")
+            )
+            self.add_item(container)
+
+            nav = ui.Button(
+                emoji=emoji.music_white if self.page == "main" else emoji.previous_white,
+                label="Lavalink" if self.page == "main" else "Back",
+                style=discord.ButtonStyle.grey,
+                custom_id="stats_nav_btn",
+            )
+            nav.callback = self._switch_page
+            refresh = ui.Button(
+                emoji=emoji.reload_white,
+                label="Refresh",
+                style=discord.ButtonStyle.grey,
+                custom_id="refresh_stats_btn",
+            )
+            refresh.callback = self._manual_refresh
+            auto = ui.Button(
+                emoji=emoji.pause_white if self.auto else emoji.play_white,
+                label="Stop Auto Refresh" if self.auto else "Auto Refresh",
+                style=discord.ButtonStyle.grey,
+                custom_id="auto_stats_btn",
+            )
+            auto.callback = self._toggle_auto
+            self.add_item(ui.ActionRow(nav, refresh, auto))
+
+    async def _manual_refresh(self, interaction: discord.Interaction) -> None:
+        self.disable_all_items()
+        if btn := self.get_item("refresh_stats_btn"):
+            btn.emoji = emoji.loading_white
+            btn.label = "Refreshing..."
+        await interaction.edit(view=self)
+        await self.build()
+        await interaction.edit(view=self)
+
+    async def _switch_page(self, interaction: discord.Interaction) -> None:
+        self.page = "lavalink" if self.page == "main" else "main"
+        self.disable_all_items()
+        if btn := self.get_item("stats_nav_btn"):
+            btn.emoji = emoji.loading_white
+        await interaction.edit(view=self)
+        await self.build()
+        await interaction.edit(view=self)
+
+    async def _toggle_auto(self, interaction: discord.Interaction) -> None:
+        self.auto = not self.auto
+        self._cancel_auto()
+        if self.auto:
+            self.history.clear()
+        self.disable_all_items()
+        if btn := self.get_item("auto_stats_btn"):
+            btn.emoji = emoji.loading_white
+        await interaction.edit(view=self)
+        await self.build()
+        await interaction.edit(view=self)
+        if self.auto:
+            self.auto_task = asyncio.create_task(self._auto_loop(interaction.message))
+
+    def _cancel_auto(self) -> None:
+        if self.auto_task:
+            self.auto_task.cancel()
+            self.auto_task = None
+
+    async def _auto_loop(self, message: discord.Message) -> None:
+        try:
+            while self.auto:
+                await asyncio.sleep(self.AUTO_REFRESH_INTERVAL)
+                await self.build()
+                await message.edit(view=self)
+        except asyncio.CancelledError:
+            pass
+        except discord.HTTPException:
+            self.auto = False
+
+    async def on_timeout(self) -> None:
+        self.auto = False
+        self._cancel_auto()
+        await super().on_timeout()
+
+    async def _main_sections(self) -> tuple[list[list[str]], int]:
+        self.process.cpu_percent()  # prime: cpu_percent measures since the previous call
+
+        host_cpu = await asyncio.to_thread(psutil.cpu_percent, 0.1)
+        return [self._bot_block(), self._runtime_block(), self._host_block(host_cpu)], 0
+
+    async def _lavalink_sections(self) -> tuple[list[list[str]], int]:
+        nodes = self.client.lavalink.node_manager.nodes if self.client.lavalink else []
+        sections = [self._nodes_block(nodes)]
+        sections += await asyncio.gather(*(self._node_block(i, n) for i, n in enumerate(nodes, start=1)))
+
+        omitted = 0
+        while sum(len(Term.fence(s)) for s in sections) > self.REPORT_LIMIT and len(sections) > 1:
+            sections, omitted = sections[:-1], omitted + 1
+        return sections, omitted
+
+    def _bot_block(self) -> list[str]:
+        uptime = datetime.timedelta(seconds=int(time.time() - self.process.create_time()))
+        latency = self.client.latency * 1000
+        rows = [
+            ("Latency", f"{round(latency)} ms"),
+            ("Uptime", format_timedelta(uptime, locale="en")),
+            ("Shards", f"{self.client.shard_count or 1}"),
+            ("Commands", f"{len(self.client.application_commands):,}"),
+            ("Guilds", f"{len(self.client.guilds):,}"),
+            ("Members", f"{sum(1 for _ in self.client.get_all_members()):,}"),
+            ("Channels", f"{sum(1 for _ in self.client.get_all_channels()):,}"),
+            ("Voice", f"{len(self.client.voice_clients):,}"),
+        ]
+        return ["BOT", *Term.kv(rows), "", *self._chart("Latency (ms)", self._track("latency", latency))]
+
+    def _runtime_block(self) -> list[str]:
+        with open("pyproject.toml") as f:
+            version = toml.load(f)["project"]["version"]
+        rss = self.process.memory_info().rss
+        rows = [
+            ("Square", f"v{version}"),
+            ("Python", f"v{platform.python_version()}"),
+            ("Pycord", f"v{discord.__version__}"),
+            ("Lavalink.py", f"v{lavalink.__version__}"),
+            ("PID", f"{self.process.pid}"),
+            ("Threads", f"{self.process.num_threads():,}"),
+            ("RSS", fmt_memory(rss)),
+            ("CPU", f"{self.process.cpu_percent():.1f}%"),
+        ]
+        return ["RUNTIME", *Term.kv(rows), "", *self._chart("RSS (MB)", self._track("rss", rss / 1024 / 1024))]
+
+    def _host_block(self, host_cpu: float) -> list[str]:
+        mem = psutil.virtual_memory()
+        disk = psutil.disk_usage("/")
+        freq = psutil.cpu_freq()
+        cores = psutil.cpu_count(logical=False) or 0
+        threads = psutil.cpu_count() or 0
+        grid = Term.grid(
+            ["RESOURCE", "USED", "TOTAL", "LOAD"],
+            [
+                ["Memory", fmt_memory(mem.used), fmt_memory(mem.total), self._bar(mem.percent)],
+                ["Storage", fmt_memory(disk.used), fmt_memory(disk.total), self._bar(disk.percent)],
+                ["CPU", f"{threads} thr", f"{cores} cores", self._bar(host_cpu)],
+            ],
+        )
+        rows = [
+            ("System", f"{platform.system()} {platform.release()}"),
+            ("Machine", platform.machine()),
+            ("CPU Clock", f"{round(freq.current):,} MHz" if freq else "unknown"),
+        ]
+        return [
+            "HOST",
+            *Term.kv(rows, cols=1),
+            "",
+            *grid,
+            "",
+            *self._chart("CPU (%)", self._track("host_cpu", host_cpu)),
+            *self._chart("Memory (%)", self._track("host_mem", mem.percent)),
+        ]
+
+    def _nodes_block(self, nodes: list[lavalink.Node]) -> list[str]:
+        if not nodes:
+            return ["LAVALINK", "  No nodes are configured."]
+        rows = []
+        for i, node in enumerate(nodes, start=1):
+            stats = _has_stats(node)
+            rows.append(
+                [
+                    f"{i}",
+                    node.name,
+                    "ONLINE" if node.available else "OFFLINE",
+                    f"{node.stats.players}" if stats else "-",
+                    f"{node.stats.playing_players}" if stats else "-",
+                ]
+            )
+        online_count = sum(1 for n in nodes if n.available)
+        return [
+            f"LAVALINK • {online_count}/{len(nodes)} online",
+            *Term.grid(["#", "NODE", "STATE", "PLAYERS", "PLAYING"], rows),
+        ]
+
+    async def _node_block(self, index: int, node: lavalink.Node) -> list[str]:
+        title = f"NODE {index} • {node.name}"
+        if not node.available:
+            return [title, *Term.kv([("State", "OFFLINE"), ("Region", node.region or "none")], cols=1)]
+
+        async def version() -> str:
+            try:
+                return f"v{await node.get_version()}"
+            except Exception:
+                return "unknown"
+
+        async def rest() -> str:
+            try:
+                return f"{round(await node.get_rest_latency())} ms"
+            except Exception:
+                return "unknown"
+
+        node_version, node_rest = await asyncio.gather(version(), rest())
+        rows = [
+            ("State", "ONLINE"),
+            ("Version", node_version),
+            ("Region", node.region or "none"),
+            ("Rest", node_rest),
+        ]
+        if not _has_stats(node):
+            return [title, *Term.kv(rows, cols=1), "", "  Awaiting first stats frame."]
+
+        stats = node.stats
+        rows += [
+            ("Uptime", format_timedelta(datetime.timedelta(milliseconds=stats.uptime), locale="en")),
+            ("Penalty", f"{node.penalty:.1f}"),
+            ("Players", f"{stats.players:,}"),
+            ("Playing", f"{stats.playing_players:,}"),
+            ("Memory", f"{fmt_memory(stats.memory_used)} / {fmt_memory(stats.memory_allocated)}"),
+        ]
+        allocated = stats.memory_allocated or 1
+        return [
+            title,
+            *Term.kv(rows, cols=1),
+            "",
+            f"  {'Memory'.ljust(8)} {self._bar(stats.memory_used / allocated * 100)}",
+            f"  {'CPU Sys'.ljust(8)} {self._bar(stats.system_load * 100)}",
+            f"  {'CPU Lava'.ljust(8)} {self._bar(stats.lavalink_load * 100)}",
+        ]
 
 
 class SyncEmojiView(DesignerView):
@@ -332,6 +664,16 @@ class Devs(commands.Cog):
                 color=config.color.green,
             )
         )
+        await ctx.respond(view=view)
+
+    # Stats
+    @slash_command(guild_ids=config.owner_guild_ids, name="stats")
+    @check.is_dev()
+    async def stats(self, ctx: discord.ApplicationContext):
+        """Shows bot, host & lavalink node stats."""
+        await ctx.defer()
+        view = StatsView(self.client, ctx)
+        await view.build()
         await ctx.respond(view=view)
 
     # Guild slash cmd group

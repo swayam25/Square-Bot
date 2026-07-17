@@ -1,11 +1,10 @@
 import discord
 import lavalink
 import re
-from core import Client
 from core.view import DesignerView
 from discord import ui
 from music import store
-from utils import config, logger
+from utils import config
 from utils.emoji import emoji
 
 # Music sources
@@ -58,21 +57,25 @@ async def reply(
         await interaction.response.send_message(view=view, ephemeral=True)
 
 
-async def music_log(client: Client, guild_id: int, content: str, *, color: int | None = None) -> None:
+async def music_log(guild_id: int, content: str, *, color: int | None = None) -> None:
     """
-    Posts a log message to the guild's player channel via webhook.
+    Posts a self-deleting log message to the guild's player channel.
 
     The message auto-deletes after 5 seconds. Does nothing if no player channel is set.
 
     Parameters:
-        client (Client): The bot client used for webhook logging.
         guild_id (int): The guild whose player channel receives the log.
         content (str): The message text.
         color (int | None): Optional accent color for the container.
     """
     channel = store.play_ch(guild_id)
-    if channel:
-        await logger.log(client, channel, logger.LogType.MUSIC, container(content, color), delete_after=5)
+    if not channel:
+        return
+    try:
+        await channel.send(view=container(content, color), delete_after=5)
+    except discord.HTTPException:
+        # Missing send permission in the player channel must not break the player action itself.
+        pass
 
 
 def to_log_text(content: str) -> str:

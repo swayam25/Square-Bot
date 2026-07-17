@@ -12,15 +12,15 @@ from discord import SlashCommandGroup, ui
 from discord.commands import option, slash_command
 from discord.ext import commands, tasks
 from music import recommend, store
-from music.client import LavalinkVoiceClient, add_nodes
-from music.player import _get_render_lock, cleanup_guild, render_player, slash_log, stop_player
+from music.client import LavalinkVoiceClient, Player, add_nodes, load_tracks
+from music.player import cleanup_guild, render_player, slash_log, start_lyrics, stop_player
 from music.queue import QueueListView
 from music.utils import container, music_log, reply, sources
 from rich.console import Console
 from rich.live import Live
 from rich.spinner import Spinner
 from rich.text import Text
-from utils import config, logger
+from utils import config
 from utils.emoji import emoji
 from utils.helpers import parse_duration
 
@@ -31,6 +31,22 @@ _lavalink_live: Live | None = None
 
 # Regex
 url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
+
+# Estimated on-screen chat lines an attachment/embed/sticker occupies - tall enough that one big block relocates the player on its own.
+_BLOCK_LINES = 10
+# Characters per rendered chat line, used to estimate wrapping of long messages.
+_CHARS_PER_LINE = 60
+# Relocate the player once this many estimated chat lines have stacked below it.
+_RELOCATE_LINES = 10
+
+
+def _visual_lines(message: discord.Message) -> int:
+    """Estimates how many on-screen chat lines a message occupies."""
+    lines = 1
+    if message.content:
+        lines = sum(len(line) // _CHARS_PER_LINE + 1 for line in message.content.splitlines()) or 1
+    blocks = len(message.attachments) + len(message.embeds) + len(message.stickers)
+    return lines + blocks * _BLOCK_LINES
 
 
 class Music(commands.Cog):
@@ -47,7 +63,7 @@ class Music(commands.Cog):
     async def on_ready(self):
         global _lavalink_live
         if self.client.lavalink is None:
-            self.client.lavalink = lavalink.Client(self.client.user.id)
+            self.client.lavalink = lavalink.Client(self.client.user.id, player=Player)
             self.connect_lavalink()
             if _lavalink_live is None or not _lavalink_live.is_started:
                 _lavalink_live = Live(
@@ -160,11 +176,6 @@ class Music(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
         cleanup_guild(guild.id)
-        for task_fn in (store.inactivity_task, store.render_task):
-            task = task_fn(guild.id, mode="get")
-            if task is not None:
-                task.cancel()
-        store.store.pop(guild.id, None)
 
     @lavalink.listener(lavalink.TrackStartEvent)
     async def track_start_hook(self, event: lavalink.TrackStartEvent):
@@ -179,20 +190,41 @@ class Music(commands.Cog):
         if vc is not None:
             coros.append(vc.set_status(status=f"Playing **{player.current.title}**"))
         await asyncio.gather(*coros, return_exceptions=True)
+        start_lyrics(self.client, guild_id)
 
     @lavalink.listener(lavalink.TrackStuckEvent, lavalink.TrackExceptionEvent)
     async def track_stuck_or_exception_hook(self, event: lavalink.TrackExceptionEvent):
         await music_log(
-            self.client,
             int(event.player.guild_id),
             f"{emoji.error} Track is stuck or an error occurred while playing the track.",
             color=config.color.red,
         )
 
+    @lavalink.listener(lavalink.PlayerErrorEvent)
+    async def player_error_hook(self, event: lavalink.PlayerErrorEvent):
+        """
+        Destroys the player when lavalink fails to advance it (e.g. the node died mid-request).
+
+        Without this, a failed track transition leaves a phantom player: `current` stays set with its position reset to 0, no `QueueEndEvent` fires, and the card keeps updating with no audio.
+        """
+        guild_id = int(event.player.guild_id)
+        guild: discord.Guild = self.client.get_guild(guild_id)
+        await music_log(
+            guild_id,
+            f"{emoji.error} Player error occurred, destroying the player.",
+            color=config.color.red,
+        )
+        if guild:
+            await stop_player(event.player, guild)
+
     @lavalink.listener(lavalink.QueueEndEvent)
     async def queue_end_hook(self, event: lavalink.QueueEndEvent):
         guild_id = int(event.player.guild_id)
         if not store.autoplay(guild_id):
+            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(guild_id)
+            guild: discord.Guild = self.client.get_guild(guild_id)
+            if player and guild:
+                await stop_player(player, guild)
             return
         lock = recommend.get_lock(guild_id)
         if lock.locked():
@@ -210,7 +242,6 @@ class Music(commands.Cog):
                     await stop_player(player, guild)
                     return
                 await music_log(
-                    self.client,
                     guild_id,
                     f"{emoji.autoplay} Autoplay queued [**{track.title}** by **{track.author}**]({track.uri}).",
                 )
@@ -274,9 +305,9 @@ class Music(commands.Cog):
             return tracks
         try:
             if ctx.value != "":
-                result = await player.node.get_tracks(f"ytmsearch:{ctx.value}")
+                result = await load_tracks(player, f"ytmsearch:{ctx.value}")
             else:
-                result = await player.node.get_tracks("ytmsearch:top tracks")
+                result = await load_tracks(player, "ytmsearch:top tracks")
         except lavalink.errors.ClientError:
             return tracks
         for track in result.tracks:
@@ -339,17 +370,17 @@ class Music(commands.Cog):
 
             humans = [m for m in bot_voice_channel.members if not m.bot]
 
-            if not humans:
-                pending_inactivity_task = store.inactivity_task(member.guild.id, mode="get")
-                if pending_inactivity_task:
-                    pending_inactivity_task.cancel()
-                    store.inactivity_task(member.guild.id, mode="clear")
+            # A pending countdown is stale either way: humans returned, or a fresh countdown replaces it below.
+            pending_inactivity_task = store.inactivity_task(member.guild.id, mode="get")
+            if pending_inactivity_task:
+                pending_inactivity_task.cancel()
+                store.inactivity_task(member.guild.id, mode="clear")
 
+            if not humans:
                 # Each inactivity task is uniquely associated with its guild ID in the store, ensuring isolation between guilds.
                 async def inactivity_task():
                     async def stop_and_disconnect():
                         await music_log(
-                            self.client,
                             member.guild.id,
                             f"{emoji.remove} Left {bot_voice_channel.mention} due to inactivity.",
                             color=config.color.red,
@@ -366,37 +397,39 @@ class Music(commands.Cog):
                         if not current_humans:
                             await stop_and_disconnect()
                     except asyncio.CancelledError:
+                        # Cancelled by player destruction (cleanup_guild) - nothing to resume or stop.
+                        if not player.is_connected:
+                            raise
                         if player.paused and not is_paused_before:
                             await player.set_pause(False)
                         if sleep_done:
                             await stop_and_disconnect()
 
                 store.inactivity_task(guild_id=member.guild.id, task=asyncio.create_task(inactivity_task()), mode="set")
-            else:
-                inactivity_task = store.inactivity_task(member.guild.id, mode="get")
-                if inactivity_task:
-                    inactivity_task.cancel()
-                    store.inactivity_task(member.guild.id, mode="clear")
 
     # Track chat after the player so it can be relocated to the bottom
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        """Relocates the player to the bottom when unrelated chat arrives in its channel."""
+        """
+        Relocates the player to the bottom once enough chat has stacked up to push it out of view.
+
+        Each message adds its estimated on-screen height to the guild's chat weight; the player is only re-sent when the total crosses `_RELOCATE_LINES` (a single image/embed/long message can cross it alone).
+        Light chatter below the threshold leaves the card edited in place, keeping delete/send API calls rare while the lyrics loop is already editing heavily.
+        """
         if not message.guild:
             return
-        if message.author.name == f"{self.client.user.name} - {logger.LogType.MUSIC}":
+        if message.author.id == self.client.user.id:
+            # Own messages never hide the card: log toasts self-delete in 5s and the card itself is exempt.
             return
         play_msg, _ = store.play_msg(message.guild.id)
         if not play_msg or message.channel.id != play_msg.channel.id:
             return
-        if message.author.bot:
-            # Case 1: player card fires during channel.send - lock is still held mid-gather.
-            # Case 2: player card fires after gather returns - store is already updated so IDs match.
-            if _get_render_lock(message.guild.id).locked() or message.id == play_msg.id:
-                return
+        if store.chat_weight(message.guild.id, _visual_lines(message), "add") < _RELOCATE_LINES:
+            return
         pending = store.render_task(message.guild.id)
         if pending and not pending.done():
-            pending.cancel()
+            # A relocation is already scheduled - let it fire instead of pushing it back on every message.
+            return
 
         async def _relocate(guild_id: int = message.guild.id):
             await asyncio.sleep(2)
@@ -419,7 +452,18 @@ class Music(commands.Cog):
             query = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b|\s*-\s*\d{1,2}:\d{2}(?::\d{2})?\b", "", query)
             if not url_rx.match(query):
                 query = f"ytmsearch:{query}"
-            results = await player.node.get_tracks(query)
+            try:
+                results = await load_tracks(player, query)
+            except lavalink.errors.ClientError:
+                await ctx.respond(
+                    view=container(
+                        f"{emoji.error} All music nodes are currently unavailable. Please try again in a moment.",
+                        config.color.red,
+                    )
+                )
+                if just_connected:
+                    await stop_player(player, ctx.guild)
+                return
             if not results or not results.tracks:
                 await ctx.respond(
                     view=container(f"{emoji.error} No track found from the given query.", config.color.red)
@@ -441,7 +485,7 @@ class Music(commands.Cog):
                     dur = f"{emoji.live} LIVE"
                 else:
                     dur = format_timedelta(datetime.timedelta(milliseconds=track.duration), locale="en")
-                content = f"{src_info['emoji']} Added [**{track.title}** by **{track.author}**]({track.uri}) [`{dur}`]."
+                content = f"{src_info['emoji']} Added [**{track.title}** by **{track.author}**]({track.uri}) [{dur}]."
             await ctx.respond(view=container(content, int(src_info["color"])))
             if not player.is_playing:
                 await player.play()
@@ -762,6 +806,7 @@ class Music(commands.Cog):
             track_time = int(player.position + timedelta.total_seconds() * 1000)
             if track_time < player.current.duration:
                 await player.seek(track_time)
+                start_lyrics(self.client, ctx.guild.id)
                 await slash_log(ctx, f"{emoji.seek} Moved track to `{lavalink.format_time(track_time)}`.")
             else:
                 await self.skip(ctx=ctx)
@@ -898,24 +943,21 @@ class Music(commands.Cog):
         player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
         if player:
             await ctx.defer(ephemeral=True)
-            _emoji = ""
+            msg = ""
             if mode == "Disable":
                 player.set_loop(0)
-                _emoji = emoji.loop_white
+                msg = f"{emoji.loop_white} Disabled loop."
             elif mode == "Track":
                 player.set_loop(1)
-                _emoji = emoji.loop_one
+                msg = f"{emoji.loop_one} Enabled track loop."
             elif mode == "Queue":
                 if not player.queue:
                     await reply(ctx, f"{emoji.error} Queue is empty.", color=config.color.red)
                     return
                 else:
                     player.set_loop(2)
-                    _emoji = emoji.loop
-            await slash_log(
-                ctx,
-                f"{_emoji} {'Enabled' if mode != 'Disable' else 'Disabled'} {mode if mode != 'Disable' else ''} Loop.",
-            )
+                    msg = f"{emoji.loop} Enabled queue loop."
+            await slash_log(ctx, msg)
 
     # Remove
     @slash_command(name="remove")

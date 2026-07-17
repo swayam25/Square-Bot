@@ -1,10 +1,6 @@
 import datetime
 import discord
-import lavalink
-import platform
-import psutil
 import time
-import toml
 from babel.dates import format_timedelta
 from core import Client
 from core.view import DesignerView
@@ -12,158 +8,11 @@ from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from typing import Literal
-from utils import check, config
+from utils import config
 from utils.emoji import emoji
-from utils.helpers import fmt_memory
 
 # Starting time of bot
 start_time = time.time()
-
-
-class Stats:
-    def __init__(self, client: Client, ctx: discord.ApplicationContext):
-        self.client = client
-        self.ctx = ctx
-
-    def _format_memory(self, total, used, free):
-        return f"`{fmt_memory(total)}` `({fmt_memory(used)} Used | {fmt_memory(free)} Free)`"
-
-    async def get_bot_stats(self) -> list[ui.Item]:
-        dur = format_timedelta(datetime.timedelta(seconds=int(time.time() - start_time)), locale="en")
-        is_dev = await check.is_dev(self.ctx)
-
-        stats_parts = [
-            f"{emoji.ping} **Bot's Latency**: `{round(self.client.latency * 1000)} ms`",
-            f"{emoji.duration} **Bot's Uptime**: `{dur}`",
-            f"{emoji.server} **Total Servers**: `{len(self.client.guilds)}`",
-            f"{emoji.members} **Total Members**: `{sum(1 for _ in self.client.get_all_members())}`",
-            f"{emoji.channel} **Total Channels**: `{sum(1 for _ in self.client.get_all_channels())}`",
-        ]
-
-        if is_dev:
-            with open("pyproject.toml") as f:
-                toml_data = toml.load(f)
-            mem = psutil.virtual_memory()
-            disk = psutil.disk_usage("/")
-            stats_parts.extend(
-                [
-                    f"{emoji.version} **Version**: `v{toml_data['project']['version']}` `(Python v{platform.python_version()} | Pycord v{discord.__version__})`",
-                    f"{emoji.memory} **Memory**: {self._format_memory(mem.total, mem.used, mem.available)}",
-                    f"{emoji.storage} **Storage**: {self._format_memory(disk.total, disk.used, disk.free)}",
-                    f"{emoji.cpu} **CPU**: `{psutil.cpu_count()} Cores` `({round(psutil.cpu_freq().current)} MHz | {psutil.cpu_percent()}% Usage)`",
-                ]
-            )
-
-        return [ui.TextDisplay(f"## {self.client.user.name} Stats"), ui.TextDisplay("\n".join(stats_parts))]
-
-    async def get_lavalink_stats(self, manager: lavalink.NodeManager | None) -> list[ui.Item]:
-        header = ui.TextDisplay(f"## {self.client.user.name} Lavalink Stats")
-        nodes = manager.nodes if manager else []
-        if not nodes:
-            return [header, ui.TextDisplay(f"{emoji.error} No Lavalink nodes are configured.")]
-
-        online = [n for n in nodes if n.available and n.stats]
-        node = online[0] if online else None
-        node_parts = []
-        for i, n in enumerate(nodes, start=1):
-            part = f"{emoji.on if n.available else emoji.off} Node {i}"
-            if n is node:
-                part = f"**{part}**"
-            node_parts.append(part)
-        node_status = ui.TextDisplay(f"-# {' • '.join(node_parts)}")
-
-        if node is None:
-            return [header, node_status]
-
-        dur = format_timedelta(datetime.timedelta(milliseconds=node.stats.uptime), locale="en")
-        is_dev = await check.is_dev(self.ctx)
-        try:
-            latency = round(await node.get_rest_latency())
-        except Exception:  # Raw aiohttp errors escape lavalink's REST layer
-            latency = -1
-
-        stats_parts = [
-            f"{emoji.ping} **Node Latency**: `{latency} ms`",
-            f"{emoji.duration} **Node Uptime**: `{dur}`",
-            f"{emoji.music} **Players Connected**: `{sum(n.stats.players for n in online)}`",
-            f"{emoji.play} **Currently Playing**: `{sum(n.stats.playing_players for n in online)}`",
-        ]
-
-        if is_dev:
-            try:
-                version = f"v{await node.get_version()}"
-            except Exception:
-                version = "Unknown"
-            stats_parts.extend(
-                [
-                    f"{emoji.version} **Lavalink Version**: `{version}`",
-                    f"{emoji.memory} **Memory**: {self._format_memory(node.stats.memory_allocated, node.stats.memory_used, node.stats.memory_free)}",
-                    f"{emoji.cpu} **CPU**: `{node.stats.cpu_cores} Cores` `({round(node.stats.system_load * 100)}% System | {round(node.stats.lavalink_load * 100)}% Lavalink)`",
-                ]
-            )
-
-        return [header, node_status, ui.TextDisplay("\n".join(stats_parts))]
-
-
-class StatsView(DesignerView):
-    def __init__(self, client: Client, ctx: discord.ApplicationContext, manager: lavalink.NodeManager | None):
-        super().__init__(ctx=ctx, check_author_interaction=True)
-        self.client = client
-        self.ctx = ctx
-        self.manager = manager
-        self.stats = Stats(client, ctx)
-        self._footer = None
-
-    async def _get_footer(self) -> ui.Section:
-        if self._footer is None:
-            owner = await self.client.fetch_user(config.owner_id)
-            self._footer = ui.TextDisplay(f"-# Designed & Built by {owner.global_name or owner.name}")
-        return self._footer
-
-    def _get_button(self, button: Literal["Bot Stats", "Lavalink Stats"]):
-        if button == "Bot Stats":
-            btn = ui.Button(
-                emoji=emoji.music_white,
-                label="Lavalink Stats",
-                style=discord.ButtonStyle.grey,
-                custom_id="lavalink_btn",
-            )
-            btn.callback = lambda interaction: self._handle_callback(interaction, btn.id, "lavalink")
-        else:
-            btn = ui.Button(
-                emoji=emoji.previous_white,
-                label="Back",
-                style=discord.ButtonStyle.gray,
-                custom_id="bot_stats_btn",
-            )
-            btn.callback = lambda interaction: self._handle_callback(interaction, btn.id, "bot")
-        return btn
-
-    async def _build_view(self, view_type: Literal["bot", "lavalink"]):
-        self.clear_items()
-        if view_type == "bot":
-            items = await self.stats.get_bot_stats()
-            button = self._get_button("Bot Stats")
-        else:
-            items = await self.stats.get_lavalink_stats(self.manager)
-            button = self._get_button("Lavalink Stats")
-
-        container = ui.Container(*items)
-        container.add_item(await self._get_footer())
-        self.add_item(container)
-        self.add_item(ui.ActionRow(button))
-
-    async def _handle_callback(
-        self, interaction: discord.Interaction, button_id: str, view_type: Literal["bot", "lavalink"]
-    ):
-        self.disable_all_items()
-        self.get_item(button_id).emoji = emoji.loading_white
-        await interaction.edit(view=self)
-        await self._build_view(view_type)
-        await interaction.edit(view=self)
-
-    async def build(self):
-        await self._build_view("bot")
 
 
 class UserInfo:
@@ -501,19 +350,6 @@ class Info(commands.Cog):
                 ui.TextDisplay(f"{emoji.duration} **Bot's Uptime**: `{str(dur)}`"),
             )
         )
-        await ctx.respond(view=view)
-
-    # Stats
-    @slash_command(name="stats")
-    async def stats(self, ctx: discord.ApplicationContext):
-        """Shows bot stats."""
-        await ctx.defer()
-        view = StatsView(
-            client=self.client,
-            ctx=ctx,
-            manager=self.client.lavalink.node_manager if self.client.lavalink else None,
-        )
-        await view.build()
         await ctx.respond(view=view)
 
     # Avatar

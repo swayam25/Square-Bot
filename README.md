@@ -123,6 +123,7 @@ Advanced multipurpose discord bot for all your needs.
 | `lavalink.host`      | `str`       | The host of the Lavalink server.                                                                                  |
 | `lavalink.port`      | `int`       | The port of the Lavalink server.                                                                                  |
 | `lavalink.password`  | `str`       | The password for the Lavalink server.                                                                             |
+| `lavalink.region`    | `str`       | The region of the Lavalink server. This is used for latency-based node selection. Set `""` for auto-selection.    |
 | `lavalink.secure`    | `bool`      | Whether to use secure connection (wss) for Lavalink.                                                              |
 
 ## ✨ Using Custom Emojis

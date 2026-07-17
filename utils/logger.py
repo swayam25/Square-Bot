@@ -23,7 +23,6 @@ class LogType(enum.Enum):
     INVITES = ("invites", "Invite Log")
     AUTOMOD = ("automod", "AutoMod Log")
     TICKETS = ("tickets", "Ticket Log")
-    MUSIC = ("music", "Music Log")  # Logs to the player channel, not configurable via /set log
 
     def __init__(self, key: str, label: str):
         self.key = key
@@ -31,11 +30,6 @@ class LogType(enum.Enum):
 
     def __str__(self) -> str:
         return self.label
-
-    @classmethod
-    def configurable(cls) -> list[LogType]:
-        """Log types that can be assigned a channel via settings."""
-        return [log_type for log_type in cls if log_type is not cls.MUSIC]
 
     @classmethod
     def from_label(cls, label: str) -> LogType:

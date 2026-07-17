@@ -75,12 +75,8 @@ class Emoji:
     boost: str = "🚀"
 
     ping: str = "🏓"
-    memory: str = "📈"
-    storage: str = "💾"
-    cpu: str = "📡"
     more: str = "⚙️"
     more_white: str = "⚙️"
-    version: str = "🪾"
 
     spotify: str = "🟢"
     youtube: str = "🔴"
