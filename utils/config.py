@@ -60,12 +60,11 @@ def colors() -> ColorConfig:
 color = colors()
 
 
-# Lavalink configuration
+# Lavalink node configuration
 class LavalinkConfig(TypedDict):
     host: str
     port: int
     password: str
-    region: str
     secure: bool
 
 

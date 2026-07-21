@@ -1,162 +1,161 @@
 import asyncio
 import datetime
 import discord
-import lavalink
-import logging
 import math
 import re
+import sonolink
 from babel.dates import format_timedelta
 from core import Client
 from core.view import DesignerView
 from discord import SlashCommandGroup, ui
 from discord.commands import option, slash_command
-from discord.ext import commands, tasks
-from music import recommend, store
-from music.client import LavalinkVoiceClient, Player, add_nodes, load_tracks
-from music.player import cleanup_guild, render_player, slash_log, start_lyrics, stop_player
+from discord.ext import commands
+from music import store
+from music.core import (
+    SquarePlayer,
+    fetch_node_info,
+    fmt_time,
+    get_player,
+    register_nodes,
+    requester_id,
+    tag_requester,
+)
+from music.filters import EqPresets
+from music.player import cleanup_guild, render_player, skip_or_stop, slash_log, start_lyrics, stop_player
 from music.queue import QueueListView
 from music.utils import container, music_log, reply, sources
 from rich.console import Console
 from rich.live import Live
 from rich.spinner import Spinner
 from rich.text import Text
+from sonolink.models import Playlist
 from utils import config
 from utils.emoji import emoji
 from utils.helpers import parse_duration
 
-logging.getLogger("lavalink").setLevel(logging.ERROR)
-
 console = Console()
-_lavalink_live: Live | None = None
-
-# Regex
-url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
-
-# Estimated on-screen chat lines an attachment/embed/sticker occupies - tall enough that one big block relocates the player on its own.
-_BLOCK_LINES = 10
-# Characters per rendered chat line, used to estimate wrapping of long messages.
-_CHARS_PER_LINE = 60
-# Relocate the player once this many estimated chat lines have stacked below it.
-_RELOCATE_LINES = 10
-
-
-def _visual_lines(message: discord.Message) -> int:
-    """Estimates how many on-screen chat lines a message occupies."""
-    lines = 1
-    if message.content:
-        lines = sum(len(line) // _CHARS_PER_LINE + 1 for line in message.content.splitlines()) or 1
-    blocks = len(message.attachments) + len(message.embeds) + len(message.stickers)
-    return lines + blocks * _BLOCK_LINES
 
 
 class Music(commands.Cog):
+    # Regex matching URLs so plain queries get a search source instead.
+    url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
+    # Estimated on-screen chat lines an attachment/embed/sticker occupies - tall enough that one big block relocates the player on its own.
+    block_lines = 10
+    # Characters per rendered chat line, used to estimate wrapping of long messages.
+    chars_per_line = 60
+    # Relocate the player once this many estimated chat lines have stacked below it.
+    relocate_lines = 10
+
     def __init__(self, client: Client):
         self.client = client
-        self._node_reconnects: dict[str, asyncio.Task] = {}
-        self._node_down_ticks: dict[str, int] = {}
+        self._node_live: Live | None = None
+        register_nodes(client)
 
-    # Connect to lavalink
-    def connect_lavalink(self):
-        add_nodes(self.client.lavalink)
+    # Console spinner helpers
+    def _start_spinner(self, text: str):
+        if self._node_live is None or not self._node_live.is_started:
+            self._node_live = Live(
+                Spinner("dots", text=f"[yellow]{text}[/]", style="yellow"),
+                console=console,
+                refresh_per_second=10,
+                transient=False,
+            )
+            self._node_live.start()
+
+    def _finish_spinner(self, text: Text):
+        if self._node_live and self._node_live.is_started:
+            self._node_live.update(text)
+            self._node_live.stop()
+            self._node_live = None
+        else:
+            console.print(text)
 
     @commands.Cog.listener()
-    async def on_ready(self):
-        global _lavalink_live
-        if self.client.lavalink is None:
-            self.client.lavalink = lavalink.Client(self.client.user.id, player=Player)
-            self.connect_lavalink()
-            if _lavalink_live is None or not _lavalink_live.is_started:
-                _lavalink_live = Live(
-                    Spinner("dots", text="[yellow]Connecting to Lavalink...[/]", style="yellow"),
-                    console=console,
-                    refresh_per_second=10,
-                    transient=False,
-                )
-                _lavalink_live.start()
-        if self.client.lavalink._event_hooks:
-            self.client.lavalink._event_hooks.clear()
-        self.client.lavalink.add_event_hooks(self)
-        if not self.revive_nodes.is_running():
-            self.revive_nodes.start()
+    async def on_connect(self):
+        await self.client.sonolink.start()
 
-    @tasks.loop(minutes=2)
-    async def revive_nodes(self):
-        """Reconnects dead nodes"""
-        if self.client.lavalink is None:
-            return
-        for node in self.client.lavalink.nodes:
-            await self._revive_node(node)
-
-    async def _revive_node(self, node: lavalink.Node):
-        if node.available:
-            self._node_down_ticks.pop(node.name, None)
-            return
-        prev = self._node_reconnects.get(node.name)
-        if prev is not None and not prev.done():
-            return  # An earlier revive attempt is still retrying
-        try:
-            reachable = await node.get_rest_latency() >= 0
-        except Exception:  # Raw aiohttp errors escape lavalink's REST layer
-            reachable = False
-        if not reachable or node.available:
-            self._node_down_ticks.pop(node.name, None)
-            return
-        ticks = self._node_down_ticks.get(node.name, 0) + 1
-        if ticks < 2:
-            self._node_down_ticks[node.name] = ticks
-            return
-        self._node_down_ticks.pop(node.name, None)
-        task = await node.connect()
-        if task is not None:
-            self._node_reconnects[node.name] = task
-
-    @lavalink.listener(lavalink.NodeReadyEvent)
-    async def node_ready_hook(self, event: lavalink.NodeReadyEvent):
-        global _lavalink_live
-        latency = round(await event.node.get_rest_latency())
+    @commands.Cog.listener()
+    async def on_sonolink_node_ready(self, event: sonolink.gateway.ReadyEvent):
+        node = event.node
+        _, latency = await fetch_node_info(node)
         text = Text()
         text.append("✓ Connected to Lavalink ", style="green")
-        text.append(event.node.name, style="cyan")
+        text.append(node.id, style="cyan")
         text.append("\n  ├ Latency", style="green")
         text.append(": ")
-        text.append(f"{latency}ms", style="cyan")
+        text.append(latency, style="cyan")
         text.append("\n  ╰ Resumed", style="green")
         text.append(": ")
         text.append(str(event.resumed), style="cyan")
-        if _lavalink_live and _lavalink_live.is_started:
-            _lavalink_live.update(text)
-            _lavalink_live.stop()
-            _lavalink_live = None
-        else:
-            console.print(text)
+        self._finish_spinner(text)
 
-    @lavalink.listener(lavalink.NodeDisconnectedEvent)
-    async def node_disconnected_hook(self, event: lavalink.NodeDisconnectedEvent):
-        global _lavalink_live
-        items = [("Reason", event.reason or "Connection lost")]
-        if event.code:
-            items.append(("Code", str(event.code)))
+    @commands.Cog.listener()
+    async def on_sonolink_node_close(self, node: sonolink.Node):
         text = Text()
         text.append("✗ Disconnected from Lavalink ", style="red")
-        text.append(event.node.name, style="cyan")
-        for i, (key, value) in enumerate(items):
-            prefix = "╰" if i == len(items) - 1 else "├"
-            text.append(f"\n  {prefix} {key}", style="red")
-            text.append(": ")
-            text.append(value, style="cyan")
-        if _lavalink_live and _lavalink_live.is_started:
-            _lavalink_live.update(text)
-            _lavalink_live.stop()
-            _lavalink_live = None
-        else:
-            console.print(text)
-        _lavalink_live = Live(
-            Spinner("dots", text="[yellow]Reconnecting to Lavalink...[/]", style="yellow"),
-            console=console,
-            refresh_per_second=10,
-            transient=False,
+        text.append(node.id, style="cyan")
+        self._finish_spinner(text)
+        self._start_spinner("Reconnecting to Lavalink...")
+
+    @commands.Cog.listener()
+    async def on_sonolink_track_start(self, player: SquarePlayer, event: sonolink.gateway.TrackStartEvent):
+        guild_id = player.guild.id
+        track = player.current
+        if track is None:
+            return
+        coros = [render_player(self.client, guild_id)]
+        if player.channel is not None:
+            coros.append(player.channel.set_status(status=f"Playing **{track.title}**"))
+        if track.autoplay:
+            coros.append(
+                music_log(
+                    guild_id,
+                    f"{emoji.autoplay} Autoplay queued [**{track.title}** by **{track.author}**]({track.uri}).",
+                )
+            )
+        await asyncio.gather(*coros, return_exceptions=True)
+        start_lyrics(self.client, guild_id)
+
+    @commands.Cog.listener()
+    async def on_sonolink_track_end(self, player: SquarePlayer, event: sonolink.gateway.TrackEndEvent):
+        if event.reason not in (sonolink.TrackEndReason.FINISHED, sonolink.TrackEndReason.LOAD_FAILED):
+            return
+        if player.current is None and not len(player.queue.tracks):
+            guild = self.client.get_guild(player.guild.id)
+            if guild:
+                await stop_player(player, guild)
+
+    @commands.Cog.listener()
+    async def on_sonolink_track_exception(self, player: SquarePlayer, event: sonolink.gateway.TrackExceptionEvent):
+        await music_log(
+            player.guild.id,
+            f"{emoji.error} An error occurred while playing the track.",
+            color=config.color.red,
         )
-        _lavalink_live.start()
+
+    @commands.Cog.listener()
+    async def on_sonolink_track_stuck(self, player: SquarePlayer, event: sonolink.gateway.TrackStuckEvent):
+        await music_log(
+            player.guild.id,
+            f"{emoji.error} Track is stuck.",
+            color=config.color.red,
+        )
+
+    @commands.Cog.listener()
+    async def on_sonolink_player_disconnect(self, player: SquarePlayer, event: sonolink.PlayerDisconnectEvent):
+        """Single cleanup funnel: fires for manual stops, inactivity, kicks, and node errors."""
+        guild = self.client.get_guild(player.guild.id)
+        if guild is None:
+            cleanup_guild(player.guild.id)
+            return
+        if event.trigger is sonolink.DisconnectTriggerType.INACTIVITY:
+            channel = player.channel
+            await music_log(
+                guild.id,
+                f"{emoji.remove} Left {channel.mention if channel else 'the voice channel'} due to inactivity.",
+                color=config.color.red,
+            )
+        await stop_player(player, guild)
 
     # Current voice
     def current_voice_channel(self, ctx: discord.ApplicationContext):
@@ -166,90 +165,16 @@ class Music(commands.Cog):
 
     # Unloading cog
     def cog_unload(self):
-        global _lavalink_live
-        self.revive_nodes.cancel()
-        if _lavalink_live and _lavalink_live.is_started:
-            _lavalink_live.stop()
-            _lavalink_live = None
-        self.client.lavalink._event_hooks.clear()
+        if self._node_live and self._node_live.is_started:
+            self._node_live.stop()
+            self._node_live = None
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
         cleanup_guild(guild.id)
 
-    @lavalink.listener(lavalink.TrackStartEvent)
-    async def track_start_hook(self, event: lavalink.TrackStartEvent):
-        guild_id = int(event.player.guild_id)
-        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(guild_id)
-        store.last_track(guild_id, player.current, "set")
-        store.autoplay_history(guild_id, player.current.identifier, "add")
-        vc: discord.VoiceChannel | None = (
-            self.client.get_channel(int(event.player.channel_id)) if event.player.channel_id else None
-        )
-        coros = [render_player(self.client, guild_id)]
-        if vc is not None:
-            coros.append(vc.set_status(status=f"Playing **{player.current.title}**"))
-        await asyncio.gather(*coros, return_exceptions=True)
-        start_lyrics(self.client, guild_id)
-
-    @lavalink.listener(lavalink.TrackStuckEvent, lavalink.TrackExceptionEvent)
-    async def track_stuck_or_exception_hook(self, event: lavalink.TrackExceptionEvent):
-        await music_log(
-            int(event.player.guild_id),
-            f"{emoji.error} Track is stuck or an error occurred while playing the track.",
-            color=config.color.red,
-        )
-
-    @lavalink.listener(lavalink.PlayerErrorEvent)
-    async def player_error_hook(self, event: lavalink.PlayerErrorEvent):
-        """
-        Destroys the player when lavalink fails to advance it (e.g. the node died mid-request).
-
-        Without this, a failed track transition leaves a phantom player: `current` stays set with its position reset to 0, no `QueueEndEvent` fires, and the card keeps updating with no audio.
-        """
-        guild_id = int(event.player.guild_id)
-        guild: discord.Guild = self.client.get_guild(guild_id)
-        await music_log(
-            guild_id,
-            f"{emoji.error} Player error occurred, destroying the player.",
-            color=config.color.red,
-        )
-        if guild:
-            await stop_player(event.player, guild)
-
-    @lavalink.listener(lavalink.QueueEndEvent)
-    async def queue_end_hook(self, event: lavalink.QueueEndEvent):
-        guild_id = int(event.player.guild_id)
-        if not store.autoplay(guild_id):
-            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(guild_id)
-            guild: discord.Guild = self.client.get_guild(guild_id)
-            if player and guild:
-                await stop_player(player, guild)
-            return
-        lock = recommend.get_lock(guild_id)
-        if lock.locked():
-            return
-        async with lock:
-            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(guild_id)
-            guild: discord.Guild = self.client.get_guild(guild_id)
-            pool = await recommend.fetch_recommendations(player, guild_id)
-            if pool:
-                track = pool[0]
-                player.add(requester=self.client.user.id, track=track)
-                try:
-                    await player.play()
-                except Exception:
-                    await stop_player(player, guild)
-                    return
-                await music_log(
-                    guild_id,
-                    f"{emoji.autoplay} Autoplay queued [**{track.title}** by **{track.author}**]({track.uri}).",
-                )
-                return
-            await stop_player(player, guild)
-
     # Ensures voice parameters
-    async def ensure_voice(self, ctx: discord.ApplicationContext):
+    async def ensure_voice(self, ctx: discord.ApplicationContext) -> SquarePlayer | None:
         """Checks all the voice parameters."""
 
         def _err(text: str) -> DesignerView:
@@ -259,12 +184,11 @@ class Music(commands.Cog):
             await ctx.respond(view=_err(f"{emoji.error} Join a voice channel first."), ephemeral=True)
             return None
 
-        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.guild.id)
+        player = get_player(self.client, ctx.guild.id)
         bot_channel = self.current_voice_channel(ctx)
 
         if ctx.command.name == "play":
-            needs_connect = bot_channel is None or not player.is_connected
-            if needs_connect:
+            if player is None or bot_channel is None:
                 if bot_channel is not None and ctx.author.voice.channel != bot_channel:
                     await ctx.respond(view=_err(f"{emoji.error} You are not in my voice channel."), ephemeral=True)
                     return None
@@ -274,18 +198,15 @@ class Music(commands.Cog):
                         view=_err(f"{emoji.error} I need the `Connect` and `Speak` permissions."), ephemeral=True
                     )
                     return None
-                if not self.client.lavalink.node_manager.nodes:
-                    self.connect_lavalink()
                 if ctx.guild.voice_client:
                     await ctx.guild.voice_client.disconnect(force=True)
-                await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
-                player = self.client.lavalink.player_manager.create(ctx.guild.id)
+                player = await ctx.author.voice.channel.connect(cls=SquarePlayer)
                 store.play_ch(ctx.guild.id, ctx.channel, "set")
             elif ctx.author.voice.channel != bot_channel:
                 await ctx.respond(view=_err(f"{emoji.error} You are not in my voice channel."), ephemeral=True)
                 return None
         else:
-            if bot_channel is None or (not player.current and ctx.command.name != "stop"):
+            if player is None or bot_channel is None or (not player.current and ctx.command.name != "stop"):
                 await ctx.respond(
                     view=_err(f"{emoji.error} Nothing is being played at the current moment."), ephemeral=True
                 )
@@ -299,19 +220,17 @@ class Music(commands.Cog):
     # Search autocomplete
     async def search(self, ctx: discord.AutocompleteContext):
         """Searches a track from a given query."""
-        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.interaction.guild_id)
         tracks = []
-        if re.match(url_rx, ctx.value):
+        if re.match(self.url_rx, ctx.value):
             return tracks
-        try:
-            if ctx.value != "":
-                result = await load_tracks(player, f"ytmsearch:{ctx.value}")
-            else:
-                result = await load_tracks(player, "ytmsearch:top tracks")
-        except lavalink.errors.ClientError:
+        query = ctx.value if ctx.value != "" else "top tracks"
+        result = await self.client.sonolink.search_track(query, source=sonolink.TrackSourceType.YOUTUBE_MUSIC)
+        if result.is_error() or result.is_empty() or result.result is None:
             return tracks
-        for track in result.tracks:
-            dur = lavalink.format_time(track.duration)
+        data = result.result
+        found = data.tracks if isinstance(data, Playlist) else data if isinstance(data, list) else [data]
+        for track in found:
+            dur = fmt_time(track.length)
             max_len = 100
             dur_str = dur
             author = track.author
@@ -327,11 +246,11 @@ class Music(commands.Cog):
     # Track autocomplete
     async def track_autocomplete(self, ctx: discord.AutocompleteContext):
         """Provides track indices for removal."""
-        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(ctx.interaction.guild_id)
-        if not player or not player.queue:
+        player = get_player(self.client, ctx.interaction.guild_id)
+        if not player or not len(player.queue.tracks):
             return []
         result = []
-        for i, track in enumerate(player.queue):
+        for i, track in enumerate(player.queue.tracks):
             title = track.title
             full_entry = f"{i + 1}. {title}"
             entry = full_entry[:100]
@@ -339,81 +258,13 @@ class Music(commands.Cog):
                 result.append(entry)
         return result
 
-    # Voice state update event
-    @commands.Cog.listener()
-    async def on_voice_state_update(
-        self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState
-    ):
-        """Handles voice state updates to manage the bot's connection."""
-        if member.id == member.guild.me.id and after.channel is None:
-            if member.guild.voice_client:
-                await member.guild.voice_client.disconnect(force=True)
-            return
-
-        if member.bot:
-            return
-
-        if hasattr(self.client, "lavalink"):
-            player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.get(member.guild.id)
-            if not player or not player.is_connected:
-                return
-
-            bot_voice_channel = member.guild.me.voice.channel if member.guild.me.voice else None
-            if not bot_voice_channel:
-                return
-
-            member_left_bot_channel = before.channel == bot_voice_channel and after.channel != bot_voice_channel
-            member_joined_bot_channel = before.channel != bot_voice_channel and after.channel == bot_voice_channel
-
-            if not (member_left_bot_channel or member_joined_bot_channel):
-                return
-
-            humans = [m for m in bot_voice_channel.members if not m.bot]
-
-            # A pending countdown is stale either way: humans returned, or a fresh countdown replaces it below.
-            pending_inactivity_task = store.inactivity_task(member.guild.id, mode="get")
-            if pending_inactivity_task:
-                pending_inactivity_task.cancel()
-                store.inactivity_task(member.guild.id, mode="clear")
-
-            if not humans:
-                # Each inactivity task is uniquely associated with its guild ID in the store, ensuring isolation between guilds.
-                async def inactivity_task():
-                    async def stop_and_disconnect():
-                        await music_log(
-                            member.guild.id,
-                            f"{emoji.remove} Left {bot_voice_channel.mention} due to inactivity.",
-                            color=config.color.red,
-                        )
-                        await stop_player(player, bot_voice_channel.guild)
-
-                    is_paused_before = player.paused
-                    await player.set_pause(True)
-                    sleep_done: bool = False
-                    try:
-                        await asyncio.sleep(60)
-                        sleep_done = True
-                        current_humans = [m for m in bot_voice_channel.members if not m.bot]
-                        if not current_humans:
-                            await stop_and_disconnect()
-                    except asyncio.CancelledError:
-                        # Cancelled by player destruction (cleanup_guild) - nothing to resume or stop.
-                        if not player.is_connected:
-                            raise
-                        if player.paused and not is_paused_before:
-                            await player.set_pause(False)
-                        if sleep_done:
-                            await stop_and_disconnect()
-
-                store.inactivity_task(guild_id=member.guild.id, task=asyncio.create_task(inactivity_task()), mode="set")
-
     # Track chat after the player so it can be relocated to the bottom
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """
         Relocates the player to the bottom once enough chat has stacked up to push it out of view.
 
-        Each message adds its estimated on-screen height to the guild's chat weight; the player is only re-sent when the total crosses `_RELOCATE_LINES` (a single image/embed/long message can cross it alone).
+        Each message adds its estimated on-screen height to the guild's chat weight; the player is only re-sent when the total crosses :attr:`relocate_lines` (a single image/embed/long message can cross it alone).
         Light chatter below the threshold leaves the card edited in place, keeping delete/send API calls rare while the lyrics loop is already editing heavily.
         """
         if not message.guild:
@@ -424,7 +275,7 @@ class Music(commands.Cog):
         play_msg, _ = store.play_msg(message.guild.id)
         if not play_msg or message.channel.id != play_msg.channel.id:
             return
-        if store.chat_weight(message.guild.id, _visual_lines(message), "add") < _RELOCATE_LINES:
+        if store.chat_weight(message.guild.id, self._visual_lines(message), "add") < self.relocate_lines:
             return
         pending = store.render_task(message.guild.id)
         if pending and not pending.done():
@@ -437,58 +288,64 @@ class Music(commands.Cog):
 
         store.render_task(message.guild.id, asyncio.create_task(_relocate()), mode="set")
 
+    @classmethod
+    def _visual_lines(cls, message: discord.Message) -> int:
+        """Estimates how many on-screen chat lines a message occupies."""
+        lines = 1
+        if message.content:
+            lines = sum(len(line) // cls.chars_per_line + 1 for line in message.content.splitlines()) or 1
+        blocks = len(message.attachments) + len(message.embeds) + len(message.stickers)
+        return lines + blocks * cls.block_lines
+
     # Play
     @slash_command(name="play")
     @option("query", description="Enter your track name/link or playlist link", autocomplete=search)
     async def play(self, ctx: discord.ApplicationContext, query: str):
         """Searches and plays a track from a given query."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if not player:
             return
         await ctx.defer()
-        just_connected = not player.current and not player.queue
+        just_connected = not player.current and not len(player.queue.tracks)
         try:
             query = query.strip("<>")
             query = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b|\s*-\s*\d{1,2}:\d{2}(?::\d{2})?\b", "", query)
-            if not url_rx.match(query):
-                query = f"ytmsearch:{query}"
-            try:
-                results = await load_tracks(player, query)
-            except lavalink.errors.ClientError:
+            result = await self.client.sonolink.search_track(query, source=sonolink.TrackSourceType.YOUTUBE_MUSIC)
+            if result.is_error():
                 await ctx.respond(
                     view=container(
-                        f"{emoji.error} All music nodes are currently unavailable. Please try again in a moment.",
+                        f"{emoji.error} Failed to load the track. Please try again in a moment.",
                         config.color.red,
                     )
                 )
                 if just_connected:
                     await stop_player(player, ctx.guild)
                 return
-            if not results or not results.tracks:
+            if result.is_empty() or result.result is None:
                 await ctx.respond(
                     view=container(f"{emoji.error} No track found from the given query.", config.color.red)
                 )
                 if just_connected:
                     await stop_player(player, ctx.guild)
                 return
-            if results.load_type == lavalink.LoadType.PLAYLIST:
-                tracks = results.tracks
-                src_info = sources.get(results.tracks[0].source_name, sources["_"])
-                for track in tracks:
-                    player.add(requester=ctx.author.id, track=track)
-                content = f"{src_info['emoji']} Added **{results.playlist_info.name}** with `{len(tracks)}` tracks."
+            data = result.result
+            if isinstance(data, Playlist):
+                tracks = [tag_requester(self.client, track, ctx.author.id) for track in data.tracks]
+                src_info = sources.get(tracks[0].source_name, sources["_"])
+                player.queue.put(tracks)
+                content = f"{src_info['emoji']} Added **{data.name}** with `{len(tracks)}` tracks."
             else:
-                track = results.tracks[0]
-                player.add(requester=ctx.author.id, track=track)
+                track = tag_requester(self.client, data[0] if isinstance(data, list) else data, ctx.author.id)
+                player.queue.put(track)
                 src_info = sources.get(track.source_name, sources["_"])
-                if track.stream:
+                if track.is_stream:
                     dur = f"{emoji.live} LIVE"
                 else:
-                    dur = format_timedelta(datetime.timedelta(milliseconds=track.duration), locale="en")
+                    dur = format_timedelta(datetime.timedelta(milliseconds=track.length), locale="en")
                 content = f"{src_info['emoji']} Added [**{track.title}** by **{track.author}**]({track.uri}) [{dur}]."
             await ctx.respond(view=container(content, int(src_info["color"])))
-            if not player.is_playing:
-                await player.play()
+            if not player.current:
+                await player.play(player.queue.get())
         except Exception:
             if just_connected:
                 await stop_player(player, ctx.guild)
@@ -498,26 +355,27 @@ class Music(commands.Cog):
     @slash_command(name="now-playing")
     async def now_playing(self, ctx: discord.ApplicationContext):
         """Shows currently playing track."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         duration: str = ""
         bar: str = ""
         if player:
-            requester = ctx.guild.get_member(player.current.requester)
-            if player.current.stream:
+            requester = ctx.guild.get_member(requester_id(player, player.current) or 0)
+            if player.current.is_stream:
                 duration = f"{emoji.live} LIVE"
-            elif not player.current.stream:
+            else:
                 bar_length = 10
-                filled_length = int(bar_length * player.position // float(player.current.duration))
-                bar = f"`{lavalink.format_time(player.position)}` {emoji.filled_bar * filled_length}{emoji.empty_bar * (bar_length - filled_length)} `{lavalink.format_time(player.current.duration)}`"
-                duration = datetime.timedelta(milliseconds=player.current.duration)
+                filled_length = int(bar_length * player.position // float(player.current.length))
+                bar = f"`{fmt_time(player.position)}` {emoji.filled_bar * filled_length}{emoji.empty_bar * (bar_length - filled_length)} `{fmt_time(player.current.length)}`"
+                duration = datetime.timedelta(milliseconds=player.current.length)
                 duration = format_timedelta(duration, locale="en")
             loop = ""
-            if player.loop == player.LOOP_NONE:
+            if player.queue_mode is sonolink.QueueMode.NORMAL:
                 loop = "Disabled"
-            elif player.loop == player.LOOP_SINGLE:
+            elif player.queue_mode is sonolink.QueueMode.LOOP:
                 loop = "Track"
-            elif player.loop == player.LOOP_QUEUE:
+            elif player.queue_mode is sonolink.QueueMode.LOOP_ALL:
                 loop = "Queue"
+            autoplay_on = player.autoplay is sonolink.AutoPlayMode.ENABLED
             view = DesignerView(
                 ui.Container(
                     ui.Section(
@@ -528,12 +386,12 @@ class Music(commands.Cog):
                             f"{emoji.duration} **Duration**: {duration}\n"
                             f"{emoji.voice} **Volume**: `{player.volume}%`\n"
                             f"{emoji.loop} **Loop**: {loop}\n"
-                            f"{emoji.shuffle} **Shuffle**: {'Enabled' if player.shuffle else 'Disabled'}\n"
-                            f"{emoji.autoplay} **Autoplay**: {'Enabled' if store.autoplay(ctx.guild.id) else 'Disabled'}\n"
-                            f"{emoji.equalizer} **Equalizers**: {', '.join([name.title() for name in player.filters]) if player.filters else 'None'}"
+                            f"{emoji.shuffle} **Shuffle**: {'Enabled' if player.queue.shuffle_mode is sonolink.ShuffleMode.PERSISTENT else 'Disabled'}\n"
+                            f"{emoji.autoplay} **Autoplay**: {'Enabled' if autoplay_on else 'Disabled'}\n"
+                            f"{emoji.equalizer} **Equalizers**: {', '.join([name.title() for name in player.presets]) if player.presets else 'None'}"
                             f"{f'\n\n {bar}' if bar else ''}"
                         ),
-                        accessory=ui.Thumbnail(url=player.current.artwork_url) if player.current.artwork_url else None,
+                        accessory=ui.Thumbnail(url=player.current.artwork) if player.current.artwork else None,
                     )
                 )
             )
@@ -542,27 +400,40 @@ class Music(commands.Cog):
     # Equalizer slash cmd group
     eq = SlashCommandGroup(name="eq", description="Equalizer commands.")
 
+    async def _apply_preset(self, ctx: discord.ApplicationContext, kind: str, variant: str, label: str):
+        """Stores the preset for its kind and re-applies the combined filter state."""
+        player = await self.ensure_voice(ctx)
+        if player:
+            player.presets[kind] = EqPresets.build(kind, variant)
+            await player.apply_presets()
+            await slash_log(ctx, f"{emoji.equalizer} Applied **{label}** ({variant}) equalizer.")
+
     @eq.command(name="reset")
     async def reset(self, ctx: discord.ApplicationContext):
         """Resets the equalizer to default."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
-            await player.clear_filters()
+            player.presets.clear()
+            await player.apply_presets()
             await slash_log(ctx, f"{emoji.equalizer} Reset equalizer to default settings.")
 
     async def filter_autocomplete(self, ctx: discord.AutocompleteContext):
         """Provides filter names for autocomplete."""
-        player: lavalink.DefaultPlayer = self.client.lavalink.player_manager.create(ctx.interaction.guild_id)
-        return [name.title() for name in player.filters if ctx.value.lower() in name.lower()]
+        player = get_player(self.client, ctx.interaction.guild_id)
+        if not player:
+            return []
+        return [name.title() for name in player.presets if ctx.value.lower() in name.lower()]
 
     @eq.command(name="remove")
     @option("name", description="Name of the equalizer to remove.", autocomplete=filter_autocomplete)
     async def remove_eq(self, ctx: discord.ApplicationContext, name: str):
         """Removes an equalizer by name."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
-            if player.get_filter(name):
-                await player.remove_filter(name)
+            key = name.lower()
+            if key in player.presets:
+                player.presets.pop(key)
+                await player.apply_presets()
                 await slash_log(ctx, f"{emoji.equalizer} Removed **{name.title()}** equalizer.")
             else:
                 await reply(ctx, f"{emoji.error} **{name}** equalizer not found.", color=config.color.red)
@@ -576,23 +447,7 @@ class Music(commands.Cog):
     )
     async def karaoke(self, ctx: discord.ApplicationContext, intensity: str = "Medium"):
         """Remove center vocals for karaoke effect."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
-        if player:
-            presets = {
-                "Light": {"level": 1.5, "mono_level": 0.8, "filter_band": 220.0, "filter_width": 100.0},
-                "Medium": {"level": 2.0, "mono_level": 1.0, "filter_band": 220.0, "filter_width": 100.0},
-                "Strong": {"level": 3.0, "mono_level": 1.2, "filter_band": 220.0, "filter_width": 100.0},
-            }
-            cfg = presets[intensity]
-            eq = lavalink.Karaoke()
-            eq.update(
-                level=cfg["level"],
-                mono_level=cfg["mono_level"],
-                filter_band=cfg["filter_band"],
-                filter_width=cfg["filter_width"],
-            )
-            await player.set_filter(eq)
-            await slash_log(ctx, f"{emoji.equalizer} Applied **Karaoke** ({intensity}) equalizer.")
+        await self._apply_preset(ctx, "karaoke", intensity, "Karaoke")
 
     @eq.command(name="timescale")
     @option(
@@ -603,90 +458,31 @@ class Music(commands.Cog):
     )
     async def timescale(self, ctx: discord.ApplicationContext, speed: str = "1x"):
         """Change playback speed and pitch."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
-        if player:
-            presets = {
-                "Nightcore": {"speed": 1.3, "pitch": 1.3, "rate": 1.0},
-                "Daycore": {"speed": 0.7, "pitch": 0.7, "rate": 1.0},
-            }
-            if speed in presets:
-                cfg = presets[speed]
-                eq = lavalink.Timescale()
-                eq.update(speed=cfg["speed"], pitch=cfg["pitch"], rate=cfg["rate"])
-            else:
-                speed_value = float(speed.replace("x", ""))
-                eq = lavalink.Timescale()
-                eq.update(speed=speed_value, pitch=speed_value, rate=1.0)
-            await player.set_filter(eq)
-            await slash_log(ctx, f"{emoji.equalizer} Applied **Timescale** ({speed}) equalizer.")
+        await self._apply_preset(ctx, "timescale", speed, "Timescale")
 
     @eq.command(name="tremolo")
     @option("intensity", description="Tremolo intensity", choices=["Subtle", "Medium", "Strong"], required=False)
     async def tremolo(self, ctx: discord.ApplicationContext, intensity: str = "Medium"):
         """Apply volume trembling effect."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
-        if player:
-            presets = {
-                "Subtle": {"frequency": 1.5, "depth": 0.3},
-                "Medium": {"frequency": 2.0, "depth": 0.5},
-                "Strong": {"frequency": 3.0, "depth": 0.7},
-            }
-            cfg = presets[intensity]
-            eq = lavalink.Tremolo()
-            eq.update(frequency=cfg["frequency"], depth=cfg["depth"])
-            await player.set_filter(eq)
-            await slash_log(ctx, f"{emoji.equalizer} Applied **Tremolo** ({intensity}) equalizer.")
+        await self._apply_preset(ctx, "tremolo", intensity, "Tremolo")
 
     @eq.command(name="vibrato")
     @option("intensity", description="Vibrato intensity", choices=["Light", "Medium", "Heavy"], required=False)
     async def vibrato(self, ctx: discord.ApplicationContext, intensity: str = "Medium"):
         """Apply pitch wobbling effect."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
-        if player:
-            presets = {
-                "Light": {"frequency": 1.5, "depth": 0.3},
-                "Medium": {"frequency": 2.0, "depth": 0.5},
-                "Heavy": {"frequency": 3.5, "depth": 0.8},
-            }
-            cfg = presets[intensity]
-            eq = lavalink.Vibrato()
-            eq.update(frequency=cfg["frequency"], depth=cfg["depth"])
-            await player.set_filter(eq)
-            await slash_log(ctx, f"{emoji.equalizer} Applied **Vibrato** ({intensity}) equalizer.")
+        await self._apply_preset(ctx, "vibrato", intensity, "Vibrato")
 
     @eq.command(name="rotation")
     @option("speed", description="8D rotation speed", choices=["Slow", "Medium", "Fast"], required=False)
     async def rotation(self, ctx: discord.ApplicationContext, speed: str = "Medium"):
         """Apply 8D audio rotation effect."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
-        if player:
-            presets = {
-                "Slow": 0.1,
-                "Medium": 0.2,
-                "Fast": 0.3,
-            }
-            rotation_hz = presets[speed]
-            eq = lavalink.Rotation()
-            eq.update(rotation_hz=rotation_hz)
-            await player.set_filter(eq)
-            await slash_log(ctx, f"{emoji.equalizer} Applied **Rotation** ({speed}) equalizer.")
+        await self._apply_preset(ctx, "rotation", speed, "Rotation")
 
     @eq.command(name="lowpass")
     @option("strength", description="Low-pass filter strength", choices=["Light", "Medium", "Heavy"], required=False)
     async def lowpass(self, ctx: discord.ApplicationContext, strength: str = "Medium"):
         """Apply muffled/underwater sound effect."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
-        if player:
-            presets = {
-                "Light": 5.0,
-                "Medium": 20.0,
-                "Heavy": 50.0,
-            }
-            smoothing = presets[strength]
-            eq = lavalink.LowPass()
-            eq.update(smoothing=smoothing)
-            await player.set_filter(eq)
-            await slash_log(ctx, f"{emoji.equalizer} Applied **Lowpass** ({strength}) equalizer.")
+        await self._apply_preset(ctx, "lowpass", strength, "Lowpass")
 
     @eq.command(name="channelmix")
     @option(
@@ -697,25 +493,7 @@ class Music(commands.Cog):
     )
     async def channelmix(self, ctx: discord.ApplicationContext, mode: str = "Mono"):
         """Mix audio channels for different stereo effects."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
-        if player:
-            presets = {
-                "Mono": {"left_to_left": 0.5, "left_to_right": 0.5, "right_to_left": 0.5, "right_to_right": 0.5},
-                "Left Only": {"left_to_left": 1.0, "left_to_right": 1.0, "right_to_left": 0.0, "right_to_right": 0.0},
-                "Right Only": {"left_to_left": 0.0, "left_to_right": 0.0, "right_to_left": 1.0, "right_to_right": 1.0},
-                "Swap": {"left_to_left": 0.0, "left_to_right": 1.0, "right_to_left": 1.0, "right_to_right": 0.0},
-                "Wide Stereo": {"left_to_left": 1.0, "left_to_right": 0.3, "right_to_left": 0.3, "right_to_right": 1.0},
-            }
-            cfg = presets[mode]
-            eq = lavalink.ChannelMix()
-            eq.update(
-                left_to_left=cfg["left_to_left"],
-                left_to_right=cfg["left_to_right"],
-                right_to_left=cfg["right_to_left"],
-                right_to_right=cfg["right_to_right"],
-            )
-            await player.set_filter(eq)
-            await slash_log(ctx, f"{emoji.equalizer} Applied **Channel Mix** ({mode}) equalizer.")
+        await self._apply_preset(ctx, "channelmix", mode, "Channel Mix")
 
     @eq.command(name="distortion")
     @option(
@@ -726,71 +504,14 @@ class Music(commands.Cog):
     )
     async def distortion(self, ctx: discord.ApplicationContext, type: str = "Light Crunch"):
         """Apply audio distortion effects."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
-        if player:
-            presets = {
-                "Light Crunch": {
-                    "sin_offset": 0.0,
-                    "sin_scale": 1.2,
-                    "cos_offset": 0.0,
-                    "cos_scale": 1.1,
-                    "tan_offset": 0.0,
-                    "tan_scale": 1.0,
-                    "offset": 0.05,
-                    "scale": 1.0,
-                },
-                "Heavy Metal": {
-                    "sin_offset": 0.1,
-                    "sin_scale": 1.5,
-                    "cos_offset": 0.1,
-                    "cos_scale": 1.4,
-                    "tan_offset": 0.05,
-                    "tan_scale": 1.2,
-                    "offset": 0.1,
-                    "scale": 1.1,
-                },
-                "Vintage": {
-                    "sin_offset": 0.0,
-                    "sin_scale": 1.1,
-                    "cos_offset": 0.0,
-                    "cos_scale": 1.05,
-                    "tan_offset": 0.0,
-                    "tan_scale": 1.0,
-                    "offset": 0.02,
-                    "scale": 0.95,
-                },
-                "Digital Clip": {
-                    "sin_offset": 0.2,
-                    "sin_scale": 2.0,
-                    "cos_offset": 0.2,
-                    "cos_scale": 1.8,
-                    "tan_offset": 0.1,
-                    "tan_scale": 1.5,
-                    "offset": 0.15,
-                    "scale": 1.2,
-                },
-            }
-            cfg = presets[type]
-            eq = lavalink.Distortion()
-            eq.update(
-                sin_offset=cfg["sin_offset"],
-                sin_scale=cfg["sin_scale"],
-                cos_offset=cfg["cos_offset"],
-                cos_scale=cfg["cos_scale"],
-                tan_offset=cfg["tan_offset"],
-                tan_scale=cfg["tan_scale"],
-                offset=cfg["offset"],
-                scale=cfg["scale"],
-            )
-            await player.set_filter(eq)
-            await slash_log(ctx, f"{emoji.equalizer} Applied **Distortion** ({type}) equalizer.")
+        await self._apply_preset(ctx, "distortion", type, "Distortion")
 
     # Stop
     @slash_command(name="stop")
     async def stop(self, ctx: discord.ApplicationContext):
         """Destroys the player."""
         await ctx.defer(ephemeral=True)
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
             await slash_log(ctx, f"{emoji.stop} Destroyed player.", render=False)
             await stop_player(player, ctx.guild)
@@ -800,14 +521,14 @@ class Music(commands.Cog):
     @option("duration", description="Enter the amount of duration to seek. Ex: 10s, 1m, 2h etc....")
     async def seek(self, ctx: discord.ApplicationContext, duration: str):
         """Seeks to a given position in a track."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
             timedelta = parse_duration(duration)
             track_time = int(player.position + timedelta.total_seconds() * 1000)
-            if track_time < player.current.duration:
+            if track_time < player.current.length:
                 await player.seek(track_time)
                 start_lyrics(self.client, ctx.guild.id)
-                await slash_log(ctx, f"{emoji.seek} Moved track to `{lavalink.format_time(track_time)}`.")
+                await slash_log(ctx, f"{emoji.seek} Moved track to `{fmt_time(track_time)}`.")
             else:
                 await self.skip(ctx=ctx)
 
@@ -815,56 +536,52 @@ class Music(commands.Cog):
     @slash_command(name="skip")
     async def skip(self, ctx: discord.ApplicationContext):
         """Skips the current playing track."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
-            await player.skip()
             await slash_log(ctx, f"{emoji.skip} Skipped the track.", render=False)
+            await skip_or_stop(player, ctx.guild)
 
     # Skip to
     @slash_command(name="skip-to")
     @option("track", description="Enter your track index number to skip", autocomplete=track_autocomplete)
     async def skip_to(self, ctx: discord.ApplicationContext, track: str):
         """Skips to a given track in the queue."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
             await ctx.defer(ephemeral=True)
             index: int = int(track.split(".")[0])
-            if index < 1 or index > len(player.queue):
+            if index < 1 or index > len(player.queue.tracks):
                 await reply(
                     ctx,
-                    f"{emoji.error} Track number must be between `1` and `{len(player.queue)}`",
+                    f"{emoji.error} Track number must be between `1` and `{len(player.queue.tracks)}`",
                     color=config.color.red,
                 )
             else:
-                player.queue = player.queue[index - 1 :]
-                shuffle_state = player.shuffle
-                player.set_shuffle(False)
-                await player.skip()
-                player.set_shuffle(shuffle_state)
+                await player.skip_to(index - 1)
                 await slash_log(ctx, f"{emoji.skip} Skipped to track `{index}`.", render=False)
 
     # Pause
     @slash_command(name="pause")
     async def pause(self, ctx: discord.ApplicationContext):
         """Pauses the player."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
             if player.paused:
                 await reply(ctx, f"{emoji.error} Player is already paused.", color=config.color.red)
             else:
                 await ctx.defer(ephemeral=True)
-                await player.set_pause(True)
+                await player.pause()
                 await slash_log(ctx, f"{emoji.pause} Player paused.")
 
     # Resume
     @slash_command(name="resume")
     async def resume(self, ctx: discord.ApplicationContext):
         """Resumes the player."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
             if player.paused:
                 await ctx.defer(ephemeral=True)
-                await player.set_pause(False)
+                await player.resume()
                 await slash_log(ctx, f"{emoji.play} Player resumed.")
             else:
                 await reply(ctx, f"{emoji.error} Player is not paused", color=config.color.red)
@@ -874,7 +591,7 @@ class Music(commands.Cog):
     @option("volume", description="Enter your volume amount from 1 - 100")
     async def volume(self, ctx: discord.ApplicationContext, volume: int):
         """Changes the player's volume 1 - 100."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
             if volume < 1 or volume > 100:
                 await reply(ctx, f"{emoji.error} Volume amount must be between `1` - `100`", color=config.color.red)
@@ -887,10 +604,10 @@ class Music(commands.Cog):
     @option("page", description="Enter queue page number", default=1, required=False)
     async def queue(self, ctx: discord.ApplicationContext, page: int = 1):
         """Shows the player's queue."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
             items_per_page = 5
-            pages = max(1, math.ceil(len(player.queue) / items_per_page))
+            pages = max(1, math.ceil(len(player.queue.tracks) / items_per_page))
             if page > pages or page < 1:
                 await reply(ctx, f"{emoji.error} Page has to be between `1` to `{pages}`", color=config.color.red)
                 return
@@ -901,9 +618,9 @@ class Music(commands.Cog):
     @slash_command(name="clear-queue")
     async def clear_queue(self, ctx: discord.ApplicationContext):
         """Clears the player's queue."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
-            if not player.queue:
+            if not len(player.queue.tracks):
                 await reply(ctx, f"{emoji.error} Queue is empty", color=config.color.red)
             else:
                 player.queue.clear()
@@ -913,23 +630,26 @@ class Music(commands.Cog):
     @slash_command(name="shuffle")
     async def shuffle(self, ctx: discord.ApplicationContext):
         """Toggle shuffle for the player's queue."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
-            if not player.queue:
+            if not len(player.queue.tracks):
                 await reply(ctx, f"{emoji.error} Queue is empty", color=config.color.red)
             else:
                 await ctx.defer(ephemeral=True)
-                player.set_shuffle(not player.shuffle)
-                await slash_log(ctx, f"{emoji.shuffle} {'Enabled' if player.shuffle else 'Disabled'} shuffle.")
+                shuffled = player.queue.shuffle_mode is sonolink.ShuffleMode.PERSISTENT
+                player.queue.shuffle_mode = (
+                    sonolink.ShuffleMode.DEFAULT if shuffled else sonolink.ShuffleMode.PERSISTENT
+                )
+                await slash_log(ctx, f"{emoji.shuffle} {'Disabled' if shuffled else 'Enabled'} shuffle.")
 
     # Autoplay
     @slash_command(name="autoplay")
     async def autoplay(self, ctx: discord.ApplicationContext):
-        """Toggles autoplay"""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        """Toggles autoplay."""
+        player = await self.ensure_voice(ctx)
         if player:
-            enabled = store.autoplay(ctx.guild.id)
-            store.autoplay(ctx.guild.id, not enabled, "set")
+            enabled = player.autoplay is sonolink.AutoPlayMode.ENABLED
+            player.autoplay = sonolink.AutoPlayMode.DISABLED if enabled else sonolink.AutoPlayMode.ENABLED
             await slash_log(
                 ctx,
                 f"{emoji.autoplay} {'Enabled' if not enabled else 'Disabled'} autoplay.",
@@ -940,22 +660,22 @@ class Music(commands.Cog):
     @option("mode", description="Enter loop mode", choices=["Disable", "Queue", "Track"])
     async def loop(self, ctx: discord.ApplicationContext, mode: str):
         """Loops the current queue until the command is invoked again or until a new track is enqueued."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
             await ctx.defer(ephemeral=True)
             msg = ""
             if mode == "Disable":
-                player.set_loop(0)
+                player.queue_mode = sonolink.QueueMode.NORMAL
                 msg = f"{emoji.loop_white} Disabled loop."
             elif mode == "Track":
-                player.set_loop(1)
+                player.queue_mode = sonolink.QueueMode.LOOP
                 msg = f"{emoji.loop_one} Enabled track loop."
             elif mode == "Queue":
-                if not player.queue:
+                if not len(player.queue.tracks):
                     await reply(ctx, f"{emoji.error} Queue is empty.", color=config.color.red)
                     return
                 else:
-                    player.set_loop(2)
+                    player.queue_mode = sonolink.QueueMode.LOOP_ALL
                     msg = f"{emoji.loop} Enabled queue loop."
             await slash_log(ctx, msg)
 
@@ -964,17 +684,19 @@ class Music(commands.Cog):
     @option("track", description="Select the track to remove", autocomplete=track_autocomplete)
     async def remove(self, ctx: discord.ApplicationContext, track: str):
         """Removes a track from the player's queue with the given index."""
-        player: lavalink.DefaultPlayer = await self.ensure_voice(ctx)
+        player = await self.ensure_voice(ctx)
         if player:
             index: int = int(track.split(".")[0])
-            if not player.queue:
+            if not len(player.queue.tracks):
                 await reply(ctx, f"{emoji.error} Queue is empty", color=config.color.red)
-            elif index > len(player.queue) or index < 1:
+            elif index > len(player.queue.tracks) or index < 1:
                 await reply(
-                    ctx, f"{emoji.error} Index has to be between `1` to `{len(player.queue)}`", color=config.color.red
+                    ctx,
+                    f"{emoji.error} Index has to be between `1` to `{len(player.queue.tracks)}`",
+                    color=config.color.red,
                 )
             else:
-                removed = player.queue.pop(index - 1)
+                removed = player.queue.remove_at(index - 1)
                 await slash_log(ctx, f"{emoji.remove} Removed **{removed.title}**.", color=config.color.red)
 
 

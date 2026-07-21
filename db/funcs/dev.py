@@ -11,7 +11,7 @@ async def add_dev(user_id: int) -> None:
     """
     Adds a developer user ID to the database.
 
-    Parameters:
+    Args:
         user_id (int): The user ID to perform action on.
     """
     await DevTable.get_or_create(user_id=user_id)
@@ -21,7 +21,7 @@ async def remove_dev(user_id: int) -> None:
     """
     Removes a developer user ID from the database.
 
-    Parameters:
+    Args:
         user_id (int): The user ID to perform action on.
     """
     dev = await DevTable.filter(user_id=user_id).first()

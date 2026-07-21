@@ -1,11 +1,11 @@
 import asyncio
 import datetime
 import discord
-import lavalink
 import math
 import os
 import platform
 import psutil
+import sonolink
 import sys
 import time
 import toml
@@ -21,6 +21,7 @@ from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
 from discord.ui import ActionRow
 from io import BytesIO
+from music.core import fetch_node_info
 from typing import Literal
 from utils import check, config, temp
 from utils.emoji import Emoji, emoji, reload_emoji, update_emoji
@@ -29,9 +30,9 @@ from utils.logger import cleanup_guild
 from utils.term import Term
 
 
-def _has_stats(node: lavalink.Node) -> bool:
+def _has_stats(node: sonolink.Node) -> bool:
     """Whether a node has reported real stats."""
-    return bool(node.available and not node.stats.is_fake)
+    return bool(node.is_connected and node.stats is not None)
 
 
 class GuildContainer(ui.Container):
@@ -268,7 +269,7 @@ class StatsView(DesignerView):
         return [self._bot_block(), self._runtime_block(), self._host_block(host_cpu)], 0
 
     async def _lavalink_sections(self) -> tuple[list[list[str]], int]:
-        nodes = self.client.lavalink.node_manager.nodes if self.client.lavalink else []
+        nodes = self.client.sonolink.nodes
         sections = [self._nodes_block(nodes)]
         sections += await asyncio.gather(*(self._node_block(i, n) for i, n in enumerate(nodes, start=1)))
 
@@ -300,7 +301,7 @@ class StatsView(DesignerView):
             ("Square", f"v{version}"),
             ("Python", f"v{platform.python_version()}"),
             ("Pycord", f"v{discord.__version__}"),
-            ("Lavalink.py", f"v{lavalink.__version__}"),
+            ("Sonolink", f"v{sonolink.__version__}"),
             ("PID", f"{self.process.pid}"),
             ("Threads", f"{self.process.num_threads():,}"),
             ("RSS", fmt_memory(rss)),
@@ -337,7 +338,7 @@ class StatsView(DesignerView):
             *self._chart("Memory (%)", self._track("host_mem", mem.percent)),
         ]
 
-    def _nodes_block(self, nodes: list[lavalink.Node]) -> list[str]:
+    def _nodes_block(self, nodes: list[sonolink.Node]) -> list[str]:
         if not nodes:
             return ["LAVALINK", "  No nodes are configured."]
         rows = []
@@ -346,61 +347,57 @@ class StatsView(DesignerView):
             rows.append(
                 [
                     f"{i}",
-                    node.name,
-                    "ONLINE" if node.available else "OFFLINE",
+                    node.id,
+                    "ONLINE" if node.is_connected else "OFFLINE",
                     f"{node.stats.players}" if stats else "-",
                     f"{node.stats.playing_players}" if stats else "-",
                 ]
             )
-        online_count = sum(1 for n in nodes if n.available)
+        online_count = sum(1 for n in nodes if n.is_connected)
         return [
             f"LAVALINK • {online_count}/{len(nodes)} online",
             *Term.grid(["#", "NODE", "STATE", "PLAYERS", "PLAYING"], rows),
         ]
 
-    async def _node_block(self, index: int, node: lavalink.Node) -> list[str]:
-        title = f"NODE {index} • {node.name}"
-        if not node.available:
-            return [title, *Term.kv([("State", "OFFLINE"), ("Region", node.region or "none")], cols=1)]
+    async def _node_block(self, index: int, node: sonolink.Node) -> list[str]:
+        title = f"NODE {index} • {node.id}"
+        if not node.is_connected:
+            return [title, *Term.kv([("State", "OFFLINE")], cols=1)]
 
-        async def version() -> str:
-            try:
-                return f"v{await node.get_version()}"
-            except Exception:
-                return "unknown"
-
-        async def rest() -> str:
-            try:
-                return f"{round(await node.get_rest_latency())} ms"
-            except Exception:
-                return "unknown"
-
-        node_version, node_rest = await asyncio.gather(version(), rest())
+        info, node_rest = await fetch_node_info(node)
         rows = [
             ("State", "ONLINE"),
-            ("Version", node_version),
-            ("Region", node.region or "none"),
+            ("Version", f"v{info.version.semver}" if info else "unknown"),
             ("Rest", node_rest),
         ]
+        if info:
+            rows += [
+                ("JVM", f"v{info.jvm}"),
+                ("Lavaplayer", f"v{info.lavaplayer}"),
+                ("Sources", ", ".join(info.source_managers) or "none"),
+            ]
+            if info.plugins:
+                rows += [("Plugins" if i == 0 else "", f"{p.name} v{p.version}") for i, p in enumerate(info.plugins)]
+            else:
+                rows.append(("Plugins", "none"))
         if not _has_stats(node):
             return [title, *Term.kv(rows, cols=1), "", "  Awaiting first stats frame."]
 
         stats = node.stats
         rows += [
             ("Uptime", format_timedelta(datetime.timedelta(milliseconds=stats.uptime), locale="en")),
-            ("Penalty", f"{node.penalty:.1f}"),
             ("Players", f"{stats.players:,}"),
             ("Playing", f"{stats.playing_players:,}"),
-            ("Memory", f"{fmt_memory(stats.memory_used)} / {fmt_memory(stats.memory_allocated)}"),
+            ("Memory", f"{fmt_memory(stats.memory.used)} / {fmt_memory(stats.memory.allocated)}"),
         ]
-        allocated = stats.memory_allocated or 1
+        allocated = stats.memory.allocated or 1
         return [
             title,
             *Term.kv(rows, cols=1),
             "",
-            f"  {'Memory'.ljust(8)} {self._bar(stats.memory_used / allocated * 100)}",
-            f"  {'CPU Sys'.ljust(8)} {self._bar(stats.system_load * 100)}",
-            f"  {'CPU Lava'.ljust(8)} {self._bar(stats.lavalink_load * 100)}",
+            f"  {'Memory'.ljust(8)} {self._bar(stats.memory.used / allocated * 100)}",
+            f"  {'CPU Sys'.ljust(8)} {self._bar(stats.cpu.system_load * 100)}",
+            f"  {'CPU Lava'.ljust(8)} {self._bar(stats.cpu.lavalink_load * 100)}",
         ]
 
 

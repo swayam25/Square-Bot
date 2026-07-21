@@ -57,8 +57,8 @@ class TicketTranscript:
     """
     Class to create a transcript of a ticket channel.
 
-    Attributes:
-        channel (discord.TextChannel): The ticket channel to create a transcript for.
+    Args:
+        channel (:class:`discord.TextChannel`): The ticket channel to create a transcript for.
     """
 
     def __init__(self, channel: discord.TextChannel):
@@ -71,7 +71,7 @@ class TicketTranscript:
 
 
 def get_ticket_view(interaction: discord.Interaction) -> TicketView:
-    """Creates a TicketView from an interaction."""
+    """Creates a :class:`TicketView` from an interaction."""
     return TicketView(
         author_id=int(interaction.channel.name.split("-")[1]),
         reason=str(interaction.channel.topic or "No reason provided"),

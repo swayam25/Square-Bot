@@ -10,7 +10,7 @@ def parse_duration(duration: str, max_duration: str | None = None) -> datetime.t
     """
     Parse a duration string into a timedelta object.
 
-    Parameters:
+    Args:
         duration (str): A string representing the duration, e.g., "2w3d4h5m6s".
         max_duration (str | None): An optional maximum duration string, e.g., "2w3d".
     """
@@ -56,7 +56,7 @@ def fmt_perms(perms: list[str]) -> str:
     """
     Format a list of permissions into a human-readable string.
 
-    Parameters:
+    Args:
         perms (list[str]): A list of permission names.
 
     Returns:
@@ -170,14 +170,14 @@ def create_dc_msgs_file(
     Uncached IDs get a minimal entry (only the ID & sent time are known),
     shown as a jump link when guild_id & channel_id are provided.
 
-    Parameters:
-        msgs (list[discord.Message]): A list of Discord messages.
+    Args:
+        msgs (list[:class:`discord.Message`]): A list of Discord messages.
         uncached_ids (set[int] | None): IDs of deleted messages that weren't cached.
         guild_id (int | None): Guild ID used to build jump links for uncached IDs.
         channel_id (int | None): Channel ID used to build jump links for uncached IDs.
 
     Returns:
-        discord.File: A Discord file object containing the messages.
+        :class:`discord.File`: A Discord file object containing the messages.
     """
     entries: list[tuple[datetime.datetime, str]] = []
     for msg in msgs:

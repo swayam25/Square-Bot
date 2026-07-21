@@ -6,7 +6,7 @@ async def fetch_log_channel(guild_id: int, log_type: str) -> int | None:
     """
     Fetches the log channel ID set for a log type, or None if not set.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to perform action on.
         log_type (str): The log type key (e.g. "moderation").
     """
@@ -18,7 +18,7 @@ async def fetch_log_channels(guild_id: int) -> dict[str, int]:
     """
     Fetches all configured log channels for a guild as a `{log_type: channel_id}` mapping.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to perform action on.
     """
     rows = await LogChannelTable.filter(guild__guild_id=guild_id)
@@ -29,7 +29,7 @@ async def set_log_channel(guild_id: int, log_type: str, channel_id: int) -> None
     """
     Sets the log channel for a log type, creating or updating its row.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to perform action on.
         log_type (str): The log type key (e.g. "moderation").
         channel_id (int): The channel ID to log in.
@@ -42,7 +42,7 @@ async def set_all_log_channels(guild_id: int, log_types: list[str], channel_id: 
     """
     Sets every given log type to the same channel.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to perform action on.
         log_types (list[str]): The log type keys to set.
         channel_id (int): The channel ID to log in.
@@ -55,7 +55,7 @@ async def remove_log_channel(guild_id: int, log_type: str | None = None) -> None
     """
     Removes a log channel setting, or all of them if no log type is given.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to perform action on.
         log_type (str | None): The log type key to remove, or None for all.
     """

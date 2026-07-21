@@ -1,9 +1,9 @@
 import discord
-import lavalink
 import re
 from core.view import DesignerView
 from discord import ui
 from music import store
+from music.core import SquarePlayer
 from utils import config
 from utils.emoji import emoji
 
@@ -18,14 +18,14 @@ sources = {
 
 def container(content: str, color: int | None = None) -> DesignerView:
     """
-    Wraps a text string into a DesignerView container.
+    Wraps a text string into a :class:`DesignerView` container.
 
-    Parameters:
+    Args:
         content (str): The text to display inside the container.
         color (int | None): Optional accent color for the container border.
 
     Returns:
-        DesignerView: A view containing the styled container.
+        :class:`DesignerView`: A view containing the styled container.
     """
     c = ui.Container(ui.TextDisplay(content))
     if color is not None:
@@ -44,8 +44,8 @@ async def reply(
 
     Works for both slash command contexts and button/select interactions, using followup if the response has already been sent.
 
-    Parameters:
-        source (ApplicationContext | Interaction): The invoking command or interaction.
+    Args:
+        source (:class:`ApplicationContext` | :class:`Interaction`): The invoking command or interaction.
         content (str): The message text.
         color (int | None): Optional accent color for the container.
     """
@@ -63,7 +63,7 @@ async def music_log(guild_id: int, content: str, *, color: int | None = None) ->
 
     The message auto-deletes after 5 seconds. Does nothing if no player channel is set.
 
-    Parameters:
+    Args:
         guild_id (int): The guild whose player channel receives the log.
         content (str): The message text.
         color (int | None): Optional accent color for the container.
@@ -84,7 +84,7 @@ def to_log_text(content: str) -> str:
 
     Used to convert slash command confirmation messages into clean log lines without a leading emoji prefix (e.g. for use after a user mention).
 
-    Parameters:
+    Args:
         content (str): The message text, optionally starting with a custom or unicode emoji.
 
     Returns:
@@ -94,18 +94,16 @@ def to_log_text(content: str) -> str:
     return stripped[0].lower() + stripped[1:] if stripped else content
 
 
-async def music_interaction_check(
-    view: DesignerView, player: lavalink.DefaultPlayer, interaction: discord.Interaction
-) -> bool:
+async def music_interaction_check(view: DesignerView, player: SquarePlayer, interaction: discord.Interaction) -> bool:
     """
     Gate for all player and queue button interactions.
 
     Verifies that something is currently playing, the user is in a voice channel, and the user is in the same voice channel as the bot.
 
-    Parameters:
-        view (DesignerView): The view whose items are disabled on failure.
-        player (DefaultPlayer): The active Lavalink player for the guild.
-        interaction (Interaction): The incoming button or select interaction.
+    Args:
+        view (:class:`DesignerView`): The view whose items are disabled on failure.
+        player (:class:`SquarePlayer`): The active player for the guild.
+        interaction (:class:`Interaction`): The incoming button or select interaction.
 
     Returns:
         bool: True if all checks pass, False otherwise (response already sent).
@@ -123,7 +121,7 @@ async def music_interaction_check(
             view=container(f"{emoji.error} Join a voice channel first.", config.color.red), ephemeral=True
         )
         return False
-    elif player.is_connected and interaction.user.voice.channel.id != int(player.channel_id):
+    elif player.connected and interaction.user.voice.channel.id != player.channel.id:
         await interaction.response.send_message(
             view=container(f"{emoji.error} You are not in my voice channel.", config.color.red), ephemeral=True
         )

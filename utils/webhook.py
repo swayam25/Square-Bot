@@ -13,9 +13,9 @@ async def get_webhook(client: Client, channel: discord.TextChannel) -> discord.W
     The webhook is named after the bot & carries its avatar. Per-message identity
     should be applied via `username` & `avatar_url` on send.
 
-    Parameters:
-        client (Client): The bot client.
-        channel (discord.TextChannel): The channel to own the webhook.
+    Args:
+        client (:class:`Client`): The bot client.
+        channel (:class:`discord.TextChannel`): The channel to own the webhook.
     """
     global _avatar
     if webhook := _cache.get(channel.id):

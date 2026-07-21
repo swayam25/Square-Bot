@@ -21,10 +21,9 @@ async def get_cogs(ctx: discord.ApplicationContext) -> list[CogDict]:
     """
     Get all cogs and their commands for the help menu.
 
-    Parameters:
-        ctx (Any): The context of the command.
+    Args:
+        ctx (:class:`discord.ApplicationContext`): The context of the command.
     """
-
     cogs: list[CogDict] = [
         {
             "name": "Moderation",  # This should match the class name of the cogs (spaces are removed).

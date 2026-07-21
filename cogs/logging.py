@@ -23,10 +23,7 @@ def log_view(
     extra: list[ui.Item] | None = None,
     buttons: list[ui.Button] | None = None,
 ) -> DesignerView:
-    """
-    Builds a simple log view: a container with a title & body, optionally
-    with a thumbnail, extra items & an action row of buttons.
-    """
+    """Builds a simple log view: a container with a title & body, optionally with a thumbnail, extra items & an action row of buttons."""
     header: list[ui.Item] = [ui.TextDisplay(f"## {title}"), ui.TextDisplay(body)]
     items: list[ui.Item] = [ui.Section(*header, accessory=ui.Thumbnail(thumbnail))] if thumbnail else header
     if extra:

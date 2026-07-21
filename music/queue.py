@@ -1,10 +1,10 @@
 import discord
-import lavalink
 import math
+import sonolink
 from core import Client
 from core.view import DesignerView
 from discord import ui
-from music import store
+from music.core import SquarePlayer, fmt_time, get_player, requester_id
 from music.utils import music_interaction_check, music_log, reply
 from utils import config
 from utils.emoji import emoji
@@ -20,9 +20,9 @@ class QueueBtnCallback:
 
     @staticmethod
     async def queue_btn_callback(
-        i: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: QueueListView
+        i: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
     ):
-        if not player or not player.queue or track_index >= len(player.queue) or not queue_view:
+        if not player or not len(player.queue.tracks) or track_index >= len(player.queue.tracks) or not queue_view:
             return
         queue_view.toggle_action_buttons(track_index)
         queue_view.build()
@@ -30,15 +30,12 @@ class QueueBtnCallback:
 
     @staticmethod
     async def move_up_callback(
-        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: QueueListView
+        interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
     ):
         if track_index <= 0:
             return
         new_index = track_index - 1
-        player.queue[track_index], player.queue[new_index] = (
-            player.queue[new_index],
-            player.queue[track_index],
-        )
+        player.queue.swap(track_index, new_index)
         if track_index == queue_view.visible_action_button:
             queue_view.visible_action_button = new_index
         current_page_start = (queue_view.page - 1) * queue_view.items_per_page
@@ -48,15 +45,12 @@ class QueueBtnCallback:
 
     @staticmethod
     async def move_down_callback(
-        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: QueueListView
+        interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
     ):
-        if track_index >= len(player.queue) - 1:
+        if track_index >= len(player.queue.tracks) - 1:
             return
         new_index = track_index + 1
-        player.queue[track_index], player.queue[new_index] = (
-            player.queue[new_index],
-            player.queue[track_index],
-        )
+        player.queue.swap(track_index, new_index)
         if track_index == queue_view.visible_action_button:
             queue_view.visible_action_button = new_index
         current_page_start = (queue_view.page - 1) * queue_view.items_per_page
@@ -67,13 +61,13 @@ class QueueBtnCallback:
 
     @staticmethod
     async def remove_callback(
-        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: QueueListView
+        interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
     ):
-        if track_index >= len(player.queue):
+        if track_index >= len(player.queue.tracks):
             return
-        player.queue.pop(track_index)
+        player.queue.remove_at(track_index)
         queue_view.visible_action_button = None
-        total_pages = max(1, math.ceil(len(player.queue) / queue_view.items_per_page))
+        total_pages = max(1, math.ceil(len(player.queue.tracks) / queue_view.items_per_page))
         if queue_view.page > total_pages and total_pages > 0:
             queue_view.page = total_pages
         queue_view.build()
@@ -81,12 +75,12 @@ class QueueBtnCallback:
 
     @staticmethod
     async def play_now_callback(
-        interaction: discord.Interaction, player: lavalink.DefaultPlayer, track_index: int, queue_view: QueueListView
+        interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
     ):
-        if track_index >= len(player.queue):
+        if track_index >= len(player.queue.tracks):
             return
-        await player.play_track(player.queue.pop(track_index))
-        total_pages = max(1, math.ceil(len(player.queue) / queue_view.items_per_page))
+        await player.skip_to(track_index)
+        total_pages = max(1, math.ceil(len(player.queue.tracks) / queue_view.items_per_page))
         if queue_view.page > total_pages and total_pages > 0:
             queue_view.page = total_pages
         await _update_queue_view(interaction, queue_view)
@@ -103,17 +97,17 @@ class QueueContainer(ui.Container):
     Shows the currently playing track at position 0, followed by the queued tracks for the current page.
     Each track has an expand button to reveal move/remove/play-now actions.
 
-    Parameters:
-        player (DefaultPlayer): The active Lavalink player.
-        ctx (ApplicationContext): The slash command context (used to resolve member mentions).
+    Args:
+        player (:class:`SquarePlayer`): The active player.
+        ctx (:class:`ApplicationContext`): The slash command context (used to resolve member mentions).
         page (int): The page number to display (1-indexed).
         items_per_page (int): Number of tracks shown per page.
-        queue_view (QueueListView | None): The parent view, used to track which track's action buttons are expanded.
+        queue_view (:class:`QueueListView` | None): The parent view, used to track which track's action buttons are expanded.
     """
 
     def __init__(
         self,
-        player: lavalink.DefaultPlayer,
+        player: SquarePlayer,
         ctx: discord.ApplicationContext,
         page=1,
         items_per_page=5,
@@ -121,13 +115,15 @@ class QueueContainer(ui.Container):
         autoplay_enabled: bool = False,
     ):
         super().__init__()
-        pages = max(1, math.ceil(len(player.queue) / items_per_page))
+        queue_tracks = player.queue.tracks
+        autoplay_tracks = player.queue.autoplay_tracks
+        pages = max(1, math.ceil(len(queue_tracks) / items_per_page))
         start = (page - 1) * items_per_page
         end = start + items_per_page
         queue_list: list = []
 
-        for index, track in enumerate(player.queue[start:end], start=start):
-            requester = ctx.guild.get_member(track.requester)
+        for index, track in enumerate(queue_tracks[start:end], start=start):
+            requester = ctx.guild.get_member(requester_id(player, track) or 0)
             btn = ui.Button(
                 emoji=emoji.more if queue_view and index == queue_view.visible_action_button else emoji.more_white,
                 style=discord.ButtonStyle.grey,
@@ -138,7 +134,7 @@ class QueueContainer(ui.Container):
             queue_list.append(
                 ui.Section(
                     ui.TextDisplay(
-                        f"`{index + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) [`{lavalink.format_time(track.duration)}`]\n"
+                        f"`{index + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) [`{fmt_time(track.length)}`]\n"
                         f"-# {emoji.bottom_right} {requester.mention if requester else 'Unknown'}"
                     ),
                     accessory=btn,
@@ -150,7 +146,7 @@ class QueueContainer(ui.Container):
                     i, player=player, track_index=track_idx, queue_view=queue_view
                 )
                 move_down_btn = ui.Button(
-                    emoji=emoji.down_white, style=discord.ButtonStyle.grey, disabled=(index == len(player.queue) - 1)
+                    emoji=emoji.down_white, style=discord.ButtonStyle.grey, disabled=(index == len(queue_tracks) - 1)
                 )
                 move_down_btn.callback = lambda i, track_idx=index: QueueBtnCallback.move_down_callback(
                     i, player=player, track_index=track_idx, queue_view=queue_view
@@ -165,39 +161,52 @@ class QueueContainer(ui.Container):
                 )
                 queue_list.append(ui.ActionRow(move_up_btn, move_down_btn, remove_btn, play_now_btn))
 
-        current_requester = ctx.guild.get_member(player.current.requester) if player.current else None
+        current = player.current
+        current_requester = ctx.guild.get_member(requester_id(player, current) or 0) if current else None
         self.add_item(ui.TextDisplay(f"## {ctx.guild.name}'s Queue"))
         self.add_item(
             ui.TextDisplay(
-                f"`0.` [**{player.current.title}** by **{player.current.author}**]({player.current.uri}) [`{lavalink.format_time(player.current.duration)}`]\n"
+                f"`0.` [**{current.title}** by **{current.author}**]({current.uri}) [`{fmt_time(current.length)}`]\n"
                 f"-# {emoji.bottom_right} {current_requester.mention if current_requester else 'Unknown'}"
-                if player.current
+                if current
                 else "No track playing."
             )
         )
         if queue_list:
-            self.add_item(ui.TextDisplay(f"### Queued {len(player.queue)} Tracks"))
+            self.add_item(ui.TextDisplay(f"### Queued {len(queue_tracks)} Tracks"))
             self.items.extend(queue_list)
-        if len(player.queue) > items_per_page:
+        if len(queue_tracks) > items_per_page:
             self.add_item(ui.Separator())
             self.add_item(ui.TextDisplay(f"-# Viewing Page {page}/{pages}"))
         if autoplay_enabled:
             self.add_item(ui.Separator())
-            self.add_item(
-                ui.TextDisplay(
-                    f"-# {emoji.autoplay} **Autoplay Enabled**\n"
-                    f"-# Related tracks will be added automatically when the queue ends."
+            if autoplay_tracks and page == pages:
+                self.add_item(ui.TextDisplay(f"### {emoji.autoplay} Up Next • AutoPlay"))
+                self.add_item(
+                    ui.TextDisplay(
+                        "\n".join(
+                            f"`{idx + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) "
+                            f"[`{fmt_time(track.length)}`]"
+                            for idx, track in enumerate(autoplay_tracks)
+                        )
+                    )
                 )
-            )
+            else:
+                self.add_item(
+                    ui.TextDisplay(
+                        f"-# {emoji.autoplay} **Autoplay Enabled**\n"
+                        f"-# Related tracks will be added automatically when the queue ends."
+                    )
+                )
 
 
 class QueueListView(DesignerView):
     """
     Interactive queue view with pagination, bulk actions, and per-track controls.
 
-    Parameters:
-        client (Client): The bot client used to fetch the player.
-        ctx (ApplicationContext): The slash command context passed down to QueueContainer.
+    Args:
+        client (:class:`Client`): The bot client used to fetch the player.
+        ctx (:class:`ApplicationContext`): The slash command context passed down to :class:`QueueContainer`.
         page (int): The initial page to display (1-indexed, default 1).
     """
 
@@ -207,7 +216,7 @@ class QueueListView(DesignerView):
         self.ctx = ctx
         self.page = page
         self.items_per_page = 5
-        self.player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(ctx.guild.id)
+        self.player = get_player(client, ctx.guild.id)
         self.interaction_check = lambda interaction: music_interaction_check(
             player=self.player, interaction=interaction, view=self
         )
@@ -222,7 +231,7 @@ class QueueListView(DesignerView):
 
     def build(self):
         self.clear_items()
-        autoplay_enabled = store.autoplay(self.ctx.guild.id)
+        autoplay_enabled = self.player.autoplay is sonolink.AutoPlayMode.ENABLED
         self.add_item(
             QueueContainer(
                 self.player,
@@ -233,7 +242,7 @@ class QueueListView(DesignerView):
                 autoplay_enabled=autoplay_enabled,
             )
         )
-        if self.player.queue:
+        if len(self.player.queue):
             self.add_item(
                 ui.ActionRow(
                     more_select := ui.Select(
@@ -294,14 +303,9 @@ class QueueListView(DesignerView):
             elif selected_value == "reverse_queue":
                 self.player.queue.reverse()
             elif selected_value == "sort_by_duration":
-                self.player.queue.sort(key=lambda track: track.duration)
+                self.player.queue.sort(key=lambda track: track.length)
             elif selected_value == "remove_duplicates":
-                seen = set()
-                original_length = len(self.player.queue)
-                self.player.queue = [
-                    track for track in self.player.queue if not (track.identifier in seen or seen.add(track.identifier))
-                ]
-                if original_length == len(self.player.queue):
+                if self.player.queue.dedupe() == 0:
                     await reply(
                         interaction, f"{emoji.error} No duplicate tracks found in the queue.", color=config.color.red
                     )
@@ -310,9 +314,7 @@ class QueueListView(DesignerView):
 
     async def requester_modal_callback(self, interaction: discord.Interaction, view_interaction: discord.Interaction):
         user_id = int(interaction.data["components"][0]["component"]["values"][0])
-        original_length = len(self.player.queue)
-        self.player.queue = [track for track in self.player.queue if track.requester != user_id]
-        removed_count = original_length - len(self.player.queue)
+        removed_count = self.player.queue.remove([user_id], key=lambda track: requester_id(self.player, track))
         self.visible_action_button = None
         if removed_count == 0:
             await reply(

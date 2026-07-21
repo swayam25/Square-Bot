@@ -1,7 +1,7 @@
 import aiohttp
-import lavalink
 import re
 from bisect import bisect_right
+from sonolink.models import Playable
 
 API_URL = "https://lrclib.net/api"
 HEADERS = {"User-Agent": "Square (Discord Music Bot)"}
@@ -15,12 +15,12 @@ _noise_rx = re.compile(
 )
 
 
-def _clean_query(track: lavalink.AudioTrack) -> tuple[str, str]:
+def _clean_query(track: Playable) -> tuple[str, str]:
     """
     Returns a (title, artist) pair stripped of upload noise like "(Official Video)" or "- Topic".
 
-    Parameters:
-        track (AudioTrack): The track to build the lookup query from.
+    Args:
+        track (:class:`Playable`): The track to build the lookup query from.
     """
     title = _noise_rx.sub("", track.title).strip()
     artist = re.sub(r"\s*-\s*Topic$", "", track.author or "").strip()
@@ -33,7 +33,7 @@ def parse_lrc(text: str) -> list[tuple[int, str]]:
 
     Handles multiple timestamp tags on a single line (repeated choruses).
 
-    Parameters:
+    Args:
         text (str): The raw LRC lyrics text.
 
     Returns:
@@ -52,22 +52,22 @@ def parse_lrc(text: str) -> list[tuple[int, str]]:
     return lines
 
 
-async def fetch(track: lavalink.AudioTrack) -> list[tuple[int, str]]:
+async def fetch(track: Playable) -> list[tuple[int, str]]:
     """
     Fetches synced lyrics for a track from LRCLIB.
 
     Tries an exact signature match (title + artist + duration) first, then falls back to a search, keeping only results whose duration is within 10 seconds of the track.
 
-    Parameters:
-        track (AudioTrack): The track to fetch lyrics for.
+    Args:
+        track (:class:`Playable`): The track to fetch lyrics for.
 
     Returns:
         list[tuple[int, str]]: Timestamped lyric lines, or an empty list if none were found.
     """
-    if track.stream:
+    if track.is_stream:
         return []
     title, artist = _clean_query(track)
-    duration_sec = round(track.duration / 1000)
+    duration_sec = round(track.length / 1000)
     timeout = aiohttp.ClientTimeout(total=10)
     try:
         async with aiohttp.ClientSession(headers=HEADERS, timeout=timeout) as session:
@@ -98,7 +98,7 @@ def window(lines: list[tuple[int, str]], position_ms: int) -> tuple[int, str, st
     """
     Returns the lyrics window around the playback position.
 
-    Parameters:
+    Args:
         lines (list[tuple[int, str]]): Timestamped lyric lines sorted by position.
         position_ms (int): The current playback position in milliseconds.
 

@@ -8,14 +8,14 @@ from utils.emoji import emoji
 
 class DesignerView(BaseDesignerView):
     """
-    A custom DesignerView class for Discord UI components derived from `discord.ui.DesignerView`.
+    A custom DesignerView class for Discord UI components derived from :class:`discord.ui.DesignerView`.
 
-    Parameters:
-        *items (Item[V]): The items to be added to the view.
+    Args:
+        *items (:class:`Item`[V]): The items to be added to the view.
         timeout (float | None): The timeout for the view, defaults to 180.0 seconds.
         disable_on_timeout (bool): Whether to disable all items on timeout, defaults to True.
-        allowed_mentions (AllowedMentions | None): Allowed mentions for the view's messages. Defaults to no mentions.
-        ctx (ApplicationContext | None): The application context for the view.
+        allowed_mentions (:class:`AllowedMentions` | None): Allowed mentions for the view's messages. Defaults to no mentions.
+        ctx (:class:`ApplicationContext` | None): The application context for the view.
         check_author_interaction (bool): Whether to check if the interaction author is the command author.
     """
 
@@ -39,11 +39,10 @@ class DesignerView(BaseDesignerView):
 
     async def interaction_check(self, interaction: Interaction) -> bool:
         """
-        A callback that is called when an interaction happens within the view
-        that checks whether the view should process item callbacks for the interaction.
+        A callback that is called when an interaction happens within the view that checks whether the view should process item callbacks for the interaction.
 
-        Parameters:
-            interaction (Interaction): The interaction that occurred.
+        Args:
+            interaction (:class:`Interaction`): The interaction that occurred.
         """
         if self.check_author_interaction:
             if interaction.user != self.ctx.author:

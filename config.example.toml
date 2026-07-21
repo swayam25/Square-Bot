@@ -17,12 +17,10 @@ orange = "#E67E22"
 host = ""
 port = 0
 password = ""
-region = ""
 secure = true
 
 [[lavalink]]
 host = ""
 port = 0
 password = ""
-region = ""
 secure = true

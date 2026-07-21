@@ -11,7 +11,7 @@ async def add_guild(guild_id: int) -> GuildTable:
     """
     Adds a guild to the database.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to perform action on.
     """
     return (await GuildTable.get_or_create(guild_id=guild_id))[0]
@@ -21,7 +21,7 @@ async def remove_guild(guild_id: int) -> None:
     """
     Removes a guild from the database along with its log channels.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to perform action on.
     """
     guild = await GuildTable.filter(guild_id=guild_id).first()
@@ -33,7 +33,7 @@ async def fetch_guild_settings(guild_id: int) -> GuildTable:
     """
     Fetches settings for a specific guild, creating the row if missing.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to fetch settings for.
     """
     guild = await GuildTable.filter(guild_id=guild_id).first()
@@ -46,7 +46,7 @@ async def set_ticket_cmds(guild_id: int, enabled: bool) -> None:
     """
     Enables or disables ticket commands for a guild.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to perform action on.
         enabled (bool): Whether to enable or disable ticket commands.
     """
@@ -59,7 +59,7 @@ async def set_media_only(guild_id: int, channel_id: int | None) -> None:
     """
     Sets the media-only channel for a guild.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to perform action on.
         channel_id (int | None): The channel ID to set as the media-only channel.
     """
@@ -72,7 +72,7 @@ async def set_autorole(guild_id: int, role_id: int | None) -> None:
     """
     Sets the autorole for a guild.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to perform action on.
         role_id (int | None): The role ID to set as the autorole.
     """

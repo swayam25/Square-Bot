@@ -54,12 +54,12 @@ async def log(
     """
     Sends a log message through the channel's single shared webhook, renamed per message to `{bot} - {log type}`.
 
-    Parameters:
-        client (Client): The bot client.
-        channel (discord.abc.Messageable): The channel to log in (threads log via their parent).
-        log_type (LogType): The log category, shown as the sender name.
-        view (DesignerView | None): The components view to send.
-        file (discord.File | None): Optional file attachment, sent on its own to stay valid alongside components.
+    Args:
+        client (:class:`Client`): The bot client.
+        channel (:class:`discord.abc.Messageable`): The channel to log in (threads log via their parent).
+        log_type (:class:`LogType`): The log category, shown as the sender name.
+        view (:class:`DesignerView` | None): The components view to send.
+        file (:class:`discord.File` | None): Optional file attachment, sent on its own to stay valid alongside components.
         delete_after (float | None): Seconds before the log auto-deletes.
     """
     thread = discord.utils.MISSING

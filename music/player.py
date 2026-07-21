@@ -1,11 +1,12 @@
 import asyncio
 import discord
-import lavalink
+import sonolink
 import time
 from core import Client
 from core.view import DesignerView
 from discord import ui
-from music import lyrics, recommend, store
+from music import lyrics, store
+from music.core import SquarePlayer, fmt_time, get_player, requester_id
 from music.utils import music_interaction_check, music_log, reply, sources, to_log_text
 from utils import config
 from utils.emoji import emoji
@@ -27,11 +28,11 @@ def _get_render_lock(guild_id: int) -> asyncio.Lock:
     """
     Returns the render lock for a guild, creating it on first access.
 
-    Parameters:
+    Args:
         guild_id (int): The guild ID to retrieve the lock for.
 
     Returns:
-        asyncio.Lock: The lock associated with the guild.
+        :class:`asyncio.Lock`: The lock associated with the guild.
     """
     if guild_id not in _render_locks:
         _render_locks[guild_id] = asyncio.Lock()
@@ -45,16 +46,16 @@ async def render_player(client: Client, guild_id: int, *, force_new: bool = Fals
     Edits the player in place while it is still the latest message, otherwise deletes the stale player and posts a fresh one at the bottom of the channel.
     Skips silently if a render is already in progress for this guild.
 
-    Parameters:
-        client (Client): The Discord bot client.
+    Args:
+        client (:class:`Client`): The Discord bot client.
         guild_id (int): The guild to render the player for.
         force_new (bool): Always send a new player message instead of editing.
     """
     lock = _get_render_lock(guild_id)
     if lock.locked():
         return
-    player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(guild_id)
-    if not player or not player.is_connected or not player.current:
+    player = get_player(client, guild_id)
+    if not player or not player.connected or not player.current:
         return
     channel = store.play_ch(guild_id)
     if not channel:
@@ -90,8 +91,8 @@ def start_lyrics(client: Client, guild_id: int) -> None:
 
     Cancels any previous updater so only one loop runs per guild.
 
-    Parameters:
-        client (Client): The Discord bot client.
+    Args:
+        client (:class:`Client`): The Discord bot client.
         guild_id (int): The guild to update lyrics for.
     """
     task = store.lyrics_task(guild_id)
@@ -105,15 +106,15 @@ async def _lyrics_loop(client: Client, guild_id: int) -> None:
     Re-renders the player card whenever the active lyric line changes, keeping the progress bar fresh in between.
 
     Fetches lyrics once per track (cached in the store), then sleeps until the next line boundary.
-    Edits are throttled to one per `_LYRICS_MIN_EDIT_INTERVAL` seconds to stay clear of Discord rate limits, and nothing is edited while paused or when the line hasn't changed.
-    Tracks without lyrics (and instrumental gaps) still get a bar-only refresh every `_BAR_REFRESH_INTERVAL` seconds.
+    Edits are throttled to one per :data:`_LYRICS_MIN_EDIT_INTERVAL` seconds to stay clear of Discord rate limits, and nothing is edited while paused or when the line hasn't changed.
+    Tracks without lyrics (and instrumental gaps) still get a bar-only refresh every :data:`_BAR_REFRESH_INTERVAL` seconds.
 
-    Parameters:
-        client (Client): The Discord bot client.
+    Args:
+        client (:class:`Client`): The Discord bot client.
         guild_id (int): The guild to update lyrics for.
     """
-    player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(guild_id)
-    if not player or not player.current or player.current.stream:
+    player = get_player(client, guild_id)
+    if not player or not player.current or player.current.is_stream:
         return
     track = player.current
     cached = store.lyrics(guild_id)
@@ -126,7 +127,7 @@ async def _lyrics_loop(client: Client, guild_id: int) -> None:
     last_edit = 0.0
     while True:
         current = player.current
-        if not player.is_connected or not current or current.identifier != track.identifier:
+        if not player.connected or not current or current.identifier != track.identifier:
             return
         if not lines:
             # No lyrics found: keep the progress bar moving with a slow tick.
@@ -153,14 +154,13 @@ async def _lyrics_loop(client: Client, guild_id: int) -> None:
 
 def cleanup_guild(guild_id: int) -> None:
     """
-    Releases all per-guild in-memory state: locks, scheduled tasks (lyrics, relocation, inactivity), and every store key.
+    Releases all per-guild in-memory state: locks, scheduled tasks (lyrics, relocation), and every store key.
 
     Cancels tasks first, then flushes the store so the guild entry is dropped entirely.
-    A task is never cancelled from within itself (the inactivity task reaches here through `stop_player`), so the caller's own cleanup can finish.
+    A task is never cancelled from within itself, so the caller's own cleanup can finish.
     """
     _render_locks.pop(guild_id, None)
-    recommend.cleanup(guild_id)
-    for task_fn in (store.lyrics_task, store.render_task, store.inactivity_task):
+    for task_fn in (store.lyrics_task, store.render_task):
         task = task_fn(guild_id)
         if task and task is not asyncio.current_task():
             task.cancel()
@@ -171,7 +171,7 @@ async def clear_player(guild_id: int) -> None:
     """
     Deletes the persistent player message and clears all per-guild state.
 
-    Parameters:
+    Args:
         guild_id (int): The guild whose player message should be removed.
     """
     play_msg, _ = store.play_msg(guild_id)
@@ -183,23 +183,38 @@ async def clear_player(guild_id: int) -> None:
     cleanup_guild(guild_id)
 
 
-async def stop_player(player: lavalink.DefaultPlayer, guild: discord.Guild) -> None:
+async def stop_player(player: SquarePlayer, guild: discord.Guild) -> None:
     """
-    Stops playback, clears the VC status, disconnects from voice, and deletes the player card.
+    Clears the VC status, disconnects (destroying the lavalink-side player), and deletes the player card.
 
-    Parameters:
-        player (DefaultPlayer): The active Lavalink player to stop.
-        guild (Guild): The guild to disconnect from.
+    Safe to call repeatedly: the disconnect fires :meth:`on_sonolink_player_disconnect`, which funnels back
+    here, so a per-player guard makes every path after the first a no-op.
+
+    Args:
+        player (:class:`SquarePlayer`): The active player to stop.
+        guild (:class:`Guild`): The guild to disconnect from.
     """
-    try:
-        await player.stop()
-    except Exception:
-        pass  # Node may be unreachable; still disconnect and clean up locally
+    if getattr(player, "_square_stopped", False):
+        return
+    player._square_stopped = True
     if guild.me.voice and guild.me.voice.channel:
-        await guild.me.voice.channel.set_status(status=None)
-    if guild.voice_client:
-        await guild.voice_client.disconnect(force=True)
+        try:
+            await guild.me.voice.channel.set_status(status=None)
+        except discord.HTTPException:
+            pass
+    try:
+        await player.disconnect(force=True)
+    except Exception:
+        pass  # Node may be unreachable; still clean up locally
     await clear_player(guild.id)
+
+
+async def skip_or_stop(player: SquarePlayer, guild: discord.Guild) -> None:
+    """Skips to the next track, tearing the player down when nothing is left to play."""
+    try:
+        await player.skip()
+    except sonolink.QueueEmpty, sonolink.AutoPlaySeedMissing:
+        await stop_player(player, guild)
 
 
 async def slash_log(
@@ -214,8 +229,8 @@ async def slash_log(
 
     Sends an ephemeral confirmation to the invoker, optionally re-renders the player card, and posts a public log line with the user mention prepended.
 
-    Parameters:
-        ctx (ApplicationContext): The slash command context.
+    Args:
+        ctx (:class:`ApplicationContext`): The slash command context.
         content (str): The confirmation/log message (leading emoji is stripped for the log line).
         color (int | None): Optional accent color applied to both the reply and the log.
         render (bool): Whether to re-render the player card after the action.
@@ -233,22 +248,22 @@ class MusicContainer(ui.Container):
     Displays the track title (linked), artist, requester mention, and a position/duration progress bar (fully filled with a LIVE badge for streams).
     When synced lyrics are cached for the current track, a previous/current/next line window is appended with the current line in bold.
 
-    Parameters:
-        player (DefaultPlayer): The active Lavalink player with a current track set.
+    Args:
+        player (:class:`SquarePlayer`): The active player with a current track set.
     """
 
-    def __init__(self, player: lavalink.DefaultPlayer):
+    def __init__(self, player: SquarePlayer):
         super().__init__()
-        requester = f"<@{player.current.requester}>"
+        rid = requester_id(player, player.current)
         info = (
-            f"{emoji.user} **Requested By**: {requester if requester else 'Unknown'}\n"
+            f"{emoji.user} **Requested By**: {f'<@{rid}>' if rid else 'Unknown'}\n"
             f"{emoji.mic} **Artist**: {sources.get(player.current.source_name, sources['_'])['emoji']} {player.current.author}"
         )
         self.items = [
             ui.Section(
                 ui.TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
                 ui.TextDisplay(info),
-                accessory=ui.Thumbnail(url=player.current.artwork_url),
+                accessory=ui.Thumbnail(url=player.current.artwork),
             )
         ]
         lyrics_text = self._lyrics_text(player)
@@ -257,25 +272,25 @@ class MusicContainer(ui.Container):
         self.items.append(ui.TextDisplay(self._progress_bar(player)))
 
     @staticmethod
-    def _progress_bar(player: lavalink.DefaultPlayer, bar_length: int = 10) -> str:
+    def _progress_bar(player: SquarePlayer, bar_length: int = 10) -> str:
         """Builds the position/duration progress bar line. Streams get a fully filled bar with a LIVE badge."""
-        if player.current.stream:
+        if player.current.is_stream:
             return f"{emoji.live} **LIVE** {emoji.filled_bar * bar_length}"
-        filled = min(bar_length, int(bar_length * player.position // float(player.current.duration)))
+        filled = min(bar_length, int(bar_length * player.position // float(player.current.length)))
         return (
-            f"`{lavalink.format_time(player.position)}` "
+            f"`{fmt_time(player.position)}` "
             f"{emoji.filled_bar * filled}{emoji.empty_bar * (bar_length - filled)} "
-            f"`{lavalink.format_time(player.current.duration)}`"
+            f"`{fmt_time(player.current.length)}`"
         )
 
     @staticmethod
-    def _lyrics_text(player: lavalink.DefaultPlayer) -> str | None:
+    def _lyrics_text(player: SquarePlayer) -> str | None:
         """
         Builds the three-line synced lyrics block for the current playback position.
 
         Returns None when no lyrics are cached for the current track.
         """
-        cached = store.lyrics(int(player.guild_id))
+        cached = store.lyrics(player.guild.id)
         if not cached or cached[0] != player.current.identifier or not cached[1]:
             return None
         _, prev, current, upcoming = lyrics.window(cached[1], player.position + _LYRICS_LEAD_MS)
@@ -290,11 +305,11 @@ class MusicView(DesignerView):
     """
     Persistent now-playing card with playback control buttons.
 
-    Displays a `MusicContainer` and two action rows: the first with pause/resume, stop, skip, loop cycle, and shuffle toggle; the second with an autoplay toggle.
+    Displays a :class:`MusicContainer` and two action rows: the first with pause/resume, stop, skip, loop cycle, and shuffle toggle; the second with an autoplay toggle.
     The view has no timeout and re-checks interaction eligibility on every button press.
 
-    Parameters:
-        client (Client): The bot client used to fetch the player and send follow-up logs.
+    Args:
+        client (:class:`Client`): The bot client used to fetch the player and send follow-up logs.
         guild_id (int): The guild this player card belongs to.
     """
 
@@ -302,7 +317,7 @@ class MusicView(DesignerView):
         super().__init__(timeout=None)
         self.client = client
         self.guild_id = guild_id
-        self.player: lavalink.DefaultPlayer = client.lavalink.player_manager.get(guild_id)
+        self.player = get_player(client, guild_id)
         self.interaction_check = lambda interaction: music_interaction_check(
             player=self.player, interaction=interaction, view=self
         )
@@ -318,24 +333,32 @@ class MusicView(DesignerView):
             (emoji.skip_white, "skip"),
             (
                 emoji.loop_white
-                if self.player.loop == self.player.LOOP_NONE
+                if self.player.queue_mode is sonolink.QueueMode.NORMAL
                 else emoji.loop_one
-                if self.player.loop == self.player.LOOP_SINGLE
+                if self.player.queue_mode is sonolink.QueueMode.LOOP
                 else emoji.loop,
                 "loop",
             ),
-            (emoji.shuffle_white if not self.player.shuffle else emoji.shuffle, "shuffle"),
+            (
+                emoji.shuffle_white
+                if self.player.queue.shuffle_mode is not sonolink.ShuffleMode.PERSISTENT
+                else emoji.shuffle,
+                "shuffle",
+            ),
         ]:
             btn = ui.Button(emoji=btn_emoji, custom_id=action, style=discord.ButtonStyle.grey)
             btn.callback = getattr(self, f"{action}_callback")
             row.add_item(btn)
-        autoplay_on = store.autoplay(self.guild_id)
+        autoplay_on = self.player.autoplay is sonolink.AutoPlayMode.ENABLED
         autoplay_btn = ui.Button(emoji=emoji.autoplay if autoplay_on else emoji.autoplay_white, custom_id="autoplay")
         autoplay_btn.callback = self.autoplay_callback
         self.add_item(ui.ActionRow(autoplay_btn))
 
     async def pause_callback(self, interaction: discord.Interaction):
-        await self.player.set_pause(not self.player.paused)
+        if self.player.paused:
+            await self.player.resume()
+        else:
+            await self.player.pause()
         await interaction.response.defer()
         await render_player(self.client, interaction.guild_id)
         await music_log(
@@ -351,18 +374,20 @@ class MusicView(DesignerView):
 
     async def skip_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        await self.player.skip()
         await music_log(interaction.guild_id, f"{interaction.user.mention} skipped the track.")
+        guild = self.client.get_guild(int(interaction.guild_id))
+        if guild:
+            await skip_or_stop(self.player, guild)
 
     async def loop_callback(self, interaction: discord.Interaction):
-        if self.player.loop == self.player.LOOP_NONE:
-            self.player.set_loop(1)
+        if self.player.queue_mode is sonolink.QueueMode.NORMAL:
+            self.player.queue_mode = sonolink.QueueMode.LOOP
             mode = "Track"
-        elif self.player.loop == self.player.LOOP_SINGLE and self.player.queue:
-            self.player.set_loop(2)
+        elif self.player.queue_mode is sonolink.QueueMode.LOOP and len(self.player.queue):
+            self.player.queue_mode = sonolink.QueueMode.LOOP_ALL
             mode = "Queue"
         else:
-            self.player.set_loop(0)
+            self.player.queue_mode = sonolink.QueueMode.NORMAL
             mode = "Disable"
         await interaction.response.defer()
         await render_player(self.client, interaction.guild_id)
@@ -372,20 +397,21 @@ class MusicView(DesignerView):
         )
 
     async def shuffle_callback(self, interaction: discord.Interaction):
-        if not self.player.queue:
+        if not len(self.player.queue):
             await reply(interaction, f"{emoji.error} Queue is empty.", color=config.color.red)
             return
-        self.player.set_shuffle(not self.player.shuffle)
+        shuffled = self.player.queue.shuffle_mode is sonolink.ShuffleMode.PERSISTENT
+        self.player.queue.shuffle_mode = sonolink.ShuffleMode.DEFAULT if shuffled else sonolink.ShuffleMode.PERSISTENT
         await interaction.response.defer()
         await render_player(self.client, interaction.guild_id)
         await music_log(
             interaction.guild_id,
-            f"{interaction.user.mention} {'enabled' if self.player.shuffle else 'disabled'} shuffle.",
+            f"{interaction.user.mention} {'disabled' if shuffled else 'enabled'} shuffle.",
         )
 
     async def autoplay_callback(self, interaction: discord.Interaction):
-        enabled = store.autoplay(interaction.guild_id)
-        store.autoplay(interaction.guild_id, not enabled, "set")
+        enabled = self.player.autoplay is sonolink.AutoPlayMode.ENABLED
+        self.player.autoplay = sonolink.AutoPlayMode.DISABLED if enabled else sonolink.AutoPlayMode.ENABLED
         await interaction.response.defer()
         await render_player(self.client, interaction.guild_id)
         await music_log(
