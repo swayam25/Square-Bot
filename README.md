@@ -23,8 +23,6 @@ Advanced multipurpose discord bot for all your needs.
 
 ## 💫 Prerequisites
 
-### 🧰 Tools
-
 | Tool                                                                                                                                    | Type                     | Version | Purpose                                             |
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------- | --------------------------------------------------- |
 | [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/) | Required                 | 20.10+  | To run the bot in a containerized environment.      |
