@@ -7,13 +7,26 @@ from music.core import SquarePlayer
 from utils import config
 from utils.emoji import emoji
 
-# Music sources
-sources = {
-    "spotify": {"emoji": emoji.spotify, "color": config.color.green},
-    "youtube": {"emoji": emoji.youtube, "color": config.color.red},
-    "soundcloud": {"emoji": emoji.soundcloud, "color": config.color.orange},
-    "_": {"emoji": emoji.music, "color": config.color.theme},
-}
+
+def get_source(source_name: str | None) -> dict:
+    """
+    Resolves the emoji and accent color for a music source.
+
+    Args:
+        source_name (str | None): The track's source name (e.g. ``"youtube"``).
+
+    Returns:
+        dict: A mapping with the resolved ``emoji`` markdown and ``color`` accent.
+    """
+    _sources = {
+        "spotify": {"emoji": "spotify", "color": config.color.green},
+        "youtube": {"emoji": "youtube", "color": config.color.red},
+        "soundcloud": {"emoji": "soundcloud", "color": config.color.orange},
+        "_": {"emoji": "music", "color": config.color.theme},
+    }
+
+    meta = _sources.get(source_name, _sources["_"])
+    return {"emoji": getattr(emoji, meta["emoji"]), "color": meta["color"]}
 
 
 def container(content: str, color: int | None = None) -> DesignerView:

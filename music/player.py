@@ -7,7 +7,7 @@ from core.view import DesignerView
 from discord import ui
 from music import lyrics, store
 from music.core import SquarePlayer, fmt_time, get_player, requester_id
-from music.utils import music_interaction_check, music_log, reply, sources, to_log_text
+from music.utils import get_source, music_interaction_check, music_log, reply, to_log_text
 from utils import config
 from utils.emoji import emoji
 
@@ -257,7 +257,7 @@ class MusicContainer(ui.Container):
         rid = requester_id(player, player.current)
         info = (
             f"{emoji.user} **Requested By**: {f'<@{rid}>' if rid else 'Unknown'}\n"
-            f"{emoji.mic} **Artist**: {sources.get(player.current.source_name, sources['_'])['emoji']} {player.current.author}"
+            f"{emoji.mic} **Artist**: {get_source(player.current.source_name)['emoji']} {player.current.author}"
         )
         self.items = [
             ui.Section(

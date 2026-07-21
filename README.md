@@ -18,7 +18,7 @@ Advanced multipurpose discord bot for all your needs.
 - Music with player controls, multi-node failover, smart autoplay & audio filters.
 - Auto-mod, mass moderation, tickets & detailed logging.
 - Custom emojis synced from a simple `.zip` upload.
-- Browser-based database panel.
+- Browser-based database panel & live container logs.
 - Fully dockerized, deploys with a single `just prod` command.
 
 ## 💫 Prerequisites
@@ -49,24 +49,31 @@ Advanced multipurpose discord bot for all your needs.
 > [!TIP]
 > Check [configuration](#-configuration) section for details on the configuration keys.
 
-3. Example `Caddyfile` configuration for a domain `example.com`
-    ```Caddyfile
-    example.com {
-        reverse_proxy drizzle-gateway:8080
-    }
-    ```
+3. Everything is driven by `config.toml`, you don't need to touch the `Caddyfile`.
+    - Set `auth-pass` to a strong password. It guards **every** web panel (*login username is `admin`*).
+    - Optionally point the panels at real domains under `[domains]` to get automatic HTTPS:
+        ```toml
+        auth-pass = "a-strong-password"
+
+        [domains]
+        dozzle = "logs.example.com" # Dozzle
+        drizzle = "db.example.com"  # Drizzle Gateway
+        ```
+    - Leave a domain empty to serve that panel over plain HTTP on its fallback port instead.
 
 > [!NOTE]
-> If you don't have a domain, you can use `:80` to access the database panel via your server's IP address. However, this is not recommended for production use.
+> With no domain set, the panels are reachable on your server's IP:
+> - Dozzle → `http://<server-ip>:8081`
+> - Drizzle Gateway → `http://<server-ip>:8080`
 >
-> Read [Caddy's documentation](https://caddyserver.com/docs/caddyfile) for more details.
+> Set the matching `[domains]` key to a hostname to serve it with automatic HTTPS on `:443` instead.
 
 4. Build the images and start everything
     ```sh
     just prod
     ```
 
-5. Done! The bot should be up and running now. You can access the database panel at `http(s)://<your-domain-or-ip>/`.
+5. Done! The bot should be up and running now. Log in with username `admin` and your `auth-pass` to reach the database panel (`:8080` or its domain) and container logs (`:8081` or its domain).
 
 ## 🛸 Development
 
@@ -94,15 +101,21 @@ Advanced multipurpose discord bot for all your needs.
     ```
 
 > [!IMPORTANT]
-> For development Caddy is by-default configured to run on port `80`
+> The local stack only runs Postgres and Drizzle Gateway - no Caddy, no auth. Drizzle Gateway is exposed directly:
+> - Drizzle Gateway → `http://localhost:8080`
 >
-> ```Caddyfile
-> :80 {
->     reverse_proxy drizzle-gateway:8080
-> }
-> ```
->
-> This allows you to access the database panel via `http://localhost` without needing a domain or SSL certificate, which simplifies the development process.
+> Dozzle, Caddy and the containerized bot are production-only and live in `docker-compose.prod.yml`.
+
+## 📚 Setup Drizzle Gateway
+
+1. Open the Drizzle Gateway panel in your browser (*`http://localhost:8080` or its domain*).
+
+2. Log in with username `admin` and your `auth-pass`.
+
+3. Add the PostgreSQL database:
+
+    https://raw.githubusercontent.com/swayam25/Square-Bot/refs/heads/main/assets/drizzle_gateway_setup.mp4
+
 
 ## 🔑 Configuration
 
@@ -113,8 +126,10 @@ Advanced multipurpose discord bot for all your needs.
 | `system-channel-id`  | `int`       | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.           |
 | `support-server-url` | `str`       | The invite URL of the support server.                                                                             |
 | `bot-token`          | `str`       | Discord Bot Token. Get this from developer portal.                                                                |
-| `drizzle-password`   | `str`       | The password for Drizzle Studio Gateway. This is used to access the database panel.                               |
 | `database-url`       | `str`       | The URL for the PostgreSQL database.                                                                              |
+| `auth-pass`          | `str`       | Single password guarding all web panels (database & logs) behind Caddy. Login username is `admin`.                |
+| `domains.dozzle`     | `str`       | Hostname for the Dozzle container-logs panel.                                                                     |
+| `domains.drizzle`    | `str`       | Hostname for the Drizzle Gateway database panel.                                                                  |
 | `colors.theme`       | `str`       | The color theme for the bot's view containers.                                                                    |
 | `colors.green`       | `str`       | The color code for green color in view containers.                                                                |
 | `colors.red`         | `str`       | The color code for red color in view containers.                                                                  |

@@ -1,3 +1,15 @@
-:80 {
+(auth) {
+	basic_auth {
+		admin {$CADDY_AUTH_HASH}
+	}
+}
+
+{$DOZZLE_DOMAIN::8081} {
+	import auth
+	reverse_proxy dozzle:8080
+}
+
+{$DRIZZLE_DOMAIN::8080} {
+	import auth
 	reverse_proxy drizzle-gateway:8080
 }

@@ -1,0 +1,6 @@
+FROM caddy:2-alpine
+
+COPY containers/caddy-entrypoint.sh /usr/local/bin/caddy-entrypoint.sh
+RUN chmod +x /usr/local/bin/caddy-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/caddy-entrypoint.sh"]

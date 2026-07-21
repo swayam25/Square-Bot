@@ -23,7 +23,7 @@ from music.core import (
 from music.filters import EqPresets
 from music.player import cleanup_guild, render_player, skip_or_stop, slash_log, start_lyrics, stop_player
 from music.queue import QueueListView
-from music.utils import container, music_log, reply, sources
+from music.utils import container, get_source, music_log, reply
 from rich.console import Console
 from rich.live import Live
 from rich.spinner import Spinner
@@ -331,13 +331,13 @@ class Music(commands.Cog):
             data = result.result
             if isinstance(data, Playlist):
                 tracks = [tag_requester(self.client, track, ctx.author.id) for track in data.tracks]
-                src_info = sources.get(tracks[0].source_name, sources["_"])
+                src_info = get_source(tracks[0].source_name)
                 player.queue.put(tracks)
                 content = f"{src_info['emoji']} Added **{data.name}** with `{len(tracks)}` tracks."
             else:
                 track = tag_requester(self.client, data[0] if isinstance(data, list) else data, ctx.author.id)
                 player.queue.put(track)
-                src_info = sources.get(track.source_name, sources["_"])
+                src_info = get_source(track.source_name)
                 if track.is_stream:
                     dur = f"{emoji.live} LIVE"
                 else:
@@ -382,7 +382,7 @@ class Music(commands.Cog):
                         ui.TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
                         ui.TextDisplay(
                             f"{emoji.user} **Requested By**: {requester.mention if requester else 'Unknown'}\n"
-                            f"{emoji.mic} **Artist**: {sources.get(player.current.source_name, sources['_'])['emoji']} {player.current.author}\n"
+                            f"{emoji.mic} **Artist**: {get_source(player.current.source_name)['emoji']} {player.current.author}\n"
                             f"{emoji.duration} **Duration**: {duration}\n"
                             f"{emoji.voice} **Volume**: `{player.volume}%`\n"
                             f"{emoji.loop} **Loop**: {loop}\n"

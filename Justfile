@@ -12,15 +12,13 @@ setup:
     @uv run pre-commit install
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDone\033[0m\n'
 
-# Start local docker services
+# Start local docker services (Postgres + Drizzle Gateway)
 start:
     #!/usr/bin/env bash
     set -euo pipefail
     printf '\033[43m\033[30m INFO \033[0m \033[33mStarting services\033[0m\n'
-    docker compose up db drizzle-gateway caddy -d --build
-    url=$(docker inspect -f '{{{{with index .NetworkSettings.Ports "80/tcp"}}http://localhost:{{{{(index . 0).HostPort}}{{{{end}}' square_caddy)
+    docker compose up -d
     printf '\033[42m\033[30m  OK  \033[0m \033[32mServices ready\033[0m\n'
-    printf '\033[46m\033[30m LINK \033[0m \033[36mDatabase panel → %s\033[0m\n' "$url"
 
 # Stop local docker services
 stop:
@@ -31,7 +29,7 @@ stop:
 dev:
     #!/usr/bin/env bash
     set -euo pipefail
-    if [[ $(docker compose ps --status running -q db drizzle-gateway caddy 2>/dev/null | wc -l) -lt 3 ]]; then
+    if [[ $(docker compose ps --status running -q 2>/dev/null | wc -l) -lt 2 ]]; then
         just start
     fi
     printf '\n'
@@ -71,12 +69,12 @@ db-heads: db-ensure-init
 
 # ── Deploy ────────────────────────────────────────────────────────────────────
 
-# Pull latest, rebuild, and deploy
+# Pull latest, rebuild, and deploy the full production stack
 prod:
     @printf '\033[43m\033[30m PULL \033[0m \033[33mPulling latest\033[0m\n'
     @git pull
     @printf '\033[43m\033[30m BLD  \033[0m \033[33mRebuilding images\033[0m\n'
-    @docker compose build --pull
+    @docker compose -f docker-compose.prod.yml build --pull
     @printf '\033[43m\033[30m BOOT \033[0m \033[33mDeploying services\033[0m\n'
-    @docker compose up -d --remove-orphans
+    @docker compose -f docker-compose.prod.yml up -d --remove-orphans
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDeployed\033[0m\n'

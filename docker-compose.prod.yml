@@ -1,0 +1,76 @@
+name: square
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: containers/Dockerfile
+    container_name: square
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./.cache:/square/.cache
+      - ./config.toml:/square/config.toml:ro
+
+  db:
+    image: postgres:16-alpine
+    container_name: square_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: youcannotpass
+      POSTGRES_DB: square
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d square"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  drizzle-gateway:
+    image: ghcr.io/drizzle-team/gateway:latest
+    container_name: square_drizzle
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+    volumes:
+      - drizzle_data:/app
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: square_dozzle
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  caddy:
+    build:
+      context: .
+      dockerfile: containers/Dockerfile.caddy
+    container_name: square_caddy
+    restart: unless-stopped
+    depends_on:
+      - drizzle-gateway
+      - dozzle
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Drizzle Gateway
+      - "8081:8081" # Dozzle
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./config.toml:/square/config.toml:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  postgres_data:
+  drizzle_data:
+  caddy_data:
+  caddy_config:
