@@ -109,13 +109,10 @@ Advanced multipurpose discord bot for all your needs.
 ## 📚 Setup Drizzle Gateway
 
 1. Open the Drizzle Gateway panel in your browser (*`http://localhost:8080` or its domain*).
-
 2. Log in with username `admin` and your `auth-pass`.
+3. Add the Database Connection
 
-3. Add the PostgreSQL database:
-
-    https://raw.githubusercontent.com/swayam25/Square-Bot/refs/heads/main/assets/drizzle_gateway_setup.mp4
-
+   https://github.com/user-attachments/assets/cfbcfb0d-afa3-43b5-a502-f4e9d5962273
 
 ## 🔑 Configuration
 
