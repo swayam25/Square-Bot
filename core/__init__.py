@@ -11,6 +11,14 @@ console = Console()
 
 
 class Client(commands.Bot):
+    """
+    Custom Discord bot client class that extends :class:`discord.ext.commands.Bot`.
+
+    Attributes:
+        allowed_mentions (:class:`discord.AllowedMentions`): Specifies which mentions are allowed in messages sent by the bot.
+        sonolink (:class:`sonolink.Client`): An instance of the Sonolink client for handling music playback and related features.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.allowed_mentions = discord.AllowedMentions().none()
