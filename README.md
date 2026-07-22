@@ -61,8 +61,8 @@ Advanced multipurpose discord bot for all your needs.
 
 > [!NOTE]
 > With no domain set, the panels are reachable on your server's IP:
-> - Dozzle → `http://<server-ip>:8081`
-> - Drizzle Gateway → `http://<server-ip>:8080`
+> - Dozzle → `http://<server-ip>:8080`
+> - Drizzle Gateway → `http://<server-ip>:8081`
 >
 > Set the matching `[domains]` key to a hostname to serve it with automatic HTTPS on `:443` instead.
 
@@ -71,7 +71,7 @@ Advanced multipurpose discord bot for all your needs.
     just prod
     ```
 
-5. Done! The bot should be up and running now. Log in with username `admin` and your `auth-pass` to reach the drizzle gateway (`:8080` or its domain) and dozzle (`:8081` or its domain).
+5. Done! The bot should be up and running now. Log in with username `admin` and your `auth-pass` to reach the dozzle (`:8080` or its domain) and drizzle gateway (`:8081` or its domain).
 
 ## 🛸 Development
 
@@ -100,13 +100,13 @@ Advanced multipurpose discord bot for all your needs.
 
 > [!IMPORTANT]
 > The local stack only runs Postgres and Drizzle Gateway - no Caddy, no auth. Drizzle Gateway is exposed directly:
-> - Drizzle Gateway → `http://localhost:8080`
+> - Drizzle Gateway → `http://localhost:8081`
 >
 > Dozzle, Caddy and the containerized bot are production-only and live in [`docker-compose.prod.yml`](./docker-compose.prod.yml).
 
 ## 📚 Setup Drizzle Gateway
 
-1. Open the Drizzle Gateway in your browser (*`http://localhost:8080` or its domain*).
+1. Open the Drizzle Gateway in your browser (*`http://localhost:8081` or its domain*).
 2. Log in with username `admin` and your `auth-pass`.
 3. Add the Database Connection
 

@@ -30,6 +30,14 @@ services:
       timeout: 5s
       retries: 5
 
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: square_dozzle
+    restart: unless-stopped
+    environment:
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
   drizzle-gateway:
     image: ghcr.io/drizzle-team/gateway:latest
     container_name: square_drizzle
@@ -38,16 +46,9 @@ services:
       db:
         condition: service_healthy
     environment:
-      PORT: 8080
+      PORT: 8081
     volumes:
       - drizzle_data:/app
-
-  dozzle:
-    image: amir20/dozzle:latest
-    container_name: square_dozzle
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
 
   caddy:
     build:
@@ -56,13 +57,13 @@ services:
     container_name: square_caddy
     restart: unless-stopped
     depends_on:
-      - drizzle-gateway
       - dozzle
+      - drizzle-gateway
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080" # Drizzle Gateway
-      - "8081:8081" # Dozzle
+      - "8080:8080" # Dozzle
+      - "8081:8081" # Drizzle Gateway
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./config.toml:/square/config.toml:ro
