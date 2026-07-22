@@ -4,7 +4,7 @@ from bisect import bisect_right
 from sonolink.models import Playable
 
 API_URL = "https://lrclib.net/api"
-HEADERS = {"User-Agent": "Square (Discord Music Bot)"}
+HEADERS = {"User-Agent": "Square (Discord Bot)"}
 
 # LRC timestamp tag, e.g. [01:23.45]
 _lrc_rx = re.compile(r"\[(\d+):(\d{1,2}(?:\.\d+)?)\]")
