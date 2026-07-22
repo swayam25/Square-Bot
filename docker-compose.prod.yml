@@ -34,7 +34,6 @@ services:
     image: amir20/dozzle:latest
     container_name: square_dozzle
     restart: unless-stopped
-    environment:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
