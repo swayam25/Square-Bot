@@ -24,6 +24,7 @@ start:
 stop:
     @printf '\033[41m\033[30m STOP \033[0m \033[31mStopping services\033[0m\n'
     @docker compose down
+    @printf '\033[42m\033[30m  OK  \033[0m \033[32mServices stopped\033[0m\n'
 
 # Run the bot locally (auto-starts services if not running)
 dev:
@@ -78,3 +79,9 @@ prod:
     @printf '\033[43m\033[30m BOOT \033[0m \033[33mDeploying services\033[0m\n'
     @docker compose -f docker-compose.prod.yml up -d --remove-orphans
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDeployed\033[0m\n'
+
+# Stop the full production stack
+prod-stop:
+    @printf '\033[41m\033[30m STOP \033[0m \033[31mStopping production stack\033[0m\n'
+    @docker compose -f docker-compose.prod.yml down
+    @printf '\033[42m\033[30m  OK  \033[0m \033[32mProduction stack stopped\033[0m\n'
