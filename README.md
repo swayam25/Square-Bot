@@ -28,8 +28,8 @@ Advanced multipurpose discord bot for all your needs.
 | [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/) | Required                 | 20.10+  | To run the bot in a containerized environment.      |
 | [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)             | Required                 | 2.50+   | To clone the repository and manage version control. |
 | [![Just](https://img.shields.io/badge/Just-%23EF4041?style=for-the-badge&logo=just&logoColor=%23FFFFFF)](https://github.com/casey/just) | Required                 | 1.27+   | A command runner for the project's recipes.         |
-| [![Python](https://img.shields.io/badge/Python-%233776AB?style=for-the-badge&logo=python&logoColor=%23FFFFFF)](https://www.python.org/) | Optional (*Development*) | 3.12+   | The programming language used to develop the bot.   |
-| [![UV](https://img.shields.io/badge/UV-%23DE5FE9?style=for-the-badge&logo=uv&logoColor=%23FFFFFF)](https://docs.astral.sh/uv/)          | Optional (*Development*) | 0.9+    | A modern Python package manager for development.    |
+| [![Python](https://img.shields.io/badge/Python-%233776AB?style=for-the-badge&logo=python&logoColor=%23FFFFFF)](https://www.python.org/) | Optional (*Development*) | 3.14+   | The programming language used to develop the bot.   |
+| [![UV](https://img.shields.io/badge/UV-%23DE5FE9?style=for-the-badge&logo=uv&logoColor=%23FFFFFF)](https://docs.astral.sh/uv/)          | Optional (*Development*) | 0.11+   | A modern Python package manager for development.    |
 
 ## 🚀 Production
 
@@ -71,7 +71,7 @@ Advanced multipurpose discord bot for all your needs.
     just prod
     ```
 
-5. Done! The bot should be up and running now. Log in with username `admin` and your `auth-pass` to reach the database panel (`:8080` or its domain) and container logs (`:8081` or its domain).
+5. Done! The bot should be up and running now. Log in with username `admin` and your `auth-pass` to reach the drizzle gateway (`:8080` or its domain) and dozzle (`:8081` or its domain).
 
 ## 🛸 Development
 
@@ -106,7 +106,7 @@ Advanced multipurpose discord bot for all your needs.
 
 ## 📚 Setup Drizzle Gateway
 
-1. Open the Drizzle Gateway panel in your browser (*`http://localhost:8080` or its domain*).
+1. Open the Drizzle Gateway in your browser (*`http://localhost:8080` or its domain*).
 2. Log in with username `admin` and your `auth-pass`.
 3. Add the Database Connection
 
@@ -122,9 +122,9 @@ Advanced multipurpose discord bot for all your needs.
 | `support-server-url` | `str`       | The invite URL of the support server.                                                                             |
 | `bot-token`          | `str`       | Discord Bot Token. Get this from developer portal.                                                                |
 | `database-url`       | `str`       | The URL for the PostgreSQL database.                                                                              |
-| `auth-pass`          | `str`       | Single password guarding all web panels (database & logs) behind Caddy. Login username is `admin`.                |
-| `domains.dozzle`     | `str`       | Hostname for the Dozzle container-logs panel.                                                                     |
-| `domains.drizzle`    | `str`       | Hostname for the Drizzle Gateway database panel.                                                                  |
+| `auth-pass`          | `str`       | Single password guarding all web panels behind Caddy. Login username is `admin`.                                  |
+| `domains.dozzle`     | `str`       | Hostname for the Dozzle.                                                                                          |
+| `domains.drizzle`    | `str`       | Hostname for the Drizzle Gateway.                                                                                 |
 | `colors.theme`       | `str`       | The color theme for the bot's view containers.                                                                    |
 | `colors.green`       | `str`       | The color code for green color in view containers.                                                                |
 | `colors.red`         | `str`       | The color code for red color in view containers.                                                                  |
