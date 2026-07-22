@@ -102,7 +102,7 @@ Advanced multipurpose discord bot for all your needs.
 > The local stack only runs Postgres and Drizzle Gateway - no Caddy, no auth. Drizzle Gateway is exposed directly:
 > - Drizzle Gateway → `http://localhost:8080`
 >
-> Dozzle, Caddy and the containerized bot are production-only and live in `docker-compose.prod.yml`.
+> Dozzle, Caddy and the containerized bot are production-only and live in [`docker-compose.prod.yml`](./docker-compose.prod.yml).
 
 ## 📚 Setup Drizzle Gateway
 
@@ -136,47 +136,59 @@ Advanced multipurpose discord bot for all your needs.
 | `lavalink.region`    | `str`       | The region of the Lavalink server. This is used for latency-based node selection. Set `""` for auto-selection.    |
 | `lavalink.secure`    | `bool`      | Whether to use secure connection (wss) for Lavalink.                                                              |
 
-## ✨ Using Custom Emojis
+## ✨ Custom Emojis
 
-- To create custom emojis, upload a `.zip` file containing the emojis (*`.png` format*) using `/emoji upload` command.
-- There is a zip file containing custom emojis that are used in this bot.
-- Upload the [`emojis.zip`](./assets/emojis.zip) via `/emoji upload` command.
-- Run the `/emoji sync` command to sync the emojis to `.cache/emoji.json`.
-- Restart the bot to apply the changes.
+The bot ships with a default set of Unicode emojis defined on the `Emoji` class in [`emoji.py`](./utils/emoji.py). You can override any of these with your own Discord custom emojis.
 
-## 🙂 Using Your Own Emojis
+**How it works:** every emoji is keyed by an attribute name on the `Emoji` class (*e.g. `success`, `error`, `loading`*). The bot loads overrides from `.cache/emoji.json`, matching each entry to an attribute by name. Any attribute without an override simply falls back to its default.
 
-- Emojis are synced (*when you run the `/emoji sync` command*) based on their file names, which must match the attribute names of the `Emoji` class in [`emoji.py`](./utils/emoji.py).
-- Collect all the emojis you want the bot to use and name each file according to the corresponding attribute in the `Emoji` class.
-- Compress all the emoji files into a single `.zip` archive.
-- Upload this archive using the `/emoji upload` command.
-- After uploading, run the `/emoji sync` command to sync the emojis to `.cache/emoji.json`.
-- Restart the bot to apply the changes.
+There are two ways to provide overrides - upload a `.zip`, or write `.cache/emoji.json` by hand.
 
-Alternatively, you can manually create a `.cache/emoji.json` file with the following structure:
+### [Option 1] Upload a `.zip` (*recommended*)
+
+The workflow is the same whether you use the emojis bundled with this bot or your own:
+
+1. **Prepare a `.zip`** of `.png`/`.gif` emoji files. Each file name **must** match an attribute on the `Emoji` class (*e.g. `success.png` → the `success` attribute*).
+    > To use the bot's built-in set, just grab the ready-made [`emojis.zip`](./assets/emojis.zip).
+1. **`/emoji upload`**: Upload the `.zip` to register the emojis with Discord.
+
+```mermaid
+flowchart LR
+    A["Zip of .png/.gif files<br/>named after Emoji attributes"] --> B["/emoji upload"]
+    B --> C[".cache/emoji.json"]
+    C --> D["Emojis applied ✨"]
+```
+
+### [Option 2] Write `.cache/emoji.json` manually
+
+If you already have the emojis, you can skip uploading and create `.cache/emoji.json` yourself:
+
 ```json
 {
     "emoji_name": "<a:dc_emoji_name:dc_emoji_id>",
     "emoji_name": "<:dc_emoji_name:dc_emoji_id>"
 }
 ```
-- `emoji_name` must match the corresponding attribute name in the `Emoji` class.
-- `<a:...>` denotes an animated emoji, while `<:...>` denotes a static emoji.
-- `dc_emoji_name` refers to the name of the emoji as it appears in Discord.
-- `dc_emoji_id` is the unique identifier of the emoji in Discord.
 
-> [!NOTE]
-> If a custom emoji is missing for any attribute in `.cache/emoji.json`, the bot will automatically use the default emoji from the `Emoji` class.
+| Field                | Meaning                                                           |
+| -------------------- | ----------------------------------------------------------------- |
+| `emoji_name`         | The attribute name on the `Emoji` class this override maps to.    |
+| `<a:...>` / `<:...>` | `<a:...>` is an **animated** emoji, `<:...>` is a **static** one. |
+| `dc_emoji_name`      | The emoji's name as it appears in Discord.                        |
+| `dc_emoji_id`        | The emoji's unique Discord ID.                                    |
 
 ## ❤️ Contributing
 
-- Things to keep in mind
-    - Follow our commit message convention.
-    - Write meaningful commit messages.
-    - Keep the code clean and readable.
-    - Make sure the bot is working as expected.
+Contributions are welcome! Whether it's a bug fix, a new feature, or a docs tweak, here's how to get set up and what we look for.
 
-- Install dependencies and set up `pre-commit` hooks
-    ```sh
-    just setup
-    ```
+### Getting started
+
+1. Fork the repository and clone your fork.
+2. Set up your development environment by following the [development](#-development) section.
+3. Create a branch for your change, commit your work, and open a pull request.
+
+### Guidelines
+
+- **Commits**: Write clear, meaningful messages that describe *what* changed and *why*, and follow the style used in the project's history.
+- **Code quality**: Keep the code clean, readable, and consistent with the surrounding style. Let the `pre-commit` hooks format and lint your changes before you push.
+- **Testing**: Run the bot locally and confirm your change works as expected before opening a PR.
