@@ -1,6 +1,6 @@
 <div align="center">
 
-![Square Bot](./assets/banner.png)
+![Square Bot](./assets/banner.gif)
 
 # Square Bot
 
