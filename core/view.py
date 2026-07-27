@@ -50,9 +50,10 @@ class DesignerView(BaseDesignerView):
                     Container(
                         TextDisplay(f"{emoji.error} You are not the author of this command."),
                         color=config.color.red,
-                    )
+                    ),
+                    disable_on_timeout=False,
                 )
-                await interaction.response.send_message(embed=view, ephemeral=True)
+                await interaction.response.send_message(view=view, ephemeral=True)
                 return False
             else:
                 return True
