@@ -13,7 +13,7 @@ setup:
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDone\033[0m\n'
 
 # Start local docker services (Postgres + Drizzle Gateway)
-start:
+up:
     #!/usr/bin/env bash
     set -euo pipefail
     printf '\033[43m\033[30m INFO \033[0m \033[33mStarting services\033[0m\n'
@@ -21,7 +21,7 @@ start:
     printf '\033[42m\033[30m  OK  \033[0m \033[32mServices ready\033[0m\n'
 
 # Stop local docker services
-stop:
+down:
     @printf '\033[41m\033[30m STOP \033[0m \033[31mStopping services\033[0m\n'
     @docker compose down
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mServices stopped\033[0m\n'
@@ -31,7 +31,7 @@ dev:
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ $(docker compose ps --status running -q 2>/dev/null | wc -l) -lt 2 ]]; then
-        just start
+        just up
     fi
     printf '\n'
     DB_HOST=localhost uv run main.py

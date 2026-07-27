@@ -84,7 +84,7 @@ Advanced multipurpose discord bot for all your needs.
 
 3. Start the docker services
     ```sh
-    just start
+    just up
     ```
 
 4. Run the bot
@@ -95,7 +95,7 @@ Advanced multipurpose discord bot for all your needs.
 
 5. Stop the docker services when done
     ```sh
-    just stop
+    just down
     ```
 
 > [!IMPORTANT]
