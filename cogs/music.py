@@ -99,11 +99,24 @@ class Music(commands.Cog):
 
     @commands.Cog.listener()
     async def on_sonolink_track_start(self, player: SquarePlayer, event: sonolink.gateway.TrackStartEvent):
+        """
+        Renders the card for the new track, relocating it to the bottom when any chat has landed under it.
+
+        A track change is the one moment the card is worth re-sending cheaply: a single message below it is enough to
+        trigger a fresh send, so the new track always announces itself at the bottom of the channel.
+        With an untouched channel the card is edited in place as usual.
+        """
         guild_id = player.guild.id
         track = player.current
         if track is None:
             return
-        coros = [render_player(self.client, guild_id)]
+        relocate = store.chat_weight(guild_id) > 0
+        if relocate:
+            pending = store.render_task(guild_id)
+            if pending and not pending.done():
+                # This render supersedes the scheduled relocation - let it not fire a second send right after.
+                pending.cancel()
+        coros = [render_player(self.client, guild_id, force_new=relocate)]
         if player.channel is not None:
             coros.append(player.channel.set_status(status=f"Playing **{track.title}**"))
         if track.autoplay:
@@ -266,6 +279,7 @@ class Music(commands.Cog):
 
         Each message adds its estimated on-screen height to the guild's chat weight; the player is only re-sent when the total crosses :attr:`relocate_lines` (a single image/embed/long message can cross it alone).
         Light chatter below the threshold leaves the card edited in place, keeping delete/send API calls rare while the lyrics loop is already editing heavily.
+        The next track start relocates on any accumulated weight though, so chatter never outlives the track it was posted under.
         """
         if not message.guild:
             return
