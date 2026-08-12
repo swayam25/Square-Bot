@@ -23,13 +23,11 @@ Advanced multipurpose discord bot for all your needs.
 
 ## 💫 Prerequisites
 
-| Tool                                                                                                                                    | Type                     | Version | Purpose                                             |
-| --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | ------- | --------------------------------------------------- |
-| [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/) | Required                 | 20.10+  | To run the bot in a containerized environment.      |
-| [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)             | Required                 | 2.50+   | To clone the repository and manage version control. |
-| [![Just](https://img.shields.io/badge/Just-%23EF4041?style=for-the-badge&logo=just&logoColor=%23FFFFFF)](https://github.com/casey/just) | Required                 | 1.27+   | A command runner for the project's recipes.         |
-| [![Python](https://img.shields.io/badge/Python-%233776AB?style=for-the-badge&logo=python&logoColor=%23FFFFFF)](https://www.python.org/) | Optional (*Development*) | 3.14+   | The programming language used to develop the bot.   |
-| [![UV](https://img.shields.io/badge/UV-%23DE5FE9?style=for-the-badge&logo=uv&logoColor=%23FFFFFF)](https://docs.astral.sh/uv/)          | Optional (*Development*) | 0.11+   | A modern Python package manager for development.    |
+| Tool                                                                                                                                    | Version | Purpose                                             |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------------- |
+| [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/) | 20.10+  | To run the bot in a containerized environment.      |
+| [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)             | 2.50+   | To clone the repository and manage version control. |
+| [![Just](https://img.shields.io/badge/Just-%23EF4041?style=for-the-badge&logo=just&logoColor=%23FFFFFF)](https://github.com/casey/just) | 1.27+   | A command runner for the project's recipes.         |
 
 ## 🚀 Production
 
