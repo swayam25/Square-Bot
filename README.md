@@ -73,36 +73,37 @@ Advanced multipurpose discord bot for all your needs.
 
 5. Done! The bot should be up and running now. Log in with username `admin` and your `auth-pass` to reach the dozzle (`:8080` or its domain) and drizzle gateway (`:8081` or its domain).
 
-## 🛸 Development
+## 🪇 Setup Lavalink
 
-1. Follow the first 2 steps of the [production](#-production) section.
+The bot needs at least one [Lavalink](https://github.com/lavalink-devs/Lavalink) node to play music. Nodes are configured as `[[lavalink]]` tables in `config.toml`, you can add more than one and the bot fails over to a healthy node if one dies.
 
-2. Install the dependencies and set up pre-commit hooks
-    ```sh
-    just setup
-    ```
+```mermaid
+flowchart LR
+    A["Player needs a node"] --> B{"Any [[lavalink]]<br/>node online?"}
+    B -- No --> C["Music commands fail"]
+    B -- Yes --> D["Use a healthy node"]
+    D --> E["Active node dies"]
+    E --> F["Fail over to the next<br/>healthy node"]
+```
 
-3. Start the docker services
-    ```sh
-    just up
-    ```
+### [Option 1] Use a free public node
 
-4. Run the bot
-    ```sh
-    just dev
-    ```
-    > `just dev` auto-starts services if they aren't already running, so you can skip step 3 and run it directly.
+There's a [community-maintained list](https://lavalink.darrennathanael.com) of free public Lavalink nodes. Pick one and drop its host/port/password into a `[[lavalink]]` table.
 
-5. Stop the docker services when done
-    ```sh
-    just down
-    ```
-
-> [!IMPORTANT]
-> The local stack only runs Postgres and Drizzle Gateway - no Caddy, no auth. Drizzle Gateway is exposed directly:
-> - Drizzle Gateway → `http://localhost:8081`
+> [!WARNING]
+> Public nodes are shared with everyone else using that list. Expect rate limits, downtime, and credentials that rotate or die without notice.
 >
-> Dozzle, Caddy and the containerized bot are production-only and live in [`docker-compose.prod.yml`](./docker-compose.prod.yml).
+> Fine for a quick test, not something to rely on for production.
+
+### [Option 2] Self-host your own node (*recommended*)
+
+Running your own node gives you full control over performance, uptime, and audio sources. See the [Lavalink docs](https://lavalink.dev) for setup.
+
+> [!NOTE]
+> Lavalink is a separate service, it isn't bundled in this repo's `docker-compose` files. Run it on its own (same host or elsewhere) and point a `[[lavalink]]` table at it.
+
+> [!WARNING]
+> It's best to host Lavalink on a **different VPS** than the one running the bot itself. Most big-name cloud providers (AWS, GCP, Azure, DigitalOcean, etc.) have their IP ranges rate-limited or blocked by YouTube, so playback breaks even though the node itself is perfectly healthy. A smaller, less popular host tends to dodge this.
 
 ## 📚 Setup Drizzle Gateway
 
@@ -133,7 +134,6 @@ Advanced multipurpose discord bot for all your needs.
 | `lavalink.host`      | `str`       | The host of the Lavalink server.                                                                                  |
 | `lavalink.port`      | `int`       | The port of the Lavalink server.                                                                                  |
 | `lavalink.password`  | `str`       | The password for the Lavalink server.                                                                             |
-| `lavalink.region`    | `str`       | The region of the Lavalink server. This is used for latency-based node selection. Set `""` for auto-selection.    |
 | `lavalink.secure`    | `bool`      | Whether to use secure connection (wss) for Lavalink.                                                              |
 
 ## ✨ Custom Emojis
@@ -156,7 +156,7 @@ The workflow is the same whether you use the emojis bundled with this bot or you
 flowchart LR
     A["Zip of .png/.gif files<br/>named after Emoji attributes"] --> B["/emoji upload"]
     B --> C[".cache/emoji.json"]
-    C --> D["Emojis applied ✨"]
+    C --> D["Emojis applied"]
 ```
 
 ### [Option 2] Write `.cache/emoji.json` manually
@@ -179,16 +179,4 @@ If you already have the emojis, you can skip uploading and create `.cache/emoji.
 
 ## ❤️ Contributing
 
-Contributions are welcome! Whether it's a bug fix, a new feature, or a docs tweak, here's how to get set up and what we look for.
-
-### Getting started
-
-1. Fork the repository and clone your fork.
-2. Set up your development environment by following the [development](#-development) section.
-3. Create a branch for your change, commit your work, and open a pull request.
-
-### Guidelines
-
-- **Commits**: Write clear, meaningful messages that describe *what* changed and *why*, and follow the style used in the project's history.
-- **Code quality**: Keep the code clean, readable, and consistent with the surrounding style. Let the `pre-commit` hooks format and lint your changes before you push.
-- **Testing**: Run the bot locally and confirm your change works as expected before opening a PR.
+Contributions are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to get a local copy running and what we look for in a pull request.
