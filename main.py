@@ -4,6 +4,7 @@ import os
 import toml
 from core import Client
 from db import DB
+from music import lyrics
 from pyfiglet import Figlet
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -71,13 +72,15 @@ async def shutdown():
     )
 
     with shutdown_prog as prog:
-        task = prog.add_task("Shutting down", total=2)
+        task = prog.add_task("Shutting down", total=3)
         await DB().close()
+        prog.advance(task, advance=1)
+        await lyrics.close()
         prog.advance(task, advance=1)
         if not client.is_closed():
             await client.close()
         prog.advance(task, advance=1)
-        prog.update(task, description="[yellow]Bot has been shut down[/]", completed=2)
+        prog.update(task, description="[yellow]Bot has been shut down[/]", completed=3)
 
 
 # Main func to run the bot

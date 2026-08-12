@@ -5,6 +5,9 @@ from sonolink.models import Playable
 
 API_URL = "https://lrclib.net/api"
 HEADERS = {"User-Agent": "Square (Discord Bot)"}
+TIMEOUT = aiohttp.ClientTimeout(total=10)
+
+_session: aiohttp.ClientSession | None = None
 
 # LRC timestamp tag, e.g. [01:23.45]
 _lrc_rx = re.compile(r"\[(\d+):(\d{1,2}(?:\.\d+)?)\]")
@@ -13,6 +16,26 @@ _noise_rx = re.compile(
     r"\s*[(\[][^)\]]*(official|video|audio|lyric|visuali[sz]er|remaster|hd|4k|mv)[^)\]]*[)\]]",
     re.IGNORECASE,
 )
+
+
+def _get_session() -> aiohttp.ClientSession:
+    """
+    Returns the shared LRCLIB session, creating it on first use.
+
+    Reusing it keeps the connection alive, so only the first fetch pays for the handshake.
+    """
+    global _session
+    if _session is None or _session.closed:
+        _session = aiohttp.ClientSession(headers=HEADERS, timeout=TIMEOUT)
+    return _session
+
+
+async def close() -> None:
+    """Closes the shared LRCLIB session. Called on bot shutdown."""
+    global _session
+    if _session is not None and not _session.closed:
+        await _session.close()
+    _session = None
 
 
 def _clean_query(track: Playable) -> tuple[str, str]:
@@ -68,24 +91,23 @@ async def fetch(track: Playable) -> list[tuple[int, str]]:
         return []
     title, artist = _clean_query(track)
     duration_sec = round(track.length / 1000)
-    timeout = aiohttp.ClientTimeout(total=10)
+    session = _get_session()
     try:
-        async with aiohttp.ClientSession(headers=HEADERS, timeout=timeout) as session:
-            async with session.get(
-                f"{API_URL}/get",
-                params={"track_name": title, "artist_name": artist, "duration": str(duration_sec)},
-            ) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    if data.get("syncedLyrics"):
-                        return parse_lrc(data["syncedLyrics"])
-            async with session.get(
-                f"{API_URL}/search",
-                params={"track_name": title, "artist_name": artist},
-            ) as resp:
-                if resp.status != 200:
-                    return []
-                results = await resp.json()
+        async with session.get(
+            f"{API_URL}/get",
+            params={"track_name": title, "artist_name": artist, "duration": str(duration_sec)},
+        ) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                if data.get("syncedLyrics"):
+                    return parse_lrc(data["syncedLyrics"])
+        async with session.get(
+            f"{API_URL}/search",
+            params={"track_name": title, "artist_name": artist},
+        ) as resp:
+            if resp.status != 200:
+                return []
+            results = await resp.json()
         for result in results:
             if result.get("syncedLyrics") and abs(result.get("duration", 0) - duration_sec) <= 10:
                 return parse_lrc(result["syncedLyrics"])
