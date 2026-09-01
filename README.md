@@ -18,7 +18,6 @@ Advanced multipurpose discord bot for all your needs.
 - Music with player controls, multi-node failover, smart autoplay & audio filters.
 - Auto-mod, mass moderation, tickets & detailed logging.
 - Custom emojis synced from a simple `.zip` upload.
-- Browser-based database panel & live container logs.
 - Fully dockerized, deploys with a single `just prod` command.
 
 ## 💫 Prerequisites
@@ -45,31 +44,15 @@ Advanced multipurpose discord bot for all your needs.
 > [!TIP]
 > Check [configuration](#-configuration) section for details on the configuration keys.
 
-3. Everything is driven by `config.toml`, you don't need to touch the `Caddyfile`.
-    - Set `auth-pass` to a strong password. It guards **every** web panel (*login username is `admin`*).
-    - Optionally point the panels at real domains under `[domains]` to get automatic HTTPS:
-        ```toml
-        auth-pass = "a-strong-password"
-
-        [domains]
-        dozzle = "logs.example.com" # Dozzle
-        drizzle = "db.example.com"  # Drizzle Gateway
-        ```
-    - Leave a domain empty to serve that panel over plain HTTP on its fallback port instead.
-
-> [!NOTE]
-> With no domain set, the panels are reachable on your server's IP:
-> - Dozzle → `http://<server-ip>:8080`
-> - Drizzle Gateway → `http://<server-ip>:8081`
->
-> Set the matching `[domains]` key to a hostname to serve it with automatic HTTPS on `:443` instead.
-
-4. Build the images and start everything
+3. Build the image and start the stack
     ```sh
     just prod
     ```
 
-5. Done! The bot should be up and running now. Log in with username `admin` and your `auth-pass` to reach the dozzle (`:8080` or its domain) and drizzle gateway (`:8081` or its domain).
+4. Done! The bot and its Postgres database are up. `just prod` pulls the latest code, rebuilds, and redeploys; `just prod --down` stops everything.
+
+> [!NOTE]
+> The production stack is only the bot and its Postgres database. It has no web UI and exposes no ports. Logs go to stdout (`docker compose -f docker-compose.prod.yml logs -f bot`); any monitoring or database tooling is yours to add.
 
 ## 🪇 Setup Lavalink
 
@@ -103,14 +86,6 @@ Running your own node gives you full control over performance, uptime, and audio
 > [!WARNING]
 > It's best to host Lavalink on a **different VPS** than the one running the bot itself. Most big-name cloud providers (AWS, GCP, Azure, DigitalOcean, etc.) have their IP ranges rate-limited or blocked by YouTube, so playback breaks even though the node itself is perfectly healthy. A smaller, less popular host tends to dodge this.
 
-## 📚 Setup Drizzle Gateway
-
-1. Open the Drizzle Gateway in your browser (*`http://localhost:8081` or its domain*).
-2. Log in with username `admin` and your `auth-pass`.
-3. Add the Database Connection
-
-   https://github.com/user-attachments/assets/cfbcfb0d-afa3-43b5-a502-f4e9d5962273
-
 ## 🔑 Configuration
 
 | Key                  | Type        | Description                                                                                                       |
@@ -121,9 +96,6 @@ Running your own node gives you full control over performance, uptime, and audio
 | `support-server-url` | `str`       | The invite URL of the support server.                                                                             |
 | `bot-token`          | `str`       | Discord Bot Token. Get this from developer portal.                                                                |
 | `database-url`       | `str`       | The URL for the PostgreSQL database.                                                                              |
-| `auth-pass`          | `str`       | Single password guarding all web panels behind Caddy. Login username is `admin`.                                  |
-| `domains.dozzle`     | `str`       | Hostname for the Dozzle.                                                                                          |
-| `domains.drizzle`    | `str`       | Hostname for the Drizzle Gateway.                                                                                 |
 | `colors.theme`       | `str`       | The color theme for the bot's view containers.                                                                    |
 | `colors.green`       | `str`       | The color code for green color in view containers.                                                                |
 | `colors.red`         | `str`       | The color code for red color in view containers.                                                                  |

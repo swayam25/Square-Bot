@@ -1,11 +1,16 @@
 name: square
 
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   bot:
     build:
       context: .
       dockerfile: containers/Dockerfile
-    container_name: square
     restart: unless-stopped
     depends_on:
       db:
@@ -13,10 +18,10 @@ services:
     volumes:
       - ./.cache:/square/.cache
       - ./config.toml:/square/config.toml:ro
+    logging: *logging
 
   db:
     image: postgres:16-alpine
-    container_name: square_db
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -29,48 +34,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  dozzle:
-    image: amir20/dozzle:latest
-    container_name: square_dozzle
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-
-  drizzle-gateway:
-    image: ghcr.io/drizzle-team/gateway:latest
-    container_name: square_drizzle
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      PORT: 8081
-    volumes:
-      - drizzle_data:/app
-
-  caddy:
-    build:
-      context: .
-      dockerfile: containers/Dockerfile.caddy
-    container_name: square_caddy
-    restart: unless-stopped
-    depends_on:
-      - dozzle
-      - drizzle-gateway
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080" # Dozzle
-      - "8081:8081" # Drizzle Gateway
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./config.toml:/square/config.toml:ro
-      - caddy_data:/data
-      - caddy_config:/config
+    logging: *logging
 
 volumes:
   postgres_data:
-  drizzle_data:
-  caddy_data:
-  caddy_config:

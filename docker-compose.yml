@@ -19,20 +19,5 @@ services:
       timeout: 5s
       retries: 5
 
-  drizzle-gateway:
-    image: ghcr.io/drizzle-team/gateway:latest
-    container_name: square_drizzle
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      PORT: 8081
-    ports:
-      - "127.0.0.1:8081:8081"
-    volumes:
-      - drizzle_data:/app
-
 volumes:
   postgres_data:
-  drizzle_data:

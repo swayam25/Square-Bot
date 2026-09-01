@@ -21,7 +21,7 @@ Everything in the [README's prerequisites](./README.md#-prerequisites), plus a c
     just setup
     ```
 
-3. Start the docker services
+3. Start the local docker services
 
     ```sh
     just up
@@ -35,17 +35,10 @@ Everything in the [README's prerequisites](./README.md#-prerequisites), plus a c
 
     > `just dev` auto-starts services if they aren't already running, so you can skip step 3 and run it directly.
 
-5. Stop the docker services when done
+5. Stop it when done
     ```sh
     just down
     ```
-
-> [!IMPORTANT]
-> The local stack runs Postgres, Drizzle Gateway - no Caddy, no auth.
->
-> - Drizzle Gateway → `http://localhost:8081`
->
-> Dozzle, Caddy and the containerized bot are production-only and live in [`docker-compose.prod.yml`](./docker-compose.prod.yml).
 
 ## 🍀 Making a Pull Request
 

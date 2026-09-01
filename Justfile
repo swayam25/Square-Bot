@@ -12,7 +12,7 @@ setup:
     @uv run pre-commit install
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDone\033[0m\n'
 
-# Start local docker services (Postgres + Drizzle Gateway)
+# Start local docker service
 up:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -20,7 +20,7 @@ up:
     docker compose up -d --build
     printf '\033[42m\033[30m  OK  \033[0m \033[32mServices ready\033[0m\n'
 
-# Stop local docker services
+# Stop local docker service
 down:
     @printf '\033[41m\033[30m STOP \033[0m \033[31mStopping services\033[0m\n'
     @docker compose down
@@ -30,7 +30,7 @@ down:
 dev:
     #!/usr/bin/env bash
     set -euo pipefail
-    if [[ $(docker compose ps --status running -q 2>/dev/null | wc -l) -lt 2 ]]; then
+    if [[ $(docker compose ps --status running -q 2>/dev/null | wc -l) -lt 1 ]]; then
         just up
     fi
     printf '\n'
