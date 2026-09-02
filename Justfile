@@ -4,13 +4,19 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 default:
     @just --list --list-heading $'\n\033[1;96mSquare\033[0m \033[2m/ Available Commands\033[0m\n' --list-prefix $'  \033[36m›\033[0m '
 
-# Sync dependencies and install hooks
-setup:
+[private]
+_prep:
+    @mkdir -p .cache
     @printf '\033[43m\033[30m SYNC \033[0m \033[33mSyncing Dependencies\033[0m\n'
     @uv sync
     @printf '\033[43m\033[30m HOOK \033[0m \033[33mInstalling Pre Commit\033[0m\n'
     @uv run pre-commit install
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDone\033[0m\n'
+
+# Create config.toml, the cache dir, and install dependencies
+init: _prep
+    @[[ -f config.toml ]] || cp config.example.toml config.toml
+    @printf '\033[42m\033[30m  OK  \033[0m \033[32mNow edit \033[36mconfig.toml\033[32m, then run: \033[36mjust dev\033[0m\n'
 
 # Start local docker service
 up:
@@ -71,7 +77,7 @@ db-heads: db-ensure-init
 # ── Deploy ────────────────────────────────────────────────────────────────────
 
 # Pull latest, rebuild, and deploy the full production stack (--down to stop it instead)
-prod *args:
+prod *args: _prep
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ "{{args}}" == *--down* ]]; then

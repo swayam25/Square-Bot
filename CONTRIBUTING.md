@@ -13,13 +13,16 @@ Everything in the [README's prerequisites](./README.md#-prerequisites), plus a c
 
 ## 🛸 Local Development
 
-1. Follow the first 2 steps of the [production setup](./README.md#-production) - clone the repo and create your config files.
+1. Follow the first step of the [production setup](./README.md#-production) - clone the repo.
 
-2. Install the dependencies and set up pre-commit hooks
+2. Install the dependencies, set up pre-commit hooks, and create your `config.toml` file
 
     ```sh
-    just setup
+    just init
     ```
+
+    > [!TIP]
+    > Check [configuration](./README.md#-configuration) section for details on the configuration keys.
 
 3. Start the local docker services
 
