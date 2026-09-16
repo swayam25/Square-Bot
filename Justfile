@@ -5,8 +5,11 @@ default:
     @just --list --list-heading $'\n\033[1;96mSquare\033[0m \033[2m/ Available Commands\033[0m\n' --list-prefix $'  \033[36m›\033[0m '
 
 [private]
-_prep:
+_cache:
     @mkdir -p .cache
+
+[private]
+_prep: _cache
     @printf '\033[43m\033[30m SYNC \033[0m \033[33mSyncing Dependencies\033[0m\n'
     @uv sync
     @printf '\033[43m\033[30m HOOK \033[0m \033[33mInstalling Pre Commit\033[0m\n'
@@ -50,8 +53,8 @@ db-ensure-init:
 
 # Generate a new migration from schema changes
 db-migrate name="auto": db-ensure-init
-    @printf '\033[43m\033[30m  DB  \033[0m \033[33mGenerating migration: {{name}}\033[0m\n'
-    @DB_HOST=localhost uv run aerich migrate --name {{name}}
+    @printf '\033[43m\033[30m  DB  \033[0m \033[33mGenerating migration: {{ name }}\033[0m\n'
+    @DB_HOST=localhost uv run aerich migrate --name {{ name }}
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mMigration created\033[0m\n'
 
 # Apply all pending migrations
@@ -77,10 +80,10 @@ db-heads: db-ensure-init
 # ── Deploy ────────────────────────────────────────────────────────────────────
 
 # Pull latest, rebuild, and deploy the full production stack (--down to stop it instead)
-prod *args: _prep
+prod *args: _cache
     #!/usr/bin/env bash
     set -euo pipefail
-    if [[ "{{args}}" == *--down* ]]; then
+    if [[ "{{ args }}" == *--down* ]]; then
         printf '\033[41m\033[30m STOP \033[0m \033[31mStopping production stack\033[0m\n'
         docker compose -f docker-compose.prod.yml down
         printf '\033[42m\033[30m  OK  \033[0m \033[32mProduction stack stopped\033[0m\n'
