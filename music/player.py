@@ -1,13 +1,14 @@
 import asyncio
+import datetime
 import discord
 import sonolink
 import time
 from core import Client
 from core.view import DesignerView
 from discord import ui
-from music import lyrics, store
+from music import dj, lyrics, store
 from music.core import SquarePlayer, fmt_time, get_player, requester_id
-from music.utils import get_source, music_interaction_check, music_log, reply, to_log_text
+from music.utils import get_source, music_interaction_check, music_log, reply, split_log_text
 from utils import config
 from utils.emoji import emoji
 
@@ -22,6 +23,10 @@ _LYRICS_MAX_SLEEP = 5.0
 _LYRICS_LEAD_MS = 450
 # Seconds between progress-bar-only refreshes (no lyrics, or long instrumental gaps).
 _BAR_REFRESH_INTERVAL = 10.0
+# How long an open skip vote waits for the channel to make up its mind.
+_VOTE_TIMEOUT = 60.0
+# How long the settled vote stays up before it clears itself away, matching the music log toasts.
+_VOTE_RESULT_LINGER = 5.0
 
 
 def _get_render_lock(guild_id: int) -> asyncio.Lock:
@@ -160,6 +165,9 @@ def cleanup_guild(guild_id: int) -> None:
     A task is never cancelled from within itself, so the caller's own cleanup can finish.
     """
     _render_locks.pop(guild_id, None)
+    vote = store.skip_vote(guild_id)
+    if vote:
+        vote.stop()  # Cancels its expiry task; the card itself is only removed on the async paths.
     for task_fn in (store.lyrics_task, store.render_task):
         task = task_fn(guild_id)
         if task and task is not asyncio.current_task():
@@ -174,6 +182,7 @@ async def clear_player(guild_id: int) -> None:
     Args:
         guild_id (int): The guild whose player message should be removed.
     """
+    await cancel_vote(guild_id)
     play_msg, _ = store.play_msg(guild_id)
     if play_msg:
         try:
@@ -217,6 +226,69 @@ async def skip_or_stop(player: SquarePlayer, guild: discord.Guild) -> None:
         await stop_player(player, guild)
 
 
+async def cancel_vote(guild_id: int) -> None:
+    """Closes the guild's open skip vote and removes its message, for when the track it targeted is gone."""
+    vote = store.skip_vote(guild_id)
+    if not vote:
+        return
+    vote.stop()
+    store.skip_vote(guild_id, mode="clear")
+    await vote.discard()
+
+
+async def request_skip(source: discord.ApplicationContext | discord.Interaction, player: SquarePlayer) -> None:
+    """
+    Skips the track for a DJ or the member who requested it, and opens a listener vote for everyone else.
+
+    A second member asking to skip joins the open vote instead of starting a competing one.
+
+    Args:
+        source (:class:`ApplicationContext` | :class:`Interaction`): The invoking command or button press.
+        player (:class:`SquarePlayer`): The active player for the guild.
+    """
+    is_command = isinstance(source, discord.ApplicationContext)
+    member = source.author if is_command else source.user
+    guild = source.guild
+    track = player.current
+    interaction = source.interaction if is_command else source
+    if not interaction.response.is_done():
+        await interaction.response.defer(ephemeral=is_command)
+    if await dj.is_dj(member, player) or requester_id(player, track) == member.id:
+        if is_command:
+            await reply(source, f"{emoji.skip} Skipped the track.")
+        await music_log(guild.id, f"{emoji.skip} {member.mention} skipped the track.")
+        await skip_or_stop(player, guild)
+        return
+    if member not in dj.listeners(player):
+        await reply(source, f"{emoji.error} Undeafen to vote on a skip.", color=config.color.red)
+        return
+    vote = store.skip_vote(guild.id)
+    if vote and vote.track.identifier == track.identifier:
+        await vote.add_vote(source, member)
+        return
+    await cancel_vote(guild.id)
+    vote = VoteSkipView(source.bot if is_command else source.client, player, member)
+    # Claim the slot before the send, so a second member skipping in the same breath joins this vote instead of
+    # posting a rival card that tallies votes nobody can see.
+    store.skip_vote(guild.id, vote, "set")
+    channel = store.play_ch(guild.id) or source.channel
+    play_msg, _ = store.play_msg(guild.id)
+    # Only reply to the card when it lives in the channel being posted to, otherwise Discord rejects the reference.
+    same_channel = play_msg is not None and play_msg.channel.id == channel.id
+    reference = play_msg.to_reference(fail_if_not_exists=False) if same_channel else None
+    try:
+        vote.msg = await channel.send(view=vote, reference=reference)
+    except discord.HTTPException:
+        # No card, no vote: drop it rather than leave a slot and an expiry task nothing can ever resolve.
+        vote.stop()
+        store.skip_vote(guild.id, mode="clear")
+        await reply(source, f"{emoji.error} I can't post the skip vote in that channel.", color=config.color.red)
+        return
+    # A button press was acked silently, but a command's deferred ephemeral needs filling in or it hangs on "thinking".
+    if is_command:
+        await reply(source, f"{emoji.skip} Started a vote to skip **{track.title}**.")
+
+
 async def slash_log(
     ctx: discord.ApplicationContext,
     content: str,
@@ -238,7 +310,8 @@ async def slash_log(
     await reply(ctx, content, color=color)
     if render:
         await render_player(ctx.bot, ctx.guild.id)
-    await music_log(ctx.guild.id, f"{ctx.author.mention} {to_log_text(content)}", color=color)
+    log_emoji, text = split_log_text(content)
+    await music_log(ctx.guild.id, f"{log_emoji} {ctx.author.mention} {text}".strip(), color=color)
 
 
 class MusicContainer(ui.Container):
@@ -355,31 +428,35 @@ class MusicView(DesignerView):
         self.add_item(ui.ActionRow(autoplay_btn))
 
     async def pause_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if not await dj.require_dj(interaction, self.player):
+            return
         if self.player.paused:
             await self.player.resume()
         else:
             await self.player.pause()
-        await interaction.response.defer()
         await render_player(self.client, interaction.guild_id)
         await music_log(
             interaction.guild_id,
-            f"{interaction.user.mention} {'paused' if self.player.paused else 'resumed'} the player.",
+            f"{emoji.pause if self.player.paused else emoji.play} {interaction.user.mention} "
+            f"{'paused' if self.player.paused else 'resumed'} the player.",
         )
 
     async def stop_callback(self, interaction: discord.Interaction):
-        guild: discord.Guild = self.client.get_guild(int(interaction.guild_id))
         await interaction.response.defer()
-        await music_log(interaction.guild_id, f"{interaction.user.mention} destroyed the player.")
+        if not await dj.require_dj(interaction, self.player):
+            return
+        guild: discord.Guild = self.client.get_guild(int(interaction.guild_id))
+        await music_log(interaction.guild_id, f"{emoji.stop} {interaction.user.mention} destroyed the player.")
         await stop_player(self.player, guild)
 
     async def skip_callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        await music_log(interaction.guild_id, f"{interaction.user.mention} skipped the track.")
-        guild = self.client.get_guild(int(interaction.guild_id))
-        if guild:
-            await skip_or_stop(self.player, guild)
+        await request_skip(interaction, self.player)
 
     async def loop_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if not await dj.require_dj(interaction, self.player):
+            return
         if self.player.queue_mode is sonolink.QueueMode.NORMAL:
             self.player.queue_mode = sonolink.QueueMode.LOOP
             mode = "Track"
@@ -389,32 +466,213 @@ class MusicView(DesignerView):
         else:
             self.player.queue_mode = sonolink.QueueMode.NORMAL
             mode = "Disable"
-        await interaction.response.defer()
+        loop_emoji = emoji.loop_white if mode == "Disable" else emoji.loop_one if mode == "Track" else emoji.loop
         await render_player(self.client, interaction.guild_id)
         await music_log(
             interaction.guild_id,
-            f"{interaction.user.mention} {'enabled' if mode != 'Disable' else 'disabled'} {mode} loop.",
+            f"{loop_emoji} {interaction.user.mention} "
+            f"{f'enabled {mode.lower()}' if mode != 'Disable' else 'disabled'} loop.",
         )
 
     async def shuffle_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if not await dj.require_dj(interaction, self.player):
+            return
         if not len(self.player.queue):
             await reply(interaction, f"{emoji.error} Queue is empty.", color=config.color.red)
             return
         shuffled = self.player.queue.shuffle_mode is sonolink.ShuffleMode.PERSISTENT
         self.player.queue.shuffle_mode = sonolink.ShuffleMode.DEFAULT if shuffled else sonolink.ShuffleMode.PERSISTENT
-        await interaction.response.defer()
         await render_player(self.client, interaction.guild_id)
         await music_log(
             interaction.guild_id,
-            f"{interaction.user.mention} {'disabled' if shuffled else 'enabled'} shuffle.",
+            f"{emoji.shuffle} {interaction.user.mention} {'disabled' if shuffled else 'enabled'} shuffle.",
         )
 
     async def autoplay_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if not await dj.require_dj(interaction, self.player):
+            return
         enabled = self.player.autoplay is sonolink.AutoPlayMode.ENABLED
         self.player.autoplay = sonolink.AutoPlayMode.DISABLED if enabled else sonolink.AutoPlayMode.ENABLED
-        await interaction.response.defer()
         await render_player(self.client, interaction.guild_id)
         await music_log(
             interaction.guild_id,
-            f"{interaction.user.mention} {'enabled' if not enabled else 'disabled'} autoplay.",
+            f"{emoji.autoplay} {interaction.user.mention} {'enabled' if not enabled else 'disabled'} autoplay.",
         )
+
+
+class VoteSkipView(DesignerView):
+    """
+    Public skip vote, opened when a member without DJ rights asks to skip someone else's track.
+
+    The button doubles as the tally, and a DJ pressing it settles the vote outright.
+
+    Args:
+        client (:class:`Client`): The Discord bot client.
+        player (:class:`SquarePlayer`): The active player for the guild.
+        starter (:class:`Member`): The member who opened the vote, counted as its first vote.
+    """
+
+    def __init__(self, client: Client, player: SquarePlayer, starter: discord.Member):
+        # The deadline is ours rather than the view's own timeout, which pycord refreshes on every press - including
+        # ones it rejects. A window anyone can extend by mashing the button is not one the card can count down to.
+        super().__init__(timeout=None)
+        self.client = client
+        self.player = player
+        self.guild_id = player.guild.id
+        self.track = player.current
+        self.starter = starter
+        self.voters: set[int] = {starter.id}
+        self.msg: discord.Message | None = None
+        self.expires_at = discord.utils.utcnow() + datetime.timedelta(seconds=_VOTE_TIMEOUT)
+        self.rendered: tuple[int, int] = (len(self.voters), dj.votes_needed(len(dj.listeners(player))))
+        self.deadline = asyncio.create_task(self._expire())
+        self.interaction_check = lambda interaction: music_interaction_check(
+            player=self.player, interaction=interaction, view=self
+        )
+        self.build()
+
+    async def _expire(self) -> None:
+        """Closes the vote once :attr:`expires_at` passes, however many times the button was pressed meanwhile."""
+        await discord.utils.sleep_until(self.expires_at)
+        await self.on_timeout()
+
+    def stop(self) -> None:
+        super().stop()
+        # Never cancel from inside the deadline itself, so an expiring vote can finish tidying up.
+        if self.deadline is not asyncio.current_task():
+            self.deadline.cancel()
+
+    @property
+    def needed(self) -> int:
+        """Votes the tally currently has to reach, recomputed so members joining or leaving move the bar."""
+        return dj.votes_needed(len(dj.listeners(self.player)))
+
+    def build(self):
+        self.clear_items()
+        btn = ui.Button(
+            label=f"{len(self.voters)}/{self.needed}",
+            emoji=emoji.skip_white,
+            style=discord.ButtonStyle.grey,
+        )
+        btn.callback = self.vote_callback
+        self.add_item(
+            ui.Container(
+                ui.Section(
+                    ui.TextDisplay("## Vote Skip"),
+                    ui.TextDisplay(
+                        f"[**{self.track.title}**]({self.track.uri})\n"
+                        f"-# Skip requested by {self.starter.mention} [ends {discord.utils.format_dt(self.expires_at, 'R')}]"
+                    ),
+                    accessory=btn,
+                ),
+            )
+        )
+
+    async def add_vote(self, source: discord.ApplicationContext | discord.Interaction, member: discord.Member) -> None:
+        """
+        Counts a member's vote and carries the skip once enough listeners agree.
+
+        Args:
+            source (:class:`ApplicationContext` | :class:`Interaction`): The command or press the vote came from.
+            member (:class:`Member`): The voting member.
+        """
+        if member.id in self.voters:
+            await reply(source, f"{emoji.error} You already voted to skip.", color=config.color.red)
+            return
+        self.voters.add(member.id)
+        if len(self.voters) >= self.needed:
+            await reply(source, f"{emoji.skip} Vote passed.")
+            await self.resolve()
+            return
+        await reply(source, f"{emoji.success} Vote counted `{len(self.voters)}/{self.needed}`.")
+        await self.render()
+
+    async def render(self) -> None:
+        """Pushes the current tally onto the card, skipping the edit when the numbers on it haven't moved."""
+        state = (len(self.voters), self.needed)
+        if state == self.rendered or not self.msg:
+            return
+        self.rendered = state
+        self.build()
+        try:
+            await self.msg.edit(view=self)
+        except discord.HTTPException:
+            pass
+
+    async def refresh(self) -> None:
+        """
+        Re-evaluates the vote after the voice channel's membership changed.
+
+        Members who left stop counting, both as voters and toward the threshold, so a vote carries the moment
+        whoever is still listening already agrees. An emptied channel drops the vote outright.
+        """
+        if self.is_finished():
+            return
+        listening = dj.listeners(self.player)
+        if not listening:
+            self.stop()
+            self.release()
+            await self.discard()
+            return
+        self.voters &= {member.id for member in listening}
+        if self.voters and len(self.voters) >= self.needed:
+            await self.resolve()
+            return
+        await self.render()
+
+    async def vote_callback(self, interaction: discord.Interaction):
+        # Same deadline applies here: the DJ lookup and the tally edit are both round trips.
+        await interaction.response.defer()
+        if await dj.is_dj(interaction.user, self.player):
+            await self.resolve()
+            return
+        if interaction.user not in dj.listeners(self.player):
+            await reply(interaction, f"{emoji.error} Undeafen to vote on a skip.", color=config.color.red)
+            return
+        await self.add_vote(interaction, interaction.user)
+
+    async def resolve(self) -> None:
+        """Closes the vote, settles its card in place, and skips the track."""
+        if self.is_finished():
+            # Two presses can land either side of the DJ lookup; only the first gets to advance the queue.
+            return
+        self.stop()
+        self.release()
+        await self.settle(f"{emoji.skip} {self.starter.mention} vote skipped **{self.track.title}**.")
+        guild = self.client.get_guild(self.guild_id)
+        if guild:
+            await skip_or_stop(self.player, guild)
+
+    async def settle(self, outcome: str, *, color: int | None = None) -> None:
+        """Turns the vote card into its outcome, then clears it away a few seconds later."""
+        if not self.msg:
+            return
+        self.clear_items()
+        self.add_item(ui.Container(ui.TextDisplay(outcome), color=color))
+        try:
+            await self.msg.edit(view=self)
+            await self.msg.delete(delay=_VOTE_RESULT_LINGER)
+        except discord.HTTPException:
+            pass
+        self.msg = None
+
+    def release(self) -> None:
+        """Gives up the guild's vote slot, but only while this view still holds it."""
+        if store.skip_vote(self.guild_id) is self:
+            store.skip_vote(self.guild_id, mode="clear")
+
+    async def discard(self) -> None:
+        """Removes the vote message outright, for when the track it targeted is already gone."""
+        if self.msg:
+            try:
+                await self.msg.delete()
+            except discord.HTTPException:
+                pass
+            self.msg = None
+
+    async def on_timeout(self) -> None:
+        self.stop()
+        self.release()
+        await self.settle(f"{emoji.error} {self.starter.mention}'s skip vote expired.", color=config.color.red)

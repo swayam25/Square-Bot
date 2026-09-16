@@ -7,10 +7,11 @@ import sonolink
 from babel.dates import format_timedelta
 from core import Client
 from core.view import DesignerView
+from db.funcs.dj import fetch_dj
 from discord import SlashCommandGroup, ui
 from discord.commands import option, slash_command
 from discord.ext import commands
-from music import store
+from music import dj, store
 from music.core import (
     SquarePlayer,
     fetch_node_info,
@@ -20,8 +21,17 @@ from music.core import (
     requester_id,
     tag_requester,
 )
+from music.dj import DJView
 from music.filters import EqPresets
-from music.player import cleanup_guild, render_player, skip_or_stop, slash_log, start_lyrics, stop_player
+from music.player import (
+    cancel_vote,
+    cleanup_guild,
+    render_player,
+    request_skip,
+    slash_log,
+    start_lyrics,
+    stop_player,
+)
 from music.queue import QueueListView
 from music.utils import container, get_source, music_log, reply
 from rich.console import Console
@@ -45,6 +55,19 @@ class Music(commands.Cog):
     chars_per_line = 60
     # Relocate the player once this many estimated chat lines have stacked below it.
     relocate_lines = 10
+    # Commands the whole channel hears the result of. DJ mode limits these, and every `/eq` filter, to DJs.
+    dj_commands = {
+        "autoplay",
+        "clear-queue",
+        "loop",
+        "pause",
+        "resume",
+        "seek",
+        "shuffle",
+        "skip-to",
+        "stop",
+        "volume",
+    }
 
     def __init__(self, client: Client):
         self.client = client
@@ -116,6 +139,7 @@ class Music(commands.Cog):
             if pending and not pending.done():
                 # This render supersedes the scheduled relocation - let it not fire a second send right after.
                 pending.cancel()
+        await cancel_vote(guild_id)
         coros = [render_player(self.client, guild_id, force_new=relocate)]
         if player.channel is not None:
             coros.append(player.channel.set_status(status=f"Playing **{track.title}**"))
@@ -169,6 +193,23 @@ class Music(commands.Cog):
                 color=config.color.red,
             )
         await stop_player(player, guild)
+
+    @commands.Cog.listener()
+    async def on_voice_state_update(
+        self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState
+    ):
+        """Keeps an open skip vote honest as listeners come, go, and deafen, since the threshold moves with them."""
+        if member.bot:
+            return
+        deafened = (before.deaf or before.self_deaf) != (after.deaf or after.self_deaf)
+        if before.channel == after.channel and not deafened:
+            return
+        player = get_player(self.client, member.guild.id)
+        if not player or not player.connected or player.channel not in (before.channel, after.channel):
+            return
+        vote = store.skip_vote(member.guild.id)
+        if vote:
+            await vote.refresh()
 
     # Current voice
     def current_voice_channel(self, ctx: discord.ApplicationContext):
@@ -227,6 +268,10 @@ class Music(commands.Cog):
             if ctx.author.voice.channel != bot_channel:
                 await ctx.respond(view=_err(f"{emoji.error} You are not in my voice channel."), ephemeral=True)
                 return None
+
+        name = ctx.command.qualified_name
+        if (name in self.dj_commands or name.startswith("eq ")) and not await dj.require_dj(ctx, player):
+            return None
 
         return player
 
@@ -411,6 +456,14 @@ class Music(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
 
+    # DJ
+    @slash_command(name="dj")
+    @discord.default_permissions(manage_guild=True)
+    async def dj_settings(self, ctx: discord.ApplicationContext):
+        """Manages who may use the playback controls."""
+        enabled, role_ids = await fetch_dj(ctx.guild.id)
+        await ctx.respond(view=DJView(ctx, enabled, role_ids), ephemeral=True)
+
     # Equalizer slash cmd group
     eq = SlashCommandGroup(name="eq", description="Equalizer commands.")
 
@@ -549,11 +602,10 @@ class Music(commands.Cog):
     # Skip
     @slash_command(name="skip")
     async def skip(self, ctx: discord.ApplicationContext):
-        """Skips the current playing track."""
+        """Skips the current playing track, or opens a vote when you aren't a DJ."""
         player = await self.ensure_voice(ctx)
         if player:
-            await slash_log(ctx, f"{emoji.skip} Skipped the track.", render=False)
-            await skip_or_stop(player, ctx.guild)
+            await request_skip(ctx, player)
 
     # Skip to
     @slash_command(name="skip-to")
@@ -709,7 +761,7 @@ class Music(commands.Cog):
                     f"{emoji.error} Index has to be between `1` to `{len(player.queue.tracks)}`",
                     color=config.color.red,
                 )
-            else:
+            elif await dj.require_dj(ctx, player, track=player.queue.tracks[index - 1]):
                 removed = player.queue.remove_at(index - 1)
                 await slash_log(ctx, f"{emoji.remove} Removed **{removed.title}**.", color=config.color.red)
 

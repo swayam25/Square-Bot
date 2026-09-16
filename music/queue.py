@@ -4,6 +4,7 @@ import sonolink
 from core import Client
 from core.view import DesignerView
 from discord import ui
+from music import dj
 from music.core import SquarePlayer, fmt_time, get_player, requester_id
 from music.utils import music_interaction_check, music_log, reply
 from utils import config
@@ -34,6 +35,8 @@ class QueueBtnCallback:
     ):
         if track_index <= 0:
             return
+        if not await dj.require_dj(interaction, player):
+            return
         new_index = track_index - 1
         player.queue.swap(track_index, new_index)
         if track_index == queue_view.visible_action_button:
@@ -48,6 +51,8 @@ class QueueBtnCallback:
         interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
     ):
         if track_index >= len(player.queue.tracks) - 1:
+            return
+        if not await dj.require_dj(interaction, player):
             return
         new_index = track_index + 1
         player.queue.swap(track_index, new_index)
@@ -65,6 +70,8 @@ class QueueBtnCallback:
     ):
         if track_index >= len(player.queue.tracks):
             return
+        if not await dj.require_dj(interaction, player, track=player.queue.tracks[track_index]):
+            return
         player.queue.remove_at(track_index)
         queue_view.visible_action_button = None
         total_pages = max(1, math.ceil(len(player.queue.tracks) / queue_view.items_per_page))
@@ -79,6 +86,8 @@ class QueueBtnCallback:
     ):
         if track_index >= len(player.queue.tracks):
             return
+        if not await dj.require_dj(interaction, player):
+            return
         await player.skip_to(track_index)
         total_pages = max(1, math.ceil(len(player.queue.tracks) / queue_view.items_per_page))
         if queue_view.page > total_pages and total_pages > 0:
@@ -86,7 +95,7 @@ class QueueBtnCallback:
         await _update_queue_view(interaction, queue_view)
         await music_log(
             interaction.guild_id,
-            f"{interaction.user.mention} is now playing track `{track_index + 1}` from the queue.",
+            f"{emoji.play} {interaction.user.mention} is now playing track `{track_index + 1}` from the queue.",
         )
 
 
@@ -281,6 +290,8 @@ class QueueListView(DesignerView):
                 row.add_item(btn)
 
     async def more_select_callback(self, interaction: discord.Interaction):
+        if not await dj.require_dj(interaction, self.player):
+            return
         selected_value = interaction.data["values"][0]
         if selected_value == "remove_by_requester":
             await interaction.response.send_modal(

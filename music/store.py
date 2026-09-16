@@ -91,6 +91,29 @@ def render_task(
                 del store[guild_id]["render_task"]
 
 
+def skip_vote(
+    guild_id: int, vote: DesignerView | None = None, mode: Literal["get", "set", "clear"] = "get"
+) -> DesignerView | None:
+    """
+    Gets, sets, or clears the guild's open skip vote.
+
+    Args:
+        guild_id (int): The ID of the guild.
+        vote (:class:`DesignerView` | None): The vote view to set.
+        mode (str): The operation mode, either "get", "set", or "clear".
+    """
+    match mode:
+        case "get":
+            return store.get(guild_id, {}).get("skip_vote", None)
+        case "set":
+            if guild_id not in store:
+                store[guild_id] = {}
+            store[guild_id]["skip_vote"] = vote
+        case "clear":
+            if guild_id in store:
+                store[guild_id].pop("skip_vote", None)
+
+
 # Synced lyrics cache for the currently playing track
 def lyrics(
     guild_id: int,
@@ -177,6 +200,7 @@ _MUSIC_KEYS = {
     "play_msg",
     "play_msg_view",
     "render_task",
+    "skip_vote",
 }
 
 
