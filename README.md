@@ -15,7 +15,7 @@ Advanced multipurpose discord bot for all your needs.
 
 ## 🎯 Features
 
-- Music with player controls, multi-node failover, smart autoplay & audio filters.
+- Music with player controls, DJ roles with vote skip, multi-node failover, smart autoplay & audio filters.
 - Auto-mod, mass moderation, tickets & detailed logging.
 - Custom emojis synced from a simple `.zip` upload.
 - Fully dockerized, deploys with a single `just prod` command.

@@ -91,20 +91,26 @@ async def music_log(guild_id: int, content: str, *, color: int | None = None) ->
         pass
 
 
-def to_log_text(content: str) -> str:
+def split_log_text(content: str) -> tuple[str, str]:
     """
-    Strips the leading emoji from content and lowercases the first letter.
+    Splits a confirmation message into its leading emoji and the rest, lowercased.
 
-    Used to convert slash command confirmation messages into clean log lines without a leading emoji prefix (e.g. for use after a user mention).
+    A log line reads "<emoji> @user paused the player.", so the emoji is handed back rather than dropped along with
+    the sentence case, letting the caller put it in front of the mention.
 
     Args:
         content (str): The message text, optionally starting with a custom or unicode emoji.
 
     Returns:
-        str: The stripped and lowercased string.
+        tuple[str, str]: The leading emoji, empty when there is none, and the remaining lowercased text.
     """
-    stripped = re.sub(r"^(<a?:[^:]+:\d+>|[\U00010000-\U0010ffff]|[ -㌀]|©|®|[✂-➰])\s*", "", content.strip())
-    return stripped[0].lower() + stripped[1:] if stripped else content
+    content = content.strip()
+    # Custom emoji, or a run of non-ASCII symbols: anything ASCII is real text, not a prefix worth lifting out.
+    match = re.match(r"^(<a?:[^:]+:\d+>|[^\x00-\x7f\w]+)\s*", content)
+    if not match:
+        return "", (content[0].lower() + content[1:] if content else content)
+    rest = content[match.end() :]
+    return match.group(1), (rest[0].lower() + rest[1:] if rest else content)
 
 
 async def music_interaction_check(view: DesignerView, player: SquarePlayer, interaction: discord.Interaction) -> bool:

@@ -1,6 +1,7 @@
 import discord
 from core import Client
 from core.view import DesignerView
+from db.funcs.dj import fetch_dj, remove_dj
 from db.funcs.guild import (
     fetch_guild_settings,
     remove_guild,
@@ -28,6 +29,8 @@ class SettingsCommand:
 
         guild_settings = await fetch_guild_settings(self.ctx.guild.id)
         log_channels = await fetch_log_channels(self.ctx.guild.id)
+        dj_mode, dj_role_ids = await fetch_dj(self.ctx.guild.id)
+        dj_roles = [role.mention for role_id in dj_role_ids if (role := self.ctx.guild.get_role(role_id))]
 
         ticket = emoji.on if guild_settings.ticket_cmds else emoji.off
         media_only_channel = mention_ch(guild_settings.media_only_channel_id)
@@ -45,7 +48,9 @@ class SettingsCommand:
                     f"### General\n"
                     f"{emoji.ticket} **Ticket Commands**: {ticket}\n"
                     f"{emoji.img} **Media Only Channel**: {media_only_channel}\n"
-                    f"{emoji.role} **Autorole**: {autorole}"
+                    f"{emoji.role} **Autorole**: {autorole}\n"
+                    f"{emoji.dj} **DJ Mode**: {emoji.on if dj_mode else emoji.off}\n"
+                    f"{emoji.dj} **DJ Roles**: {', '.join(dj_roles) or emoji.off}"
                 ),
                 ui.TextDisplay("### Logs"),
                 ui.TextDisplay(
@@ -71,6 +76,8 @@ class SettingsCommand:
                 await set_media_only(self.ctx.guild.id, None)
             case "auto role":
                 await set_autorole(self.ctx.guild.id, None)
+            case "dj":
+                await remove_dj(self.ctx.guild.id)
             case _:
                 await remove_log_channel(self.ctx.guild.id, LogType.from_label(setting).key)
         view = DesignerView(
@@ -92,7 +99,7 @@ class Settings(commands.Cog):
     @option(
         "reset",
         description="Setting to reset",
-        choices=["All", "All Logs", "Ticket Commands", "Media Only", "Auto Role"]
+        choices=["All", "All Logs", "Ticket Commands", "Media Only", "Auto Role", "DJ"]
         + [log_type.label for log_type in LogType],
         required=False,
     )

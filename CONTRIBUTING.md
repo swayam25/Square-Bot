@@ -21,8 +21,8 @@ Everything in the [README's prerequisites](./README.md#-prerequisites), plus a c
     just init
     ```
 
-    > [!TIP]
-    > Check [configuration](./README.md#-configuration) section for details on the configuration keys.
+> [!TIP]
+> Check [configuration](./README.md#-configuration) section for details on the configuration keys.
 
 3. Start the local docker services
 

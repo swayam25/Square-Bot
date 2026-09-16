@@ -85,6 +85,7 @@ class Emoji:
     music: str = "🎵"
     music_white: str = "🎵"
     mic: str = "🎤"
+    dj: str = "🎧"
     duration: str = "⏱️"
     duration_white: str = "⏱️"
     duration_red: str = "⏱️"

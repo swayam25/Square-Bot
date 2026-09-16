@@ -17,8 +17,10 @@ class GuildTable(Model):
     ticket_cmds = fields.BooleanField(default=False)
     media_only_channel_id = fields.BigIntField(null=True)
     autorole = fields.BigIntField(null=True)
+    dj_mode = fields.BooleanField(default=False)
 
     log_channels: fields.ReverseRelation[LogChannelTable]
+    dj_roles: fields.ReverseRelation[DJRoleTable]
 
     class Meta:
         table = "guild"
@@ -37,3 +39,17 @@ class LogChannelTable(Model):
     class Meta:
         table = "log_channel"
         unique_together = (("guild", "log_type"),)
+
+
+class DJRoleTable(Model):
+    """One row per (guild, role) pair, listing the roles that count as DJs."""
+
+    id = fields.IntField(primary_key=True)
+    guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
+        "models.GuildTable", related_name="dj_roles", on_delete=fields.CASCADE
+    )
+    role_id = fields.BigIntField()
+
+    class Meta:
+        table = "dj_role"
+        unique_together = (("guild", "role_id"),)
