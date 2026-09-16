@@ -20,12 +20,27 @@ class Voice(commands.Cog):
 
     # Move all members from one vc to another
     @vc.command(name="move")
-    @option("from", parameter_name="_from", description="The voice channel to move members from.")
     @option("to", description="The voice channel to move members to.")
-    async def move(self, ctx: discord.ApplicationContext, _from: discord.VoiceChannel, to: discord.VoiceChannel):
+    @option(
+        "from",
+        parameter_name="_from",
+        description="The voice channel to move members from. Defaults to your current voice channel.",
+        required=False,
+    )
+    async def move(self, ctx: discord.ApplicationContext, to: discord.VoiceChannel, _from: discord.VoiceChannel = None):
         """Moves all members from one voice channel to another."""
         await ctx.defer()
-        if _from == to:
+        source = _from or (ctx.author.voice.channel if ctx.author.voice else None)
+        if source is None:
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} You need to be in a voice channel or specify one to move from."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+            return
+        if source == to:
             view = DesignerView(
                 ui.Container(
                     ui.TextDisplay(f"{emoji.error} Source and destination voice channels cannot be the same."),
@@ -34,11 +49,11 @@ class Voice(commands.Cog):
             )
             await ctx.respond(view=view, ephemeral=True)
             return
-        members = _from.members
+        members = source.members
         if not members:
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay(f"{emoji.error} {_from.mention} has no members to move."),
+                    ui.TextDisplay(f"{emoji.error} {source.mention} has no members to move."),
                     color=config.color.red,
                 )
             )
@@ -56,7 +71,7 @@ class Voice(commands.Cog):
                 ui.Container(
                     ui.TextDisplay("## Moved VC Members"),
                     ui.TextDisplay(
-                        f"Successfully moved {len(moved)} member(s) from {_from.mention} to {to.mention}.\n"
+                        f"Successfully moved {len(moved)} member(s) from {source.mention} to {to.mention}.\n"
                         f"{emoji.members} **Members**: {', '.join(moved)}"
                     ),
                 )
