@@ -18,14 +18,9 @@ class SquarePlayer(sonolink.Player):
         """Whether the player is bound to a voice channel."""
         return getattr(self, "channel", None) is not None
 
-    async def pause(self) -> None:
-        # Sonolink only refreshes its position base on node player-updates (~5s apart); snapshot it
-        # here so the interpolated position doesn't jump while paused or right after resuming.
-        self._last_position = self.position
-        await super().pause()
-        self._last_update = time.monotonic()
-
     async def resume(self) -> None:
+        # Sonolink freezes the position on pause but never restarts its clock on resume, so the
+        # interpolated position would jump by however long the player sat paused.
         await super().resume()
         self._last_update = time.monotonic()
 
@@ -74,9 +69,10 @@ def register_nodes(client: Client) -> None:
     for node in config.lavalink:
         if client.sonolink.get_node(node["host"]) is not None:
             continue
-        scheme = "https" if node["secure"] else "http"
         client.sonolink.create_node(
-            uri=f"{scheme}://{node['host']}:{node['port']}",
+            host=node["host"],
+            port=node["port"],
+            secure=node["secure"],
             password=node["password"],
             id=node["host"],
             auto_reconnect=True,

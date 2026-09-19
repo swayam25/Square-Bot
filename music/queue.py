@@ -108,7 +108,7 @@ class QueueContainer(ui.Container):
 
     Args:
         player (:class:`SquarePlayer`): The active player.
-        ctx (:class:`ApplicationContext`): The slash command context (used to resolve member mentions).
+        source (:class:`ApplicationContext` | :class:`Interaction`): The invoking command or button press, used to resolve the guild.
         page (int): The page number to display (1-indexed).
         items_per_page (int): Number of tracks shown per page.
         queue_view (:class:`QueueListView` | None): The parent view, used to track which track's action buttons are expanded.
@@ -117,7 +117,7 @@ class QueueContainer(ui.Container):
     def __init__(
         self,
         player: SquarePlayer,
-        ctx: discord.ApplicationContext,
+        source: discord.ApplicationContext | discord.Interaction,
         page=1,
         items_per_page=5,
         queue_view=None,
@@ -132,7 +132,7 @@ class QueueContainer(ui.Container):
         queue_list: list = []
 
         for index, track in enumerate(queue_tracks[start:end], start=start):
-            requester = ctx.guild.get_member(requester_id(player, track) or 0)
+            requester = source.guild.get_member(requester_id(player, track) or 0)
             btn = ui.Button(
                 emoji=emoji.more if queue_view and index == queue_view.visible_action_button else emoji.more_white,
                 style=discord.ButtonStyle.grey,
@@ -171,8 +171,8 @@ class QueueContainer(ui.Container):
                 queue_list.append(ui.ActionRow(move_up_btn, move_down_btn, remove_btn, play_now_btn))
 
         current = player.current
-        current_requester = ctx.guild.get_member(requester_id(player, current) or 0) if current else None
-        self.add_item(ui.TextDisplay(f"## {ctx.guild.name}'s Queue"))
+        current_requester = source.guild.get_member(requester_id(player, current) or 0) if current else None
+        self.add_item(ui.TextDisplay(f"## {source.guild.name}'s Queue"))
         self.add_item(
             ui.TextDisplay(
                 f"`0.` [**{current.title}** by **{current.author}**]({current.uri}) [`{fmt_time(current.length)}`]\n"
@@ -182,7 +182,9 @@ class QueueContainer(ui.Container):
             )
         )
         if queue_list:
-            self.add_item(ui.TextDisplay(f"### Queued {len(queue_tracks)} Tracks"))
+            # duration_until ignores loop mode, unlike total_duration, which reports inf while looping.
+            runtime = fmt_time(player.queue.duration_until(len(queue_tracks)))
+            self.add_item(ui.TextDisplay(f"### Queued {len(queue_tracks)} Tracks • `{runtime}`"))
             self.items.extend(queue_list)
         if len(queue_tracks) > items_per_page:
             self.add_item(ui.Separator())
@@ -215,17 +217,17 @@ class QueueListView(DesignerView):
 
     Args:
         client (:class:`Client`): The bot client used to fetch the player.
-        ctx (:class:`ApplicationContext`): The slash command context passed down to :class:`QueueContainer`.
+        source (:class:`ApplicationContext` | :class:`Interaction`): The invoking command or button press, passed down to :class:`QueueContainer`.
         page (int): The initial page to display (1-indexed, default 1).
     """
 
-    def __init__(self, client: Client, ctx: discord.ApplicationContext, page: int = 1):
+    def __init__(self, client: Client, source: discord.ApplicationContext | discord.Interaction, page: int = 1):
         super().__init__()
         self.client = client
-        self.ctx = ctx
+        self.source = source
         self.page = page
         self.items_per_page = 5
-        self.player = get_player(client, ctx.guild.id)
+        self.player = get_player(client, source.guild.id)
         self.interaction_check = lambda interaction: music_interaction_check(
             player=self.player, interaction=interaction, view=self
         )
@@ -244,7 +246,7 @@ class QueueListView(DesignerView):
         self.add_item(
             QueueContainer(
                 self.player,
-                self.ctx,
+                self.source,
                 page=self.page,
                 items_per_page=self.items_per_page,
                 queue_view=self,

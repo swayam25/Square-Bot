@@ -6,14 +6,20 @@ from babel.dates import format_datetime
 from babel.units import format_unit
 
 
-def parse_duration(duration: str, max_duration: str | None = None) -> datetime.timedelta:
+def parse_duration(duration: str, max_duration: str | None = None, *, signed: bool = False) -> datetime.timedelta:
     """
     Parse a duration string into a timedelta object.
 
     Args:
         duration (str): A string representing the duration, e.g., "2w3d4h5m6s".
         max_duration (str | None): An optional maximum duration string, e.g., "2w3d".
+        signed (bool): Accept a leading ``+``/``-`` applying to the whole duration, e.g. ``"-1m20s"`` is 80 seconds back.
     """
+    duration = duration.strip()
+    sign = 1
+    if signed and duration[:1] in ("+", "-"):
+        sign = -1 if duration[0] == "-" else 1
+        duration = duration[1:]
     pattern = re.compile(r"(?P<value>\d+)(?P<unit>[wdhms])")
     matches = pattern.findall(duration)
 
@@ -49,7 +55,7 @@ def parse_duration(duration: str, max_duration: str | None = None) -> datetime.t
     elif total_duration.days > 28:
         raise ValueError("Total duration must be less than `28 days`.")
 
-    return total_duration
+    return sign * total_duration
 
 
 def fmt_perms(perms: list[str]) -> str:

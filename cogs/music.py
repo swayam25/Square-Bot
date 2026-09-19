@@ -23,6 +23,7 @@ from music.core import (
 )
 from music.dj import DJView
 from music.filters import EqPresets
+from music.history import HistoryListView, history_tracks
 from music.player import (
     cancel_vote,
     cleanup_guild,
@@ -585,19 +586,24 @@ class Music(commands.Cog):
 
     # Seek
     @slash_command(name="seek")
-    @option("duration", description="Enter the amount of duration to seek. Ex: 10s, 1m, 2h etc....")
+    @option("duration", description="How far to jump, forwards or backwards. Ex: 10s, +1m, -30s, -1m20s etc....")
     async def seek(self, ctx: discord.ApplicationContext, duration: str):
-        """Seeks to a given position in a track."""
+        """Seeks forwards or backwards in the current track."""
         player = await self.ensure_voice(ctx)
         if player:
-            timedelta = parse_duration(duration)
-            track_time = int(player.position + timedelta.total_seconds() * 1000)
-            if track_time < player.current.length:
-                await player.seek(track_time)
-                start_lyrics(self.client, ctx.guild.id)
-                await slash_log(ctx, f"{emoji.seek} Moved track to `{fmt_time(track_time)}`.")
-            else:
+            timedelta = parse_duration(duration, signed=True)
+            offset_ms = timedelta.total_seconds() * 1000
+            track_time = int(player.position + offset_ms)
+            if track_time >= player.current.length:
                 await self.skip(ctx=ctx)
+                return
+            track_time = max(0, track_time)
+            await player.seek(track_time)
+            start_lyrics(self.client, ctx.guild.id)
+            await slash_log(
+                ctx,
+                f"{emoji.rewind if offset_ms < 0 else emoji.forward} Moved track to `{fmt_time(track_time)}`.",
+            )
 
     # Skip
     @slash_command(name="skip")
@@ -677,8 +683,25 @@ class Music(commands.Cog):
             if page > pages or page < 1:
                 await reply(ctx, f"{emoji.error} Page has to be between `1` to `{pages}`", color=config.color.red)
                 return
-            queue_view = QueueListView(client=self.client, ctx=ctx, page=page if pages > 1 else 1)
+            queue_view = QueueListView(client=self.client, source=ctx, page=page if pages > 1 else 1)
             await ctx.respond(view=queue_view, ephemeral=True)
+
+    # History
+    @slash_command(name="history")
+    @option("page", description="Enter history page number", default=1, required=False)
+    async def history(self, ctx: discord.ApplicationContext, page: int = 1):
+        """Shows the tracks played so far, newest first."""
+        player = await self.ensure_voice(ctx)
+        if player:
+            tracks = history_tracks(player)
+            if not tracks:
+                await reply(ctx, f"{emoji.error} Nothing has been played yet.", color=config.color.red)
+                return
+            pages = max(1, math.ceil(len(tracks) / 5))
+            if page > pages or page < 1:
+                await reply(ctx, f"{emoji.error} Page has to be between `1` to `{pages}`", color=config.color.red)
+                return
+            await ctx.respond(view=HistoryListView(client=self.client, source=ctx, page=page), ephemeral=True)
 
     # Clear queue
     @slash_command(name="clear-queue")

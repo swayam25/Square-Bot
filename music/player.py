@@ -8,6 +8,7 @@ from core.view import DesignerView
 from discord import ui
 from music import dj, lyrics, store
 from music.core import SquarePlayer, fmt_time, get_player, requester_id
+from music.queue import QueueListView
 from music.utils import get_source, music_interaction_check, music_log, reply, split_log_text
 from utils import config
 from utils.emoji import emoji
@@ -23,6 +24,8 @@ _LYRICS_MAX_SLEEP = 5.0
 _LYRICS_LEAD_MS = 450
 # Seconds between progress-bar-only refreshes (no lyrics, or long instrumental gaps).
 _BAR_REFRESH_INTERVAL = 10.0
+# How far the rewind/forward buttons jump.
+_SEEK_STEP_MS = 10_000
 # How long an open skip vote waits for the channel to make up its mind.
 _VOTE_TIMEOUT = 60.0
 # How long the settled vote stays up before it clears itself away, matching the music log toasts.
@@ -399,33 +402,44 @@ class MusicView(DesignerView):
     def build(self):
         self.clear_items()
         self.add_item(MusicContainer(self.player))
-        self.add_item(row := ui.ActionRow())
-        for btn_emoji, action in [
-            (emoji.play_white if self.player.paused else emoji.pause_white, "pause"),
-            (emoji.stop_white, "stop"),
-            (emoji.skip_white, "skip"),
-            (
-                emoji.loop_white
-                if self.player.queue_mode is sonolink.QueueMode.NORMAL
-                else emoji.loop_one
-                if self.player.queue_mode is sonolink.QueueMode.LOOP
-                else emoji.loop,
-                "loop",
-            ),
-            (
-                emoji.shuffle_white
-                if self.player.queue.shuffle_mode is not sonolink.ShuffleMode.PERSISTENT
-                else emoji.shuffle,
-                "shuffle",
-            ),
-        ]:
-            btn = ui.Button(emoji=btn_emoji, custom_id=action, style=discord.ButtonStyle.grey)
-            btn.callback = getattr(self, f"{action}_callback")
-            row.add_item(btn)
+        is_stream = self.player.current.is_stream
         autoplay_on = self.player.autoplay is sonolink.AutoPlayMode.ENABLED
-        autoplay_btn = ui.Button(emoji=emoji.autoplay if autoplay_on else emoji.autoplay_white, custom_id="autoplay")
-        autoplay_btn.callback = self.autoplay_callback
-        self.add_item(ui.ActionRow(autoplay_btn))
+        rows = [
+            [
+                (emoji.back_white, "previous", not self.player.history),
+                (emoji.rewind10s_white, "rewind", is_stream),
+                (emoji.play_white if self.player.paused else emoji.pause_white, "pause", False),
+                (emoji.forward10s_white, "forward", is_stream),
+                (emoji.skip_white, "skip", False),
+            ],
+            [
+                (
+                    emoji.loop_white
+                    if self.player.queue_mode is sonolink.QueueMode.NORMAL
+                    else emoji.loop_one
+                    if self.player.queue_mode is sonolink.QueueMode.LOOP
+                    else emoji.loop,
+                    "loop",
+                    False,
+                ),
+                (
+                    emoji.shuffle_white
+                    if self.player.queue.shuffle_mode is not sonolink.ShuffleMode.PERSISTENT
+                    else emoji.shuffle,
+                    "shuffle",
+                    False,
+                ),
+                (emoji.stop_white, "stop", False),
+                (emoji.autoplay if autoplay_on else emoji.autoplay_white, "autoplay", False),
+                (emoji.queue_white, "queue", False),
+            ],
+        ]
+        for buttons in rows:
+            self.add_item(row := ui.ActionRow())
+            for btn_emoji, action, disabled in buttons:
+                btn = ui.Button(emoji=btn_emoji, custom_id=action, style=discord.ButtonStyle.grey, disabled=disabled)
+                btn.callback = getattr(self, f"{action}_callback")
+                row.add_item(btn)
 
     async def pause_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -452,6 +466,51 @@ class MusicView(DesignerView):
 
     async def skip_callback(self, interaction: discord.Interaction):
         await request_skip(interaction, self.player)
+
+    async def previous_callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        if not await dj.require_dj(interaction, self.player):
+            return
+        try:
+            track = await self.player.previous()
+        except sonolink.HistoryEmpty:
+            await reply(interaction, f"{emoji.error} Nothing has been played yet.", color=config.color.red)
+            return
+        await music_log(
+            interaction.guild_id,
+            f"{emoji.back} {interaction.user.mention} went back to [**{track.title}**]({track.uri}).",
+        )
+
+    async def rewind_callback(self, interaction: discord.Interaction):
+        await self._seek_by(interaction, -_SEEK_STEP_MS)
+
+    async def forward_callback(self, interaction: discord.Interaction):
+        await self._seek_by(interaction, _SEEK_STEP_MS)
+
+    async def _seek_by(self, interaction: discord.Interaction, delta_ms: int) -> None:
+        """Nudges playback by ``delta_ms``, skipping when the jump would land past the end of the track."""
+        await interaction.response.defer()
+        if not await dj.require_dj(interaction, self.player):
+            return
+        track = self.player.current
+        if not track or track.is_stream:
+            return
+        target = self.player.position + delta_ms
+        if target >= track.length:
+            await skip_or_stop(self.player, self.client.get_guild(interaction.guild_id))
+            return
+        target = max(0, target)
+        await self.player.seek(target)
+        start_lyrics(self.client, interaction.guild_id)
+        await render_player(self.client, interaction.guild_id)
+        await music_log(
+            interaction.guild_id,
+            f"{emoji.forward if delta_ms > 0 else emoji.rewind} {interaction.user.mention} "
+            f"moved track to `{fmt_time(target)}`.",
+        )
+
+    async def queue_callback(self, interaction: discord.Interaction):
+        await interaction.response.send_message(view=QueueListView(self.client, interaction), ephemeral=True)
 
     async def loop_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
