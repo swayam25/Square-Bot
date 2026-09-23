@@ -6,30 +6,62 @@ import time
 from core import Client
 from core.view import DesignerView
 from discord import ui
-from music import dj, lyrics, store
-from music.core import SquarePlayer, fmt_time, get_player, requester_id
+from music import dj, lyrics, request, store
+from music.core import SquarePlayer, drop_session_lock, fmt_time, get_player, requester_id
 from music.queue import QueueListView
 from music.utils import get_source, music_interaction_check, music_log, reply, split_log_text
+from pathlib import Path
+from typing import Literal
 from utils import config
 from utils.emoji import emoji
 
-# Per-guild asyncio locks - prevents concurrent render_player executions for the same guild.
 _render_locks: dict[int, asyncio.Lock] = {}
 
-# Minimum seconds between lyrics-driven message edits - ~3.3 edits/5s worst case, which stays under Discord's ~5 edits/5s per-channel bucket with headroom for other renders.
+# ~3.3 edits/5s worst case, inside Discord's ~5 edits/5s per-channel bucket.
 _LYRICS_MIN_EDIT_INTERVAL = 1.5
-# Upper bound on lyrics loop sleep so seeks/pauses are picked up promptly.
 _LYRICS_MAX_SLEEP = 5.0
-# Lookahead applied to the playback position so the edit lands as the line is sung, compensating for the HTTP round trip of the message edit.
+# Lookahead, so an edit lands as the line is sung rather than after it.
 _LYRICS_LEAD_MS = 450
-# Seconds between progress-bar-only refreshes (no lyrics, or long instrumental gaps).
 _BAR_REFRESH_INTERVAL = 10.0
-# How far the rewind/forward buttons jump.
+
 _SEEK_STEP_MS = 10_000
-# How long an open skip vote waits for the channel to make up its mind.
+_ENQUEUE_RENDER_DELAY = 1.0
+RELOCATE_DELAY = 2.0
 _VOTE_TIMEOUT = 60.0
-# How long the settled vote stays up before it clears itself away, matching the music log toasts.
 _VOTE_RESULT_LINGER = 5.0
+
+# Each track costs three of the message's 40 components.
+_UP_NEXT_LIMIT = 4
+# Optional; the idle card falls back to text without it.
+IDLE_GIF = Path("assets/idle.gif")
+
+
+def idle_attachment() -> dict:
+    """
+    Returns the send kwargs that attach the idle artwork, or nothing when the asset is missing.
+
+    A components v2 message can only show a local file through a component pointing at
+    ``attachment://``, so the file has to ride along with the message that references it.
+    """
+    if not IDLE_GIF.is_file():
+        return {}
+    return {"file": discord.File(IDLE_GIF, filename=IDLE_GIF.name)}
+
+
+def card_attachments(live: bool) -> dict:
+    """
+    Returns the edit kwargs that put the card's attachments into the shape the given state needs.
+
+    Passing ``attachments=[]`` alongside a file replaces the set outright, which is what lets one
+    edit carry the card between its resting and playing shapes instead of reposting it.
+
+    Args:
+        live (bool): Whether the card is being painted with a track on it.
+    """
+    kwargs: dict = {"attachments": []}
+    if not live:
+        kwargs |= idle_attachment()
+    return kwargs
 
 
 def _get_render_lock(guild_id: int) -> asyncio.Lock:
@@ -47,50 +79,137 @@ def _get_render_lock(guild_id: int) -> asyncio.Lock:
     return _render_locks[guild_id]
 
 
-async def render_player(client: Client, guild_id: int, *, force_new: bool = False) -> None:
+async def render_player(client: Client, guild_id: int, *, force_new: bool = False, wait: bool = False) -> None:
     """
     Renders the single persistent player message.
 
     Edits the player in place while it is still the latest message, otherwise deletes the stale player and posts a fresh one at the bottom of the channel.
-    Skips silently if a render is already in progress for this guild.
+    Skips silently if a render is already in progress for this guild, unless ``wait`` says otherwise.
+
+    With nothing playing this renders the resting card for a bound request channel, and does
+    nothing at all anywhere else.
 
     Args:
         client (:class:`Client`): The Discord bot client.
         guild_id (int): The guild to render the player for.
         force_new (bool): Always send a new player message instead of editing.
+        wait (bool): Queue behind an in-flight render rather than dropping this one. A dropped
+            lyrics frame is invisible, but a dropped teardown repaint freezes the card for good.
     """
     lock = _get_render_lock(guild_id)
-    if lock.locked():
+    if lock.locked() and not wait:
         return
     player = get_player(client, guild_id)
-    if not player or not player.connected or not player.current:
-        return
-    channel = store.play_ch(guild_id)
-    if not channel:
+    if not (player and player.connected and player.current) and not request.setup_mode(guild_id):
         return
     async with lock:
+        # Everything below is read after the wait, not before it. A `wait=True` caller can sit on
+        # this lock while playback stops, and an attachment set that disagrees with the shape the
+        # view actually built is a 400, not a `NotFound` the send path below would absorb.
+        channel = store.play_ch(guild_id)
+        if not channel:
+            return
         view = MusicView(client, guild_id)
+        live = view.live
+        bound = request.setup_mode(guild_id)
+        if not live and not bound:
+            return
+        # A bound channel's card is fixed in place, so it is only ever edited.
+        force_new = force_new and not bound
+        state: Literal["idle", "live"] = "live" if live else "idle"
         play_msg, _ = store.play_msg(guild_id)
-        if play_msg and not force_new:
+        # `/set music` mid-session leaves the free-form card behind in another channel. It cannot be
+        # edited into the bound one, so it is deleted and replaced below instead.
+        stale = play_msg is not None and play_msg.channel.id != channel.id
+        if play_msg and not force_new and not stale:
             try:
-                await play_msg.edit(view=view)
-                store.play_msg(guild_id, play_msg, view, "set")
+                if store.card_state(guild_id) != state:
+                    if isinstance(play_msg, discord.PartialMessage):
+                        # Only a full message can change its attachments.
+                        play_msg = await channel.fetch_message(play_msg.id)
+                    edited = await play_msg.edit(view=view, **card_attachments(live))
+                else:
+                    edited = await play_msg.edit(view=view)
+                store.play_msg(guild_id, edited or play_msg, view, "set")
+                store.card_state(guild_id, state, "set")
                 return
             except discord.NotFound:
-                pass
+                play_msg = None
         # Send new and delete old concurrently - both API calls happen in parallel
-        coros: list = [channel.send(view=view)]
+        coros: list = [channel.send(view=view, **(idle_attachment() if not live else {}))]
         if play_msg:
             coros.append(play_msg.delete())
         results = await asyncio.gather(*coros, return_exceptions=True)
         new_msg = results[0]
         if isinstance(new_msg, discord.Forbidden):
             store.play_msg(guild_id, mode="clear")
+            store.card_state(guild_id, None, "set")
             return
         if isinstance(new_msg, BaseException):
             return
         store.play_msg(guild_id, new_msg, view, "set")
+        store.card_state(guild_id, state, "set")
         store.chat_weight(guild_id, mode="clear")
+        if request.setup_mode(guild_id):
+            await request.bind_message(guild_id, new_msg.id)
+
+
+def schedule_render(
+    client: Client,
+    guild_id: int,
+    *,
+    delay: float = _ENQUEUE_RENDER_DELAY,
+    force_new: bool = False,
+) -> None:
+    """
+    Renders the card after a short pause, coalescing a burst of changes into one edit.
+
+    A render already waiting absorbs the rest, so five requests in a row cost one edit.
+
+    Args:
+        client (:class:`Client`): The Discord bot client.
+        guild_id (int): The guild to render the player for.
+        delay (float): Seconds to wait before rendering.
+        force_new (bool): Send a new card rather than editing the existing one.
+    """
+    pending = store.render_task(guild_id)
+    if pending and not pending.done():
+        return
+
+    async def _later() -> None:
+        await asyncio.sleep(delay)
+        await render_player(client, guild_id, force_new=force_new)
+
+    store.render_task(guild_id, asyncio.create_task(_later()), "set")
+
+
+async def repaint_deleted_card(client: Client, guild_id: int, deleted_ids: set[int]) -> None:
+    """
+    Reposts the card when it is deleted out from under a guild that still needs one.
+
+    The lyrics ticker repaints a playing card every few seconds and would repost it by itself, but
+    it holds still while paused and never runs at all for a stream, and a resting bound card has no
+    ticker behind it either. Those are the cases that would otherwise sit there cardless.
+
+    Waiting on the render lock is what tells a mod's delete apart from the bot's own: a relocation
+    deletes the card it has just replaced, and by the time the lock frees the store already holds
+    the replacement, so the ID no longer matches.
+
+    Args:
+        client (:class:`Client`): The Discord bot client.
+        guild_id (int): The guild the deleted messages belong to.
+        deleted_ids (set[int]): The message IDs that were deleted.
+    """
+    play_msg, _ = store.play_msg(guild_id)
+    if play_msg is None or play_msg.id not in deleted_ids:
+        return  # Checked before taking a lock, since this runs for every delete in every guild.
+    async with _get_render_lock(guild_id):
+        play_msg, _ = store.play_msg(guild_id)
+        if play_msg is None or play_msg.id not in deleted_ids:
+            return
+        store.play_msg(guild_id, mode="clear")
+        store.card_state(guild_id, None, "set")
+    await render_player(client, guild_id, wait=True)
 
 
 def start_lyrics(client: Client, guild_id: int) -> None:
@@ -160,14 +279,12 @@ async def _lyrics_loop(client: Client, guild_id: int) -> None:
         await asyncio.sleep(min(max(delay, 0.25), _LYRICS_MAX_SLEEP))
 
 
-def cleanup_guild(guild_id: int) -> None:
+def _cancel_tasks(guild_id: int) -> None:
     """
-    Releases all per-guild in-memory state: locks, scheduled tasks (lyrics, relocation), and every store key.
+    Stops the guild's scheduled work: the open skip vote, the lyrics ticker, and any pending relocation.
 
-    Cancels tasks first, then flushes the store so the guild entry is dropped entirely.
     A task is never cancelled from within itself, so the caller's own cleanup can finish.
     """
-    _render_locks.pop(guild_id, None)
     vote = store.skip_vote(guild_id)
     if vote:
         vote.stop()  # Cancels its expiry task; the card itself is only removed on the async paths.
@@ -175,24 +292,56 @@ def cleanup_guild(guild_id: int) -> None:
         task = task_fn(guild_id)
         if task and task is not asyncio.current_task():
             task.cancel()
-    store.flush_store(guild_id)
 
 
-async def clear_player(guild_id: int) -> None:
+def cleanup_guild(client: Client, guild_id: int) -> None:
     """
-    Deletes the persistent player message and clears all per-guild state.
+    Releases all per-guild in-memory state: locks, scheduled tasks (lyrics, relocation), and every store key.
+
+    Cancels tasks first, then flushes the store so the guild entry is dropped entirely. A bound
+    guild keeps its card, so its binding is primed straight back into the store the flush emptied.
 
     Args:
-        guild_id (int): The guild whose player message should be removed.
+        client (:class:`Client`): The Discord bot client.
+        guild_id (int): The guild to release.
+    """
+    lock = _render_locks.get(guild_id)
+    if lock is not None and not lock.locked():
+        del _render_locks[guild_id]  # Dropping a held one lets the next render run beside it.
+    drop_session_lock(guild_id)
+    _cancel_tasks(guild_id)
+    state = store.card_state(guild_id)
+    store.flush_store(guild_id)
+    if request.prime(client, guild_id):  # No-op unless the guild has a request channel bound.
+        # The card outlived the flush, in whatever shape the last render left it. Forgetting that
+        # costs the next render a fetch and an attachment rewrite on an already-correct card.
+        store.card_state(guild_id, state, "set")
+
+
+async def clear_player(client: Client, guild_id: int) -> None:
+    """
+    Retires the persistent player message and clears all per-guild state.
+
+    A bound channel's card is repainted to its resting state rather than deleted; it is that
+    channel's only permanent message. Everywhere else the card is removed outright.
+
+    Args:
+        client (:class:`Client`): The Discord bot client.
+        guild_id (int): The guild whose player message should be retired.
     """
     await cancel_vote(guild_id)
-    play_msg, _ = store.play_msg(guild_id)
-    if play_msg:
-        try:
-            await play_msg.delete()
-        except discord.HTTPException:
-            pass
-    cleanup_guild(guild_id)
+    # Before the flush, which drops the channel and message the repaint needs.
+    _cancel_tasks(guild_id)
+    if request.setup_mode(guild_id):
+        await render_player(client, guild_id, wait=True)
+    else:
+        play_msg, _ = store.play_msg(guild_id)
+        if play_msg:
+            try:
+                await play_msg.delete()
+            except discord.HTTPException:
+                pass
+    cleanup_guild(client, guild_id)
 
 
 async def stop_player(player: SquarePlayer, guild: discord.Guild) -> None:
@@ -218,7 +367,28 @@ async def stop_player(player: SquarePlayer, guild: discord.Guild) -> None:
         await player.disconnect(force=True)
     except Exception:
         pass  # Node may be unreachable; still clean up locally
-    await clear_player(guild.id)
+    await clear_player(player.client, guild.id)
+
+
+async def release_guild(client: Client, guild_id: int) -> None:
+    """
+    Tears a guild's session down once it has lost its request channel.
+
+    Playback is stopped rather than handed back to the free-form player. The card lived in a
+    channel that is being deleted, and guessing a new home for it would drop a player card into a
+    channel nobody asked for. Callers unbind first, so the teardown takes the free-mode path and
+    the database is already clear by the time this runs.
+
+    Args:
+        client (:class:`Client`): The Discord bot client.
+        guild_id (int): The guild to release.
+    """
+    player = get_player(client, guild_id)
+    guild = client.get_guild(guild_id)
+    if player and guild:
+        await stop_player(player, guild)
+    else:
+        cleanup_guild(client, guild_id)
 
 
 async def skip_or_stop(player: SquarePlayer, guild: discord.Guild) -> None:
@@ -377,11 +547,80 @@ class MusicContainer(ui.Container):
         return f"-# {fmt(prev)}\n**{fmt(current)}**\n-# {fmt(upcoming)}"
 
 
+class UpNextContainer(ui.Container):
+    """
+    Renders the next few queued tracks, each with a button that jumps straight to it.
+
+    Stays on the card when the queue is empty, so it doesn't grow and shrink as the queue drains.
+
+    Args:
+        player (:class:`SquarePlayer`): The active player.
+        view (:class:`MusicView`): The card this container belongs to, which owns the callbacks.
+    """
+
+    def __init__(self, player: SquarePlayer, view: MusicView):
+        super().__init__()
+        # Indexed, not `queue.tracks`: that property copies the whole queue, and this runs on every
+        # paint, which the lyrics ticker drives every couple of seconds.
+        queue = player.queue
+        total = len(queue)
+        self.add_item(ui.TextDisplay(f"### {emoji.skip} Up Next"))
+        if total:
+            for index in range(min(total, _UP_NEXT_LIMIT)):
+                track = queue[index]
+                btn = ui.Button(
+                    emoji=emoji.play_white,
+                    style=discord.ButtonStyle.grey,
+                    custom_id=f"up_next_play_{index}",
+                )
+                btn.callback = lambda i, ident=track.identifier: view.play_now_callback(i, ident)
+                self.add_item(
+                    ui.Section(
+                        ui.TextDisplay(
+                            f"`{index + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) "
+                            f"[`{fmt_time(track.length)}`]"
+                        ),
+                        accessory=btn,
+                    )
+                )
+            # duration_until ignores loop mode, unlike total_duration, which reports inf while looping.
+            runtime = fmt_time(queue.duration_until(total))
+            remaining = total - _UP_NEXT_LIMIT
+            self.add_item(ui.TextDisplay(f"-# {f'+{remaining} more • ' if remaining > 0 else ''}`{runtime}` total"))
+        elif player.autoplay is sonolink.AutoPlayMode.ENABLED:
+            self.add_item(ui.TextDisplay(f"-# {emoji.autoplay} Nothing queued. Autoplay takes over when this ends."))
+        else:
+            self.add_item(ui.TextDisplay("-# Nothing up next. Queue something to keep the music going."))
+
+
+class IdleContainer(ui.Container):
+    """
+    Renders the resting card shown when nothing is playing.
+
+    Only bound request channels see this; a free-form card is deleted on teardown instead.
+
+    Args:
+        guild_id (int): The guild the card belongs to, used to word the hint.
+    """
+
+    def __init__(self, guild_id: int):
+        super().__init__()
+        self.add_item(ui.TextDisplay("## Nothing is being played"))
+        if IDLE_GIF.is_file():
+            self.add_item(ui.MediaGallery(discord.MediaGalleryItem(url=f"attachment://{IDLE_GIF.name}")))
+        if request.setup_mode(guild_id):
+            hint = "Send a track name or a link in this channel to queue it."
+        else:
+            hint = "Run `/play` to queue a track."
+        self.add_item(ui.TextDisplay(hint))
+
+
 class MusicView(DesignerView):
     """
-    Persistent now-playing card with playback control buttons.
+    Persistent player card: the track, the next few queued tracks, and the transport controls.
 
-    Displays a :class:`MusicContainer` and two action rows: the first with pause/resume, stop, skip, loop cycle, and shuffle toggle; the second with an autoplay toggle.
+    With nothing playing it falls back to an :class:`IdleContainer` and disables every control,
+    which is the resting state of a bound request channel's card.
     The view has no timeout and re-checks interaction eligibility on every button press.
 
     Args:
@@ -399,47 +638,62 @@ class MusicView(DesignerView):
         )
         self.build()
 
+    @property
+    def live(self) -> bool:
+        """Whether there is a player with a track on it, as opposed to a resting card."""
+        return bool(self.player and self.player.connected and self.player.current)
+
     def build(self):
         self.clear_items()
-        self.add_item(MusicContainer(self.player))
-        is_stream = self.player.current.is_stream
-        autoplay_on = self.player.autoplay is sonolink.AutoPlayMode.ENABLED
-        rows = [
+        if self.live:
+            self.add_item(MusicContainer(self.player))
+            if request.setup_mode(self.guild_id):
+                self.add_item(UpNextContainer(self.player, self))
+        else:
+            self.add_item(IdleContainer(self.guild_id))
+        for buttons in self._rows():
+            self.add_item(row := ui.ActionRow())
+            for btn_emoji, action, disabled in buttons:
+                btn = ui.Button(
+                    emoji=btn_emoji,
+                    custom_id=action,
+                    style=discord.ButtonStyle.grey,
+                    disabled=disabled or not self.live,
+                )
+                btn.callback = getattr(self, f"{action}_callback")
+                row.add_item(btn)
+
+    def _rows(self) -> list[list[tuple[str, str, bool]]]:
+        """Builds the transport button table, falling back to resting states when nothing is playing."""
+        player = self.player if self.live else None
+        is_stream = bool(player and player.current.is_stream)
+        queue_mode = player.queue_mode if player else sonolink.QueueMode.NORMAL
+        shuffled = bool(player and player.queue.shuffle_mode is sonolink.ShuffleMode.PERSISTENT)
+        autoplay_on = bool(player and player.autoplay is sonolink.AutoPlayMode.ENABLED)
+        return [
             [
-                (emoji.back_white, "previous", not self.player.history),
+                (emoji.back_white, "previous", not (player and player.history)),
                 (emoji.rewind10s_white, "rewind", is_stream),
-                (emoji.play_white if self.player.paused else emoji.pause_white, "pause", False),
+                (emoji.play_white if player and player.paused else emoji.pause_white, "pause", False),
                 (emoji.forward10s_white, "forward", is_stream),
                 (emoji.skip_white, "skip", False),
             ],
             [
                 (
                     emoji.loop_white
-                    if self.player.queue_mode is sonolink.QueueMode.NORMAL
+                    if queue_mode is sonolink.QueueMode.NORMAL
                     else emoji.loop_one
-                    if self.player.queue_mode is sonolink.QueueMode.LOOP
+                    if queue_mode is sonolink.QueueMode.LOOP
                     else emoji.loop,
                     "loop",
                     False,
                 ),
-                (
-                    emoji.shuffle_white
-                    if self.player.queue.shuffle_mode is not sonolink.ShuffleMode.PERSISTENT
-                    else emoji.shuffle,
-                    "shuffle",
-                    False,
-                ),
+                (emoji.shuffle if shuffled else emoji.shuffle_white, "shuffle", False),
                 (emoji.stop_white, "stop", False),
                 (emoji.autoplay if autoplay_on else emoji.autoplay_white, "autoplay", False),
                 (emoji.queue_white, "queue", False),
             ],
         ]
-        for buttons in rows:
-            self.add_item(row := ui.ActionRow())
-            for btn_emoji, action, disabled in buttons:
-                btn = ui.Button(emoji=btn_emoji, custom_id=action, style=discord.ButtonStyle.grey, disabled=disabled)
-                btn.callback = getattr(self, f"{action}_callback")
-                row.add_item(btn)
 
     async def pause_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -511,6 +765,25 @@ class MusicView(DesignerView):
 
     async def queue_callback(self, interaction: discord.Interaction):
         await interaction.response.send_message(view=QueueListView(self.client, interaction), ephemeral=True)
+
+    async def play_now_callback(self, interaction: discord.Interaction, identifier: str) -> None:
+        """Jumps straight to one of the previewed tracks, for a DJ or whoever queued it."""
+        await interaction.response.defer()
+        queue = self.player.queue
+        # By identifier, not by the position the button was drawn at: `/queue` can reorder or drop
+        # a track without repainting the card, and a stale index would skip to the wrong one.
+        index = next((i for i in range(len(queue)) if queue[i].identifier == identifier), None)
+        if index is None:
+            await render_player(self.client, interaction.guild_id)
+            return
+        track = queue[index]
+        if not await dj.require_dj(interaction, self.player, track=track):
+            return
+        await self.player.skip_to(index)
+        await music_log(
+            interaction.guild_id,
+            f"{emoji.play} {interaction.user.mention} skipped to [**{track.title}**]({track.uri}).",
+        )
 
     async def loop_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()

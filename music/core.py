@@ -1,3 +1,4 @@
+import asyncio
 import sonolink
 import time
 from core import Client
@@ -30,6 +31,32 @@ class SquarePlayer(sonolink.Player):
         for preset in self.presets.values():
             combined = combined.combine(preset)
         await self.set_filters(combined, seek=True)
+
+
+_session_locks: dict[int, asyncio.Lock] = {}
+
+
+def session_lock(guild_id: int) -> asyncio.Lock:
+    """
+    Returns the guild's playback lock, creating it on first use.
+
+    Connecting the bot and starting the first track are both check-then-act across an await:
+    ``get_player`` stays None until the voice handshake lands, and ``player.current`` stays None
+    until the node answers. Two requests arriving together would otherwise connect twice, or both
+    start a track and drop one from the queue. The request channel makes that ordinary, since the
+    rate limit is per member and two people can type at once.
+
+    Args:
+        guild_id (int): The guild to serialize playback changes for.
+    """
+    return _session_locks.setdefault(guild_id, asyncio.Lock())
+
+
+def drop_session_lock(guild_id: int) -> None:
+    """Forgets a guild's playback lock, unless something is holding it right now."""
+    lock = _session_locks.get(guild_id)
+    if lock is not None and not lock.locked():
+        del _session_locks[guild_id]
 
 
 def get_player(client: Client, guild_id: int) -> SquarePlayer | None:

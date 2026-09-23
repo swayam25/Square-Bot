@@ -108,9 +108,21 @@ def split_log_text(content: str) -> tuple[str, str]:
     # Custom emoji, or a run of non-ASCII symbols: anything ASCII is real text, not a prefix worth lifting out.
     match = re.match(r"^(<a?:[^:]+:\d+>|[^\x00-\x7f\w]+)\s*", content)
     if not match:
-        return "", (content[0].lower() + content[1:] if content else content)
+        return "", _decapitalize(content)
     rest = content[match.end() :]
-    return match.group(1), (rest[0].lower() + rest[1:] if rest else content)
+    return match.group(1), (_decapitalize(rest) if rest else content)
+
+
+def _decapitalize(text: str) -> str:
+    """
+    Lowercases the opening word so it can follow a mention, unless it carries its own capital.
+
+    "I need the `Connect` permission." has to survive as "I", and an acronym as itself.
+    """
+    first = text.split(" ", 1)[0].rstrip(".,:;!?")
+    if not first or first.isupper() or not first[:1].isalpha():
+        return text
+    return text[0].lower() + text[1:]
 
 
 async def music_interaction_check(view: DesignerView, player: SquarePlayer, interaction: discord.Interaction) -> bool:
@@ -127,6 +139,13 @@ async def music_interaction_check(view: DesignerView, player: SquarePlayer, inte
     Returns:
         bool: True if all checks pass, False otherwise (response already sent).
     """
+    if getattr(view, "live", True) is False:
+        # Already-disabled buttons; swallow the race rather than stripping the card below.
+        try:
+            await interaction.response.defer()
+        except discord.HTTPException:
+            pass  # Acknowledged elsewhere, or the token expired. Either way the press is spent.
+        return False
     if not player or not player.current:
         view.disable_all_items()
         await interaction.response.edit_message(view=view)

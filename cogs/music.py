@@ -11,7 +11,7 @@ from db.funcs.dj import fetch_dj
 from discord import SlashCommandGroup, ui
 from discord.commands import option, slash_command
 from discord.ext import commands
-from music import dj, store
+from music import dj, request, store
 from music.core import (
     SquarePlayer,
     fetch_node_info,
@@ -19,22 +19,37 @@ from music.core import (
     get_player,
     register_nodes,
     requester_id,
-    tag_requester,
 )
 from music.dj import DJView
 from music.filters import EqPresets
 from music.history import HistoryListView, history_tracks
+from music.play import (
+    TrackPickerView,
+    enqueue,
+    ensure_connected,
+    is_link,
+    mark_request,
+    resolve_and_enqueue,
+    resolve_query,
+    search_tracks,
+    url_rx,
+    voice_error,
+)
 from music.player import (
+    RELOCATE_DELAY,
     cancel_vote,
     cleanup_guild,
+    release_guild,
     render_player,
+    repaint_deleted_card,
     request_skip,
+    schedule_render,
     slash_log,
     start_lyrics,
     stop_player,
 )
 from music.queue import QueueListView
-from music.utils import container, get_source, music_log, reply
+from music.utils import container, get_source, music_log, reply, split_log_text
 from rich.console import Console
 from rich.live import Live
 from rich.spinner import Spinner
@@ -47,9 +62,11 @@ from utils.helpers import parse_duration
 console = Console()
 
 
+# Discord renders at most this many autocomplete choices.
+AUTOCOMPLETE_LIMIT = 25
+
+
 class Music(commands.Cog):
-    # Regex matching URLs so plain queries get a search source instead.
-    url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
     # Estimated on-screen chat lines an attachment/embed/sticker occupies - tall enough that one big block relocates the player on its own.
     block_lines = 10
     # Characters per rendered chat line, used to estimate wrapping of long messages.
@@ -73,6 +90,9 @@ class Music(commands.Cog):
     def __init__(self, client: Client):
         self.client = client
         self._node_live: Live | None = None
+        self._adopting: asyncio.Task | None = None
+        self._request_cooldown = commands.CooldownMapping.from_cooldown(2, 5.0, commands.BucketType.member)
+        self._cooldown_warn = commands.CooldownMapping.from_cooldown(1, 15.0, commands.BucketType.member)
         register_nodes(client)
 
     # Console spinner helpers
@@ -97,6 +117,34 @@ class Music(commands.Cog):
     @commands.Cog.listener()
     async def on_connect(self):
         await self.client.sonolink.start()
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        """Reloads the request channel bindings and takes their cards back over."""
+        if self._adopting and not self._adopting.done():
+            return  # A resume re-fires this; two adoption sweeps would each post a card.
+        await request.seed()
+        self._adopting = self.client.loop.create_task(request.adopt_all(self.client))
+
+    @commands.Cog.listener()
+    async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
+        """Drops the binding and stops playback when the request channel is deleted."""
+        if not request.is_request_channel(channel.guild.id, channel.id):
+            return
+        await request.unbind(channel.guild.id)
+        await release_guild(self.client, channel.guild.id)
+
+    @commands.Cog.listener()
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
+        """Reposts the card when someone deletes it."""
+        if payload.guild_id:
+            await repaint_deleted_card(self.client, payload.guild_id, {payload.message_id})
+
+    @commands.Cog.listener()
+    async def on_raw_bulk_message_delete(self, payload: discord.RawBulkMessageDeleteEvent):
+        """Reposts the card when a purge takes it along with everything else."""
+        if payload.guild_id:
+            await repaint_deleted_card(self.client, payload.guild_id, payload.message_ids)
 
     @commands.Cog.listener()
     async def on_sonolink_node_ready(self, event: sonolink.gateway.ReadyEvent):
@@ -144,13 +192,6 @@ class Music(commands.Cog):
         coros = [render_player(self.client, guild_id, force_new=relocate)]
         if player.channel is not None:
             coros.append(player.channel.set_status(status=f"Playing **{track.title}**"))
-        if track.autoplay:
-            coros.append(
-                music_log(
-                    guild_id,
-                    f"{emoji.autoplay} Autoplay queued [**{track.title}** by **{track.author}**]({track.uri}).",
-                )
-            )
         await asyncio.gather(*coros, return_exceptions=True)
         start_lyrics(self.client, guild_id)
 
@@ -158,7 +199,7 @@ class Music(commands.Cog):
     async def on_sonolink_track_end(self, player: SquarePlayer, event: sonolink.gateway.TrackEndEvent):
         if event.reason not in (sonolink.TrackEndReason.FINISHED, sonolink.TrackEndReason.LOAD_FAILED):
             return
-        if player.current is None and not len(player.queue.tracks):
+        if player.current is None and not len(player.queue):
             guild = self.client.get_guild(player.guild.id)
             if guild:
                 await stop_player(player, guild)
@@ -184,7 +225,7 @@ class Music(commands.Cog):
         """Single cleanup funnel: fires for manual stops, inactivity, kicks, and node errors."""
         guild = self.client.get_guild(player.guild.id)
         if guild is None:
-            cleanup_guild(player.guild.id)
+            cleanup_guild(self.client, player.guild.id)
             return
         if event.trigger is sonolink.DisconnectTriggerType.INACTIVITY:
             channel = player.channel
@@ -226,11 +267,12 @@ class Music(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
-        cleanup_guild(guild.id)
+        request.forget(guild.id)
+        cleanup_guild(self.client, guild.id)
 
     # Ensures voice parameters
     async def ensure_voice(self, ctx: discord.ApplicationContext) -> SquarePlayer | None:
-        """Checks all the voice parameters."""
+        """Checks all the voice parameters. `/play` connects instead, through :func:`ensure_connected`."""
 
         def _err(text: str) -> DesignerView:
             return DesignerView(ui.Container(ui.TextDisplay(text), color=config.color.red))
@@ -242,33 +284,14 @@ class Music(commands.Cog):
         player = get_player(self.client, ctx.guild.id)
         bot_channel = self.current_voice_channel(ctx)
 
-        if ctx.command.name == "play":
-            if player is None or bot_channel is None:
-                if bot_channel is not None and ctx.author.voice.channel != bot_channel:
-                    await ctx.respond(view=_err(f"{emoji.error} You are not in my voice channel."), ephemeral=True)
-                    return None
-                permissions = ctx.author.voice.channel.permissions_for(ctx.me)
-                if not permissions.connect or not permissions.speak:
-                    await ctx.respond(
-                        view=_err(f"{emoji.error} I need the `Connect` and `Speak` permissions."), ephemeral=True
-                    )
-                    return None
-                if ctx.guild.voice_client:
-                    await ctx.guild.voice_client.disconnect(force=True)
-                player = await ctx.author.voice.channel.connect(cls=SquarePlayer)
-                store.play_ch(ctx.guild.id, ctx.channel, "set")
-            elif ctx.author.voice.channel != bot_channel:
-                await ctx.respond(view=_err(f"{emoji.error} You are not in my voice channel."), ephemeral=True)
-                return None
-        else:
-            if player is None or bot_channel is None or (not player.current and ctx.command.name != "stop"):
-                await ctx.respond(
-                    view=_err(f"{emoji.error} Nothing is being played at the current moment."), ephemeral=True
-                )
-                return None
-            if ctx.author.voice.channel != bot_channel:
-                await ctx.respond(view=_err(f"{emoji.error} You are not in my voice channel."), ephemeral=True)
-                return None
+        if player is None or bot_channel is None or (not player.current and ctx.command.name != "stop"):
+            await ctx.respond(
+                view=_err(f"{emoji.error} Nothing is being played at the current moment."), ephemeral=True
+            )
+            return None
+        if ctx.author.voice.channel != bot_channel:
+            await ctx.respond(view=_err(f"{emoji.error} You are not in my voice channel."), ephemeral=True)
+            return None
 
         name = ctx.command.qualified_name
         if (name in self.dj_commands or name.startswith("eq ")) and not await dj.require_dj(ctx, player):
@@ -280,11 +303,11 @@ class Music(commands.Cog):
     async def search(self, ctx: discord.AutocompleteContext):
         """Searches a track from a given query."""
         tracks = []
-        if re.match(self.url_rx, ctx.value):
+        if re.match(url_rx, ctx.value):
             return tracks
         query = ctx.value if ctx.value != "" else "top tracks"
-        result = await self.client.sonolink.search_track(query, source=sonolink.TrackSourceType.YOUTUBE_MUSIC)
-        if result.is_error() or result.is_empty() or result.result is None:
+        result = await search_tracks(self.client, query, retry=False)
+        if result is None or result.is_error() or result.is_empty() or result.result is None:
             return tracks
         data = result.result
         found = data.tracks if isinstance(data, Playlist) else data if isinstance(data, list) else [data]
@@ -306,20 +329,125 @@ class Music(commands.Cog):
     async def track_autocomplete(self, ctx: discord.AutocompleteContext):
         """Provides track indices for removal."""
         player = get_player(self.client, ctx.interaction.guild_id)
-        if not player or not len(player.queue.tracks):
+        if not player or not len(player.queue):
             return []
         result = []
-        for i, track in enumerate(player.queue.tracks):
-            title = track.title
-            full_entry = f"{i + 1}. {title}"
-            entry = full_entry[:100]
-            if ctx.value.lower() in entry.lower():
+        needle = ctx.value.lower()
+        for i, track in enumerate(player.queue):
+            entry = f"{i + 1}. {track.title}"[:100]
+            if needle in entry.lower():
                 result.append(entry)
+                if len(result) == AUTOCOMPLETE_LIMIT:
+                    break  # Discord shows 25; a long queue would build the rest for nothing.
         return result
 
-    # Track chat after the player so it can be relocated to the bottom
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        """
+        Handles a request channel's traffic, and tracks chat weight everywhere else.
+
+        One listener rather than two: py-cord runs them concurrently, so a consumed request would
+        otherwise still add chat weight and schedule a relocation for a message that is gone. The
+        card in a request channel never moves, so nothing there is weighed at all.
+        """
+        if not message.guild or message.author.id == self.client.user.id:
+            # Own messages never hide the card: log toasts self-delete in 5s and the card itself is exempt.
+            return
+        if request.is_request_channel(message.guild.id, message.channel.id):
+            await self._handle_request(message)
+            return
+        self._track_chat_weight(message)
+
+    async def _handle_request(self, message: discord.Message) -> None:
+        """
+        Treats a message in the request channel as a track to queue, then clears it away.
+
+        Marked while it resolves, then ticked or crossed, so the author sees what became of it. A
+        typed name that matched several tracks hands over to a picker instead, and goes as soon as
+        that is up, since the picker reports the outcome. Anything that is not a request is
+        simply removed.
+
+        Args:
+            message (:class:`Message`): The message posted in the bound request channel.
+        """
+
+        async def drop() -> None:
+            try:
+                await message.delete()
+            except discord.HTTPException:
+                pass
+
+        if message.type not in (discord.MessageType.default, discord.MessageType.reply) or (
+            message.author.bot or message.webhook_id
+        ):
+            await drop()
+            return
+        guild_id = message.guild.id
+        request.prime(self.client, guild_id)
+        if self._request_cooldown.get_bucket(message).update_rate_limit():
+            await drop()
+            if not self._cooldown_warn.get_bucket(message).update_rate_limit():
+                await music_log(
+                    guild_id,
+                    f"{emoji.error} {message.author.mention} slow down a moment.",
+                    color=config.color.red,
+                )
+            return
+        query = message.content.strip()
+        if not query:
+            await drop()
+            await music_log(
+                guild_id,
+                f"{emoji.error} {message.author.mention} send a track name or a link to queue it.",
+                color=config.color.red,
+            )
+            return
+        try:
+            await message.add_reaction(emoji.loading)
+        except discord.HTTPException:
+            pass  # No Add Reactions: the request still works, it just goes unmarked.
+        err = voice_error(message.author)
+        if err:
+            await self._request_log(message, err, config.color.red)
+            await mark_request(message, False)
+            return
+        data, err = await resolve_query(self.client, query)
+        if err:
+            await self._request_log(message, f"{err} (`{discord.utils.escape_markdown(query)[:80]}`)", config.color.red)
+            await mark_request(message, False)
+            return
+        if not is_link(query) and isinstance(data, list) and len(data) > 1:
+            # Nothing is connected yet: the picker resolves the player when a track is chosen.
+            picker = TrackPickerView(self.client, message, data)
+            picker.msg = await message.channel.send(view=picker)
+            # The picker reports the outcome from here, so the request has nothing left to say.
+            await drop()
+            return
+        player, err, connected_now = await ensure_connected(self.client, message.author)
+        if err:
+            await self._request_log(message, err, config.color.red)
+            await mark_request(message, False)
+            return
+        try:
+            result = await enqueue(self.client, player, data, message.author.id)
+        except Exception:
+            if connected_now:
+                await stop_player(player, message.guild)
+            await mark_request(message, False)  # Or it keeps its loading mark and is never cleared.
+            raise
+        log_emoji, text = split_log_text(result.content)
+        await music_log(guild_id, f"{log_emoji} {message.author.mention} {text}".strip(), color=result.color)
+        await mark_request(message, result.ok)
+        if not result.started:
+            schedule_render(self.client, guild_id)
+
+    @staticmethod
+    async def _request_log(message: discord.Message, content: str, color: int | None) -> None:
+        """Posts a request failure into the channel, addressed to whoever asked."""
+        log_emoji, text = split_log_text(content)
+        await music_log(message.guild.id, f"{log_emoji} {message.author.mention} {text}".strip(), color=color)
+
+    def _track_chat_weight(self, message: discord.Message) -> None:
         """
         Relocates the player to the bottom once enough chat has stacked up to push it out of view.
 
@@ -327,26 +455,12 @@ class Music(commands.Cog):
         Light chatter below the threshold leaves the card edited in place, keeping delete/send API calls rare while the lyrics loop is already editing heavily.
         The next track start relocates on any accumulated weight though, so chatter never outlives the track it was posted under.
         """
-        if not message.guild:
-            return
-        if message.author.id == self.client.user.id:
-            # Own messages never hide the card: log toasts self-delete in 5s and the card itself is exempt.
-            return
         play_msg, _ = store.play_msg(message.guild.id)
         if not play_msg or message.channel.id != play_msg.channel.id:
             return
         if store.chat_weight(message.guild.id, self._visual_lines(message), "add") < self.relocate_lines:
             return
-        pending = store.render_task(message.guild.id)
-        if pending and not pending.done():
-            # A relocation is already scheduled - let it fire instead of pushing it back on every message.
-            return
-
-        async def _relocate(guild_id: int = message.guild.id):
-            await asyncio.sleep(2)
-            await render_player(self.client, guild_id, force_new=True)
-
-        store.render_task(message.guild.id, asyncio.create_task(_relocate()), mode="set")
+        schedule_render(self.client, message.guild.id, delay=RELOCATE_DELAY, force_new=True)
 
     @classmethod
     def _visual_lines(cls, message: discord.Message) -> int:
@@ -357,59 +471,53 @@ class Music(commands.Cog):
         blocks = len(message.attachments) + len(message.embeds) + len(message.stickers)
         return lines + blocks * cls.block_lines
 
+    @staticmethod
+    async def _play_reply(ctx: discord.ApplicationContext, content: str, color: int | None, quiet: bool) -> None:
+        """Answers `/play` ephemerally in a request channel, publicly anywhere else."""
+        if quiet:
+            await reply(ctx, content, color=color)
+        else:
+            await ctx.respond(view=container(content, color))
+
     # Play
     @slash_command(name="play")
     @option("query", description="Enter your track name/link or playlist link", autocomplete=search)
     async def play(self, ctx: discord.ApplicationContext, query: str):
         """Searches and plays a track from a given query."""
-        player = await self.ensure_voice(ctx)
-        if not player:
+        bound = request.channel_id(ctx.guild.id)
+        if bound is not None and ctx.channel.id != bound:
+            await ctx.respond(
+                view=container(f"{emoji.error} Queue tracks in <#{bound}>.", config.color.red), ephemeral=True
+            )
             return
-        await ctx.defer()
-        just_connected = not player.current and not len(player.queue.tracks)
+        quiet = bound is not None
+        await ctx.defer(ephemeral=quiet)
+        if quiet:
+            request.prime(self.client, ctx.guild.id)
+        player, err, connected_now = await ensure_connected(self.client, ctx.author)
+        if err:
+            await self._play_reply(ctx, err, config.color.red, quiet)
+            return
+        if connected_now and not quiet:
+            store.play_ch(ctx.guild.id, ctx.channel, "set")
         try:
-            query = query.strip("<>")
-            query = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b|\s*-\s*\d{1,2}:\d{2}(?::\d{2})?\b", "", query)
-            result = await self.client.sonolink.search_track(query, source=sonolink.TrackSourceType.YOUTUBE_MUSIC)
-            if result.is_error():
-                await ctx.respond(
-                    view=container(
-                        f"{emoji.error} Failed to load the track. Please try again in a moment.",
-                        config.color.red,
-                    )
-                )
-                if just_connected:
-                    await stop_player(player, ctx.guild)
-                return
-            if result.is_empty() or result.result is None:
-                await ctx.respond(
-                    view=container(f"{emoji.error} No track found from the given query.", config.color.red)
-                )
-                if just_connected:
-                    await stop_player(player, ctx.guild)
-                return
-            data = result.result
-            if isinstance(data, Playlist):
-                tracks = [tag_requester(self.client, track, ctx.author.id) for track in data.tracks]
-                src_info = get_source(tracks[0].source_name)
-                player.queue.put(tracks)
-                content = f"{src_info['emoji']} Added **{data.name}** with `{len(tracks)}` tracks."
-            else:
-                track = tag_requester(self.client, data[0] if isinstance(data, list) else data, ctx.author.id)
-                player.queue.put(track)
-                src_info = get_source(track.source_name)
-                if track.is_stream:
-                    dur = f"{emoji.live} LIVE"
-                else:
-                    dur = format_timedelta(datetime.timedelta(milliseconds=track.length), locale="en")
-                content = f"{src_info['emoji']} Added [**{track.title}** by **{track.author}**]({track.uri}) [{dur}]."
-            await ctx.respond(view=container(content, int(src_info["color"])))
-            if not player.current:
-                await player.play(player.queue.get())
+            result = await resolve_and_enqueue(self.client, player, query, ctx.author.id)
         except Exception:
-            if just_connected:
+            if connected_now:
                 await stop_player(player, ctx.guild)
             raise
+        if not result.ok:
+            await self._play_reply(ctx, result.content, result.color, quiet)
+            if connected_now:
+                await stop_player(player, ctx.guild)
+            return
+        if quiet:
+            await slash_log(ctx, result.content, color=result.color, render=False)
+        else:
+            await ctx.respond(view=container(result.content, result.color))
+        # Only a bound card lists what is up next, so only it changes when a track is queued.
+        if not result.started and request.setup_mode(ctx.guild.id):
+            schedule_render(self.client, ctx.guild.id)
 
     # Now playing
     @slash_command(name="now-playing")
@@ -622,10 +730,10 @@ class Music(commands.Cog):
         if player:
             await ctx.defer(ephemeral=True)
             index: int = int(track.split(".")[0])
-            if index < 1 or index > len(player.queue.tracks):
+            if index < 1 or index > len(player.queue):
                 await reply(
                     ctx,
-                    f"{emoji.error} Track number must be between `1` and `{len(player.queue.tracks)}`",
+                    f"{emoji.error} Track number must be between `1` and `{len(player.queue)}`",
                     color=config.color.red,
                 )
             else:
@@ -679,7 +787,7 @@ class Music(commands.Cog):
         player = await self.ensure_voice(ctx)
         if player:
             items_per_page = 5
-            pages = max(1, math.ceil(len(player.queue.tracks) / items_per_page))
+            pages = max(1, math.ceil(len(player.queue) / items_per_page))
             if page > pages or page < 1:
                 await reply(ctx, f"{emoji.error} Page has to be between `1` to `{pages}`", color=config.color.red)
                 return
@@ -709,7 +817,7 @@ class Music(commands.Cog):
         """Clears the player's queue."""
         player = await self.ensure_voice(ctx)
         if player:
-            if not len(player.queue.tracks):
+            if not len(player.queue):
                 await reply(ctx, f"{emoji.error} Queue is empty", color=config.color.red)
             else:
                 player.queue.clear()
@@ -721,7 +829,7 @@ class Music(commands.Cog):
         """Toggle shuffle for the player's queue."""
         player = await self.ensure_voice(ctx)
         if player:
-            if not len(player.queue.tracks):
+            if not len(player.queue):
                 await reply(ctx, f"{emoji.error} Queue is empty", color=config.color.red)
             else:
                 await ctx.defer(ephemeral=True)
@@ -760,7 +868,7 @@ class Music(commands.Cog):
                 player.queue_mode = sonolink.QueueMode.LOOP
                 msg = f"{emoji.loop_one} Enabled track loop."
             elif mode == "Queue":
-                if not len(player.queue.tracks):
+                if not len(player.queue):
                     await reply(ctx, f"{emoji.error} Queue is empty.", color=config.color.red)
                     return
                 else:
@@ -776,15 +884,15 @@ class Music(commands.Cog):
         player = await self.ensure_voice(ctx)
         if player:
             index: int = int(track.split(".")[0])
-            if not len(player.queue.tracks):
+            if not len(player.queue):
                 await reply(ctx, f"{emoji.error} Queue is empty", color=config.color.red)
-            elif index > len(player.queue.tracks) or index < 1:
+            elif index > len(player.queue) or index < 1:
                 await reply(
                     ctx,
-                    f"{emoji.error} Index has to be between `1` to `{len(player.queue.tracks)}`",
+                    f"{emoji.error} Index has to be between `1` to `{len(player.queue)}`",
                     color=config.color.red,
                 )
-            elif await dj.require_dj(ctx, player, track=player.queue.tracks[index - 1]):
+            elif await dj.require_dj(ctx, player, track=player.queue[index - 1]):
                 removed = player.queue.remove_at(index - 1)
                 await slash_log(ctx, f"{emoji.remove} Removed **{removed.title}**.", color=config.color.red)
 

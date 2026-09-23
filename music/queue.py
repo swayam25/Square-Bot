@@ -4,7 +4,8 @@ import sonolink
 from core import Client
 from core.view import DesignerView
 from discord import ui
-from music import dj
+from itertools import islice
+from music import dj, request
 from music.core import SquarePlayer, fmt_time, get_player, requester_id
 from music.utils import music_interaction_check, music_log, reply
 from utils import config
@@ -16,6 +17,19 @@ async def _update_queue_view(interaction: discord.Interaction, queue_view: Queue
     await interaction.response.edit_message(view=queue_view)
 
 
+def _nudge_card(player: SquarePlayer, guild_id: int) -> None:
+    """
+    Repaints the player card after a button reorders or drops a track.
+
+    Only a bound card lists what is up next, and only these buttons change the queue without going
+    through `slash_log`, which renders on its own.
+    """
+    from music.player import schedule_render  # Local: `music/player.py` imports this module.
+
+    if request.setup_mode(guild_id):
+        schedule_render(player.client, guild_id)
+
+
 class QueueBtnCallback:
     """Static callbacks for per-track action buttons (expand, move up/down, remove, play now)."""
 
@@ -23,7 +37,7 @@ class QueueBtnCallback:
     async def queue_btn_callback(
         i: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
     ):
-        if not player or not len(player.queue.tracks) or track_index >= len(player.queue.tracks) or not queue_view:
+        if not player or not len(player.queue) or track_index >= len(player.queue) or not queue_view:
             return
         queue_view.toggle_action_buttons(track_index)
         queue_view.build()
@@ -44,13 +58,14 @@ class QueueBtnCallback:
         current_page_start = (queue_view.page - 1) * queue_view.items_per_page
         if new_index < current_page_start:
             queue_view.page = (new_index // queue_view.items_per_page) + 1
+        _nudge_card(player, interaction.guild_id)
         await _update_queue_view(interaction, queue_view)
 
     @staticmethod
     async def move_down_callback(
         interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
     ):
-        if track_index >= len(player.queue.tracks) - 1:
+        if track_index >= len(player.queue) - 1:
             return
         if not await dj.require_dj(interaction, player):
             return
@@ -62,34 +77,36 @@ class QueueBtnCallback:
         current_page_end = current_page_start + queue_view.items_per_page - 1
         if new_index > current_page_end:
             queue_view.page = (new_index // queue_view.items_per_page) + 1
+        _nudge_card(player, interaction.guild_id)
         await _update_queue_view(interaction, queue_view)
 
     @staticmethod
     async def remove_callback(
         interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
     ):
-        if track_index >= len(player.queue.tracks):
+        if track_index >= len(player.queue):
             return
-        if not await dj.require_dj(interaction, player, track=player.queue.tracks[track_index]):
+        if not await dj.require_dj(interaction, player, track=player.queue[track_index]):
             return
         player.queue.remove_at(track_index)
         queue_view.visible_action_button = None
-        total_pages = max(1, math.ceil(len(player.queue.tracks) / queue_view.items_per_page))
+        total_pages = max(1, math.ceil(len(player.queue) / queue_view.items_per_page))
         if queue_view.page > total_pages and total_pages > 0:
             queue_view.page = total_pages
         queue_view.build()
+        _nudge_card(player, interaction.guild_id)
         await interaction.response.edit_message(view=queue_view)
 
     @staticmethod
     async def play_now_callback(
         interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
     ):
-        if track_index >= len(player.queue.tracks):
+        if track_index >= len(player.queue):
             return
         if not await dj.require_dj(interaction, player):
             return
         await player.skip_to(track_index)
-        total_pages = max(1, math.ceil(len(player.queue.tracks) / queue_view.items_per_page))
+        total_pages = max(1, math.ceil(len(player.queue) / queue_view.items_per_page))
         if queue_view.page > total_pages and total_pages > 0:
             queue_view.page = total_pages
         await _update_queue_view(interaction, queue_view)
@@ -124,14 +141,15 @@ class QueueContainer(ui.Container):
         autoplay_enabled: bool = False,
     ):
         super().__init__()
-        queue_tracks = player.queue.tracks
         autoplay_tracks = player.queue.autoplay_tracks
-        pages = max(1, math.ceil(len(queue_tracks) / items_per_page))
+        total = len(player.queue)
+        pages = max(1, math.ceil(total / items_per_page))
         start = (page - 1) * items_per_page
         end = start + items_per_page
         queue_list: list = []
 
-        for index, track in enumerate(queue_tracks[start:end], start=start):
+        # islice over the live queue: `queue.tracks` would copy all of it to render one page.
+        for index, track in enumerate(islice(player.queue, start, end), start=start):
             requester = source.guild.get_member(requester_id(player, track) or 0)
             btn = ui.Button(
                 emoji=emoji.more if queue_view and index == queue_view.visible_action_button else emoji.more_white,
@@ -155,7 +173,7 @@ class QueueContainer(ui.Container):
                     i, player=player, track_index=track_idx, queue_view=queue_view
                 )
                 move_down_btn = ui.Button(
-                    emoji=emoji.down_white, style=discord.ButtonStyle.grey, disabled=(index == len(queue_tracks) - 1)
+                    emoji=emoji.down_white, style=discord.ButtonStyle.grey, disabled=(index == total - 1)
                 )
                 move_down_btn.callback = lambda i, track_idx=index: QueueBtnCallback.move_down_callback(
                     i, player=player, track_index=track_idx, queue_view=queue_view
@@ -183,10 +201,10 @@ class QueueContainer(ui.Container):
         )
         if queue_list:
             # duration_until ignores loop mode, unlike total_duration, which reports inf while looping.
-            runtime = fmt_time(player.queue.duration_until(len(queue_tracks)))
-            self.add_item(ui.TextDisplay(f"### Queued {len(queue_tracks)} Tracks • `{runtime}`"))
+            runtime = fmt_time(player.queue.duration_until(total))
+            self.add_item(ui.TextDisplay(f"### Queued {total} Tracks • `{runtime}`"))
             self.items.extend(queue_list)
-        if len(queue_tracks) > items_per_page:
+        if total > items_per_page:
             self.add_item(ui.Separator())
             self.add_item(ui.TextDisplay(f"-# Viewing Page {page}/{pages}"))
         if autoplay_enabled:

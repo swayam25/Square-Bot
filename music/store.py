@@ -161,6 +161,34 @@ def lyrics_task(
                 del store[guild_id]["lyrics_task"]
 
 
+def card_state(
+    guild_id: int,
+    state: Literal["idle", "live"] | None = None,
+    mode: Literal["get", "set"] = "get",
+) -> Literal["idle", "live"] | None:
+    """
+    Gets or sets which of its two shapes the guild's card is currently in.
+
+    The idle card carries an attached GIF and the live card does not, and an edit can neither add
+    an attachment nor remove one on a partial message. So this is what tells the renderer that the
+    card is about to cross between the two and its attachments need rewriting, which costs a fetch
+    when the store only holds a partial. `None` means the state is unknown, which counts as a
+    mismatch, so an unknown card pays for that rewrite whether or not it needed one.
+
+    Args:
+        guild_id (int): The ID of the guild.
+        state (str | None): The state to record, for "set".
+        mode (str): The operation mode, either "get" or "set".
+    """
+    match mode:
+        case "get":
+            return store.get(guild_id, {}).get("card_state", None)
+        case "set":
+            if guild_id not in store:
+                store[guild_id] = {}
+            store[guild_id]["card_state"] = state
+
+
 # Accumulated visual height (estimated chat lines) posted since the player message was last sent
 def chat_weight(
     guild_id: int,
@@ -193,6 +221,7 @@ def chat_weight(
 
 
 _MUSIC_KEYS = {
+    "card_state",
     "chat_weight",
     "lyrics",
     "lyrics_task",

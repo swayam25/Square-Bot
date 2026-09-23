@@ -13,6 +13,8 @@ from db.funcs.logs import fetch_log_channels, remove_log_channel, set_all_log_ch
 from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
+from music import request
+from music.player import release_guild, render_player
 from utils import config
 from utils.emoji import emoji
 from utils.logger import LogType
@@ -34,6 +36,11 @@ class SettingsCommand:
 
         ticket = emoji.on if guild_settings.ticket_cmds else emoji.off
         media_only_channel = mention_ch(guild_settings.media_only_channel_id)
+        music_channel_id = guild_settings.music_channel_id
+        if music_channel_id and not self.ctx.guild.get_channel(music_channel_id):
+            await request.unbind(self.ctx.guild.id)
+            music_channel_id = None
+        music_channel = mention_ch(music_channel_id)
         role_id = guild_settings.autorole
         autorole = (
             self.ctx.guild.get_role(role_id).mention if (role_id and self.ctx.guild.get_role(role_id)) else emoji.off
@@ -48,6 +55,7 @@ class SettingsCommand:
                     f"### General\n"
                     f"{emoji.ticket} **Ticket Commands**: {ticket}\n"
                     f"{emoji.img} **Media Only Channel**: {media_only_channel}\n"
+                    f"{emoji.music} **Music Channel**: {music_channel}\n"
                     f"{emoji.role} **Autorole**: {autorole}\n"
                     f"{emoji.dj} **DJ Mode**: {emoji.on if dj_mode else emoji.off}\n"
                     f"{emoji.dj} **DJ Roles**: {', '.join(dj_roles) or emoji.off}"
@@ -63,11 +71,40 @@ class SettingsCommand:
         )
         await self.ctx.respond(view=view)
 
+    async def _clear_music_channel(self) -> str:
+        """
+        Unbinds the music channel and deletes it, card and all.
+
+        `/set music` creates the channel, so the bot is throwing away its own: everything in there
+        is either the card or a request the bot already cleared.
+
+        Returns:
+            str: A note to append to the reply when the channel had to be left behind.
+        """
+        guild_id = self.ctx.guild.id
+        channel_id = request.channel_id(guild_id)
+        if channel_id is None:
+            return ""
+        # Unbind first, so deleting the channel doesn't race the listener that watches for it.
+        await request.unbind(guild_id)
+        channel = self.ctx.guild.get_channel(channel_id)
+        note = ""
+        if channel is not None:
+            try:
+                await channel.delete(reason=f"Music channel reset by {self.ctx.author}")
+            except discord.HTTPException:
+                note = f"\n-# I couldn't delete {channel.mention}, so it's yours to remove."
+        await release_guild(self.ctx.bot, guild_id)
+        return note
+
     async def reset(self, setting: str):
         """Resets server settings."""
+        note = ""
         match setting.lower():
             case "all":
+                note = await self._clear_music_channel()
                 await remove_guild(self.ctx.guild.id)
+                request.forget(self.ctx.guild.id)
             case "all logs":
                 await remove_log_channel(self.ctx.guild.id)
             case "ticket commands":
@@ -78,11 +115,13 @@ class SettingsCommand:
                 await set_autorole(self.ctx.guild.id, None)
             case "dj":
                 await remove_dj(self.ctx.guild.id)
+            case "music":
+                note = await self._clear_music_channel()
             case _:
                 await remove_log_channel(self.ctx.guild.id, LogType.from_label(setting).key)
         view = DesignerView(
             ui.Container(
-                ui.TextDisplay(f"{emoji.success} Successfully reset {setting.lower()} settings."),
+                ui.TextDisplay(f"{emoji.success} Successfully reset {setting.lower()} settings.{note}"),
                 color=config.color.green,
             )
         )
@@ -99,7 +138,7 @@ class Settings(commands.Cog):
     @option(
         "reset",
         description="Setting to reset",
-        choices=["All", "All Logs", "Ticket Commands", "Media Only", "Auto Role", "DJ"]
+        choices=["All", "All Logs", "Ticket Commands", "Media Only", "Auto Role", "DJ", "Music"]
         + [log_type.label for log_type in LogType],
         required=False,
     )
@@ -180,6 +219,85 @@ class Settings(commands.Cog):
                 )
             )
             await ctx.respond(view=view)
+
+    # Set music request channel
+    @setting.command(name="music")
+    async def set_music(self, ctx: discord.ApplicationContext):
+        """Creates a channel where anything you type is queued, with the player pinned to the bottom."""
+        await ctx.defer()
+        bound = request.channel_id(ctx.guild.id)
+        if bound is not None and (existing := ctx.guild.get_channel(bound)) is not None:
+            await request.adopt(ctx.bot, ctx.guild.id)
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(
+                        f"{emoji.success} Music channel is already set to {existing.mention}.\n"
+                        "-# The player card has been refreshed."
+                    ),
+                    color=config.color.green,
+                )
+            )
+            await ctx.respond(view=view)
+            return
+        if not ctx.guild.me.guild_permissions.manage_channels:
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} I need the `Manage Channels` permission to create the channel."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+            return
+        overwrites = {
+            ctx.guild.default_role: discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True,
+                add_reactions=False,
+                attach_files=False,
+                embed_links=False,
+                create_public_threads=False,
+                create_private_threads=False,
+                send_messages_in_threads=False,
+            ),
+            ctx.guild.me: discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                manage_messages=True,
+                read_message_history=True,
+                embed_links=True,
+                attach_files=True,
+                add_reactions=True,
+            ),
+        }
+        try:
+            channel = await ctx.guild.create_text_channel(
+                "music-requests",
+                overwrites=overwrites,
+                topic="Send a track name or a link here to queue it.",
+            )
+        except discord.HTTPException as exc:
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} I couldn't create the music channel: {exc.text or exc}"),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+            return
+        await request.bind(ctx.guild.id, channel.id)
+        request.prime(ctx.bot, ctx.guild.id)
+        await render_player(ctx.bot, ctx.guild.id, wait=True)
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(
+                    f"{emoji.success} Successfully set the music channel to {channel.mention}.\n"
+                    "-# Send a track name or a link there to queue it. `/play` only works inside it from now on."
+                ),
+                color=config.color.green,
+            )
+        )
+        await ctx.respond(view=view)
 
     # Set autorole
     @setting.command(name="auto-role")
