@@ -23,9 +23,15 @@ class UserInfo:
 
     async def get_user_info(self, type: Literal["main", "server"] = "server") -> tuple[list[str], list[ui.Button]]:
         """Get user info lines and URL buttons for main/server profile."""
+        status = None
         if isinstance(self.user, discord.User):
             self.user = await self.client.fetch_user(self.user.id)
         else:
+            if self.user.id == self.client.user.id:
+                status = self.client.status
+            else:
+                cached = self.ctx.guild.get_member(self.user.id)
+                status = cached.status if cached else self.user.status
             self.user = await self.ctx.guild.fetch_member(self.user.id)
 
         info_lines = [
@@ -39,9 +45,9 @@ class UserInfo:
         if isinstance(self.user, discord.Member):
             info_lines.extend(
                 [
-                    f"{emoji.description} **Status**: {self.user.status.name.title()}",
+                    f"{emoji.description} **Status**: {'Do Not Disturb' if status is discord.Status.dnd else status.name.title()}",
                     f"{emoji.user} **Nickname**: {self.user.nick}",
-                    f"{emoji.role} **Highest Role**: {self.user.top_role.mention}",
+                    f"{emoji.role} **Highest Role**: {'@everyone' if self.user.top_role.is_default() else self.user.top_role.mention}",
                     f"{emoji.add} **Server Joined**: {discord.utils.format_dt(self.user.joined_at, 'R')}",
                     f"{emoji.boost} **Boosting Since**: {discord.utils.format_dt(self.user.premium_since, 'R') if self.user.premium_since else 'Not Boosting'}",
                 ]
@@ -223,7 +229,7 @@ class InfoView(DesignerView):
                 roles_granting = []
 
                 if getattr(member.guild.default_role.permissions, perm_name, False):
-                    roles_granting.append(member.guild.default_role.mention)
+                    roles_granting.append("@everyone")
 
                 for role in member.roles:
                     if role == member.guild.default_role:
