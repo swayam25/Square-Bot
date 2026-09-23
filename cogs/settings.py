@@ -223,7 +223,7 @@ class Settings(commands.Cog):
     # Set music request channel
     @setting.command(name="music")
     async def set_music(self, ctx: discord.ApplicationContext):
-        """Creates a channel where anything you type is queued, with the player pinned to the bottom."""
+        """Creates a channel where anything you type is queued, with the player pinned."""
         await ctx.defer()
         bound = request.channel_id(ctx.guild.id)
         if bound is not None and (existing := ctx.guild.get_channel(bound)) is not None:
