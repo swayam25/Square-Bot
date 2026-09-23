@@ -128,9 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Database
-migrations/
-
 # Ruff
 .ruff_cache/
 

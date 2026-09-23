@@ -1,6 +1,6 @@
 from aerich import Command
 from rich.progress import Progress, SpinnerColumn
-from tortoise import Tortoise  # kept for close_connections
+from tortoise import Tortoise
 from utils.config import db_url
 
 TORTOISE_ORM = {
@@ -15,7 +15,7 @@ class DB:
     """Database class to handle Tortoise ORM initialization and connection management."""
 
     async def init(self):
-        """Initialize the database connection and generate schemas."""
+        """Initialize the database connection and apply pending migrations."""
         db_prog = Progress(
             SpinnerColumn(style="yellow", finished_text="[green]✓[/]"),
             "[progress.description]{task.description}",
@@ -26,8 +26,6 @@ class DB:
             command = Command(tortoise_config=TORTOISE_ORM, app="models", location="./migrations")
             await command.init()
             await command.upgrade(run_in_transaction=True)
-            await Tortoise.init(config=TORTOISE_ORM)
-            await Tortoise.generate_schemas(safe=True)
             prog.update(db_task, description="[green]Initialized Database[/]", completed=1)
 
     async def close(self):
