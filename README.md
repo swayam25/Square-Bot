@@ -18,7 +18,7 @@ Advanced multipurpose discord bot for all your needs.
 - Music with player controls, DJ roles with vote skip, multi-node failover, smart autoplay, audio filters and much more!
 - Auto-mod, mass moderation, tickets & detailed logging.
 - Custom emojis synced from a simple `.zip` upload.
-- Fully dockerized, deploys with a single `just prod` command.
+- Fully dockerized, deploys with a single `just up` command.
 
 ## 💫 Prerequisites
 
@@ -46,10 +46,10 @@ Advanced multipurpose discord bot for all your needs.
 
 3. Build the image and start the stack
     ```sh
-    just prod
+    just up
     ```
 
-4. Done! The bot and its Postgres database are up. `just prod` pulls the latest code, rebuilds, and redeploys; `just prod --down` stops everything.
+4. Done! The bot and its Postgres database are up. `just up` pulls the latest code, rebuilds, and redeploys. `just down` stops everything.
 
 > [!NOTE]
 > The production stack is only the bot and its Postgres database. It has no web UI and exposes no ports. Logs go to stdout (`docker compose -f docker-compose.prod.yml logs -f bot`); any monitoring or database tooling is yours to add.

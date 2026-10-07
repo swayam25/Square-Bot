@@ -21,26 +21,44 @@ init: _prep
     @[[ -f config.toml ]] || cp config.example.toml config.toml
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mNow edit \033[36mconfig.toml\033[32m, then run: \033[36mjust dev\033[0m\n'
 
-# Start local docker service
-up:
+# Pull latest, rebuild, and deploy the production stack (--dev for local services)
+up *args: _cache
     #!/usr/bin/env bash
     set -euo pipefail
-    printf '\033[43m\033[30m INFO \033[0m \033[33mStarting services\033[0m\n'
-    docker compose up -d --build
-    printf '\033[42m\033[30m  OK  \033[0m \033[32mServices ready\033[0m\n'
+    if [[ "{{ args }}" == *--dev* ]]; then
+        printf '\033[43m\033[30m INFO \033[0m \033[33mStarting services\033[0m\n'
+        docker compose up -d --build
+        printf '\033[42m\033[30m  OK  \033[0m \033[32mServices ready\033[0m\n'
+    else
+        printf '\033[43m\033[30m PULL \033[0m \033[33mPulling latest\033[0m\n'
+        git pull
+        printf '\033[43m\033[30m BLD  \033[0m \033[33mRebuilding images\033[0m\n'
+        docker compose -f docker-compose.prod.yml build --pull
+        printf '\033[43m\033[30m BOOT \033[0m \033[33mDeploying services\033[0m\n'
+        docker compose -f docker-compose.prod.yml up -d --remove-orphans
+        printf '\033[42m\033[30m  OK  \033[0m \033[32mDeployed\033[0m\n'
+    fi
 
-# Stop local docker service
-down:
-    @printf '\033[41m\033[30m STOP \033[0m \033[31mStopping services\033[0m\n'
-    @docker compose down
-    @printf '\033[42m\033[30m  OK  \033[0m \033[32mServices stopped\033[0m\n'
+# Stop the production stack (--dev for local services)
+down *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ "{{ args }}" == *--dev* ]]; then
+        printf '\033[41m\033[30m STOP \033[0m \033[31mStopping services\033[0m\n'
+        docker compose down
+        printf '\033[42m\033[30m  OK  \033[0m \033[32mServices stopped\033[0m\n'
+    else
+        printf '\033[41m\033[30m STOP \033[0m \033[31mStopping production stack\033[0m\n'
+        docker compose -f docker-compose.prod.yml down
+        printf '\033[42m\033[30m  OK  \033[0m \033[32mProduction stack stopped\033[0m\n'
+    fi
 
 # Run the bot locally (auto-starts services if not running)
 dev:
     #!/usr/bin/env bash
     set -euo pipefail
     if [[ $(docker compose ps --status running -q 2>/dev/null | wc -l) -lt 1 ]]; then
-        just up
+        just up --dev
     fi
     printf '\n'
     DB_HOST=localhost uv run main.py
@@ -76,23 +94,3 @@ db-history: db-ensure-init
 # Show migrations not yet applied
 db-heads: db-ensure-init
     @DB_HOST=localhost uv run aerich heads
-
-# ── Deploy ────────────────────────────────────────────────────────────────────
-
-# Pull latest, rebuild, and deploy the full production stack (--down to stop it instead)
-prod *args: _cache
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [[ "{{ args }}" == *--down* ]]; then
-        printf '\033[41m\033[30m STOP \033[0m \033[31mStopping production stack\033[0m\n'
-        docker compose -f docker-compose.prod.yml down
-        printf '\033[42m\033[30m  OK  \033[0m \033[32mProduction stack stopped\033[0m\n'
-    else
-        printf '\033[43m\033[30m PULL \033[0m \033[33mPulling latest\033[0m\n'
-        git pull
-        printf '\033[43m\033[30m BLD  \033[0m \033[33mRebuilding images\033[0m\n'
-        docker compose -f docker-compose.prod.yml build --pull
-        printf '\033[43m\033[30m BOOT \033[0m \033[33mDeploying services\033[0m\n'
-        docker compose -f docker-compose.prod.yml up -d --remove-orphans
-        printf '\033[42m\033[30m  OK  \033[0m \033[32mDeployed\033[0m\n'
-    fi

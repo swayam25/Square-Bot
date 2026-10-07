@@ -27,7 +27,7 @@ Everything in the [README's prerequisites](./README.md#-prerequisites), plus a c
 3. Start the local docker services
 
     ```sh
-    just up
+    just up --dev
     ```
 
 4. Run the bot
@@ -40,7 +40,7 @@ Everything in the [README's prerequisites](./README.md#-prerequisites), plus a c
 
 5. Stop it when done
     ```sh
-    just down
+    just down --dev
     ```
 
 ## 🍀 Making a Pull Request
