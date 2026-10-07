@@ -1,23 +1,23 @@
-import asyncio
 import datetime
 import discord
 import math
 import re
 import sonolink
 from babel.dates import format_timedelta
+from collections.abc import Awaitable
 from core import Client, console
 from core.view import DesignerView
 from dataclasses import dataclass
 from discord import ui
-from music.core import SquarePlayer, fmt_time, get_player, session_lock, tag_requester
-from music.player import schedule_render, stop_player
+from music import stay
+from music.core import SquarePlayer, can_play_in, fmt_time, get_player, session_lock, tag_requester
+from music.player import discard_stale, schedule_render, stop_player
 from music.utils import get_source, reply, split_log_text
 from sonolink.models import Playlist
 from sonolink.models.responses import SearchResult
 from utils import config
 from utils.emoji import emoji
 
-REQUEST_LINGER = 1.0
 PICKER_LIMIT = 10
 PICKER_TIMEOUT = 60.0
 PICKER_RESULT_LINGER = 3.0
@@ -67,11 +67,13 @@ def voice_error(member: discord.Member) -> str | None:
     """
     if not member.voice or not member.voice.channel:
         return f"{emoji.error} Join a voice channel first."
+    stay_id = stay.channel_id(member.guild.id)
+    if stay_id is not None and member.voice.channel.id != stay_id:
+        return f"{emoji.error} Join <#{stay_id}> to queue tracks."
     bot_channel = member.guild.me.voice.channel if member.guild.me.voice else None
     if bot_channel is not None and member.voice.channel != bot_channel:
         return f"{emoji.error} You are not in my voice channel."
-    permissions = member.voice.channel.permissions_for(member.guild.me)
-    if not permissions.connect or not permissions.speak:
+    if not can_play_in(member.voice.channel):
         return f"{emoji.error} I need the `Connect` and `Speak` permissions."
     return None
 
@@ -103,8 +105,7 @@ async def ensure_connected(client: Client, member: discord.Member) -> tuple[Squa
         player = get_player(client, guild.id)
         if player is not None and guild.me.voice is not None:
             return player, None, False
-        if guild.voice_client:
-            await guild.voice_client.disconnect(force=True)
+        await discard_stale(client, guild)
         try:
             player = await member.voice.channel.connect(cls=SquarePlayer)
         except Exception as exc:
@@ -182,6 +183,30 @@ async def resolve_query(client: Client, query: str) -> tuple[object | None, str 
     return result.result, None
 
 
+def _queue_note(player: SquarePlayer) -> str | None:
+    """
+    Says where a track queued behind the current one lands and roughly when it will play.
+
+    Args:
+        player (:class:`SquarePlayer`): The player, with a track on it and the new one not yet queued.
+
+    Returns:
+        str | None: The note, or None under shuffle, where the position means nothing.
+    """
+    queue = player.queue
+    if player.shuffled:
+        return None
+    note = f"Queued at `#{len(queue) + 1}`"
+    if player.queue_mode is sonolink.QueueMode.LOOP:
+        return note
+    current = player.current
+    if current.is_stream or any(queue[i].is_stream for i in range(len(queue))):
+        return f"{note}, plays after a live stream"
+    # `player.remaining` reads 0 while paused, which would make the wait look shorter than it is.
+    wait = max(current.length - player.position, 0) + queue.duration_until(len(queue))
+    return f"{note}, plays in ~{format_timedelta(datetime.timedelta(milliseconds=wait), locale='en')}"
+
+
 async def enqueue(client: Client, player: SquarePlayer, data: object, requester_id: int) -> Enqueued:
     """
     Puts a resolved search result on the queue, starting playback when nothing is going yet.
@@ -208,58 +233,41 @@ async def enqueue(client: Client, player: SquarePlayer, data: object, requester_
             dur = format_timedelta(datetime.timedelta(milliseconds=queued.length), locale="en")
         content = f"{src_info['emoji']} Added [**{queued.title}** by **{queued.author}**]({queued.uri}) [{dur}]."
     async with session_lock(player.guild.id):
-        player.queue.put(queued)
         started = not player.current
+        note = None if started else _queue_note(player)
+        player.queue.put(queued)
         if started:
             await player.play(player.queue.get())
+    if note:
+        content += f"\n-# {note}"
     return Enqueued(True, content, int(src_info["color"]), started)
 
 
-async def resolve_and_enqueue(client: Client, player: SquarePlayer, query: str, requester_id: int) -> Enqueued:
+async def resolve_and_enqueue(
+    client: Client,
+    player: SquarePlayer,
+    search: Awaitable[tuple[object | None, str | None]],
+    requester_id: int,
+) -> Enqueued:
     """
-    Resolves a query and queues the first thing it comes back with, in one step.
+    Queues the first thing a search comes back with, in one step.
 
-    For `/play` and for links, where there is nothing to pick between.
+    For `/play`, where there is nothing to pick between.
 
     Args:
         client (:class:`Client`): The Discord bot client.
         player (:class:`SquarePlayer`): The player to queue onto.
-        query (str): The raw track name, link, or playlist link.
+        search (Awaitable): A pending :func:`resolve_query`, started early so it can overlap the
+            voice handshake.
         requester_id (int): The user the queued tracks are credited to.
 
     Returns:
         :class:`Enqueued`: The outcome, rendered but not sent.
     """
-    data, err = await resolve_query(client, query)
+    data, err = await search
     if err:
         return Enqueued(False, err, config.color.red)
     return await enqueue(client, player, data, requester_id)
-
-
-async def mark_request(message: discord.Message, ok: bool) -> None:
-    """
-    Settles a request message: swaps the working reaction for the outcome, then clears it away.
-
-    The pause before the delete is what makes the mark worth adding, otherwise the message and its
-    reaction vanish in the same frame.
-
-    Args:
-        message (:class:`Message`): The request message to settle.
-        ok (bool): Whether the track was queued.
-    """
-    for coro in (
-        message.remove_reaction(emoji.loading, message.guild.me),
-        message.add_reaction(emoji.success if ok else emoji.error),
-    ):
-        try:
-            await coro
-        except discord.HTTPException:
-            pass
-    await asyncio.sleep(REQUEST_LINGER)
-    try:
-        await message.delete()
-    except discord.HTTPException:
-        pass
 
 
 class TrackPickerView(DesignerView):

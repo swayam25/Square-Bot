@@ -20,6 +20,7 @@ class GuildTable(Model):
     dj_mode = fields.BooleanField(default=False)
     music_channel_id = fields.BigIntField(null=True)
     music_message_id = fields.BigIntField(null=True)
+    music_stay_channel_id = fields.BigIntField(null=True)
 
     log_channels: fields.ReverseRelation[LogChannelTable]
     dj_roles: fields.ReverseRelation[DJRoleTable]

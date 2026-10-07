@@ -145,7 +145,7 @@ async def adopt(client: Client, guild_id: int) -> None:
         client (:class:`Client`): The Discord bot client.
         guild_id (int): The guild whose card should be adopted.
     """
-    from music.player import MusicView, card_attachments, idle_attachment, release_guild
+    from music.player import MusicView, has_idle_gif, idle_attachment, idle_edit_attachments, release_guild
 
     binding = _bindings.get(guild_id)
     if not binding:
@@ -166,20 +166,19 @@ async def adopt(client: Client, guild_id: int) -> None:
         return  # Already adopted; a resume re-fired this.
     store.play_ch(guild_id, channel, "set")
     view = MusicView(client, guild_id)
-    state = "live" if view.live else "idle"
     msg = None
     if mid is not None:
         try:
             msg = await channel.fetch_message(mid)
-            msg = await msg.edit(view=view, **card_attachments(view.live))
+            msg = await msg.edit(view=view, **({} if view.live else idle_edit_attachments(msg)))
         except discord.NotFound, discord.Forbidden:
             msg = None
         except discord.HTTPException:
             return
     if msg is None:
-        msg = await channel.send(view=view, **(idle_attachment() if state == "idle" else {}))
+        msg = await channel.send(view=view, **({} if view.live else idle_attachment()))
         await bind_message(guild_id, msg.id)
-    store.card_state(guild_id, state, "set")
+    store.card_gif(guild_id, has_idle_gif(msg), "set")
     store.play_msg(guild_id, msg, view, "set")
     await purge(channel, msg.id)
 

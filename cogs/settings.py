@@ -13,8 +13,9 @@ from db.funcs.logs import fetch_log_channels, remove_log_channel, set_all_log_ch
 from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
-from music import request
-from music.player import release_guild, render_player
+from music import request, stay
+from music.core import can_play_in, get_player
+from music.player import release_guild, render_player, stop_player
 from utils import config
 from utils.emoji import emoji
 from utils.logger import LogType
@@ -41,6 +42,8 @@ class SettingsCommand:
             await request.unbind(self.ctx.guild.id)
             music_channel_id = None
         music_channel = mention_ch(music_channel_id)
+        stay_channel = await stay.resolve(self.ctx.guild)
+        stay_channel = stay_channel.mention if stay_channel else emoji.off
         role_id = guild_settings.autorole
         autorole = (
             self.ctx.guild.get_role(role_id).mention if (role_id and self.ctx.guild.get_role(role_id)) else emoji.off
@@ -56,6 +59,7 @@ class SettingsCommand:
                     f"{emoji.ticket} **Ticket Commands**: {ticket}\n"
                     f"{emoji.img} **Media Only Channel**: {media_only_channel}\n"
                     f"{emoji.music} **Music Channel**: {music_channel}\n"
+                    f"{emoji.voice} **24/7 Channel**: {stay_channel}\n"
                     f"{emoji.role} **Autorole**: {autorole}\n"
                     f"{emoji.dj} **DJ Mode**: {emoji.on if dj_mode else emoji.off}\n"
                     f"{emoji.dj} **DJ Roles**: {', '.join(dj_roles) or emoji.off}"
@@ -97,14 +101,37 @@ class SettingsCommand:
         await release_guild(self.ctx.bot, guild_id)
         return note
 
+    async def _clear_stay_channel(self) -> None:
+        """
+        Drops the 24/7 channel, so the bot leaves once it is no longer needed there.
+
+        A session still playing is left to finish and is then torn down like any other.
+        An idle bot was only there because of 24/7, so it leaves right away.
+        """
+        guild_id = self.ctx.guild.id
+        if stay.channel_id(guild_id) is None:
+            return
+        await stay.unbind(guild_id)
+        player = get_player(self.ctx.bot, guild_id)
+        if player is None:
+            return
+        if player.current:
+            # Re-arms sonolink's disconnect timer, which 24/7 was holding off.
+            player.cancel_empty_timer()
+            player._check_inactivity()
+        else:
+            await stop_player(player, self.ctx.guild, force=True)
+
     async def reset(self, setting: str):
         """Resets server settings."""
         note = ""
         match setting.lower():
             case "all":
                 note = await self._clear_music_channel()
+                await self._clear_stay_channel()
                 await remove_guild(self.ctx.guild.id)
                 request.forget(self.ctx.guild.id)
+                stay.forget(self.ctx.guild.id)
             case "all logs":
                 await remove_log_channel(self.ctx.guild.id)
             case "ticket commands":
@@ -115,8 +142,10 @@ class SettingsCommand:
                 await set_autorole(self.ctx.guild.id, None)
             case "dj":
                 await remove_dj(self.ctx.guild.id)
-            case "music":
+            case "music panel":
                 note = await self._clear_music_channel()
+            case "music 24/7":
+                await self._clear_stay_channel()
             case _:
                 await remove_log_channel(self.ctx.guild.id, LogType.from_label(setting).key)
         view = DesignerView(
@@ -138,7 +167,7 @@ class Settings(commands.Cog):
     @option(
         "reset",
         description="Setting to reset",
-        choices=["All", "All Logs", "Ticket Commands", "Media Only", "Auto Role", "DJ", "Music"]
+        choices=["All", "All Logs", "Ticket Commands", "Media Only", "Auto Role", "DJ", "Music Panel", "Music 24/7"]
         + [log_type.label for log_type in LogType],
         required=False,
     )
@@ -220,9 +249,11 @@ class Settings(commands.Cog):
             )
             await ctx.respond(view=view)
 
+    music = setting.create_subgroup(name="music", description="Music settings commands.")
+
     # Set music request channel
-    @setting.command(name="music")
-    async def set_music(self, ctx: discord.ApplicationContext):
+    @music.command(name="panel")
+    async def set_music_panel(self, ctx: discord.ApplicationContext):
         """Creates a channel where anything you type is queued, with the player pinned."""
         await ctx.defer()
         bound = request.channel_id(ctx.guild.id)
@@ -294,6 +325,35 @@ class Settings(commands.Cog):
                     f"{emoji.success} Successfully set the music channel to {channel.mention}.\n"
                     "-# Send a track name or a link there to queue it. `/play` only works inside it from now on."
                 ),
+                color=config.color.green,
+            )
+        )
+        await ctx.respond(view=view)
+
+    @music.command(name="24-7")
+    @option("channel", description="Mention the voice channel to stay in")
+    async def set_music_stay(self, ctx: discord.ApplicationContext, channel: discord.VoiceChannel):
+        """Keeps the bot in a voice channel around the clock, even with nothing playing."""
+        await ctx.defer()
+        if not can_play_in(channel):
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} I need the `Connect` and `Speak` permissions in {channel.mention}."),
+                    color=config.color.red,
+                )
+            )
+            await ctx.respond(view=view, ephemeral=True)
+            return
+        await stay.bind(ctx.guild.id, channel.id)
+        note = "-# I'll stay there until settings are reset."
+        try:
+            await stay.join(ctx.bot, ctx.guild.id)
+        except Exception:
+            stay.schedule_rejoin(ctx.bot, ctx.guild.id)
+            note = "-# I couldn't join it just yet, so I'll keep trying in the background."
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"{emoji.success} Successfully set the 24/7 channel to {channel.mention}.\n{note}"),
                 color=config.color.green,
             )
         )

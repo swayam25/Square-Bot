@@ -71,3 +71,40 @@ async def remove_music_channel(guild_id: int) -> None:
     guild.music_channel_id = None
     guild.music_message_id = None
     await guild.save()
+
+
+async def fetch_all_stay_channels() -> dict[int, int]:
+    """
+    Fetches every configured 24/7 voice channel, keyed by guild ID.
+
+    One query, used to seed the in-memory binding cache at startup.
+    """
+    rows = await GuildTable.filter(music_stay_channel_id__isnull=False).values_list("guild_id", "music_stay_channel_id")
+    return dict(rows)
+
+
+async def set_stay_channel(guild_id: int, channel_id: int) -> None:
+    """
+    Sets the voice channel the bot stays in around the clock.
+
+    Args:
+        guild_id (int): The guild ID to perform action on.
+        channel_id (int): The voice channel ID to stay in.
+    """
+    guild = await fetch_guild_settings(guild_id)
+    guild.music_stay_channel_id = channel_id
+    await guild.save()
+
+
+async def remove_stay_channel(guild_id: int) -> None:
+    """
+    Clears the guild's 24/7 voice channel.
+
+    Args:
+        guild_id (int): The guild ID to perform action on.
+    """
+    guild = await GuildTable.filter(guild_id=guild_id).first()
+    if not guild:
+        return
+    guild.music_stay_channel_id = None
+    await guild.save()

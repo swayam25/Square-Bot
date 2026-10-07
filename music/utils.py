@@ -1,9 +1,11 @@
 import discord
 import re
+from collections.abc import Coroutine
 from core.view import DesignerView
 from discord import ui
 from music import store
 from music.core import SquarePlayer
+from typing import Any
 from utils import config
 from utils.emoji import emoji
 
@@ -70,18 +72,32 @@ async def reply(
         await interaction.response.send_message(view=view, ephemeral=True)
 
 
-async def music_log(guild_id: int, content: str, *, color: int | None = None) -> None:
+async def delete_quietly(message: discord.Message | discord.PartialMessage) -> None:
+    """Deletes a message, shrugging off one that is already gone or out of reach."""
+    try:
+        await message.delete()
+    except discord.HTTPException:
+        pass
+
+
+def music_log(guild_id: int, content: str, *, color: int | None = None) -> Coroutine[Any, Any, None]:
     """
     Posts a self-deleting log message to the guild's player channel.
 
     The message auto-deletes after 5 seconds. Does nothing if no player channel is set.
+
+    The channel is looked up at call time rather than when the send runs, so a log gathered
+    alongside a teardown still lands after the teardown has flushed the store.
 
     Args:
         guild_id (int): The guild whose player channel receives the log.
         content (str): The message text.
         color (int | None): Optional accent color for the container.
     """
-    channel = store.play_ch(guild_id)
+    return _send_log(store.play_ch(guild_id), content, color)
+
+
+async def _send_log(channel: discord.abc.Messageable | None, content: str, color: int | None) -> None:
     if not channel:
         return
     try:

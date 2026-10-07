@@ -6,12 +6,11 @@ import time
 from core import Client
 from core.view import DesignerView
 from discord import ui
-from music import dj, lyrics, request, store
-from music.core import SquarePlayer, drop_session_lock, fmt_time, get_player, requester_id
+from music import dj, lyrics, request, stay, store
+from music.core import SquarePlayer, drop_session_lock, fmt_time, get_player, loop_action, loop_emoji, requester_id
 from music.queue import QueueListView
-from music.utils import get_source, music_interaction_check, music_log, reply, split_log_text
+from music.utils import delete_quietly, get_source, music_interaction_check, music_log, reply, split_log_text
 from pathlib import Path
-from typing import Literal
 from utils import config
 from utils.emoji import emoji
 
@@ -23,13 +22,13 @@ _LYRICS_MAX_SLEEP = 5.0
 # Lookahead, so an edit lands as the line is sung rather than after it.
 _LYRICS_LEAD_MS = 450
 _BAR_REFRESH_INTERVAL = 10.0
-
 _SEEK_STEP_MS = 10_000
 _ENQUEUE_RENDER_DELAY = 1.0
 RELOCATE_DELAY = 2.0
+# What a fresh sonolink player starts at.
+DEFAULT_VOLUME = 100
 _VOTE_TIMEOUT = 60.0
 _VOTE_RESULT_LINGER = 5.0
-
 # Each track costs three of the message's 40 components.
 _UP_NEXT_LIMIT = 4
 # Optional; the idle card falls back to text without it.
@@ -48,20 +47,29 @@ def idle_attachment() -> dict:
     return {"file": discord.File(IDLE_GIF, filename=IDLE_GIF.name)}
 
 
-def card_attachments(live: bool) -> dict:
-    """
-    Returns the edit kwargs that put the card's attachments into the shape the given state needs.
+def has_idle_gif(message: discord.Message | discord.PartialMessage) -> bool | None:
+    """Whether a card carries the idle GIF, or None for a partial message, which can't say."""
+    attachments = getattr(message, "attachments", None)
+    if attachments is None:
+        return None
+    return any(attachment.filename == IDLE_GIF.name for attachment in attachments)
 
-    Passing ``attachments=[]`` alongside a file replaces the set outright, which is what lets one
-    edit carry the card between its resting and playing shapes instead of reposting it.
+
+def idle_edit_attachments(message: discord.Message) -> dict:
+    """
+    Returns the edit kwargs that give a card the idle GIF, or nothing when it already has it.
+
+    The GIF is never removed once attached. A components v2 message hides any attachment that no
+    component points at, so it costs nothing while a track plays, and keeping it saves a ~1MB
+    upload every time playback stops.
 
     Args:
-        live (bool): Whether the card is being painted with a track on it.
+        message (:class:`Message`): The card, as a full message.
     """
-    kwargs: dict = {"attachments": []}
-    if not live:
-        kwargs |= idle_attachment()
-    return kwargs
+    if has_idle_gif(message):
+        return {}
+    # Passing `attachments=[]` alongside the file replaces the set outright.
+    return {"attachments": [], **idle_attachment()}
 
 
 def _get_render_lock(guild_id: int) -> asyncio.Lock:
@@ -116,22 +124,20 @@ async def render_player(client: Client, guild_id: int, *, force_new: bool = Fals
             return
         # A bound channel's card is fixed in place, so it is only ever edited.
         force_new = force_new and not bound
-        state: Literal["idle", "live"] = "live" if live else "idle"
         play_msg, _ = store.play_msg(guild_id)
         # `/set music` mid-session leaves the free-form card behind in another channel. It cannot be
         # edited into the bound one, so it is deleted and replaced below instead.
         stale = play_msg is not None and play_msg.channel.id != channel.id
         if play_msg and not force_new and not stale:
             try:
-                if store.card_state(guild_id) != state:
+                kwargs: dict = {}
+                if not live and not store.card_gif(guild_id):
                     if isinstance(play_msg, discord.PartialMessage):
-                        # Only a full message can change its attachments.
                         play_msg = await channel.fetch_message(play_msg.id)
-                    edited = await play_msg.edit(view=view, **card_attachments(live))
-                else:
-                    edited = await play_msg.edit(view=view)
-                store.play_msg(guild_id, edited or play_msg, view, "set")
-                store.card_state(guild_id, state, "set")
+                    kwargs = idle_edit_attachments(play_msg)
+                edited = await play_msg.edit(view=view, **kwargs) or play_msg
+                store.play_msg(guild_id, edited, view, "set")
+                store.card_gif(guild_id, has_idle_gif(edited), "set")
                 return
             except discord.NotFound:
                 play_msg = None
@@ -143,12 +149,12 @@ async def render_player(client: Client, guild_id: int, *, force_new: bool = Fals
         new_msg = results[0]
         if isinstance(new_msg, discord.Forbidden):
             store.play_msg(guild_id, mode="clear")
-            store.card_state(guild_id, None, "set")
+            store.card_gif(guild_id, None, "set")
             return
         if isinstance(new_msg, BaseException):
             return
         store.play_msg(guild_id, new_msg, view, "set")
-        store.card_state(guild_id, state, "set")
+        store.card_gif(guild_id, has_idle_gif(new_msg), "set")
         store.chat_weight(guild_id, mode="clear")
         if request.setup_mode(guild_id):
             await request.bind_message(guild_id, new_msg.id)
@@ -208,7 +214,7 @@ async def repaint_deleted_card(client: Client, guild_id: int, deleted_ids: set[i
         if play_msg is None or play_msg.id not in deleted_ids:
             return
         store.play_msg(guild_id, mode="clear")
-        store.card_state(guild_id, None, "set")
+        store.card_gif(guild_id, None, "set")
     await render_player(client, guild_id, wait=True)
 
 
@@ -310,12 +316,11 @@ def cleanup_guild(client: Client, guild_id: int) -> None:
         del _render_locks[guild_id]  # Dropping a held one lets the next render run beside it.
     drop_session_lock(guild_id)
     _cancel_tasks(guild_id)
-    state = store.card_state(guild_id)
+    gif = store.card_gif(guild_id)
     store.flush_store(guild_id)
     if request.prime(client, guild_id):  # No-op unless the guild has a request channel bound.
-        # The card outlived the flush, in whatever shape the last render left it. Forgetting that
-        # costs the next render a fetch and an attachment rewrite on an already-correct card.
-        store.card_state(guild_id, state, "set")
+        # The card outlived the flush, GIF and all. Forgetting that costs the next idle render a fetch.
+        store.card_gif(guild_id, gif, "set")
 
 
 async def clear_player(client: Client, guild_id: int) -> None:
@@ -329,45 +334,147 @@ async def clear_player(client: Client, guild_id: int) -> None:
         client (:class:`Client`): The Discord bot client.
         guild_id (int): The guild whose player message should be retired.
     """
-    await cancel_vote(guild_id)
     # Before the flush, which drops the channel and message the repaint needs.
     _cancel_tasks(guild_id)
     if request.setup_mode(guild_id):
-        await render_player(client, guild_id, wait=True)
+        retire = render_player(client, guild_id, wait=True)
     else:
         play_msg, _ = store.play_msg(guild_id)
-        if play_msg:
-            try:
-                await play_msg.delete()
-            except discord.HTTPException:
-                pass
+        retire = delete_quietly(play_msg) if play_msg else asyncio.sleep(0)
+    await asyncio.gather(cancel_vote(guild_id), retire)
     cleanup_guild(client, guild_id)
 
 
-async def stop_player(player: SquarePlayer, guild: discord.Guild) -> None:
+async def set_track_status(player: SquarePlayer) -> None:
+    """Shows the current track as the status of the voice channel the player is in."""
+    if player.channel is None or player.current is None:
+        return
+    try:
+        await player.channel.set_status(status=f"Playing **{player.current.title}**")
+    except discord.HTTPException:
+        pass
+
+
+async def clear_status(player: SquarePlayer) -> None:
+    """
+    Clears the track status off the voice channel the player is in, or was last in.
+
+    From outside the channel Discord only allows this with Manage Channels, so without it the call
+    is skipped rather than spent on a 403. A 24/7 player that lost its connection is skipped too,
+    since the rejoin clears it on arrival.
+
+    Args:
+        player (:class:`SquarePlayer`): The player whose channel status should go.
+    """
+    guild = player.guild
+    voice = guild.me.voice
+    channel = voice.channel if voice else player.channel
+    if channel is None:
+        return
+    if voice is None and (
+        stay.channel_id(guild.id) is not None or not channel.permissions_for(guild.me).manage_channels
+    ):
+        return
+    try:
+        await channel.set_status(status=None)
+    except discord.HTTPException:
+        pass
+
+
+def stop_verb(guild_id: int) -> str:
+    """How stopping reads in a guild: a 24/7 player only stops, any other is destroyed."""
+    return "stopped" if stay.channel_id(guild_id) is not None else "destroyed"
+
+
+async def stop_player(player: SquarePlayer, guild: discord.Guild, *, force: bool = False) -> None:
     """
     Clears the VC status, disconnects (destroying the lavalink-side player), and deletes the player card.
 
     Safe to call repeatedly: the disconnect fires :meth:`on_sonolink_player_disconnect`, which funnels back
     here, so a per-player guard makes every path after the first a no-op.
 
+    A guild with a 24/7 channel keeps its connection: playback is wound down by :func:`idle_player` instead.
+
     Args:
         player (:class:`SquarePlayer`): The active player to stop.
         guild (:class:`Guild`): The guild to disconnect from.
+        force (bool): Disconnect even from a 24/7 channel, for when the player is already gone or
+            the 24/7 channel is being dropped.
     """
     if getattr(player, "_square_stopped", False):
         return
+    if not force and stay.channel_id(guild.id) is not None and guild.me.voice is not None:
+        await idle_player(player, guild)
+        return
     player._square_stopped = True
-    if guild.me.voice and guild.me.voice.channel:
-        try:
-            await guild.me.voice.channel.set_status(status=None)
-        except discord.HTTPException:
-            pass
+    await clear_status(player)
     try:
         await player.disconnect(force=True)
     except Exception:
         pass  # Node may be unreachable; still clean up locally
     await clear_player(player.client, guild.id)
+
+
+async def idle_player(player: SquarePlayer, guild: discord.Guild) -> None:
+    """
+    Ends the session but stays connected, the 24/7 counterpart of a disconnect.
+
+    Everything a session piles up goes, so the next session starts like a fresh player.
+
+    Args:
+        player (:class:`SquarePlayer`): The player sitting in the 24/7 channel.
+        guild (:class:`Guild`): The guild the player belongs to.
+    """
+    if getattr(player, "_square_idling", False):
+        return
+    player._square_idling = True
+    try:
+        player.cancel_empty_timer()
+        player.autoplay = sonolink.AutoPlayMode.DISABLED
+        player._autoplay_handler._seeds.clear()
+        player.queue.shuffle_mode = sonolink.ShuffleMode.DEFAULT
+        had_filters = bool(player.presets)
+        player.presets.clear()
+        try:
+            if had_filters:
+                await player.apply_presets()  # Before the stop: it seeks, which needs a track.
+            await player.stop(clear_queue=True, clear_history=True)
+            if player.paused:
+                await player.resume()
+            if player.volume != DEFAULT_VOLUME:
+                await player.set_volume(DEFAULT_VOLUME)
+        except Exception:
+            pass
+        await asyncio.gather(clear_status(player), clear_player(player.client, guild.id))
+    finally:
+        player._square_idling = False
+
+
+async def discard_stale(client: Client, guild: discord.Guild) -> None:
+    """
+    Throws away a voice client that outlived its connection, as one does when the bot is kicked.
+
+    Sonolink only notices a kick through Lavalink's voice connection, so an idle player, or a kick
+    that raced a move, lingers as the guild's voice client until something connects over it. It is
+    flagged stopped before its disconnect: otherwise the disconnect event runs :func:`stop_player` on
+    it, and that second disconnect destroys the guild's Lavalink player and leaves voice, taking down
+    whatever connected in the meantime.
+
+    Args:
+        client (:class:`Client`): The Discord bot client.
+        guild (:class:`Guild`): The guild to clear the stale voice client from.
+    """
+    stale = guild.voice_client
+    if stale is None:
+        return
+    stale._square_stopped = True
+    if isinstance(stale, SquarePlayer):
+        await clear_status(stale)
+    try:
+        await stale.disconnect(force=True)
+    except Exception:
+        pass
+    await clear_player(client, guild.id)
 
 
 async def release_guild(client: Client, guild_id: int) -> None:
@@ -480,11 +587,11 @@ async def slash_log(
         color (int | None): Optional accent color applied to both the reply and the log.
         render (bool): Whether to re-render the player card after the action.
     """
-    await reply(ctx, content, color=color)
-    if render:
-        await render_player(ctx.bot, ctx.guild.id)
     log_emoji, text = split_log_text(content)
-    await music_log(ctx.guild.id, f"{log_emoji} {ctx.author.mention} {text}".strip(), color=color)
+    log = music_log(ctx.guild.id, f"{log_emoji} {ctx.author.mention} {text}".strip(), color=color)
+    await asyncio.gather(
+        reply(ctx, content, color=color), log, *([render_player(ctx.bot, ctx.guild.id)] if render else [])
+    )
 
 
 class MusicContainer(ui.Container):
@@ -515,10 +622,10 @@ class MusicContainer(ui.Container):
         lyrics_text = self._lyrics_text(player)
         if lyrics_text:
             self.items.append(ui.TextDisplay(lyrics_text))
-        self.items.append(ui.TextDisplay(self._progress_bar(player)))
+        self.items.append(ui.TextDisplay(self.progress_bar(player)))
 
     @staticmethod
-    def _progress_bar(player: SquarePlayer, bar_length: int = 10) -> str:
+    def progress_bar(player: SquarePlayer, bar_length: int = 10) -> str:
         """Builds the position/duration progress bar line. Streams get a fully filled bar with a LIVE badge."""
         if player.current.is_stream:
             return f"{emoji.live} **LIVE** {emoji.filled_bar * bar_length}"
@@ -587,7 +694,7 @@ class UpNextContainer(ui.Container):
             runtime = fmt_time(queue.duration_until(total))
             remaining = total - _UP_NEXT_LIMIT
             self.add_item(ui.TextDisplay(f"-# {f'+{remaining} more • ' if remaining > 0 else ''}`{runtime}` total"))
-        elif player.autoplay is sonolink.AutoPlayMode.ENABLED:
+        elif player.autoplay_on:
             self.add_item(ui.TextDisplay(f"-# {emoji.autoplay} Nothing queued. Autoplay takes over when this ends."))
         else:
             self.add_item(ui.TextDisplay("-# Nothing up next. Queue something to keep the music going."))
@@ -668,8 +775,8 @@ class MusicView(DesignerView):
         player = self.player if self.live else None
         is_stream = bool(player and player.current.is_stream)
         queue_mode = player.queue_mode if player else sonolink.QueueMode.NORMAL
-        shuffled = bool(player and player.queue.shuffle_mode is sonolink.ShuffleMode.PERSISTENT)
-        autoplay_on = bool(player and player.autoplay is sonolink.AutoPlayMode.ENABLED)
+        shuffled = bool(player and player.shuffled)
+        autoplay_on = bool(player and player.autoplay_on)
         return [
             [
                 (emoji.back_white, "previous", not (player and player.history)),
@@ -679,15 +786,7 @@ class MusicView(DesignerView):
                 (emoji.skip_white, "skip", False),
             ],
             [
-                (
-                    emoji.loop_white
-                    if queue_mode is sonolink.QueueMode.NORMAL
-                    else emoji.loop_one
-                    if queue_mode is sonolink.QueueMode.LOOP
-                    else emoji.loop,
-                    "loop",
-                    False,
-                ),
+                (loop_emoji(queue_mode), "loop", False),
                 (emoji.shuffle if shuffled else emoji.shuffle_white, "shuffle", False),
                 (emoji.stop_white, "stop", False),
                 (emoji.autoplay if autoplay_on else emoji.autoplay_white, "autoplay", False),
@@ -715,8 +814,10 @@ class MusicView(DesignerView):
         if not await dj.require_dj(interaction, self.player):
             return
         guild: discord.Guild = self.client.get_guild(int(interaction.guild_id))
-        await music_log(interaction.guild_id, f"{emoji.stop} {interaction.user.mention} destroyed the player.")
-        await stop_player(self.player, guild)
+        await asyncio.gather(
+            music_log(guild.id, f"{emoji.stop} {interaction.user.mention} {stop_verb(guild.id)} the player."),
+            stop_player(self.player, guild),
+        )
 
     async def skip_callback(self, interaction: discord.Interaction):
         await request_skip(interaction, self.player)
@@ -790,21 +891,14 @@ class MusicView(DesignerView):
         if not await dj.require_dj(interaction, self.player):
             return
         if self.player.queue_mode is sonolink.QueueMode.NORMAL:
-            self.player.queue_mode = sonolink.QueueMode.LOOP
-            mode = "Track"
+            mode = sonolink.QueueMode.LOOP
         elif self.player.queue_mode is sonolink.QueueMode.LOOP and len(self.player.queue):
-            self.player.queue_mode = sonolink.QueueMode.LOOP_ALL
-            mode = "Queue"
+            mode = sonolink.QueueMode.LOOP_ALL
         else:
-            self.player.queue_mode = sonolink.QueueMode.NORMAL
-            mode = "Disable"
-        loop_emoji = emoji.loop_white if mode == "Disable" else emoji.loop_one if mode == "Track" else emoji.loop
+            mode = sonolink.QueueMode.NORMAL
+        self.player.queue_mode = mode
         await render_player(self.client, interaction.guild_id)
-        await music_log(
-            interaction.guild_id,
-            f"{loop_emoji} {interaction.user.mention} "
-            f"{f'enabled {mode.lower()}' if mode != 'Disable' else 'disabled'} loop.",
-        )
+        await music_log(interaction.guild_id, f"{loop_emoji(mode)} {interaction.user.mention} {loop_action(mode)}.")
 
     async def shuffle_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -813,24 +907,22 @@ class MusicView(DesignerView):
         if not len(self.player.queue):
             await reply(interaction, f"{emoji.error} Queue is empty.", color=config.color.red)
             return
-        shuffled = self.player.queue.shuffle_mode is sonolink.ShuffleMode.PERSISTENT
-        self.player.queue.shuffle_mode = sonolink.ShuffleMode.DEFAULT if shuffled else sonolink.ShuffleMode.PERSISTENT
+        shuffled = self.player.toggle_shuffle()
         await render_player(self.client, interaction.guild_id)
         await music_log(
             interaction.guild_id,
-            f"{emoji.shuffle} {interaction.user.mention} {'disabled' if shuffled else 'enabled'} shuffle.",
+            f"{emoji.shuffle} {interaction.user.mention} {'enabled' if shuffled else 'disabled'} shuffle.",
         )
 
     async def autoplay_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
         if not await dj.require_dj(interaction, self.player):
             return
-        enabled = self.player.autoplay is sonolink.AutoPlayMode.ENABLED
-        self.player.autoplay = sonolink.AutoPlayMode.DISABLED if enabled else sonolink.AutoPlayMode.ENABLED
+        enabled = self.player.toggle_autoplay()
         await render_player(self.client, interaction.guild_id)
         await music_log(
             interaction.guild_id,
-            f"{emoji.autoplay} {interaction.user.mention} {'enabled' if not enabled else 'disabled'} autoplay.",
+            f"{emoji.autoplay} {interaction.user.mention} {'enabled' if enabled else 'disabled'} autoplay.",
         )
 
 
@@ -998,10 +1090,7 @@ class VoteSkipView(DesignerView):
     async def discard(self) -> None:
         """Removes the vote message outright, for when the track it targeted is already gone."""
         if self.msg:
-            try:
-                await self.msg.delete()
-            except discord.HTTPException:
-                pass
+            await delete_quietly(self.msg)
             self.msg = None
 
     async def on_timeout(self) -> None:

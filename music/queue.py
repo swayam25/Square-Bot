@@ -1,6 +1,5 @@
 import discord
 import math
-import sonolink
 from core import Client
 from core.view import DesignerView
 from discord import ui
@@ -260,7 +259,7 @@ class QueueListView(DesignerView):
 
     def build(self):
         self.clear_items()
-        autoplay_enabled = self.player.autoplay is sonolink.AutoPlayMode.ENABLED
+        autoplay_enabled = self.player.autoplay_on
         self.add_item(
             QueueContainer(
                 self.player,
