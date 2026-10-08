@@ -49,7 +49,7 @@ Advanced multipurpose discord bot for all your needs.
     just up
     ```
 
-4. Done! The bot and its Postgres database are up. `just up` pulls the latest code, rebuilds, and redeploys. `just down` stops everything.
+4. Done! The bot and its Postgres database are up. `just up` rebuilds and redeploys. `just down` stops everything.
 
 > [!NOTE]
 > The production stack is only the bot and its Postgres database. It has no web UI and exposes no ports. Logs go to stdout (`docker compose -f docker-compose.prod.yml logs -f bot`); any monitoring or database tooling is yours to add.

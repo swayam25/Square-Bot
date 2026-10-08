@@ -21,7 +21,7 @@ init: _prep
     @[[ -f config.toml ]] || cp config.example.toml config.toml
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mNow edit \033[36mconfig.toml\033[32m, then run: \033[36mjust dev\033[0m\n'
 
-# Pull latest, rebuild, and deploy the production stack (--dev for local services)
+# Rebuild and deploy the production stack (--dev for local services)
 up *args: _cache
     #!/usr/bin/env bash
     set -euo pipefail
@@ -30,8 +30,6 @@ up *args: _cache
         docker compose up -d --build
         printf '\033[42m\033[30m  OK  \033[0m \033[32mServices ready\033[0m\n'
     else
-        printf '\033[43m\033[30m PULL \033[0m \033[33mPulling latest\033[0m\n'
-        git pull
         printf '\033[43m\033[30m BLD  \033[0m \033[33mRebuilding images\033[0m\n'
         docker compose -f docker-compose.prod.yml build --pull
         printf '\033[43m\033[30m BOOT \033[0m \033[33mDeploying services\033[0m\n'
