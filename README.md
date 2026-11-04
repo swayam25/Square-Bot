@@ -109,9 +109,6 @@ Running your own node gives you full control over performance, uptime, and audio
 | `lavalink.secure`    | `bool`      | Whether to use secure connection (wss) for Lavalink.                                                                   |
 | `lavalink.regions`   | `list[str]` | Optional. Discord voice regions this node serves, e.g. `["india"]`.                                                    |
 
-> [!NOTE]
-> The bot checks `config.toml` on startup. A missing, misspelled or wrongly typed key stops it with a message naming the key, e.g. ``Expected `int`, got `str` - at `$.owner-id` ``.
-
 ## ✨ Custom Emojis
 
 The bot ships with a default set of Unicode emojis defined on the `Emoji` class in [`emoji.py`](./src/square/utils/emoji.py). You can override any of these with your own Discord custom emojis.
