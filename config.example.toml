@@ -6,6 +6,9 @@ support-server-url = "https://discord.gg"
 bot-token = ""
 database-url = "asyncpg://postgres:youcannotpass@db:5432/square"
 
+log-level = "INFO"
+log-file = false
+
 [colors]
 theme = "#1FCEEC"
 green = "#2ECC71"
@@ -17,9 +20,11 @@ host = ""
 port = 0
 password = ""
 secure = true
+regions = []
 
 [[lavalink]]
 host = ""
 port = 0
 password = ""
 secure = true
+regions = []

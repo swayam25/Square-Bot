@@ -2,29 +2,40 @@
 name = "square"
 version = "2.7.2"
 description = "Advanced multipurpose discord bot for all your needs."
-license = "GPL-3.0"
 readme = "README.md"
-authors = [{ name = "Swayam" }]
+license = "GPL-3.0-only"
+authors = [{ name = "swayam25" }]
 requires-python = ">=3.14"
 dependencies = [
-    "aerich[toml]>=0.9.0",
-    "aiohttp>=3.14.4",
-    "babel>=2.17.0",
-    "psutil>=7.0.0",
-    "py-cord[speed,voice]>=2.8.0",
-    "pyfiglet>=1.0.4",
-    "requests>=2.32.3",
-    "rich>=14.0.0",
-    "sonolink[speed]>=1.3.0",
-    "toml>=0.10.2",
-    "tortoise-orm[asyncpg]>=0.25.0",
+    "aerich[toml]>=0.10.1",
+    "aiohttp>=3.14.5",
+    "babel>=2.18.0",
+    "jinja2>=3.1.6",
+    "msgspec>=0.21.1",
+    "psutil>=7.2.2",
+    "py-cord[speed,voice]>=2.8.1",
+    "rich>=15.0.0",
+    "sonolink[speed]>=1.4.0",
+    "tortoise-orm[asyncpg]>=1.1.9",
+    "uvloop>=0.23.0 ; sys_platform != 'win32'",
 ]
+
+[project.scripts]
+square = "square.__main__:main"
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["pre-commit>=4.7.0", "ruff>=0.17.3"]
 
 [tool.ruff]
 line-length = 120
+src = ["src"]
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "B", "C4", "UP", "D"]
+select = ["E", "W", "F", "I", "B", "C4", "UP", "D", "T20", "TID"]
 ignore = [
     "E501", # Line too long; we allow longer lines for docstrings and code
     "D1",   # Don't require docstrings; only enforce style on the ones that exist
@@ -37,15 +48,19 @@ no-sections = true
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"rich.console.Console".msg = "Log through `logging` instead, see square.log."
+
+[tool.ruff.lint.per-file-ignores]
+# The one place that renders the console
+"src/square/log.py" = ["TID251"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 docstring-code-format = true
 
 [tool.aerich]
-tortoise_orm = "db.TORTOISE_ORM"
+tortoise_orm = "square.db.TORTOISE_ORM"
 location = "./migrations"
-src_folder = "./."
-
-[dependency-groups]
-dev = ["pre-commit>=4.5.1", "ruff>=0.11.12"]
+src_folder = "./src"

@@ -1,0 +1,161 @@
+{% from "components.html" import component %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }} · {{ guild_name }}</title>
+    <style>{{ css }}</style>
+</head>
+<body>
+    <header class="header">
+        {% if guild_icon %}
+        <img class="guild-icon" src="{{ guild_icon }}" alt="">
+        {% endif %}
+        <div class="header-text">
+            <h1>{{ title }}</h1>
+            <p class="channel"><span class="hash">#</span>{{ channel_name }} <span class="dot">·</span> {{ guild_name }}</p>
+        </div>
+    </header>
+
+    {% if summary %}
+    <section class="summary">
+        {% for label, value in summary %}
+        <div class="summary-item">
+            <span class="summary-label">{{ label }}</span>
+            <span class="summary-value">{{ value }}</span>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
+    <main class="messages">
+        {% for group in groups %}
+        <article class="group">
+            {% if group.avatar %}
+            <img class="avatar" src="{{ group.avatar }}" alt="">
+            {% else %}
+            <div class="avatar avatar-unknown">?</div>
+            {% endif %}
+            <div class="group-body">
+                {% set first = group.messages[0] %}
+                {% if first.reply %}
+                <div class="reply">
+                    {% if first.reply[0] %}
+                    <span class="reply-author">{{ first.reply[0] }}</span> {{ first.reply[1] }}
+                    {% else %}
+                    <em>Original message was deleted</em>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <h2 class="author">
+                    <span class="name" style="color: {{ group.color }}">{{ group.author }}</span>
+                    {% if group.bot %}<span class="bot-tag">APP</span>{% endif %}
+                    <time class="time" datetime="{{ first.time.isoformat() }}" data-style="dt">{{ first.time.strftime("%d/%m/%Y %H:%M") }} UTC</time>
+                </h2>
+
+                {% for message in group.messages %}
+                <div class="message{% if message.system %} system{% endif %}" id="m{{ message.id }}">
+                    {% if not loop.first %}
+                    <time class="hover-time" datetime="{{ message.time.isoformat() }}" data-style="t">{{ message.time.strftime("%H:%M") }}</time>
+                    {% endif %}
+
+                    {% if message.unknown %}
+                    <div class="content unknown">This message wasn't cached, so its content is unknown.</div>
+                    {% elif message.content %}
+                    <div class="content">{{ message.content }}{% if message.edited %} <span class="edited">(edited)</span>{% endif %}</div>
+                    {% endif %}
+
+                    {% for attachment in message.attachments %}
+                    {% if attachment.image %}
+                    <a class="image" href="{{ attachment.url }}"><img src="{{ attachment.image }}" alt="{{ attachment.name }}"></a>
+                    {% else %}
+                    <a class="file" href="{{ attachment.url }}">
+                        <span class="file-name">{{ attachment.name }}</span>
+                        <span class="file-size">{{ attachment.size }}</span>
+                    </a>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% for embed in message.embeds %}
+                    <div class="embed" style="border-color: {{ embed.color }}">
+                        {% if embed.author %}<div class="embed-author">{{ embed.author }}</div>{% endif %}
+                        {% if embed.title %}
+                        <div class="embed-title">{% if embed.url %}<a href="{{ embed.url }}">{{ embed.title }}</a>{% else %}{{ embed.title }}{% endif %}</div>
+                        {% endif %}
+                        {% if embed.description %}<div class="embed-description">{{ embed.description }}</div>{% endif %}
+                        {% if embed.fields %}
+                        <div class="embed-fields">
+                            {% for name, value, inline in embed.fields %}
+                            <div class="embed-field{% if inline %} inline{% endif %}">
+                                <div class="embed-field-name">{{ name }}</div>
+                                <div class="embed-field-value">{{ value }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if embed.image %}<img class="embed-image" src="{{ embed.image }}" alt="">{% endif %}
+                        {% if embed.footer %}<div class="embed-footer">{{ embed.footer }}</div>{% endif %}
+                    </div>
+                    {% endfor %}
+
+                    {% for c in message.components %}{{ component(c) }}{% endfor %}
+
+                    {% for name, url in message.stickers %}
+                    <img class="sticker" src="{{ url }}" alt="{{ name }}" title="{{ name }}">
+                    {% endfor %}
+
+                    {% if message.reactions %}
+                    <div class="reactions">
+                        {% for emoji, count in message.reactions %}
+                        <span class="reaction">{{ emoji }} <span class="reaction-count">{{ count }}</span></span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+        {% endfor %}
+    </main>
+
+    <footer class="footer">
+        {{ message_count }} message{{ "" if message_count == 1 else "s" }}
+        <span class="dot">·</span> Generated <time datetime="{{ generated.isoformat() }}" data-style="generated">{{ generated.strftime("%d %B %Y, %H:%M UTC") }}</time>
+        <span class="dot">·</span> Square v{{ version }}
+    </footer>
+
+    <script>
+        // Times are rendered in UTC on the server. This rewrites them in the reader's own time zone and locale.
+        const STYLES = {
+            t: { timeStyle: "short" },
+            T: { timeStyle: "medium" },
+            d: { dateStyle: "short" },
+            D: { dateStyle: "long" },
+            f: { dateStyle: "long", timeStyle: "short" },
+            F: { dateStyle: "full", timeStyle: "short" },
+            dt: { dateStyle: "short", timeStyle: "short" },
+            // Intl rejects timeZoneName alongside dateStyle/timeStyle, so this one lists its fields
+            generated: { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" },
+        };
+        const UNITS = [["year", 31536000], ["month", 2592000], ["day", 86400], ["hour", 3600], ["minute", 60], ["second", 1]];
+
+        function relative(date) {
+            const seconds = (date - Date.now()) / 1000;
+            const [unit, size] = UNITS.find(([, size]) => Math.abs(seconds) >= size) || UNITS[UNITS.length - 1];
+            return new Intl.RelativeTimeFormat(undefined, { numeric: "auto" }).format(Math.round(seconds / size), unit);
+        }
+
+        for (const el of document.querySelectorAll("time[data-style]")) {
+            try {
+                const date = new Date(el.getAttribute("datetime"));
+                const style = el.dataset.style;
+                el.textContent = style === "R" ? relative(date) : new Intl.DateTimeFormat(undefined, STYLES[style] || STYLES.f).format(date);
+                el.title = new Intl.DateTimeFormat(undefined, STYLES.F).format(date);
+            } catch {
+                // Leave the server's UTC text in place
+            }
+        }
+    </script>
+</body>
+</html>

@@ -52,7 +52,7 @@ Advanced multipurpose discord bot for all your needs.
 4. Done! The bot and its Postgres database are up. `just up` rebuilds and redeploys. `just down` stops everything.
 
 > [!NOTE]
-> The production stack is only the bot and its Postgres database. It has no web UI and exposes no ports. Logs go to stdout (`docker compose -f docker-compose.prod.yml logs -f bot`); any monitoring or database tooling is yours to add.
+> The production stack is only the bot and its Postgres database. It has no web UI and exposes no ports. Logs go to stdout, follow them with `just logs`. Any monitoring or database tooling is yours to add.
 
 ## 🪇 Setup Lavalink
 
@@ -88,27 +88,33 @@ Running your own node gives you full control over performance, uptime, and audio
 
 ## 🔑 Configuration
 
-| Key                  | Type        | Description                                                                                                       |
-| -------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------- |
-| `owner-id`           | `int`       | The Discord ID of the bot owner.                                                                                  |
-| `owner-guild-ids`    | `list[int]` | A list of Discord IDs of the owner's guilds. Owner/Developer only commands are created only in these guilds.      |
-| `system-channel-id`  | `int`       | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.           |
-| `support-server-url` | `str`       | The invite URL of the support server.                                                                             |
-| `bot-token`          | `str`       | Discord Bot Token. Get this from developer portal.                                                                |
-| `database-url`       | `str`       | The URL for the PostgreSQL database.                                                                              |
-| `colors.theme`       | `str`       | The color theme for the bot's view containers.                                                                    |
-| `colors.green`       | `str`       | The color code for green color in view containers.                                                                |
-| `colors.red`         | `str`       | The color code for red color in view containers.                                                                  |
-| `colors.orange`      | `str`       | The color code for orange color in view containers.                                                               |
-| `[[lavalink]]`       | `table`     | A Lavalink node. Multiple `[[lavalink]]` tables can be configured, players fail over to another node if one dies. |
-| `lavalink.host`      | `str`       | The host of the Lavalink server.                                                                                  |
-| `lavalink.port`      | `int`       | The port of the Lavalink server.                                                                                  |
-| `lavalink.password`  | `str`       | The password for the Lavalink server.                                                                             |
-| `lavalink.secure`    | `bool`      | Whether to use secure connection (wss) for Lavalink.                                                              |
+| Key                  | Type        | Description                                                                                                            |
+| -------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `owner-id`           | `int`       | The Discord ID of the bot owner.                                                                                       |
+| `owner-guild-ids`    | `list[int]` | A list of Discord IDs of the owner's guilds. Owner/Developer only commands are created only in these guilds.           |
+| `system-channel-id`  | `int`       | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.                |
+| `support-server-url` | `str`       | The invite URL of the support server.                                                                                  |
+| `bot-token`          | `str`       | Discord Bot Token. Get this from developer portal.                                                                     |
+| `database-url`       | `str`       | The URL for the PostgreSQL database.                                                                                   |
+| `log-level`          | `str`       | *Optional.* `DEBUG`, `INFO` (default), `WARNING` or `ERROR`. The `SQUARE_LOG_LEVEL` environment variable overrides it. |
+| `log-file`           | `bool`      | *Optional.* Also write logs to `.cache/logs/square.log`, rotated at 5 × 5 MB. Defaults to `false`.                     |
+| `colors.theme`       | `str`       | The color theme for the bot's view containers.                                                                         |
+| `colors.green`       | `str`       | The color code for green color in view containers.                                                                     |
+| `colors.red`         | `str`       | The color code for red color in view containers.                                                                       |
+| `colors.orange`      | `str`       | The color code for orange color in view containers.                                                                    |
+| `[[lavalink]]`       | `table`     | A Lavalink node. Multiple `[[lavalink]]` tables can be configured, players fail over to another node if one dies.      |
+| `lavalink.host`      | `str`       | The host of the Lavalink server.                                                                                       |
+| `lavalink.port`      | `int`       | The port of the Lavalink server.                                                                                       |
+| `lavalink.password`  | `str`       | The password for the Lavalink server.                                                                                  |
+| `lavalink.secure`    | `bool`      | Whether to use secure connection (wss) for Lavalink.                                                                   |
+| `lavalink.regions`   | `list[str]` | Optional. Discord voice regions this node serves, e.g. `["india"]`.                                                    |
+
+> [!NOTE]
+> The bot checks `config.toml` on startup. A missing, misspelled or wrongly typed key stops it with a message naming the key, e.g. ``Expected `int`, got `str` - at `$.owner-id` ``.
 
 ## ✨ Custom Emojis
 
-The bot ships with a default set of Unicode emojis defined on the `Emoji` class in [`emoji.py`](./utils/emoji.py). You can override any of these with your own Discord custom emojis.
+The bot ships with a default set of Unicode emojis defined on the `Emoji` class in [`emoji.py`](./src/square/utils/emoji.py). You can override any of these with your own Discord custom emojis.
 
 **How it works:** every emoji is keyed by an attribute name on the `Emoji` class (*e.g. `success`, `error`, `loading`*). The bot loads overrides from `.cache/emoji.json`, matching each entry to an attribute by name. Any attribute without an override simply falls back to its default.
 
@@ -149,4 +155,4 @@ If you already have the emojis, you can skip uploading and create `.cache/emoji.
 
 ## ❤️ Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to get a local copy running and what we look for in a pull request.
+Contributions are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to get a local copy running, how the code is laid out, and what we look for in a pull request.

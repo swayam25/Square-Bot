@@ -51,7 +51,11 @@ down *args:
         printf '\033[42m\033[30m  OK  \033[0m \033[32mProduction stack stopped\033[0m\n'
     fi
 
-# Run the bot locally (auto-starts services if not running)
+# Follow the production bot's logs
+logs:
+    @docker compose -f docker-compose.prod.yml logs -f bot
+
+# Run the bot locally with debug logs (auto-starts services if not running)
 dev:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -59,7 +63,12 @@ dev:
         just up --dev
     fi
     printf '\n'
-    DB_HOST=localhost uv run main.py
+    DB_HOST=localhost SQUARE_LOG_LEVEL=DEBUG uv run square
+
+# Lint and format the code
+check:
+    @uv run ruff check --fix src
+    @uv run ruff format src
 
 # ── Database ──────────────────────────────────────────────────────────────────
 

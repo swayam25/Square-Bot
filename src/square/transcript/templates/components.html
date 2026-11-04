@@ -1,0 +1,39 @@
+{% macro component(c) -%}
+{% if c.kind == "container" %}
+<div class="container{% if c.color %} accent{% endif %}"{% if c.color %} style="border-left-color: {{ c.color }}"{% endif %}>
+    {% for child in c.children %}{{ component(child) }}{% endfor %}
+</div>
+{% elif c.kind == "text" %}
+<div class="content text-display">{{ c.text }}</div>
+{% elif c.kind == "section" %}
+<div class="section">
+    <div class="section-body">{% for child in c.children %}{{ component(child) }}{% endfor %}</div>
+    {% if c.accessory %}<div class="section-accessory">{{ component(c.accessory) }}</div>{% endif %}
+</div>
+{% elif c.kind == "thumbnail" %}
+<img class="thumbnail" src="{{ c.media[0] }}" alt="">
+{% elif c.kind == "gallery" %}
+<div class="gallery gallery-{{ [c.media | length, 3] | min }}">
+    {% for url in c.media %}<img src="{{ url }}" alt="">{% endfor %}
+</div>
+{% elif c.kind == "file" %}
+<a class="file" href="{{ c.url }}">
+    <span class="file-name">{{ c.label }}</span>
+    {% if c.size %}<span class="file-size">{{ c.size }}</span>{% endif %}
+</a>
+{% elif c.kind == "separator" %}
+<div class="separator{% if c.large %} large{% endif %}{% if c.divider %} divider{% endif %}"></div>
+{% elif c.kind == "row" %}
+<div class="action-row">{% for child in c.children %}{{ component(child) }}{% endfor %}</div>
+{% elif c.kind == "button" and c.url %}
+<a class="button secondary{% if c.disabled %} disabled{% endif %}" href="{{ c.url }}">
+    {{ c.emoji }}{% if c.label %}<span>{{ c.label }}</span>{% endif %}<span class="link-icon">↗</span>
+</a>
+{% elif c.kind == "button" %}
+<span class="button {{ c.style }}{% if c.disabled %} disabled{% endif %}">
+    {{ c.emoji }}{% if c.label %}<span>{{ c.label }}</span>{% endif %}
+</span>
+{% elif c.kind == "select" %}
+<div class="select {{ c.style }}{% if c.disabled %} disabled{% endif %}">{{ c.label }}</div>
+{% endif %}
+{%- endmacro %}
