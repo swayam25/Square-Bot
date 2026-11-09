@@ -52,21 +52,18 @@ src/square/
 ├── log.py             Logging setup (console, optional file)
 ├── core/              Shared by every cog: Client, Cog base class, DesignerView
 ├── db/                Tortoise models and database functions
+├── imaging/           Image engine and its card templates
 ├── music/             The music engine (players, queues, request channels)
 ├── utils/             Shared helpers: config, emojis, checks, server logs, invites
-└── cogs/              One folder per cog
+╰── cogs/              One folder per cog
     ├── moderation/    __init__.py (the cog) + purge.py, roles.py
     ├── music/         __init__.py (the cog) + listeners.py, eq.py
-    └── …
+    ╰── …
 ```
 
-**Adding a cog**: create `src/square/cogs/<name>/__init__.py` with a `setup(client)` function. It's loaded automatically. Give the cog its help category through class keywords:
+**Cogs**: add `src/square/cogs/<name>/__init__.py` with a `setup(client)` function and it loads automatically. Class keywords place it in `/help`:
 
 ```py
-from square.core.cog import Cog
-from square.utils.emoji import emoji
-
-
 class Voice(Cog, name="Voice", description="Move, mute and manage voice members.", emoji=emoji.voice, order=3): ...
 
 
@@ -74,13 +71,18 @@ def setup(client):
     client.add_cog(Voice(client))
 ```
 
-`name` and `description` are py-cord's own. `emoji` and `order` place the cog in `/help`. A cog without `emoji` stays out of the menu, and `dev_only=True` shows it only to developers.
+A cog without `emoji` stays out of `/help`, and `dev_only=True` shows it to developers only. Split a big cog into mixin classes in their own files (see `moderation/purge.py`). It's still one cog.
 
-**Settings**: a cog adds a page to the `/settings` panel by subclassing `SettingsPage` (see `cogs/automod/settings.py`) and listing it in `settings_pages = (MyPage,)`. Read values from `square.db.cache` and save through the `db.funcs` setters, which update the database and the cache together.
+**Settings**: subclass `SettingsPage` (see `cogs/automod/settings.py`) and list it in the cog's `settings_pages`. Read from `square.db.cache` and save through the `db.funcs` setters.
 
-**Keep state outside `cogs/`**: `/reload-cogs` reloads every module inside a cog folder, so anything that must survive a reload (caches, players) belongs in `music/`, `utils/` or `db/`.
+**State**: `/reload-cogs` reloads everything under `cogs/`, so caches and players belong in `music/`, `utils/` or `db/`.
 
-**Big cogs**: split them into mixin classes in their own files (see `moderation/purge.py`) and list them as bases of the cog class. py-cord collects commands and listeners from every base, so it stays one cog and one help category.
+**Emojis**: add an `Icon` line to `Emoji` in `utils/emoji.py` and a same-named `.png`/`.gif` to `assets/emojis`, then press **Sync** in `/emoji`. To change one, replace the file and sync.
+
+**Images**: `square.imaging` draws cards with Pillow. A template in `imaging/templates/` turns plain data into a layout built from `Kit` components (`ui.card`, `ui.chip`, `ui.stat`, …). Add sample data for it in `templates/__init__.py`, preview it with `uv run python -m square.imaging <template>`, and send it from a cog with `await imaging.render(template.build, data, filename="card.png")`.
+
+- **Colors**: every color comes from a scheme generated from `colors.theme` in `config.toml`. Components pick their own color roles (a warning chip uses the warning colors), so templates never hard-code colors.
+- **Icons**: `ui.chip(..., icon=...)` and `ui.icon()` draw emojis from `assets/emojis`, recolored to match the text next to them. Only the icon's shape is used, so the file's color doesn't matter. Pass the plain name (`console`, `dj`), and use a variant like `_white`, `_green` or `_red` only when no plain file exists (e.g. `user_add_white`). Brand logos keep their own colors with `tint=False`.
 
 ## 📜 Logging
 
