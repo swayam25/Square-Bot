@@ -104,7 +104,7 @@ class Music(
 
     # Unloading cog
     def cog_unload(self):
-        self.failover.cancel()
+        self.failover.stop()
 
     # Ensures voice parameters
     async def ensure_voice(self, ctx: discord.ApplicationContext, *, need_queue: bool = False) -> SquarePlayer | None:
