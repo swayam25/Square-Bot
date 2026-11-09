@@ -1,10 +1,11 @@
 import msgspec
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal, NotRequired, TypedDict
 from urllib.parse import urlparse, urlunparse
 
-config_file_path = "./config.toml"
+CONFIG_FILE_PATH = Path("config.toml")
 
 
 class LavalinkConfig(TypedDict):
@@ -39,14 +40,14 @@ class _Config(msgspec.Struct, rename="kebab", forbid_unknown_fields=True):
 def _load() -> _Config:
     """Loads `config.toml`, failing at startup with the offending key instead of deep inside a command."""
     try:
-        with open(config_file_path, "rb") as file:
+        with open(CONFIG_FILE_PATH, "rb") as file:
             return msgspec.toml.decode(file.read(), type=_Config)
     except FileNotFoundError:
         raise SystemExit(
-            f"{config_file_path} not found. Copy config.example.toml to config.toml and fill it in."
+            f"{CONFIG_FILE_PATH} not found. Copy config.example.toml to config.toml and fill it in."
         ) from None
     except msgspec.ValidationError as e:
-        raise SystemExit(f"Invalid {config_file_path}: {e}") from None
+        raise SystemExit(f"Invalid {CONFIG_FILE_PATH}: {e}") from None
 
 
 def _resolve_db_url(url: str) -> str:

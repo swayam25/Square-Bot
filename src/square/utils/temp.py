@@ -1,15 +1,15 @@
 import json
-import os
+from pathlib import Path
 from typing import Any, Literal
 
-temp_path = "./.cache/temp.json"
+TEMP_PATH = Path(".cache/temp.json")
 
-os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+TEMP_PATH.parent.mkdir(parents=True, exist_ok=True)
 try:
-    with open(temp_path) as file:
+    with open(TEMP_PATH) as file:
         json.load(file)
 except FileNotFoundError, json.JSONDecodeError:
-    with open(temp_path, "w") as file:
+    with open(TEMP_PATH, "w") as file:
         file.write("{}")
 
 
@@ -17,29 +17,29 @@ Key = Literal["restart_msg"]
 
 
 def get(key: Key) -> Any:
-    with open(temp_path) as file:
+    with open(TEMP_PATH) as file:
         data = json.load(file)
         return data.get(key)
 
 
 def set(key: Key, value: Any) -> Any:
-    with open(temp_path) as file:
+    with open(TEMP_PATH) as file:
         data = json.load(file)
     data[key] = value
-    with open(temp_path, "w") as file:
+    with open(TEMP_PATH, "w") as file:
         json.dump(data, file)
     return value
 
 
 def delete(key: Key) -> None:
-    with open(temp_path) as file:
+    with open(TEMP_PATH) as file:
         data = json.load(file)
     if key in data:
         del data[key]
-    with open(temp_path, "w") as file:
+    with open(TEMP_PATH, "w") as file:
         json.dump(data, file)
 
 
 def clear() -> None:
-    with open(temp_path, "w") as file:
+    with open(TEMP_PATH, "w") as file:
         json.dump({}, file)
