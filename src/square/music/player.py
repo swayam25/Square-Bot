@@ -23,6 +23,9 @@ from square.utils import config
 from square.utils.emoji import Icon, emoji
 
 _render_locks: dict[int, asyncio.Lock] = {}
+# Renders asked for while one was in flight, and whether any of them wanted a new message. The one in flight draws
+# again once it's done, because the state it drew may already be stale, e.g. a pause pressed mid-edit.
+_rerender: dict[int, bool] = {}
 
 # ~3.3 edits/5s worst case, inside Discord's ~5 edits/5s per-channel bucket.
 _LYRICS_MIN_EDIT_INTERVAL = 1.5
@@ -100,7 +103,8 @@ async def render_player(client: Client, guild_id: int, *, force_new: bool = Fals
     Renders the single persistent player message.
 
     Edits the player in place while it is still the latest message, otherwise deletes the stale player and posts a fresh one at the bottom of the channel.
-    Skips silently if a render is already in progress for this guild, unless ``wait`` says otherwise.
+    A render asked for while another is in flight doesn't run beside it: the one in flight draws again once it's done,
+    so a burst costs one extra edit and the card always ends on the latest state.
 
     With nothing playing this renders the resting card for a bound request channel, and does
     nothing at all anywhere else.
@@ -109,63 +113,74 @@ async def render_player(client: Client, guild_id: int, *, force_new: bool = Fals
         client (:class:`Client`): The Discord bot client.
         guild_id (int): The guild to render the player for.
         force_new (bool): Always send a new player message instead of editing.
-        wait (bool): Queue behind an in-flight render rather than dropping this one. A dropped
-            lyrics frame is invisible, but a dropped teardown repaint freezes the card for good.
+        wait (bool): Queue behind an in-flight render as a render of its own, instead of folding into its redraw.
+            For callers that need the card drawn by the time this returns.
     """
     lock = _get_render_lock(guild_id)
     if lock.locked() and not wait:
+        _rerender[guild_id] = _rerender.get(guild_id, False) or force_new
         return
     player = get_player(client, guild_id)
     if not (player and player.connected and player.current) and not request.setup_mode(guild_id):
         return
     async with lock:
-        # Everything below is read after the wait, not before it. A `wait=True` caller can sit on
-        # this lock while playback stops, and an attachment set that disagrees with the shape the
-        # view actually built is a 400, not a `NotFound` the send path below would absorb.
-        channel = store.play_ch(guild_id)
-        if not channel:
-            return
-        view = MusicView(client, guild_id)
-        live = view.live
-        bound = request.setup_mode(guild_id)
-        if not live and not bound:
-            return
-        # A bound channel's card is fixed in place, so it is only ever edited.
-        force_new = force_new and not bound
-        play_msg, _ = store.play_msg(guild_id)
-        # `/set music` mid-session leaves the free-form card behind in another channel. It cannot be
-        # edited into the bound one, so it is deleted and replaced below instead.
-        stale = play_msg is not None and play_msg.channel.id != channel.id
-        if play_msg and not force_new and not stale:
-            try:
-                kwargs: dict = {}
-                if not live and not store.card_gif(guild_id):
-                    if isinstance(play_msg, discord.PartialMessage):
-                        play_msg = await channel.fetch_message(play_msg.id)
-                    kwargs = idle_edit_attachments(play_msg)
-                edited = await play_msg.edit(view=view, **kwargs) or play_msg
-                store.play_msg(guild_id, edited, view, "set")
-                store.card_gif(guild_id, has_idle_gif(edited), "set")
+        while True:
+            _rerender.pop(guild_id, None)
+            await _render_card(client, guild_id, force_new)
+            if guild_id not in _rerender:
                 return
-            except discord.NotFound:
-                play_msg = None
-        # Send new and delete old concurrently - both API calls happen in parallel
-        coros: list = [channel.send(view=view, **(idle_attachment() if not live else {}))]
-        if play_msg:
-            coros.append(play_msg.delete())
-        results = await asyncio.gather(*coros, return_exceptions=True)
-        new_msg = results[0]
-        if isinstance(new_msg, discord.Forbidden):
-            store.play_msg(guild_id, mode="clear")
-            store.card_gif(guild_id, None, "set")
+            force_new = _rerender[guild_id]
+
+
+async def _render_card(client: Client, guild_id: int, force_new: bool) -> None:
+    """One pass of :func:`render_player`, with the guild's render lock held."""
+    # Everything below is read after the wait, not before it. A `wait=True` caller can sit on
+    # this lock while playback stops, and an attachment set that disagrees with the shape the
+    # view actually built is a 400, not a `NotFound` the send path below would absorb.
+    channel = store.play_ch(guild_id)
+    if not channel:
+        return
+    view = MusicView(client, guild_id)
+    live = view.live
+    bound = request.setup_mode(guild_id)
+    if not live and not bound:
+        return
+    # A bound channel's card is fixed in place, so it is only ever edited.
+    force_new = force_new and not bound
+    play_msg, _ = store.play_msg(guild_id)
+    # `/set music` mid-session leaves the free-form card behind in another channel. It cannot be
+    # edited into the bound one, so it is deleted and replaced below instead.
+    stale = play_msg is not None and play_msg.channel.id != channel.id
+    if play_msg and not force_new and not stale:
+        try:
+            kwargs: dict = {}
+            if not live and not store.card_gif(guild_id):
+                if isinstance(play_msg, discord.PartialMessage):
+                    play_msg = await channel.fetch_message(play_msg.id)
+                kwargs = idle_edit_attachments(play_msg)
+            edited = await play_msg.edit(view=view, **kwargs) or play_msg
+            store.play_msg(guild_id, edited, view, "set")
+            store.card_gif(guild_id, has_idle_gif(edited), "set")
             return
-        if isinstance(new_msg, BaseException):
-            return
-        store.play_msg(guild_id, new_msg, view, "set")
-        store.card_gif(guild_id, has_idle_gif(new_msg), "set")
-        store.chat_weight(guild_id, mode="clear")
-        if request.setup_mode(guild_id):
-            await request.bind_message(guild_id, new_msg.id)
+        except discord.NotFound:
+            play_msg = None
+    # Send new and delete old concurrently - both API calls happen in parallel
+    coros: list = [channel.send(view=view, **(idle_attachment() if not live else {}))]
+    if play_msg:
+        coros.append(play_msg.delete())
+    results = await asyncio.gather(*coros, return_exceptions=True)
+    new_msg = results[0]
+    if isinstance(new_msg, discord.Forbidden):
+        store.play_msg(guild_id, mode="clear")
+        store.card_gif(guild_id, None, "set")
+        return
+    if isinstance(new_msg, BaseException):
+        return
+    store.play_msg(guild_id, new_msg, view, "set")
+    store.card_gif(guild_id, has_idle_gif(new_msg), "set")
+    store.chat_weight(guild_id, mode="clear")
+    if request.setup_mode(guild_id):
+        await request.bind_message(guild_id, new_msg.id)
 
 
 def schedule_render(
@@ -322,6 +337,7 @@ def cleanup_guild(client: Client, guild_id: int) -> None:
     lock = _render_locks.get(guild_id)
     if lock is not None and not lock.locked():
         del _render_locks[guild_id]  # Dropping a held one lets the next render run beside it.
+    _rerender.pop(guild_id, None)
     drop_session_lock(guild_id)
     _cancel_tasks(guild_id)
     gif = store.card_gif(guild_id)
