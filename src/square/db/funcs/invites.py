@@ -122,13 +122,18 @@ async def fetch_leaderboard(guild_id: int) -> list[tuple[int, InviteCounts]]:
     """
     rows = (
         await InviteJoinTable.filter(guild__guild_id=guild_id, inviter_id__isnull=False)
-        .annotate(n_regular=Count("id", _filter=_REGULAR))
+        .annotate(
+            n_regular=Count("id", _filter=_REGULAR),
+            n_left=Count("id", _filter=Q(left_at__isnull=False)),
+            n_fake=Count("id", _filter=Q(fake=True)),
+        )
         .group_by("inviter_id")
-        .values_list("inviter_id", "n_regular")
+        .values_list("inviter_id", "n_regular", "n_left", "n_fake")
     )
     bonuses = dict(await InviteBonusTable.filter(guild__guild_id=guild_id).values_list("user_id", "amount"))
     counts = {
-        inviter_id: InviteCounts(regular=regular, bonus=bonuses.pop(inviter_id, 0)) for inviter_id, regular in rows
+        inviter_id: InviteCounts(regular, left, fake, bonuses.pop(inviter_id, 0))
+        for inviter_id, regular, left, fake in rows
     }
     counts |= {user_id: InviteCounts(bonus=amount) for user_id, amount in bonuses.items()}
     return sorted(((user_id, c) for user_id, c in counts.items() if c.total), key=lambda item: -item[1].total)
