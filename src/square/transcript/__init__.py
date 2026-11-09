@@ -46,13 +46,17 @@ class Attachment:
     name: str
     url: str
     size: str
-    image: str | None = None  # A data URI when the image was copied into the file
+    kind: str = "file"  # image, video, audio or file
+    src: str = ""  # What the page loads, a data URI when the image was copied into the file
+    width: int | None = None
+    height: int | None = None
 
 
 @dataclass
 class Embed:
-    color: str
+    color: str | None
     author: str | None
+    author_icon: str | None
     title: str | None
     url: str | None
     description: Markup
@@ -60,6 +64,27 @@ class Embed:
     image: str | None
     thumbnail: str | None
     footer: str | None
+    footer_icon: str | None
+    time: datetime.datetime | None
+    # A bare image or GIF link shows as the media alone, like Discord does
+    media: tuple[str, str] | None = None  # (kind, url)
+
+
+@dataclass
+class Reply:
+    author: str
+    avatar: str
+    color: str
+    preview: str
+    id: int
+
+
+@dataclass
+class Person:
+    id: int
+    name: str
+    avatar: str
+    color: str
 
 
 @dataclass
@@ -76,6 +101,7 @@ class Component:
     style: str = ""
     url: str | None = None
     media: list[str] = field(default_factory=list)
+    items: list[Attachment] = field(default_factory=list)  # A gallery's pictures and videos
     size: str = ""
     disabled: bool = False
     divider: bool = False
@@ -88,9 +114,10 @@ class Message:
     time: datetime.datetime
     content: Markup
     edited: bool = False
-    system: bool = False
+    system: str = ""  # The gutter icon for a system message: join, pin, boost or other
     unknown: bool = False  # Deleted before the bot cached it, so only its ID and time are known
-    reply: tuple[str, str] | None = None  # (author, preview), or ("", "") when the original is gone
+    reply: Reply | None = None
+    reply_deleted: bool = False
     attachments: list[Attachment] = field(default_factory=list)
     embeds: list[Embed] = field(default_factory=list)
     components: list[Component] = field(default_factory=list)
@@ -100,11 +127,10 @@ class Message:
 
 @dataclass
 class Group:
-    author: str
-    color: str
-    avatar: str
+    author: Person | None  # None for messages that weren't cached
     bot: bool
     messages: list[Message]
+    day: datetime.date | None = None  # Set when the group starts a new day, for the divider above it
 
 
 def _size(num_bytes: int) -> str:
@@ -117,6 +143,16 @@ def _size(num_bytes: int) -> str:
 
 def _hex(color: discord.Colour | None, default: str) -> str:
     return f"#{color.value:06x}" if color and color.value else default
+
+
+def _person(user: discord.User | discord.Member) -> Person:
+    color = _hex(user.color, "") if isinstance(user, discord.Member) else ""
+    return Person(user.id, user.display_name, user.display_avatar.with_size(128).url, color or "#fbfbfb")
+
+
+def _kind(content_type: str | None) -> str:
+    kind = (content_type or "").split("/", 1)[0]
+    return kind if kind in ("image", "video", "audio") else "file"
 
 
 def _component_text(components: Sequence) -> str:
@@ -175,7 +211,19 @@ def _components(
             case Thumbnail():
                 return Component("thumbnail", media=[media(component.media)])
             case MediaGallery():
-                return Component("gallery", media=[media(item.media) for item in component.items])
+                items = [
+                    Attachment(
+                        item.description or "",
+                        item.media.url,
+                        "",
+                        "video" if _kind(item.media.content_type) == "video" else "image",
+                        media(item.media),
+                        item.media.width,
+                        item.media.height,
+                    )
+                    for item in component.items
+                ]
+                return Component("gallery", items=items)
             case FileComponent():
                 name = component.name or component.file.url.rsplit("/", 1)[-1].split("?")[0]
                 size = _size(component.size) if component.size else ""
@@ -242,28 +290,83 @@ def _message(message: discord.Message, lookups: Lookups, images: dict[int, str])
     reply = None
     if message.reference is not None and not message.is_system():
         resolved = message.reference.resolved
-        reply = (
-            (
-                resolved.author.display_name,
-                plain(resolved.content or _component_text(resolved.components) or "Attachment"),
+        if isinstance(resolved, discord.Message):
+            author = _person(resolved.author)
+            preview = plain(resolved.content or _component_text(resolved.components))
+            if not preview and resolved.attachments:
+                preview = "Click to see attachment"
+            reply = Reply(author.name, author.avatar, author.color, preview, resolved.id)
+    return Message(
+        id=message.id,
+        time=message.created_at,
+        content=Markup.escape(content) if message.is_system() else render(content, lookups),
+        edited=message.edited_at is not None,
+        system=_system_icon(message),
+        reply=reply,
+        reply_deleted=bool(message.reference)
+        and isinstance(message.reference.resolved, discord.DeletedReferencedMessage),
+        attachments=[
+            Attachment(
+                a.filename,
+                a.url,
+                _size(a.size),
+                _kind(a.content_type),
+                images.get(a.id) or a.url,
+                a.width,
+                a.height,
             )
-            if isinstance(resolved, discord.Message)
-            else ("", "")
-        )
-    embeds = [
-        Embed(
-            color=_hex(embed.colour if isinstance(embed.colour, discord.Colour) else None, "#1e1f22"),
-            author=embed.author.name if embed.author else None,
-            title=embed.title,
-            url=embed.url,
-            description=render(embed.description or "", lookups),
-            fields=[(f.name or "", render(f.value or "", lookups), bool(f.inline)) for f in embed.fields],
-            image=embed.image.url if embed.image else None,
-            thumbnail=embed.thumbnail.url if embed.thumbnail else None,
-            footer=embed.footer.text if embed.footer else None,
-        )
-        for embed in message.embeds
-    ]
+            for a in message.attachments
+            if a.id not in drawn
+        ],
+        embeds=[_embed(embed, lookups) for embed in message.embeds],
+        components=components,
+        stickers=[(sticker.name, sticker.url) for sticker in message.stickers],
+        reactions=_reactions(message),
+    )
+
+
+def _system_icon(message: discord.Message) -> str:
+    if not message.is_system():
+        return ""
+    match message.type:
+        case discord.MessageType.new_member:
+            return "join"
+        case discord.MessageType.pins_add:
+            return "pin"
+        case (
+            discord.MessageType.premium_guild_subscription
+            | discord.MessageType.premium_guild_tier_1
+            | discord.MessageType.premium_guild_tier_2
+            | discord.MessageType.premium_guild_tier_3
+        ):
+            return "boost"
+    return "other"
+
+
+def _embed(embed: discord.Embed, lookups: Lookups) -> Embed:
+    media = None
+    if embed.type == "gifv" and embed.video and embed.video.url:
+        media = ("video", embed.video.url)
+    elif embed.type == "image" and (url := (embed.thumbnail.url if embed.thumbnail else None) or embed.url):
+        media = ("image", url)
+    return Embed(
+        color=_hex(embed.colour if isinstance(embed.colour, discord.Colour) else None, "") or None,
+        author=embed.author.name if embed.author else None,
+        author_icon=embed.author.icon_url if embed.author else None,
+        title=embed.title,
+        url=embed.url,
+        description=render(embed.description or "", lookups),
+        fields=[(f.name or "", render(f.value or "", lookups), bool(f.inline)) for f in embed.fields],
+        image=embed.image.url if embed.image else None,
+        thumbnail=embed.thumbnail.url if embed.thumbnail else None,
+        footer=embed.footer.text if embed.footer else None,
+        footer_icon=embed.footer.icon_url if embed.footer else None,
+        time=embed.timestamp or None,
+        media=media,
+    )
+
+
+def _reactions(message: discord.Message) -> list[tuple[Markup, int]]:
     reactions = []
     for reaction in message.reactions:
         if isinstance(reaction.emoji, str):
@@ -271,46 +374,32 @@ def _message(message: discord.Message, lookups: Lookups, images: dict[int, str])
         else:
             shown = Markup('<img class="emoji" alt="{0}" src="{1}">').format(reaction.emoji.name, reaction.emoji.url)
         reactions.append((shown, reaction.count))
-    return Message(
-        id=message.id,
-        time=message.created_at,
-        content=Markup.escape(content) if message.is_system() else render(content, lookups),
-        edited=message.edited_at is not None,
-        system=message.is_system(),
-        reply=reply,
-        attachments=[
-            Attachment(a.filename, a.url, _size(a.size), images.get(a.id))
-            for a in message.attachments
-            if a.id not in drawn
-        ],
-        embeds=embeds,
-        components=components,
-        stickers=[(sticker.name, sticker.url) for sticker in message.stickers],
-        reactions=reactions,
-    )
+    return reactions
 
 
 def _group(entries: list[tuple[discord.User | discord.Member | None, Message]]) -> list[Group]:
+    """Runs of messages shown under one author header, split the way Discord splits them."""
     groups: list[Group] = []
-    last_author: int | None = None
     for author, message in entries:
-        previous = groups[-1].messages[-1] if groups else None
+        previous = groups[-1] if groups else None
+        last = previous.messages[-1] if previous else None
+        new_day = last is None or message.time.date() != last.time.date()
         same = (
-            author is not None
-            and author.id == last_author
-            and previous is not None
-            and message.time - previous.time < GROUP_WINDOW
-            and message.reply is None
+            previous is not None
+            and last is not None
+            and author is not None
+            and previous.author is not None
+            and author.id == previous.author.id
+            and not new_day
+            and message.time - last.time < GROUP_WINDOW
+            and not (message.system or last.system or message.reply or message.reply_deleted)
         )
         if same:
-            groups[-1].messages.append(message)
+            previous.messages.append(message)
             continue
-        if author is None:
-            groups.append(Group("Unknown", "#949ba4", "", False, [message]))
-        else:
-            color = _hex(author.color, "#f2f3f5") if isinstance(author, discord.Member) else "#f2f3f5"
-            groups.append(Group(author.display_name, color, author.display_avatar.url, author.bot, [message]))
-        last_author = author.id if author else None
+        person = _person(author) if author is not None else None
+        bot = author is not None and author.bot
+        groups.append(Group(person, bot, [message], message.time.date() if new_day else None))
     return groups
 
 
@@ -346,6 +435,10 @@ async def render_transcript(
         for i in unknown_ids
     ]
     entries.sort(key=lambda entry: entry[1].id)
+    people: dict[int, Person] = {}
+    for message in ordered:
+        if not message.author.bot and message.author.id not in people:
+            people[message.author.id] = _person(message.author)
     return _env.get_template("transcript.html").render(
         css=Markup((TEMPLATES / "transcript.css").read_text()),  # noqa: S704 - our own stylesheet
         title=title,
@@ -354,6 +447,7 @@ async def render_transcript(
         channel_name=channel_name,
         summary=summary,
         groups=_group(entries),
+        participants=list(people.values()),
         message_count=len(entries),
         generated=discord.utils.utcnow(),
         version=version("square"),
