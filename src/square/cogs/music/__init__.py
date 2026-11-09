@@ -1,20 +1,21 @@
 import asyncio
-import datetime
 import discord
 import math
 import re
 import sonolink
-from babel.dates import format_timedelta
 from discord import ui
 from discord.commands import option, slash_command
 from discord.ext import commands
 from sonolink.models import Playlist
+from square import imaging
 from square.cogs.music.eq import Equalizer
 from square.cogs.music.listeners import Listeners
 from square.cogs.music.settings import MusicPage
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView
+from square.imaging import assets
+from square.imaging.templates import now_playing as track_card
 from square.music import dj, request, store
 from square.music.core import (
     LOOP_LABELS,
@@ -30,7 +31,6 @@ from square.music.filters import EQ_PRESETS
 from square.music.history import HistoryListView, history_tracks
 from square.music.play import clean_query, ensure_connected, is_link, resolve_and_enqueue, resolve_query, search_tracks
 from square.music.player import (
-    MusicContainer,
     request_skip,
     schedule_render,
     slash_log,
@@ -286,36 +286,57 @@ class Music(
     async def now_playing(self, ctx: discord.ApplicationContext):
         """Shows currently playing track."""
         player = await self.ensure_voice(ctx)
-        duration: str = ""
-        bar: str = ""
-        if player:
-            requester = ctx.guild.get_member(requester_id(player, player.current) or 0)
-            if player.current.is_stream:
-                duration = f"{emoji.live} LIVE"
-            else:
-                bar = MusicContainer.progress_bar(player)
-                duration = datetime.timedelta(milliseconds=player.current.length)
-                duration = format_timedelta(duration, locale="en")
-            view = DesignerView(
-                ui.Container(
-                    ui.Section(
-                        ui.TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
-                        ui.TextDisplay(
-                            f"{emoji.user} **Requested By**: {requester.mention if requester else 'Unknown'}\n"
-                            f"{emoji.mic} **Artist**: {get_source(player.current.source_name)['emoji']} {player.current.author}\n"
-                            f"{emoji.duration} **Duration**: {duration}\n"
-                            f"{emoji.voice} **Volume**: `{player.volume}%`\n"
-                            f"{emoji.loop} **Loop**: {LOOP_LABELS[player.queue_mode]}\n"
-                            f"{emoji.shuffle} **Shuffle**: {'Enabled' if player.shuffled else 'Disabled'}\n"
-                            f"{emoji.autoplay} **Autoplay**: {'Enabled' if player.autoplay_on else 'Disabled'}\n"
-                            f"{emoji.equalizer} **Equalizers**: {', '.join(EQ_PRESETS[name].label for name in player.presets) or 'None'}"
-                            f"{f'\n\n {bar}' if bar else ''}"
-                        ),
-                        accessory=ui.Thumbnail(url=player.current.artwork) if player.current.artwork else None,
+        if not player:
+            return
+        await ctx.defer(ephemeral=True)
+        track = player.current
+        requester = ctx.guild.get_member(requester_id(player, track) or 0)
+        up_next = player.queue[0] if len(player.queue) else None
+        artwork, next_artwork, avatar = await asyncio.gather(
+            assets.fetch_url(track.artwork),
+            assets.fetch_url(up_next.artwork if up_next else None),
+            assets.fetch(requester.display_avatar if requester else None, 64),
+        )
+        data = track_card.NowPlaying(
+            title=track.title,
+            author=track.author,
+            source=track.source_name or "",
+            artwork=artwork,
+            requester=requester.display_name if requester else None,
+            requester_avatar=avatar,
+            progress=0 if track.is_stream or not track.length else player.position / track.length,
+            elapsed=fmt_time(player.position),
+            duration=fmt_time(track.length),
+            stream=track.is_stream,
+            paused=player.paused,
+            volume=player.volume,
+            loop=LOOP_LABELS[player.queue_mode],
+            shuffle=player.shuffled,
+            autoplay=player.autoplay_on,
+            filters=[EQ_PRESETS[name].label for name in player.presets],
+            up_next=f"{up_next.title} by {up_next.author}" if up_next else None,
+            up_next_artwork=next_artwork,
+            queued=len(player.queue),
+        )
+        file = await imaging.render(track_card.build, data, filename="now-playing.png")
+        alt = f"Now playing {track.title} by {track.author}" + (
+            ", live" if track.is_stream else f", {data.elapsed} of {data.duration}"
+        )
+        view = DesignerView(
+            ui.Container(ui.MediaGallery(discord.MediaGalleryItem("attachment://now-playing.png", description=alt)))
+        )
+        if track.uri:
+            view.add_item(
+                ui.ActionRow(
+                    ui.Button(
+                        label=f"Open on {track_card.source_label(data.source)}",
+                        emoji=get_source(track.source_name)["emoji"],
+                        style=discord.ButtonStyle.link,
+                        url=track.uri,
                     )
                 )
             )
-            await ctx.respond(view=view, ephemeral=True)
+        await ctx.respond(view=view, file=file, ephemeral=True)
 
     # Stop
     @slash_command(name="stop")
