@@ -92,7 +92,7 @@ class TaskManagerView(DesignerView):
         for emoji_icon, label, callback, disabled in [
             (emoji.bin_white, "Stop All", self._stop_all, False),
             (None, "‎ ", None, True),
-            (emoji.reload_white, "Refresh", self._refresh, False),
+            (emoji.reload_white, "Refresh", self._reload_tasks, False),
         ]:
             btn = ui.Button(emoji=emoji_icon, label=label, style=discord.ButtonStyle.grey, disabled=disabled)
             btn.callback = callback
@@ -128,7 +128,7 @@ class TaskManagerView(DesignerView):
         await interaction.edit(view=self)
         await interaction.delete_original_response(delay=5)
 
-    async def _refresh(self, interaction: discord.Interaction):
+    async def _reload_tasks(self, interaction: discord.Interaction):
         """Refresh the task list."""
         self.eval_cog.cleanup_completed_tasks()
         self.build()
