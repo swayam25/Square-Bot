@@ -179,6 +179,9 @@ class Tickets(Cog, name="Tickets", description="Need help? Open a ticket and ask
             if not support and member.id != ticket.opener_id:
                 await self._reply(interaction, error_view("Only staff or the opener can get the transcript."))
                 return
+            if ticket.status == "open":
+                await self._reply(interaction, error_view("Close the ticket first to get its transcript."))
+                return
 
             async def send_transcript() -> None:
                 await self._reply(interaction, *self._with_file(await actions.transcript(guild, channel, ticket)))
@@ -190,13 +193,18 @@ class Tickets(Cog, name="Tickets", description="Need help? Open a ticket and ask
             await self._reply(interaction, error_view("Only staff can do that."))
             return
         match action:
+            case "claim" if ticket.status != "open":
+                await self._reply(interaction, error_view("Closed tickets can't be claimed or unclaimed."))
+            case "claim" if ticket.claimed_by == member.id:
+                await self._with_loading(
+                    interaction, card, "Unclaiming...", lambda: actions.unclaim(self.client, guild, ticket)
+                )
             case "claim":
                 await self._with_loading(
-                    interaction,
-                    card,
-                    "Unclaiming..." if ticket.claimed_by == member.id else "Claiming...",
-                    lambda: actions.claim(self.client, guild, ticket, member),
+                    interaction, card, "Claiming...", lambda: actions.claim(self.client, guild, ticket, member)
                 )
+            case "add" | "remove" if ticket.status != "open":
+                await self._reply(interaction, error_view("Reopen the ticket first to add or remove members."))
             case "add" | "remove":
                 await self._member_modal(interaction, action, ticket, channel, member)
             case "reopen":
@@ -293,9 +301,17 @@ class Tickets(Cog, name="Tickets", description="Need help? Open a ticket and ask
         await ctx.respond(view=view, ephemeral=True)
 
     async def _ticket_here(
-        self, ctx: discord.ApplicationContext, *, staff: bool
+        self, ctx: discord.ApplicationContext, *, staff: bool, closed: str | None = None, still_open: str | None = None
     ) -> tuple[discord.Guild, discord.Member, discord.TextChannel, TicketTable] | None:
-        """The ticket this command runs in, checking who may use it. Replies and returns None when refused."""
+        """
+        The ticket this command runs in, checking who may use it. Replies and returns None when refused.
+
+        Args:
+            ctx (:class:`ApplicationContext`): The command.
+            staff (bool): Only staff may use it. Otherwise the opener can too.
+            closed (str | None): Refuses an open ticket with this message.
+            still_open (str | None): Refuses a closed ticket with this message.
+        """
         guild, member, channel = ctx.guild, ctx.author, ctx.channel
         ticket = await fetch_ticket(channel.id) if isinstance(channel, discord.TextChannel) else None
         if not (guild and isinstance(member, discord.Member) and isinstance(channel, discord.TextChannel) and ticket):
@@ -304,35 +320,72 @@ class Tickets(Cog, name="Tickets", description="Need help? Open a ticket and ask
         if not actions.is_support(member) and (staff or member.id != ticket.opener_id):
             await ctx.respond(view=error_view("You can't do that in this ticket."), ephemeral=True)
             return None
+        refusal = closed if ticket.status == "open" else still_open
+        if refusal:
+            await ctx.respond(view=error_view(refusal), ephemeral=True)
+            return None
         return guild, member, channel, ticket
 
     @ticket.command(name="close")
     async def close_ticket(self, ctx: discord.ApplicationContext):
         """Closes this ticket and saves its transcript."""
-        if not (found := await self._ticket_here(ctx, staff=False)):
+        if not (found := await self._ticket_here(ctx, staff=False, still_open="This ticket is already closed.")):
             return
         guild, member, channel, ticket = found
-        if ticket.status != "open":
-            await ctx.respond(view=error_view("This ticket is already closed."), ephemeral=True)
-            return
         await ctx.defer(ephemeral=True)
         await actions.close(self.client, guild, ticket, channel, member)
         await ctx.respond(view=success_view(f"Closed ticket {cards.label(ticket)}."), ephemeral=True)
 
+    @ticket.command(name="reopen")
+    async def reopen_ticket(self, ctx: discord.ApplicationContext):
+        """Reopens this closed ticket."""
+        if not (found := await self._ticket_here(ctx, staff=True, closed="This ticket is already open.")):
+            return
+        guild, _, channel, ticket = found
+        await ctx.defer(ephemeral=True)
+        await actions.reopen(self.client, guild, ticket, channel)
+        await ctx.respond(view=success_view(f"Reopened ticket {cards.label(ticket)}."), ephemeral=True)
+
+    @ticket.command(name="delete")
+    async def delete_ticket(self, ctx: discord.ApplicationContext):
+        """Deletes this closed ticket and its channel."""
+        if found := await self._ticket_here(ctx, staff=True, closed="Close the ticket before deleting it."):
+            ticket = found[3]
+            await ctx.respond(
+                view=cards.confirm("delete", f"Delete ticket {cards.label(ticket)} and its channel?"), ephemeral=True
+            )
+
     @ticket.command(name="claim")
     async def claim_ticket(self, ctx: discord.ApplicationContext):
-        """Claims this ticket, or releases it if you already have."""
-        if found := await self._ticket_here(ctx, staff=True):
-            guild, member, _, ticket = found
+        """Claims this ticket, taking it over if someone else has."""
+        if not (found := await self._ticket_here(ctx, staff=True, still_open="Closed tickets can't be claimed.")):
+            return
+        guild, member, _, ticket = found
+        if ticket.claimed_by == member.id:
+            await ctx.respond(view=error_view("You've already claimed this ticket."), ephemeral=True)
+            return
+        await ctx.respond(view=success_view(await actions.claim(self.client, guild, ticket, member)), ephemeral=True)
+
+    @ticket.command(name="unclaim")
+    async def unclaim_ticket(self, ctx: discord.ApplicationContext):
+        """Releases your claim on this ticket."""
+        if not (found := await self._ticket_here(ctx, staff=True, still_open="Closed tickets can't be unclaimed.")):
+            return
+        guild, member, _, ticket = found
+        if ticket.claimed_by is None:
+            await ctx.respond(view=error_view("Nobody has claimed this ticket."), ephemeral=True)
+        elif ticket.claimed_by != member.id and not member.guild_permissions.manage_channels:
             await ctx.respond(
-                view=success_view(await actions.claim(self.client, guild, ticket, member)), ephemeral=True
+                view=error_view(f"Only <@{ticket.claimed_by}> or an admin can unclaim this ticket."), ephemeral=True
             )
+        else:
+            await ctx.respond(view=success_view(await actions.unclaim(self.client, guild, ticket)), ephemeral=True)
 
     @ticket.command(name="add")
     @option("member", description="Who to add to this ticket.")
     async def add_to_ticket(self, ctx: discord.ApplicationContext, member: discord.Member):
         """Adds a member to this ticket."""
-        if found := await self._ticket_here(ctx, staff=True):
+        if found := await self._ticket_here(ctx, staff=True, still_open="Reopen the ticket first to add members."):
             _, by, channel, ticket = found
             await ctx.respond(view=success_view(await actions.add_members(ticket, channel, [member], by)))
 
@@ -340,15 +393,15 @@ class Tickets(Cog, name="Tickets", description="Need help? Open a ticket and ask
     @option("member", description="Who to remove from this ticket.")
     async def remove_from_ticket(self, ctx: discord.ApplicationContext, member: discord.Member):
         """Removes a member from this ticket."""
-        if found := await self._ticket_here(ctx, staff=True):
+        if found := await self._ticket_here(ctx, staff=True, still_open="Reopen the ticket first to remove members."):
             _, by, channel, ticket = found
             await ctx.respond(view=success_view(await actions.remove_members(ticket, channel, [member], by)))
 
     @ticket.command(name="transcript")
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def transcript_ticket(self, ctx: discord.ApplicationContext):
-        """Gets this ticket's transcript as a file."""
-        if found := await self._ticket_here(ctx, staff=False):
+        """Gets this closed ticket's transcript as a file."""
+        if found := await self._ticket_here(ctx, staff=False, closed="Close the ticket first to get its transcript."):
             guild, _, channel, ticket = found
             await ctx.defer(ephemeral=True)
             view, file = self._with_file(await actions.transcript(guild, channel, ticket))

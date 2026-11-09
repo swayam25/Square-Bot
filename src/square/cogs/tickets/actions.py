@@ -136,11 +136,16 @@ async def refresh(client: Client, guild: discord.Guild, ticket: TicketTable) -> 
 
 
 async def claim(client: Client, guild: discord.Guild, ticket: TicketTable, member: discord.Member) -> str:
-    """Claims the ticket for a staff member, or releases it when they already hold it."""
-    releasing = ticket.claimed_by == member.id
-    await db.save_ticket(ticket, claimed_by=None if releasing else member.id)
+    """Claims the ticket for a staff member, taking it over if someone else holds it."""
+    await db.save_ticket(ticket, claimed_by=member.id)
     await refresh(client, guild, ticket)
-    return f"{'Unclaimed' if releasing else 'Claimed'} ticket {cards.label(ticket)}."
+    return f"Claimed ticket {cards.label(ticket)}."
+
+
+async def unclaim(client: Client, guild: discord.Guild, ticket: TicketTable) -> str:
+    await db.save_ticket(ticket, claimed_by=None)
+    await refresh(client, guild, ticket)
+    return f"Unclaimed ticket {cards.label(ticket)}."
 
 
 async def add_members(
