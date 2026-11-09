@@ -1,6 +1,8 @@
 import datetime
 import discord
+import math
 import re
+from babel.numbers import format_compact_decimal
 from babel.units import format_unit
 
 
@@ -81,6 +83,18 @@ def fmt_memory(bytes_value):
         return format_unit(gb, "digital-gigabyte", "short", locale="en")
     else:
         return format_unit(mb, "digital-megabyte", "short", locale="en")
+
+
+def fmt_number(value: int | float) -> str:
+    """
+    Formats a number in CLDR short compact form: 999, 1K, 1.3K, 12.3K, 1.5M, 2.3B.
+
+    Args:
+        value (int | float): The number to format.
+    """
+    unit = 1000 ** max(int(math.log(abs(value), 1000)), 0) if value else 1
+    # Rounded to the shown precision first, otherwise Babel turns 999,950 into "1000K" instead of "1M"
+    return format_compact_decimal(round(value / unit, 1) * unit, locale="en", fraction_digits=1)
 
 
 def member_counts(guild: discord.Guild) -> tuple[int, int, int]:

@@ -1,4 +1,5 @@
 import discord
+import importlib
 import os
 import sys
 from discord import ui
@@ -15,6 +16,26 @@ from square.core.view import DesignerView, error_view, success_view
 from square.db.funcs.dev import add_dev, fetch_dev_ids, remove_dev
 from square.utils import check, config, temp
 from square.utils.emoji import emoji
+
+# Cogs import these without them being cogs, so `reload_extension` alone leaves them stale. Dependencies first.
+# `assets` is skipped to keep its avatar cache.
+_IMAGING = (
+    "square.imaging.tokens",
+    "square.imaging.theme",
+    "square.imaging.fonts",
+    "square.imaging.canvas",
+    "square.imaging.layout",
+    "square.imaging.components",
+    "square.imaging",
+)
+
+
+def _reload_imaging() -> None:
+    """Reloads the image engine and its templates in place, so code holding them sees the new versions."""
+    templates = sorted(name for name in sys.modules if name.startswith("square.imaging.templates."))
+    for name in (*_IMAGING, *templates, "square.imaging.templates"):
+        if module := sys.modules.get(name):
+            importlib.reload(module)
 
 
 class Devs(
@@ -113,6 +134,7 @@ class Devs(
             )
         )
         await ctx.respond(view=view, ephemeral=True, delete_after=2)
+        _reload_imaging()
         for name in extensions():
             self.client.reload_extension(name)
 

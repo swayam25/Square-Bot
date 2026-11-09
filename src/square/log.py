@@ -15,6 +15,8 @@ LIBRARY_LEVELS = {
     "aerich": logging.WARNING,
     "asyncio": logging.WARNING,
     "discord": logging.WARNING,
+    "fontTools": logging.WARNING,
+    "PIL": logging.WARNING,
     "sonolink": logging.INFO,
     "tortoise": logging.WARNING,
 }

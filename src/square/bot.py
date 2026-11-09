@@ -7,6 +7,7 @@ from pathlib import Path
 from square.cogs import extensions
 from square.core import Client
 from square.db import DB
+from square.imaging import assets
 from square.music import lyrics
 from square.utils import config, invites
 
@@ -56,6 +57,7 @@ async def shutdown() -> None:
     """Shuts the bot down gracefully."""
     await DB().close()
     await lyrics.close()
+    await assets.close()
     if not client.is_closed():
         await client.close()
     log.info("Shut down")

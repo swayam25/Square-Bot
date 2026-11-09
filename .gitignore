@@ -133,3 +133,5 @@ dmypy.json
 
 # Test script
 tst.*
+# Image previews from `python -m square.imaging`
+.preview/
