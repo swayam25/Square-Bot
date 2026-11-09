@@ -650,13 +650,18 @@ class MusicContainer(ui.Container):
 
     @staticmethod
     def progress_bar(player: SquarePlayer, bar_length: int = 10) -> str:
-        """Builds the position/duration progress bar line. Streams get a fully filled bar with a LIVE badge."""
+        """
+        Builds the position/duration progress bar line. Streams get a fully filled bar with a LIVE badge.
+
+        The filled part waves while playing and lies flat while paused, like a wavy progress indicator.
+        """
+        active = str(emoji.still_bar if player.paused else emoji.filled_bar)
         if player.current.is_stream:
-            return f"{emoji.live} **LIVE** {str(emoji.filled_bar) * bar_length}"
+            return f"{emoji.live} **LIVE** {active * bar_length}"
         filled = min(bar_length, int(bar_length * player.position // float(player.current.length)))
         return (
             f"`{fmt_time(player.position)}` "
-            f"{str(emoji.filled_bar) * filled}{str(emoji.empty_bar) * (bar_length - filled)} "
+            f"{active * filled}{str(emoji.empty_bar) * (bar_length - filled)} "
             f"`{fmt_time(player.current.length)}`"
         )
 
