@@ -23,6 +23,18 @@ def channel_name(number: int) -> str:
     return f"ticket-{number:04d}"
 
 
+_LOCK = "🔒-"
+
+
+def unlocked_name(name: str) -> str:
+    return name.removeprefix(_LOCK)
+
+
+def locked_name(name: str) -> str:
+    """The channel's current name behind a lock, so a ticket staff renamed keeps its name when closed."""
+    return (_LOCK + unlocked_name(name))[:100]
+
+
 def support_roles(guild: discord.Guild) -> list[discord.Role]:
     ids = cache.get(guild.id).ticket_support_role_ids
     return [role for role_id in ids if (role := guild.get_role(role_id))]

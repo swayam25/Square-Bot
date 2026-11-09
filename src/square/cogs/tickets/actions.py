@@ -31,6 +31,7 @@ _MEMBER_PERMISSIONS = {
 MEMBER = discord.PermissionOverwrite(**_MEMBER_PERMISSIONS)
 STAFF = discord.PermissionOverwrite(**_MEMBER_PERMISSIONS, manage_messages=True)
 BOT = discord.PermissionOverwrite(**_MEMBER_PERMISSIONS, manage_messages=True, manage_channels=True)
+_renames: dict[int, asyncio.Task] = {}
 
 
 def is_support(member: discord.Member) -> bool:
@@ -39,6 +40,27 @@ def is_support(member: discord.Member) -> bool:
         return True
     ids = set(cache.get(member.guild.id).ticket_support_role_ids)
     return any(role.id in ids for role in member.roles)
+
+
+def _rename(channel: discord.TextChannel, closed: bool, reason: str) -> None:
+    """Puts the lock on a closed ticket's channel name, or takes it off, in the background."""
+    if pending := _renames.pop(channel.id, None):
+        pending.cancel()
+
+    async def run() -> None:
+        # The cached channel, since `interaction.channel` is a copy that doesn't see later renames
+        current = channel.guild.get_channel(channel.id) or channel
+        name = cards.locked_name(current.name) if closed else cards.unlocked_name(current.name)
+        if name == current.name:
+            return
+        try:
+            await current.edit(name=name, reason=reason)
+        except discord.HTTPException:
+            log.warning("Couldn't rename ticket channel %s in guild %s", channel.id, channel.guild.id)
+
+    task = asyncio.create_task(run())
+    _renames[channel.id] = task
+    task.add_done_callback(lambda done: _renames.pop(channel.id, None) if _renames.get(channel.id) is done else None)
 
 
 async def _category(guild: discord.Guild) -> discord.CategoryChannel | None:
@@ -177,7 +199,7 @@ async def _transcript(
 async def transcript(guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable | None) -> discord.File:
     """A transcript to hand to someone who asked for it."""
     page, _, _ = await _transcript(guild, channel, ticket)
-    return discord.File(io.BytesIO(page), filename=f"{channel.name}.html")
+    return discord.File(io.BytesIO(page), filename=f"{cards.unlocked_name(channel.name)}.html")
 
 
 async def close(
@@ -189,7 +211,7 @@ async def close(
         if member := guild.get_member(user_id):
             await channel.set_permissions(member, overwrite=discord.PermissionOverwrite(view_channel=False))
     page, count, participants = await _transcript(guild, channel, ticket)
-    filename = f"{channel.name}.html"
+    filename = f"{cards.unlocked_name(channel.name)}.html"
     card = cards.log_card(ticket, transcript=filename, messages=count, participants=participants)
     edited = ticket.log_message_id is not None and await server_log.edit(
         client,
@@ -205,6 +227,7 @@ async def close(
         )
         await db.save_ticket(ticket, log_message_id=log_id)
     await refresh(client, guild, ticket)
+    _rename(channel, True, f"Ticket closed by {by}")
 
 
 async def reopen(client: Client, guild: discord.Guild, ticket: TicketTable, channel: discord.TextChannel) -> None:
@@ -213,6 +236,7 @@ async def reopen(client: Client, guild: discord.Guild, ticket: TicketTable, chan
             await channel.set_permissions(member, overwrite=MEMBER)
     await db.save_ticket(ticket, status="open", closed_by=None, closed_at=None)
     await refresh(client, guild, ticket)
+    _rename(channel, False, "Ticket reopened")
 
 
 async def delete(
