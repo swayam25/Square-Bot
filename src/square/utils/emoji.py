@@ -1,11 +1,12 @@
 import discord
 import json
 import logging
-import os
+from pathlib import Path
 
 log = logging.getLogger(__name__)
 
-custom_emoji_file_path = "./.cache/emoji.json"
+CUSTOM_EMOJI_FILE_PATH = Path(".cache/emoji.json")
+EMOJI_DIR = Path("assets/emojis")
 
 
 class Icon(discord.PartialEmoji):
@@ -13,7 +14,7 @@ class Icon(discord.PartialEmoji):
     One emoji, usable in f-strings and as a button or select option's `emoji`.
 
     Updated in place, so anything holding one (a cog's help emoji, a settings page, a button) shows the new emoji after
-    `/emoji upload` without a restart.
+    a sync from `/emoji` without a restart.
     """
 
     def __init__(self, default: str):
@@ -27,7 +28,7 @@ class Icon(discord.PartialEmoji):
 
 
 class Emoji:
-    """Every emoji the bot uses. Adding one here is all it takes: the line's name is what gets uploaded and synced."""
+    """Every emoji the bot uses. Add a line here and a same-named file in `assets/emojis`, then sync from `/emoji`."""
 
     bullet = Icon("•")
     bullet_red = Icon("•")
@@ -95,12 +96,8 @@ class Emoji:
     voice_red = Icon("🔊")
     invite = Icon("🔗")
     invite_red = Icon("🔗")
-    leaderboard = Icon("🏆")
-    joins = Icon("📥")
     joins_green = Icon("📥")
-    left = Icon("📤")
     fake = Icon("⚠️")
-    bonus = Icon("🎁")
     lock_white = Icon("🔒")
     edit_white = Icon("✏️")
     channel = Icon("📺")
@@ -166,9 +163,11 @@ class Emoji:
     equalizer = Icon("🎛️")
     empty_bar = Icon("░")
     filled_bar = Icon("█")
+    still_bar = Icon("█")
 
     reload = Icon("🔄")
     reload_white = Icon("🔄")
+    sync_white = Icon("🔄")
     shutdown = Icon("🔴")
     console = Icon("🖥️")
     console_green = Icon("🖥️")
@@ -188,14 +187,14 @@ def get_emoji_names() -> list[str]:
 
 def create_custom_emoji_config(emojis: dict[str, str]) -> dict:
     """Saves the app's emojis, using defaults for the missing ones. `reload_emoji` applies them."""
-    os.makedirs(os.path.dirname(custom_emoji_file_path), exist_ok=True)
+    CUSTOM_EMOJI_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
     default_emoji_keys = [name for name in _icons if not emojis.get(name, "").strip()]
     extra_keys = [name for name in emojis if name not in _icons]
     final_emojis = {
         name: emojis[name] if name not in default_emoji_keys else icon.default for name, icon in _icons.items()
     }
 
-    with open(custom_emoji_file_path, "w", encoding="utf8") as emoji_file:
+    with open(CUSTOM_EMOJI_FILE_PATH, "w", encoding="utf8") as emoji_file:
         json.dump(final_emojis, emoji_file, ensure_ascii=False, indent=4)
 
     msg: dict = {"status": "success"}
@@ -219,19 +218,19 @@ def update_emoji(name: str, value: str) -> None:
 def reload_emoji() -> None:
     """Applies the saved emojis, falling back to the default for missing ones. Everything holding an `Icon` updates."""
     try:
-        with open(custom_emoji_file_path, encoding="utf8") as emoji_file:
+        with open(CUSTOM_EMOJI_FILE_PATH, encoding="utf8") as emoji_file:
             saved: dict[str, str] = dict(json.load(emoji_file))
     except FileNotFoundError:
         log.warning(
-            "Custom emoji file %s not found, using default emojis. Upload some with /emoji upload",
-            custom_emoji_file_path,
+            "Custom emoji file %s not found, using default emojis. Sync them from /emoji",
+            CUSTOM_EMOJI_FILE_PATH,
         )
         saved = {}
     else:
         # Clean up the JSON file by removing invalid keys
         known = {name: value for name, value in saved.items() if name in _icons}
         if len(known) != len(saved):
-            with open(custom_emoji_file_path, "w", encoding="utf8") as emoji_file:
+            with open(CUSTOM_EMOJI_FILE_PATH, "w", encoding="utf8") as emoji_file:
                 json.dump(known, emoji_file, ensure_ascii=False, indent=4)
 
     for name, icon in _icons.items():

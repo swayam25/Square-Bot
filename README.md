@@ -115,26 +115,32 @@ The bot ships with a default set of Unicode emojis defined on the `Emoji` class 
 
 **How it works:** every emoji is keyed by an attribute name on the `Emoji` class (*e.g. `success`, `error`, `loading`*). The bot loads overrides from `.cache/emoji.json`, matching each entry to an attribute by name. Any attribute without an override simply falls back to its default.
 
-There are two ways to provide overrides - upload a `.zip`, or write `.cache/emoji.json` by hand.
+There are two ways to provide overrides: sync the bundled emojis, or write `.cache/emoji.json` by hand.
 
-### [Option 1] Upload a `.zip` (*recommended*)
+### [Option 1] Sync [`assets/emojis`](./assets/emojis) (*recommended*)
 
-The workflow is the same whether you use the emojis bundled with this bot or your own:
+The bot's emojis live in [`assets/emojis`](./assets/emojis) as full-resolution `.png`/`.gif` files, one per attribute (*e.g. `success.png` → the `success` attribute*).
 
-1. **Prepare a `.zip`** of `.png`/`.gif` emoji files. Each file name **must** match an attribute on the `Emoji` class (*e.g. `success.png` → the `success` attribute*).
-    > To use the bot's built-in set, just grab the ready-made [`emojis.zip`](./assets/emojis.zip).
-1. **`/emoji upload`**: Upload the `.zip` to register the emojis with Discord.
+Run **`/emoji`** to open a panel that compares the folder with the bot's app emojis: what's new, edited or removed, and any attribute without a file. **Sync** makes the app emojis match:
+- New files are uploaded and edited files are re-uploaded. Unchanged ones are left alone, so their IDs stay the same.
+- App emojis with no file are deleted.
+- `.cache/emoji.json` is rewritten, and the new emojis show up without a restart.
+
+To change an emoji, replace its file in `assets/emojis`, then run `/emoji` and press **Sync**. To use your own set, swap in your own files with the same names.
+
+> [!NOTE]
+> Discord takes `.png`/`.gif` files up to 256 KB, named with 2-32 letters, digits or underscores. The panel lists files that break these rules and leaves them out of the sync.
 
 ```mermaid
 flowchart LR
-    A["Zip of .png/.gif files<br/>named after Emoji attributes"] --> B["/emoji upload"]
+    A["assets/emojis<br/>.png/.gif named after Emoji attributes"] --> B["/emoji → Sync"]
     B --> C[".cache/emoji.json"]
     C --> D["Emojis applied"]
 ```
 
 ### [Option 2] Write `.cache/emoji.json` manually
 
-If you already have the emojis, you can skip uploading and create `.cache/emoji.json` yourself:
+If your emojis are already on Discord, you can skip syncing and create `.cache/emoji.json` yourself:
 
 ```json
 {
