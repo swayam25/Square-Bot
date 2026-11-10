@@ -36,6 +36,8 @@
     },
     "dependencies": {
         "@redis/client": "^6.3.1",
-        "@square/api-client": "workspace:*"
+        "@square/api-client": "workspace:*",
+        "discord-api-types": "^0.38.58",
+        "oauth4webapi": "^3.8.8"
     }
 }

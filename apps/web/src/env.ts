@@ -25,4 +25,18 @@ export const variables = defineEnvVars({
             return value;
         }),
     },
+    DISCORD_CLIENT_ID: {
+        description: "Application ID from the Discord Developer Portal (the bot's user ID)",
+        schema: runtime((value) => {
+            if (!value || !/^\d{17,20}$/.test(value)) throw new Error("must be a Discord application ID");
+            return value;
+        }),
+    },
+    DISCORD_CLIENT_SECRET: {
+        description: "OAuth2 client secret from the Discord Developer Portal",
+        schema: runtime((value) => {
+            if (!value) throw new Error("is required");
+            return value;
+        }),
+    },
 });
