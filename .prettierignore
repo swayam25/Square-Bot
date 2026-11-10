@@ -1,0 +1,11 @@
+node_modules
+build
+dist
+.svelte-kit
+.turbo
+pnpm-lock.yaml
+uv.lock
+apps/web/static
+# Ruff formats the bot, and its Jinja templates aren't valid HTML to Prettier
+apps/bot
+*.md

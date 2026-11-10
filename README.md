@@ -6,7 +6,7 @@
 
 Advanced multipurpose discord bot for all your needs.
 
-[![Python Version](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fswayam25%2FSquare-Bot%2Fmain%2Fpyproject.toml&style=for-the-badge&logo=python&logoColor=%23FFFFFF&labelColor=%233776AB&color=%23000000)](https://www.python.org/downloads)
+[![Python Version](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fswayam25%2FSquare-Bot%2Fmain%2Fapps%2Fbot%2Fpyproject.toml&style=for-the-badge&logo=python&logoColor=%23FFFFFF&labelColor=%233776AB&color=%23000000)](https://www.python.org/downloads)
 [![Pycord Version](https://img.shields.io/badge/pycord-v2.8.1-%23000000?style=for-the-badge&logo=python&logoColor=%23FFFFFF&labelColor=%235865F2)](https://github.com/Pycord-Development/pycord)
 [![GitHub Release](https://img.shields.io/github/v/release/swayam25/Square-Bot?style=for-the-badge&logo=github&logoColor=%23FFFFFF&labelColor=%230D1117&color=%23000000)](https://github.com/swayam25/Square-Bot/releases)
 [![GitHub License](https://img.shields.io/github/license/swayam25/Square-Bot?style=for-the-badge&logo=gnu&logoColor=%23FFFFFF&labelColor=%23A32D2A&color=%23000000)](https://github.com/swayam25/Square-Bot/blob/main/LICENSE)
@@ -38,7 +38,7 @@ Advanced multipurpose discord bot for all your needs.
 
 2. Create `config.toml` file from the provided `config.example.toml` and fill in the required values.
     ```sh
-    cp config.example.toml config.toml
+    cp apps/bot/config.example.toml apps/bot/config.toml
     ```
 
 > [!TIP]
@@ -111,29 +111,29 @@ Running your own node gives you full control over performance, uptime, and audio
 
 ## ✨ Custom Emojis
 
-The bot ships with a default set of Unicode emojis defined on the `Emoji` class in [`emoji.py`](./src/square/utils/emoji.py). You can override any of these with your own Discord custom emojis.
+The bot ships with a default set of Unicode emojis defined on the `Emoji` class in [`emoji.py`](./apps/bot/src/square/utils/emoji.py). You can override any of these with your own Discord custom emojis.
 
 **How it works:** every emoji is keyed by an attribute name on the `Emoji` class (*e.g. `success`, `error`, `loading`*). The bot loads overrides from `.cache/emoji.json`, matching each entry to an attribute by name. Any attribute without an override simply falls back to its default.
 
 There are two ways to provide overrides: sync the bundled emojis, or write `.cache/emoji.json` by hand.
 
-### [Option 1] Sync [`assets/emojis`](./assets/emojis) (*recommended*)
+### [Option 1] Sync [`apps/bot/emojis`](./apps/bot/emojis) (*recommended*)
 
-The bot's emojis live in [`assets/emojis`](./assets/emojis) as full-resolution `.png`/`.gif` files, one per attribute (*e.g. `success.png` → the `success` attribute*).
+The bot's emojis live in [`apps/bot/emojis`](./apps/bot/emojis) as full-resolution `.png`/`.gif` files, one per attribute (*e.g. `success.png` → the `success` attribute*).
 
 Run **`/emoji`** to open a panel that compares the folder with the bot's app emojis: what's new, edited or removed, and any attribute without a file. **Sync** makes the app emojis match:
 - New files are uploaded and edited files are re-uploaded. Unchanged ones are left alone, so their IDs stay the same.
 - App emojis with no file are deleted.
 - `.cache/emoji.json` is rewritten, and the new emojis show up without a restart.
 
-To change an emoji, replace its file in `assets/emojis`, then run `/emoji` and press **Sync**. To use your own set, swap in your own files with the same names.
+To change an emoji, replace its file in `apps/bot/emojis`, then run `/emoji` and press **Sync**. To use your own set, swap in your own files with the same names.
 
 > [!NOTE]
 > Discord takes `.png`/`.gif` files up to 256 KB, named with 2-32 letters, digits or underscores. The panel lists files that break these rules and leaves them out of the sync.
 
 ```mermaid
 flowchart LR
-    A["assets/emojis<br/>.png/.gif named after Emoji attributes"] --> B["/emoji → Sync"]
+    A["apps/bot/emojis<br/>.png/.gif named after Emoji attributes"] --> B["/emoji → Sync"]
     B --> C[".cache/emoji.json"]
     C --> D["Emojis applied"]
 ```

@@ -77,13 +77,13 @@ A cog without `emoji` stays out of `/help`, and `dev_only=True` shows it to deve
 
 **State**: `/reload-cogs` reloads everything under `cogs/`, so caches and players belong in `music/`, `utils/` or `db/`.
 
-**Emojis**: add an `Icon` line to `Emoji` in `utils/emoji.py` and a same-named `.png`/`.gif` to `assets/emojis`, then press **Sync** in `/emoji`. To change one, replace the file and sync.
+**Emojis**: add an `Icon` line to `Emoji` in `utils/emoji.py` and a same-named `.png`/`.gif` to `emojis/`, then press **Sync** in `/emoji`. To change one, replace the file and sync.
 
 **Images**: `square.imaging` draws cards with Pillow in the same design as the website. A template in `imaging/templates/` turns plain data into a layout built from `Kit` components (`ui.chip`, `ui.stat`, `ui.tile`, …), and `imaging.render` puts it on the card. Add sample data for it in `templates/__init__.py`, preview it with `uv run python -m square.imaging <template>`, and send it from a cog with `await imaging.render(template.build, data, filename="card.png")`.
 
 - **Colors**: every color is Tailwind's (`mist` greys, `emerald-400`, `amber-400`, `red-400`) except the accent, which comes from `colors.theme` in `config.toml`, all in `imaging/theme.py`. The other `[colors]` keys are Discord's own green, red and orange, used by embeds and emojis so they look native next to Discord's UI. Images don't sit in Discord's UI, so they stay on Tailwind. Components pick their own color roles (a warning chip uses the warning color), so templates never hard-code colors. A translucent Tailwind fill like `bg-red-400/10` is flattened onto the surface with `theme.tint()`.
 - **Type and shape**: text styles are Tailwind's sizes in `imaging/tokens.py` (`Type.SM` is `text-sm`), set in Saira for titles, Noto Sans for reading and JetBrains Mono for numbers, handles and eyebrow labels. Every family falls back to the rest of Noto (math letters, symbols, color emoji), so any Discord name draws. Radii are Tailwind's too (`Radius.XL2` is `rounded-2xl`), and spacing sticks to even Tailwind steps (8, 16, 24 px).
-- **Icons**: `ui.chip(..., icon=...)` and `ui.icon()` draw emojis from `assets/emojis`, recolored to match the text next to them. Only the icon's shape is used, so the file's color doesn't matter. Pass the plain name (`console`, `dj`), and use a variant like `_white`, `_green` or `_red` only when no plain file exists (e.g. `user_add_white`). Brand logos keep their own colors with `tint=False`.
+- **Icons**: `ui.chip(..., icon=...)` and `ui.icon()` draw emojis from `emojis/`, recolored to match the text next to them. Only the icon's shape is used, so the file's color doesn't matter. Pass the plain name (`console`, `dj`), and use a variant like `_white`, `_green` or `_red` only when no plain file exists (e.g. `user_add_white`). Brand logos keep their own colors with `tint=False`.
 
 ## 📜 Logging
 

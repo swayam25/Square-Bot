@@ -43,7 +43,7 @@ _VOTE_RESULT_LINGER = 5.0
 # Each track costs three of the message's 40 components.
 _UP_NEXT_LIMIT = 4
 # Optional; the idle card falls back to text without it.
-IDLE_GIF = Path("assets/idle.gif")
+IDLE_GIF = Path("idle.gif")
 
 
 def idle_attachment() -> dict:

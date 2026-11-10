@@ -6,20 +6,20 @@ default:
 
 [private]
 _cache:
-    @mkdir -p .cache
+    @mkdir -p apps/bot/.cache
 
 [private]
 _prep: _cache
     @printf '\033[43m\033[30m SYNC \033[0m \033[33mSyncing Dependencies\033[0m\n'
-    @uv sync
+    @uv --directory apps/bot sync
     @printf '\033[43m\033[30m HOOK \033[0m \033[33mInstalling Pre Commit\033[0m\n'
-    @uv run pre-commit install
+    @uv --directory apps/bot run pre-commit install
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDone\033[0m\n'
 
 # Create config.toml, the cache dir, and install dependencies
 init: _prep
-    @[[ -f config.toml ]] || cp config.example.toml config.toml
-    @printf '\033[42m\033[30m  OK  \033[0m \033[32mNow edit \033[36mconfig.toml\033[32m, then run: \033[36mjust dev\033[0m\n'
+    @[[ -f apps/bot/config.toml ]] || cp apps/bot/config.example.toml apps/bot/config.toml
+    @printf '\033[42m\033[30m  OK  \033[0m \033[32mNow edit \033[36mapps/bot/config.toml\033[32m, then run: \033[36mjust dev\033[0m\n'
 
 # Rebuild and deploy the production stack (--dev for local services)
 up *args: _cache
@@ -55,49 +55,43 @@ down *args:
 logs:
     @docker compose -f docker-compose.prod.yml logs -f bot
 
-# Run the bot locally with debug logs (auto-starts services if not running)
+# Run the bot and the website together with debug logs (starts services first, Ctrl-C stops both apps)
 dev:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [[ $(docker compose ps --status running -q 2>/dev/null | wc -l) -lt 1 ]]; then
-        just up --dev
-    fi
-    printf '\n'
-    DB_HOST=localhost SQUARE_LOG_LEVEL=DEBUG uv run square
+    @pnpm run dev
 
 # Lint and format the code
 check:
-    @uv run ruff check --fix src
-    @uv run ruff format src
+    @uv --directory apps/bot run ruff check --fix src
+    @uv --directory apps/bot run ruff format src
 
 # ── Database ──────────────────────────────────────────────────────────────────
 
 [private]
 db-ensure-init:
-    -@DB_HOST=localhost uv run aerich init-db > /dev/null 2>&1
+    -@DB_HOST=localhost uv --directory apps/bot run aerich init-db > /dev/null 2>&1
 
 # Generate a new migration from schema changes
 db-migrate name="auto": db-ensure-init
     @printf '\033[43m\033[30m  DB  \033[0m \033[33mGenerating migration: {{ name }}\033[0m\n'
-    @DB_HOST=localhost uv run aerich migrate --name {{ name }}
+    @DB_HOST=localhost uv --directory apps/bot run aerich migrate --name {{ name }}
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mMigration created\033[0m\n'
 
 # Apply all pending migrations
 db-upgrade: db-ensure-init
     @printf '\033[43m\033[30m  DB  \033[0m \033[33mApplying migrations\033[0m\n'
-    @DB_HOST=localhost uv run aerich upgrade
+    @DB_HOST=localhost uv --directory apps/bot run aerich upgrade
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDatabase up to date\033[0m\n'
 
 # Roll back the last applied migration
 db-downgrade: db-ensure-init
     @printf '\033[41m\033[30m  DB  \033[0m \033[31mRolling back last migration\033[0m\n'
-    @DB_HOST=localhost uv run aerich downgrade -v -1
+    @DB_HOST=localhost uv --directory apps/bot run aerich downgrade -v -1
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mRolled back\033[0m\n'
 
 # Show applied migration history
 db-history: db-ensure-init
-    @DB_HOST=localhost uv run aerich history
+    @DB_HOST=localhost uv --directory apps/bot run aerich history
 
 # Show migrations not yet applied
 db-heads: db-ensure-init
-    @DB_HOST=localhost uv run aerich heads
+    @DB_HOST=localhost uv --directory apps/bot run aerich heads

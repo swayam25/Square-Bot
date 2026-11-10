@@ -41,7 +41,7 @@ def _names(names: Iterable[str]) -> str:
 
 @dataclass(slots=True)
 class Snapshot:
-    """`assets/emojis` next to the app's emojis. What's out of sync is worked out from these, without more requests."""
+    """`emojis/` next to the app's emojis. What's out of sync is worked out from these, without more requests."""
 
     files: dict[str, bytes]
     hashes: dict[str, str]
@@ -254,6 +254,6 @@ class Emojis:
     @slash_command(guild_ids=config.owner_guild_ids, name="emoji")
     @check.is_dev()
     async def emoji_panel(self, ctx: discord.ApplicationContext):
-        """Checks the app's emojis against assets/emojis and syncs them."""
+        """Checks the app's emojis against emojis/ and syncs them."""
         await ctx.defer()
         await ctx.respond(view=EmojiPanel(ctx, self.client, await scan(self.client)))

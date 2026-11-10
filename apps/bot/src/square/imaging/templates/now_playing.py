@@ -8,7 +8,7 @@ from square.imaging.tokens import Radius, Type
 _ARTWORK = 160
 _COVER = 32
 _FILTERS_SHOWN = 2
-# Lavalink source names with a brand logo in `assets/emojis`. Others get a music note
+# Lavalink source names with a brand logo in `emojis/`. Others get a music note
 _LOGOS = {"youtube", "spotify", "soundcloud"}
 _LABELS = {
     "youtube": "YouTube",

@@ -17,7 +17,7 @@ type ChipTone = Literal["neutral", "muted", "on", "accent", "success", "warning"
 @lru_cache(maxsize=128)
 def load_icon(name: str, color: RGB | None = None) -> Image.Image:
     """
-    One of the bot's emojis from `assets/emojis` as an icon, so images and messages share one icon set.
+    One of the bot's emojis from `emojis/` as an icon, so images and messages share one icon set.
 
     Tinted to `color` through its alpha, so any color variant of an icon works. Pass no color to keep a brand logo's
     own colors.
@@ -97,7 +97,7 @@ class Kit:
         """
         A pill chip, `h-8 text-xs`, filled by its tone.
 
-        `icon` names a leading icon from `assets/emojis`, tinted to the label's color unless `tint` is off (brand
+        `icon` names a leading icon from `emojis/`, tinted to the label's color unless `tint` is off (brand
         logos). `dot` leads with an 8px status dot instead. Chips with a lead use `px-3` on both sides, text-only
         chips `px-4`.
         """

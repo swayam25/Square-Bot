@@ -9,15 +9,14 @@ x-logging: &logging
 services:
   bot:
     build:
-      context: .
-      dockerfile: containers/Dockerfile
+      context: apps/bot
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      - ./.cache:/square/.cache
-      - ./config.toml:/square/config.toml:ro
+      - ./apps/bot/.cache:/square/.cache
+      - ./apps/bot/config.toml:/square/config.toml:ro
     logging: *logging
 
   db:

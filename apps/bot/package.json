@@ -1,0 +1,8 @@
+{
+    "name": "bot",
+    "private": true,
+    "scripts": {
+        "dev": "DB_HOST=localhost SQUARE_LOG_LEVEL=DEBUG uv run square",
+        "lint": "uv run ruff check src && uv run ruff format --check src"
+    }
+}

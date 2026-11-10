@@ -2,7 +2,6 @@
 name = "square"
 version = "2.7.2"
 description = "Advanced multipurpose discord bot for all your needs."
-readme = "README.md"
 license = "GPL-3.0-only"
 authors = [{ name = "swayam25" }]
 requires-python = ">=3.14"

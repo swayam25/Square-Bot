@@ -3,7 +3,6 @@ import discord
 import logging
 import sys
 from importlib.metadata import metadata, version
-from pathlib import Path
 from square.cogs import extensions
 from square.core import Client
 from square.db import DB
@@ -28,11 +27,34 @@ client = Client(
 )
 invites.setup(client)
 
+LOGO = r"""
+       ::  @@:@-
+   =*#####*===*##:
+  *#-:=+=--+*==- -@:
+ --:##+=+#######- ---
+:++##  @@  :--: +##*=
+#==-:#= -+*=:@@:## @@@
+:-@:##:*#*=:-=*##+ -=
+ ::**:##:=###**=:===
+  :+ -#==#+++#*=*+
+    @:#*:--=*-- :
+     -#====
+"""
+
+NAME = r"""
+ ____
+/ ___|  __ _ _   _  __ _ _ __ ___
+\___ \ / _` | | | |/ _` | '__/ _ \
+ ___) | (_| | |_| | (_| | | |  __/
+|____/ \__, |\__,_|\__,_|_|  \___|
+          |_|
+"""
+
 
 def log_banner() -> None:
     """Logs the startup banner: the logo with the name centered beside it, version after the name."""
-    art = Path("assets/ascii.txt").read_text().strip("\n").splitlines()
-    name = [line.rstrip() for line in Path("assets/name.txt").read_text().strip("\n").splitlines()]
+    art = LOGO.strip("\n").splitlines()
+    name = NAME.strip("\n").splitlines()
     width = max(map(len, art))
     top = (len(art) - len(name)) // 2
     ver = f"v{version('square')}"

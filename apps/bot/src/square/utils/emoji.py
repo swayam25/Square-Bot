@@ -6,7 +6,7 @@ from pathlib import Path
 log = logging.getLogger(__name__)
 
 CUSTOM_EMOJI_FILE_PATH = Path(".cache/emoji.json")
-EMOJI_DIR = Path("assets/emojis")
+EMOJI_DIR = Path("emojis")
 
 
 class Icon(discord.PartialEmoji):
@@ -28,7 +28,7 @@ class Icon(discord.PartialEmoji):
 
 
 class Emoji:
-    """Every emoji the bot uses. Add a line here and a same-named file in `assets/emojis`, then sync from `/emoji`."""
+    """Every emoji the bot uses. Add a line here and a same-named file in `emojis/`, then sync from `/emoji`."""
 
     bullet = Icon("•")
     bullet_red = Icon("•")
