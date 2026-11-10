@@ -9,3 +9,6 @@ apps/web/static
 # Ruff formats the bot, and its Jinja templates aren't valid HTML to Prettier
 apps/bot
 *.md
+# Generated from the bot API by `pnpm run generate`
+packages/api-client/openapi.json
+packages/api-client/src/gen

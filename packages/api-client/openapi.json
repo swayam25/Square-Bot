@@ -1,0 +1,445 @@
+{
+  "info": {
+    "title": "Square API",
+    "version": "2.7.2"
+  },
+  "openapi": "3.1.0",
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Bot status",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/me/guilds": {
+      "get": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "Servers the user can manage",
+        "operationId": "my_guilds",
+        "parameters": [
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Guild"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/settings": {
+      "get": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "A server's settings",
+        "operationId": "guild_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Guild": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "name": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "memberCount": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "iconUrl",
+          "id",
+          "memberCount",
+          "name"
+        ],
+        "title": "Guild"
+      },
+      "Health": {
+        "properties": {
+          "ready": {
+            "type": "boolean"
+          },
+          "guilds": {
+            "type": "integer"
+          },
+          "latencyMs": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "guilds",
+          "latencyMs",
+          "ready"
+        ],
+        "title": "Health"
+      },
+      "Settings": {
+        "properties": {
+          "ticketCmds": {
+            "type": "boolean"
+          },
+          "mediaOnlyChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "autorole": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "djMode": {
+            "type": "boolean"
+          },
+          "djRoles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "musicChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "musicMessageId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "musicStayChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "inviteTracker": {
+            "type": "boolean"
+          },
+          "inviteFakeDays": {
+            "type": "integer"
+          },
+          "ticketCategoryId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "ticketSupportRoleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ticketPanelChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "ticketPanelMessageId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "ticketMaxOpen": {
+            "type": "integer"
+          },
+          "ticketConfirmClose": {
+            "type": "boolean"
+          },
+          "logChannels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object",
+        "required": [
+          "autorole",
+          "djMode",
+          "djRoles",
+          "inviteFakeDays",
+          "inviteTracker",
+          "logChannels",
+          "mediaOnlyChannelId",
+          "musicChannelId",
+          "musicMessageId",
+          "musicStayChannelId",
+          "ticketCategoryId",
+          "ticketCmds",
+          "ticketConfirmClose",
+          "ticketMaxOpen",
+          "ticketPanelChannelId",
+          "ticketPanelMessageId",
+          "ticketSupportRoleIds"
+        ],
+        "title": "Settings"
+      }
+    },
+    "securitySchemes": {
+      "secret": {
+        "type": "http",
+        "description": "The `[api] secret` from config.toml",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

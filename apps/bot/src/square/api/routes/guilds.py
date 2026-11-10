@@ -18,7 +18,7 @@ async def my_guilds(client: Client, actor: int) -> list[Guild]:
 
 
 @get(
-    "/guilds/{guild_id:int}/settings",
+    "/guilds/{guild_id:str}/settings",
     summary="A server's settings",
     tags=["Guilds"],
     dependencies={"guild": Provide(provide_guild, sync_to_thread=False)},

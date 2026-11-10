@@ -16,6 +16,9 @@
         "dev": {
             "cache": false,
             "persistent": true
+        },
+        "generate": {
+            "cache": false
         }
     }
 }

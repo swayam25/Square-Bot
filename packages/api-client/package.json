@@ -1,0 +1,20 @@
+{
+    "name": "@square/api-client",
+    "version": "0.0.0",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "generate": "uv --directory ../../apps/bot run python -m square.api ../../packages/api-client/openapi.json && openapi-ts"
+    },
+    "devDependencies": {
+        "@hey-api/openapi-ts": "^0.99.0"
+    },
+    "dependencies": {
+        "zod": "^4.6.7"
+    },
+    "exports": {
+        ".": "./src/gen/index.ts",
+        "./client": "./src/gen/client/index.ts",
+        "./zod": "./src/gen/zod.gen.ts"
+    }
+}

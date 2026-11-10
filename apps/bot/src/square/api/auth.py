@@ -47,9 +47,13 @@ def provide_actor(
     return int(actor_id)
 
 
-def provide_guild(client: Client, guild_id: int, actor: int) -> discord.Guild:
+def provide_guild(
+    client: Client,
+    guild_id: Annotated[str, Parameter(pattern=r"^\d{17,20}$", description="A Discord ID")],
+    actor: int,
+) -> discord.Guild:
     """The guild, if the actor can manage it. Same rule as Discord: Manage Server, which admins and the owner have."""
-    guild = client.get_guild(guild_id)
+    guild = client.get_guild(int(guild_id))
     member = guild.get_member(actor) if guild else None
     # One answer for "bot isn't there" and "you aren't there", so neither is revealed
     if guild is None or member is None:

@@ -52,6 +52,8 @@ def _openapi() -> OpenAPIConfig:
         version=version("square"),
         path="/docs",
         render_plugins=[ScalarRenderPlugin()],
+        # The handler's name becomes the generated client's function name, e.g. `my_guilds` -> `myGuilds()`
+        operation_id_creator=lambda handler, _method, _path: handler.handler_name,
         components=Components(
             security_schemes={
                 "secret": SecurityScheme(
