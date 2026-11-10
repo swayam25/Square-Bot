@@ -2,12 +2,11 @@ import asyncio
 import datetime
 import discord
 import sonolink
-import time
 from discord import ui
 from pathlib import Path
 from square.core import Client
 from square.core.view import DesignerView
-from square.music import dj, lyrics, request, stay, store
+from square.music import dj, request, stay, store
 from square.music.core import (
     SquarePlayer,
     drop_session_lock,
@@ -27,11 +26,6 @@ _render_locks: dict[int, asyncio.Lock] = {}
 # again once it's done, because the state it drew may already be stale, e.g. a pause pressed mid-edit.
 _rerender: dict[int, bool] = {}
 
-# ~3.3 edits/5s worst case, inside Discord's ~5 edits/5s per-channel bucket.
-_LYRICS_MIN_EDIT_INTERVAL = 1.5
-_LYRICS_MAX_SLEEP = 5.0
-# Lookahead, so an edit lands as the line is sung rather than after it.
-_LYRICS_LEAD_MS = 450
 _BAR_REFRESH_INTERVAL = 10.0
 _SEEK_STEP_MS = 10_000
 _ENQUEUE_RENDER_DELAY = 1.0
@@ -116,6 +110,8 @@ async def render_player(client: Client, guild_id: int, *, force_new: bool = Fals
         wait (bool): Queue behind an in-flight render as a render of its own, instead of folding into its redraw.
             For callers that need the card drawn by the time this returns.
     """
+    # Every playback change comes through here, so live dashboards hear about it from the same place the card does
+    client.dispatch("music_update", guild_id)
     lock = _get_render_lock(guild_id)
     if lock.locked() and not wait:
         _rerender[guild_id] = _rerender.get(guild_id, False) or force_new
@@ -216,7 +212,7 @@ async def repaint_deleted_card(client: Client, guild_id: int, deleted_ids: set[i
     """
     Reposts the card when it is deleted out from under a guild that still needs one.
 
-    The lyrics ticker repaints a playing card every few seconds and would repost it by itself, but
+    The progress ticker repaints a playing card every few seconds and would repost it by itself, but
     it holds still while paused and never runs at all for a stream, and a resting bound card has no
     ticker behind it either. Those are the cases that would otherwise sit there cardless.
 
@@ -241,83 +237,52 @@ async def repaint_deleted_card(client: Client, guild_id: int, deleted_ids: set[i
     await render_player(client, guild_id, wait=True)
 
 
-def start_lyrics(client: Client, guild_id: int) -> None:
+def start_progress(client: Client, guild_id: int) -> None:
     """
-    Starts (or restarts) the synced-lyrics updater task for a guild.
+    Starts (or restarts) the task that keeps the card's progress bar moving.
 
-    Cancels any previous updater so only one loop runs per guild.
+    Cancels any previous one so only one runs per guild.
 
     Args:
         client (:class:`Client`): The Discord bot client.
-        guild_id (int): The guild to update lyrics for.
+        guild_id (int): The guild whose card to keep fresh.
     """
-    task = store.lyrics_task(guild_id)
+    task = store.progress_task(guild_id)
     if task:
         task.cancel()
-    store.lyrics_task(guild_id, asyncio.create_task(_lyrics_loop(client, guild_id)), "set")
+    store.progress_task(guild_id, asyncio.create_task(_progress_loop(client, guild_id)), "set")
 
 
-async def _lyrics_loop(client: Client, guild_id: int) -> None:
+async def _progress_loop(client: Client, guild_id: int) -> None:
     """
-    Re-renders the player card whenever the active lyric line changes, keeping the progress bar fresh in between.
+    Repaints a playing card every :data:`_BAR_REFRESH_INTERVAL` seconds so its progress bar moves.
 
-    Fetches lyrics once per track (cached in the store), then sleeps until the next line boundary.
-    Edits are throttled to one per :data:`_LYRICS_MIN_EDIT_INTERVAL` seconds to stay clear of Discord rate limits, and nothing is edited while paused or when the line hasn't changed.
-    Tracks without lyrics (and instrumental gaps) still get a bar-only refresh every :data:`_BAR_REFRESH_INTERVAL` seconds.
-
-    Args:
-        client (:class:`Client`): The Discord bot client.
-        guild_id (int): The guild to update lyrics for.
+    The only timed edit the card gets, kept slow to stay clear of Discord rate limits. It holds still while paused,
+    never runs for a stream, and ends when the track changes.
     """
     player = get_player(client, guild_id)
     if not player or not player.current or player.current.is_stream:
         return
-    track = player.current
-    cached = store.lyrics(guild_id)
-    if cached and cached[0] == track.identifier:
-        lines = cached[1]
-    else:
-        lines = await lyrics.fetch(track)
-        store.lyrics(guild_id, track.identifier, lines, "set")
-    last_idx: int | None = None
-    last_edit = 0.0
+    track = player.current.identifier
     while True:
+        await asyncio.sleep(_BAR_REFRESH_INTERVAL)
         current = player.current
-        if not player.connected or not current or current.identifier != track.identifier:
+        if not player.connected or not current or current.identifier != track:
             return
-        if not lines:
-            # No lyrics found: keep the progress bar moving with a slow tick.
-            if not player.paused:
-                await render_player(client, guild_id)
-            await asyncio.sleep(_BAR_REFRESH_INTERVAL)
-            continue
-        idx, *_ = lyrics.window(lines, player.position + _LYRICS_LEAD_MS)
-        if idx != last_idx:
-            wait = _LYRICS_MIN_EDIT_INTERVAL - (time.monotonic() - last_edit)
-            if wait > 0:
-                await asyncio.sleep(wait)
-                continue
+        if not player.paused:
             await render_player(client, guild_id)
-            last_idx = idx
-            last_edit = time.monotonic()
-        elif not player.paused and time.monotonic() - last_edit >= _BAR_REFRESH_INTERVAL:
-            await render_player(client, guild_id)
-            last_edit = time.monotonic()
-        next_ts = lines[idx + 1][0] if idx + 1 < len(lines) else None
-        delay = (next_ts - _LYRICS_LEAD_MS - player.position) / 1000 if next_ts is not None else _LYRICS_MAX_SLEEP
-        await asyncio.sleep(min(max(delay, 0.25), _LYRICS_MAX_SLEEP))
 
 
 def _cancel_tasks(guild_id: int) -> None:
     """
-    Stops the guild's scheduled work: the open skip vote, the lyrics ticker, and any pending relocation.
+    Stops the guild's scheduled work: the open skip vote, the progress ticker, and any pending relocation.
 
     A task is never cancelled from within itself, so the caller's own cleanup can finish.
     """
     vote = store.skip_vote(guild_id)
     if vote:
         vote.stop()  # Cancels its expiry task; the card itself is only removed on the async paths.
-    for task_fn in (store.lyrics_task, store.render_task):
+    for task_fn in (store.progress_task, store.render_task):
         task = task_fn(guild_id)
         if task and task is not asyncio.current_task():
             task.cancel()
@@ -325,7 +290,7 @@ def _cancel_tasks(guild_id: int) -> None:
 
 def cleanup_guild(client: Client, guild_id: int) -> None:
     """
-    Releases all per-guild in-memory state: locks, scheduled tasks (lyrics, relocation), and every store key.
+    Releases all per-guild in-memory state: locks, scheduled tasks (progress ticker, relocation), and every store key.
 
     Cancels tasks first, then flushes the store so the guild entry is dropped entirely. A bound
     guild keeps its card, so its binding is primed straight back into the store the flush emptied.
@@ -345,6 +310,7 @@ def cleanup_guild(client: Client, guild_id: int) -> None:
     if request.prime(client, guild_id):  # No-op unless the guild has a request channel bound.
         # The card outlived the flush, GIF and all. Forgetting that costs the next idle render a fetch.
         store.card_gif(guild_id, gif, "set")
+    client.dispatch("music_update", guild_id)
 
 
 async def clear_player(client: Client, guild_id: int) -> None:
@@ -623,7 +589,6 @@ class MusicContainer(ui.Container):
     Renders the currently playing track as a Discord container component.
 
     Displays the track title (linked), artist, requester mention, and a position/duration progress bar (fully filled with a LIVE badge for streams).
-    When synced lyrics are cached for the current track, a previous/current/next line window is appended with the current line in bold.
 
     Args:
         player (:class:`SquarePlayer`): The active player with a current track set.
@@ -643,9 +608,6 @@ class MusicContainer(ui.Container):
                 accessory=ui.Thumbnail(url=player.current.artwork),
             )
         ]
-        lyrics_text = self._lyrics_text(player)
-        if lyrics_text:
-            self.items.append(ui.TextDisplay(lyrics_text))
         self.items.append(ui.TextDisplay(self.progress_bar(player)))
 
     @staticmethod
@@ -665,23 +627,6 @@ class MusicContainer(ui.Container):
             f"`{fmt_time(player.current.length)}`"
         )
 
-    @staticmethod
-    def _lyrics_text(player: SquarePlayer) -> str | None:
-        """
-        Builds the three-line synced lyrics block for the current playback position.
-
-        Returns None when no lyrics are cached for the current track.
-        """
-        cached = store.lyrics(player.guild.id)
-        if not cached or cached[0] != player.current.identifier or not cached[1]:
-            return None
-        _, prev, current, upcoming = lyrics.window(cached[1], player.position + _LYRICS_LEAD_MS)
-
-        def fmt(line: str) -> str:
-            return discord.utils.escape_markdown(line) if line else "♪"
-
-        return f"-# {fmt(prev)}\n**{fmt(current)}**\n-# {fmt(upcoming)}"
-
 
 class UpNextContainer(ui.Container):
     """
@@ -697,7 +642,7 @@ class UpNextContainer(ui.Container):
     def __init__(self, player: SquarePlayer, view: MusicView):
         super().__init__()
         # Indexed, not `queue.tracks`: that property copies the whole queue, and this runs on every
-        # paint, which the lyrics ticker drives every couple of seconds.
+        # paint, which the progress ticker drives every few seconds.
         queue = player.queue
         total = len(queue)
         self.add_item(ui.TextDisplay(f"### {emoji.skip} Up Next"))
@@ -885,7 +830,7 @@ class MusicView(DesignerView):
             return
         target = max(0, target)
         await self.player.seek(target)
-        start_lyrics(self.client, interaction.guild_id)
+        start_progress(self.client, interaction.guild_id)
         await render_player(self.client, interaction.guild_id)
         await music_log(
             interaction.guild_id,

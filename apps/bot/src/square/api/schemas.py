@@ -1,6 +1,11 @@
 import discord
 import msgspec
+import time
 from msgspec import UNSET, UnsetType
+from sonolink import QueueMode
+from sonolink.models import Playable
+from square.core import Client
+from square.music.core import SquarePlayer, get_player, requester_id
 from square.music.dj import MAX_ROLES
 from square.settings import invites, tickets
 from square.utils.server_log import LogType
@@ -11,6 +16,10 @@ Snowflake = Annotated[str, msgspec.Meta(pattern=r"^\d{17,20}$", description="A D
 
 ChannelKind = Literal["text", "news", "voice", "stage_voice", "category", "forum", "media"]
 _CHANNEL_KINDS: frozenset[str] = frozenset(get_args(ChannelKind))
+Loop = Literal["off", "track", "queue"]
+_LOOP: dict[QueueMode, Loop] = {QueueMode.NORMAL: "off", QueueMode.LOOP: "track", QueueMode.LOOP_ALL: "queue"}
+
+QUEUE_LIMIT = 100
 
 
 class Schema(msgspec.Struct, rename="camel", kw_only=True, forbid_unknown_fields=True):
@@ -45,6 +54,35 @@ class Role(Schema):
     position: int
     managed: bool
     assignable: bool  # Below the bot's top role and not managed, so the bot can give it out
+
+
+class Track(Schema):
+    identifier: str
+    title: str
+    author: str
+    uri: str | None
+    artwork_url: str | None
+    length_ms: int
+    is_stream: bool
+    source: str
+    requester_id: Snowflake | None
+
+
+class PlayerState(Schema):
+    voice_channel_id: Snowflake | None
+    track: Track | None
+    paused: bool
+    position_ms: int
+    position_at: int  # Unix ms when `position_ms` was read, so the dashboard can keep the clock moving on its own
+    volume: int
+    loop: Loop
+    shuffle: bool
+    autoplay: bool
+
+
+class QueueState(Schema):
+    tracks: list[Track]  # Only the first `QUEUE_LIMIT`, so a huge queue doesn't flood every update
+    total: int
 
 
 class Problem(Schema):
@@ -190,3 +228,57 @@ def roles_out(guild: discord.Guild) -> list[Role]:
         for role in reversed(guild.roles)
         if not role.is_default()
     ]
+
+
+def _track(player: SquarePlayer, track: Playable) -> Track:
+    rid = requester_id(player, track)
+    return Track(
+        identifier=track.identifier,
+        title=track.title,
+        author=track.author,
+        uri=track.uri,
+        artwork_url=track.artwork,
+        length_ms=track.length,
+        is_stream=track.is_stream,
+        source=track.source_name,
+        requester_id=None if rid is None else str(rid),
+    )
+
+
+def _live_player(client: Client, guild_id: int) -> SquarePlayer | None:
+    player = get_player(client, guild_id)
+    return player if player and player.connected else None
+
+
+def player_out(client: Client, guild: discord.Guild) -> PlayerState:
+    if (player := _live_player(client, guild.id)) is None:
+        return PlayerState(
+            voice_channel_id=None,
+            track=None,
+            paused=False,
+            position_ms=0,
+            position_at=round(time.time() * 1000),
+            volume=100,
+            loop="off",
+            shuffle=False,
+            autoplay=False,
+        )
+    return PlayerState(
+        voice_channel_id=id_of(player.channel),
+        track=_track(player, player.current) if player.current else None,
+        paused=player.paused,
+        position_ms=player.position if player.current else 0,
+        position_at=round(time.time() * 1000),
+        volume=player.volume,
+        loop=_LOOP[player.queue_mode],
+        shuffle=player.shuffled,
+        autoplay=player.autoplay_on,
+    )
+
+
+def queue_out(client: Client, guild: discord.Guild) -> QueueState:
+    if (player := _live_player(client, guild.id)) is None:
+        return QueueState(tracks=[], total=0)
+    queue = player.queue
+    # Indexed rather than `queue.tracks`, which copies the whole queue
+    return QueueState(tracks=[_track(player, queue[i]) for i in range(min(len(queue), QUEUE_LIMIT))], total=len(queue))

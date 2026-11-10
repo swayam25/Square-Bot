@@ -34,7 +34,7 @@ from square.music.player import (
     request_skip,
     schedule_render,
     slash_log,
-    start_lyrics,
+    start_progress,
     stop_player,
     stop_verb,
 )
@@ -368,7 +368,7 @@ class Music(
                 return
             track_time = max(0, track_time)
             await player.seek(track_time)
-            start_lyrics(self.client, ctx.guild.id)
+            start_progress(self.client, ctx.guild.id)
             await slash_log(
                 ctx,
                 f"{emoji.rewind if offset_ms < 0 else emoji.forward} Moved track to `{fmt_time(track_time)}`.",

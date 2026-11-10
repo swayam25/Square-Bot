@@ -229,10 +229,36 @@ export type Notes = {
 };
 
 /**
+ * PlayerState
+ */
+export type PlayerState = {
+    /**
+     * A Discord ID
+     */
+    voiceChannelId: string | null;
+    track: Track | null;
+    paused: boolean;
+    positionMs: number;
+    positionAt: number;
+    volume: number;
+    loop: "off" | "track" | "queue";
+    shuffle: boolean;
+    autoplay: boolean;
+};
+
+/**
  * Problem
  */
 export type Problem = {
     detail: string;
+};
+
+/**
+ * QueueState
+ */
+export type QueueState = {
+    tracks: Array<Track>;
+    total: number;
 };
 
 /**
@@ -280,6 +306,24 @@ export type TicketSettings = {
      * A Discord ID
      */
     panelChannelId: string | null;
+};
+
+/**
+ * Track
+ */
+export type Track = {
+    identifier: string;
+    title: string;
+    author: string;
+    uri: string | null;
+    artworkUrl: string | null;
+    lengthMs: number;
+    isStream: boolean;
+    source: string;
+    /**
+     * A Discord ID
+     */
+    requesterId: string | null;
 };
 
 export type HealthData = {
@@ -1400,3 +1444,93 @@ export type ResetAllSettingsResponses = {
 };
 
 export type ResetAllSettingsResponse = ResetAllSettingsResponses[keyof ResetAllSettingsResponses];
+
+export type MusicPlayerData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/player";
+};
+
+export type MusicPlayerErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type MusicPlayerError = MusicPlayerErrors[keyof MusicPlayerErrors];
+
+export type MusicPlayerResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: PlayerState;
+};
+
+export type MusicPlayerResponse = MusicPlayerResponses[keyof MusicPlayerResponses];
+
+export type MusicQueueData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/queue";
+};
+
+export type MusicQueueErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type MusicQueueError = MusicQueueErrors[keyof MusicQueueErrors];
+
+export type MusicQueueResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: QueueState;
+};
+
+export type MusicQueueResponse = MusicQueueResponses[keyof MusicQueueResponses];

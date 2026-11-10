@@ -9,6 +9,7 @@ from litestar.openapi import OpenAPIConfig
 from litestar.openapi.plugins import ScalarRenderPlugin
 from litestar.openapi.spec import Components, SecurityScheme
 from litestar.types import Scope
+from square.api import live
 from square.api.auth import provide_actor, provide_client, secret_guard
 from square.api.routes import handlers
 from square.core import Client
@@ -27,6 +28,8 @@ def create_app(client: Client | None, *, secret: str, docs: bool) -> Litestar:
         secret (str): The `[api] secret` the dashboard server sends.
         docs (bool): Serve the OpenAPI docs at `/docs`. Off in production.
     """
+    if client is not None:
+        client.add_listener(live.on_music_update, "on_music_update")
     api = Router(
         path="/",
         route_handlers=handlers,

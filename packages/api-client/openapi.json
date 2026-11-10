@@ -2338,6 +2338,190 @@
           }
         ]
       }
+    },
+    "/guilds/{guild_id}/music/player": {
+      "get": {
+        "tags": [
+          "Music"
+        ],
+        "summary": "What's playing right now. `/live` pushes the same shape as it changes",
+        "operationId": "music_player",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerState"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/music/queue": {
+      "get": {
+        "tags": [
+          "Music"
+        ],
+        "summary": "The upcoming tracks. `/live` pushes the same shape as it changes",
+        "operationId": "music_queue",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueState"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2928,6 +3112,71 @@
         ],
         "title": "Notes"
       },
+      "PlayerState": {
+        "properties": {
+          "voiceChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "track": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Track"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "paused": {
+            "type": "boolean"
+          },
+          "positionMs": {
+            "type": "integer"
+          },
+          "positionAt": {
+            "type": "integer"
+          },
+          "volume": {
+            "type": "integer"
+          },
+          "loop": {
+            "type": "string",
+            "enum": [
+              "off",
+              "track",
+              "queue"
+            ]
+          },
+          "shuffle": {
+            "type": "boolean"
+          },
+          "autoplay": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "autoplay",
+          "loop",
+          "paused",
+          "positionAt",
+          "positionMs",
+          "shuffle",
+          "track",
+          "voiceChannelId",
+          "volume"
+        ],
+        "title": "PlayerState"
+      },
       "Problem": {
         "properties": {
           "detail": {
@@ -2939,6 +3188,25 @@
           "detail"
         ],
         "title": "Problem"
+      },
+      "QueueState": {
+        "properties": {
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/Track"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "tracks"
+        ],
+        "title": "QueueState"
       },
       "Role": {
         "properties": {
@@ -3096,6 +3364,73 @@
           "supportRoleIds"
         ],
         "title": "TicketSettings"
+      },
+      "Track": {
+        "properties": {
+          "identifier": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "uri": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "artworkUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lengthMs": {
+            "type": "integer"
+          },
+          "isStream": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string"
+          },
+          "requesterId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          }
+        },
+        "type": "object",
+        "required": [
+          "artworkUrl",
+          "author",
+          "identifier",
+          "isStream",
+          "lengthMs",
+          "requesterId",
+          "source",
+          "title",
+          "uri"
+        ],
+        "title": "Track"
       }
     },
     "securitySchemes": {

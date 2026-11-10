@@ -114,51 +114,20 @@ def skip_vote(
                 store[guild_id].pop("skip_vote", None)
 
 
-# Synced lyrics cache for the currently playing track
-def lyrics(
-    guild_id: int,
-    identifier: str | None = None,
-    lines: list[tuple[int, str]] | None = None,
-    mode: Literal["get", "set", "clear"] = "get",
-) -> tuple[str, list[tuple[int, str]]] | None:
-    """
-    Gets, sets, or clears the cached lyrics for a guild.
-
-    Args:
-        guild_id (int): The ID of the guild.
-        identifier (str | None): The track identifier the lyrics belong to.
-        lines (list[tuple[int, str]] | None): Timestamped lyric lines.
-        mode (str): The operation mode, either "get", "set", or "clear".
-
-    Returns:
-        tuple[str, list[tuple[int, str]]] | None: The cached (identifier, lines) pair, or None.
-    """
-    match mode:
-        case "get":
-            return store.get(guild_id, {}).get("lyrics", None)
-        case "set":
-            if guild_id not in store:
-                store[guild_id] = {}
-            store[guild_id]["lyrics"] = (identifier, lines or [])
-        case "clear":
-            if guild_id in store:
-                store[guild_id].pop("lyrics", None)
-
-
-# Lyrics updater task
-def lyrics_task(
+# Progress bar ticker task
+def progress_task(
     guild_id: int, task: asyncio.Task | None = None, mode: Literal["get", "set", "clear"] = "get"
 ) -> asyncio.Task | None:
     match mode:
         case "get":
-            return store.get(guild_id, {}).get("lyrics_task", None)
+            return store.get(guild_id, {}).get("progress_task", None)
         case "set":
             if guild_id not in store:
                 store[guild_id] = {}
-            store[guild_id]["lyrics_task"] = task
+            store[guild_id]["progress_task"] = task
         case "clear":
-            if guild_id in store and "lyrics_task" in store[guild_id]:
-                del store[guild_id]["lyrics_task"]
+            if guild_id in store and "progress_task" in store[guild_id]:
+                del store[guild_id]["progress_task"]
 
 
 def card_gif(
@@ -220,11 +189,10 @@ def chat_weight(
 _MUSIC_KEYS = {
     "card_gif",
     "chat_weight",
-    "lyrics",
-    "lyrics_task",
     "play_ch",
     "play_msg",
     "play_msg_view",
+    "progress_task",
     "render_task",
     "skip_vote",
 }

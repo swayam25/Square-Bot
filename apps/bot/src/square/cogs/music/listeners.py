@@ -30,7 +30,7 @@ from square.music.player import (
     schedule_render,
     set_track_status,
     skip_or_stop,
-    start_lyrics,
+    start_progress,
     stop_player,
 )
 from square.music.utils import delete_quietly, music_log, split_log_text
@@ -180,7 +180,7 @@ class Listeners:
         await asyncio.gather(
             render_player(self.client, guild_id, force_new=relocate), set_track_status(player), return_exceptions=True
         )
-        start_lyrics(self.client, guild_id)
+        start_progress(self.client, guild_id)
 
     @commands.Cog.listener()
     async def on_sonolink_track_end(self, player: SquarePlayer, event: sonolink.gateway.TrackEndEvent):
@@ -421,7 +421,7 @@ class Listeners:
         Relocates the player to the bottom once enough chat has stacked up to push it out of view.
 
         Each message adds its estimated on-screen height to the guild's chat weight; the player is only re-sent when the total crosses :attr:`relocate_lines` (a single image/embed/long message can cross it alone).
-        Light chatter below the threshold leaves the card edited in place, keeping delete/send API calls rare while the lyrics loop is already editing heavily.
+        Light chatter below the threshold leaves the card edited in place, keeping delete/send API calls rare.
         The next track start relocates on any accumulated weight though, so chatter never outlives the track it was posted under.
         """
         play_msg, _ = store.play_msg(message.guild.id)

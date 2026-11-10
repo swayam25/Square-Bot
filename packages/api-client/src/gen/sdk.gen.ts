@@ -32,6 +32,12 @@ import type {
     GuildRolesResponses,
     HealthData,
     HealthResponses,
+    MusicPlayerData,
+    MusicPlayerErrors,
+    MusicPlayerResponses,
+    MusicQueueData,
+    MusicQueueErrors,
+    MusicQueueResponses,
     MyGuildsData,
     MyGuildsErrors,
     MyGuildsResponses,
@@ -414,5 +420,29 @@ export const resetAllSettings = <ThrowOnError extends boolean = false>(
     (options.client ?? client).delete<ResetAllSettingsResponses, ResetAllSettingsErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/settings",
+        ...options,
+    });
+
+/**
+ * What's playing right now. `/live` pushes the same shape as it changes
+ */
+export const musicPlayer = <ThrowOnError extends boolean = false>(
+    options: Options<MusicPlayerData, ThrowOnError>,
+): RequestResult<MusicPlayerResponses, MusicPlayerErrors, ThrowOnError> =>
+    (options.client ?? client).get<MusicPlayerResponses, MusicPlayerErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/player",
+        ...options,
+    });
+
+/**
+ * The upcoming tracks. `/live` pushes the same shape as it changes
+ */
+export const musicQueue = <ThrowOnError extends boolean = false>(
+    options: Options<MusicQueueData, ThrowOnError>,
+): RequestResult<MusicQueueResponses, MusicQueueErrors, ThrowOnError> =>
+    (options.client ?? client).get<MusicQueueResponses, MusicQueueErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/queue",
         ...options,
     });

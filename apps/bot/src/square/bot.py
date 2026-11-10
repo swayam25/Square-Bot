@@ -8,7 +8,6 @@ from square.cogs import extensions
 from square.core import Client
 from square.db import DB
 from square.imaging import assets
-from square.music import lyrics
 from square.utils import config, invites
 
 log = logging.getLogger("square")
@@ -81,7 +80,6 @@ async def shutdown() -> None:
     # The API stops first, so no request is mid-way when the database closes
     await api.stop()
     await DB().close()
-    await lyrics.close()
     await assets.close()
     if not client.is_closed():
         await client.close()

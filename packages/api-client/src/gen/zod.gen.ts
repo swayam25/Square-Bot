@@ -179,6 +179,44 @@ export const zTicketSettings = z.object({
 });
 
 /**
+ * Track
+ */
+export const zTrack = z.object({
+    identifier: z.string(),
+    title: z.string(),
+    author: z.string(),
+    uri: z.string().nullable(),
+    artworkUrl: z.string().nullable(),
+    lengthMs: z.int(),
+    isStream: z.boolean(),
+    source: z.string(),
+    requesterId: z.string().nullable(),
+});
+
+/**
+ * PlayerState
+ */
+export const zPlayerState = z.object({
+    voiceChannelId: z.string().nullable(),
+    track: zTrack.nullable(),
+    paused: z.boolean(),
+    positionMs: z.int(),
+    positionAt: z.int(),
+    volume: z.int(),
+    loop: z.enum(["off", "track", "queue"]),
+    shuffle: z.boolean(),
+    autoplay: z.boolean(),
+});
+
+/**
+ * QueueState
+ */
+export const zQueueState = z.object({
+    tracks: z.array(zTrack),
+    total: z.int(),
+});
+
+/**
  * Request fulfilled, document follows
  */
 export const zHealthResponse = zHealth;
@@ -500,3 +538,29 @@ export const zResetAllSettingsPath = z.object({
  * Request fulfilled, document follows
  */
 export const zResetAllSettingsResponse = zNotes;
+
+export const zMusicPlayerHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zMusicPlayerPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zMusicPlayerResponse = zPlayerState;
+
+export const zMusicQueueHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zMusicQueuePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zMusicQueueResponse = zQueueState;
