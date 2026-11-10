@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import discord
 import hashlib
 import json
@@ -117,6 +118,7 @@ async def apply(client: Client, snap: Snapshot, step: Callable[[], None]) -> dic
     async def delete(app_emoji: discord.AppEmoji) -> None:
         async with slots:
             try:
+                update_emoji(app_emoji.name, None)
                 await client.delete_emoji(app_emoji)
                 del snap.remote[app_emoji.name]
             except discord.HTTPException as exc:
@@ -129,10 +131,9 @@ async def apply(client: Client, snap: Snapshot, step: Callable[[], None]) -> dic
                 if old := snap.remote.pop(name, None):
                     await client.delete_emoji(old)
                 created = await client.create_emoji(name=name, image=snap.files[name])
+                update_emoji(name, _markdown(created))
                 snap.remote[name] = created
                 snap.uploads[name] = {"id": created.id, "sha256": snap.hashes[name]}
-                # So the panel never shows the deleted one
-                update_emoji(name, _markdown(created))
             except discord.HTTPException as exc:
                 failed[name] = exc.text or str(exc)
             step()
@@ -156,7 +157,8 @@ class EmojiPanel(DesignerView):
         self.report: str | None = None
         self.render()
 
-    def render(self) -> None:
+    def render(self, syncing: str | None = None) -> None:
+        """Draws the panel. `syncing` is the progress shown on the Sync button while a sync runs."""
         self.clear_items()
         snap, known = self.snap, set(get_emoji_names())
         changes = (
@@ -187,9 +189,19 @@ class EmojiPanel(DesignerView):
         self.add_item(
             ui.ActionRow(
                 button(
-                    self._sync, label="Sync", emoji=emoji.sync_white, custom_id="emoji:sync", disabled=not snap.pending
+                    self._sync,
+                    label=syncing or "Sync",
+                    emoji=emoji.loading_white if syncing else emoji.sync_white,
+                    custom_id="emoji:sync",
+                    disabled=bool(syncing) or not snap.pending,
                 ),
-                button(self._recheck, label="Refresh", emoji=emoji.reload_white, custom_id="emoji:refresh"),
+                button(
+                    self._recheck,
+                    label="Refresh",
+                    emoji=emoji.reload_white,
+                    custom_id="emoji:refresh",
+                    disabled=bool(syncing),
+                ),
             )
         )
 
@@ -212,13 +224,17 @@ class EmojiPanel(DesignerView):
             nonlocal done
             done += 1
 
-        pressed = self.get_item("emoji:sync")
         syncing = asyncio.ensure_future(apply(self.bot, snap, step)) if snap.pending else None
         shown = -1
         while syncing and not syncing.done():
             if done != shown:
-                shown, pressed.label = done, f"Syncing {done}/{total}"
-                await interaction.edit_original_response(view=self)
+                shown = done
+                # Redrawn each time so the text and buttons pick up emojis replaced since the last edit
+                self.render(syncing=f"Syncing {done}/{total}")
+                # Between deleting an emoji and uploading its new file, a button showing it fails the edit. Progress is
+                # only cosmetic, so that tick is skipped and the next one shows the new emoji.
+                with contextlib.suppress(discord.HTTPException):
+                    await interaction.edit_original_response(view=self)
             await asyncio.wait({syncing}, timeout=1.5)
         failed = await syncing if syncing else {}
 

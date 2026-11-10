@@ -205,11 +205,12 @@ def create_custom_emoji_config(emojis: dict[str, str]) -> dict:
     return msg
 
 
-def update_emoji(name: str, value: str) -> None:
+def update_emoji(name: str, value: str | None) -> None:
     """
-    Update a single emoji in-place.
+    Points one emoji at `value` in place, or back to its default when it's None.
 
-    Used during uploads so views rendered mid-upload never reference a deleted emoji ID: as soon as an emoji is re-created, callers can patch the new markdown here and every subsequent render picks it up.
+    A sync resets an emoji before deleting it and sets the new one once uploaded, so views drawn mid-sync never send a
+    deleted emoji's ID.
     """
     if icon := _icons.get(name):
         icon.set(value)
