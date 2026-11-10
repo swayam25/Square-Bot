@@ -3,6 +3,7 @@ import discord
 import logging
 import sys
 from importlib.metadata import metadata, version
+from square import api
 from square.cogs import extensions
 from square.core import Client
 from square.db import DB
@@ -77,6 +78,8 @@ def load_cogs() -> None:
 
 async def shutdown() -> None:
     """Shuts the bot down gracefully."""
+    # The API stops first, so no request is mid-way when the database closes
+    await api.stop()
     await DB().close()
     await lyrics.close()
     await assets.close()
@@ -89,6 +92,7 @@ async def main() -> None:
     try:
         await DB().init()
         load_cogs()
+        api.start(client)
         async with client:
             await client.start(config.bot_token)
     finally:

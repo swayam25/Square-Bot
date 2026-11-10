@@ -19,6 +19,7 @@ LIBRARY_LEVELS = {
     "PIL": logging.WARNING,
     "sonolink": logging.INFO,
     "tortoise": logging.WARNING,
+    "uvicorn": logging.INFO,
 }
 LOG_FILE = Path(".cache/logs/square.log")
 PLAIN_FORMAT = logging.Formatter("%(asctime)s %(levelname)-8s %(name)-14s %(message)s", "%Y-%m-%d %H:%M:%S")

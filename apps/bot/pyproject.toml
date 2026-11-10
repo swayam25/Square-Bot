@@ -10,7 +10,9 @@ dependencies = [
     "aiohttp>=3.14.5",
     "babel>=2.18.0",
     "fonttools>=4.68.0",
+    "httptools>=0.9.0",
     "jinja2>=3.1.6",
+    "litestar>=2.25.0",
     "msgspec>=0.21.1",
     "pillow>=13.0.0",
     "psutil>=7.2.2",
@@ -18,6 +20,7 @@ dependencies = [
     "rich>=15.0.0",
     "sonolink[speed]>=1.4.0",
     "tortoise-orm[asyncpg]>=1.1.9",
+    "uvicorn>=0.54.0",
     "uvloop>=0.23.0 ; sys_platform != 'win32'",
 ]
 

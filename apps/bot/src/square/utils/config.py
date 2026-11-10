@@ -2,7 +2,7 @@ import msgspec
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, NotRequired, TypedDict
+from typing import Annotated, Literal, NotRequired, TypedDict
 from urllib.parse import urlparse, urlunparse
 
 CONFIG_FILE_PATH = Path("config.toml")
@@ -23,6 +23,14 @@ class _Colors(msgspec.Struct, forbid_unknown_fields=True):
     orange: str
 
 
+class ApiConfig(msgspec.Struct, rename="kebab", forbid_unknown_fields=True, frozen=True):
+    # Shared with the dashboard server only. 32+ characters, e.g. `openssl rand -hex 32`
+    secret: Annotated[str, msgspec.Meta(min_length=32)]
+    host: str = "127.0.0.1"
+    port: Annotated[int, msgspec.Meta(ge=1, le=65535)] = 8080
+    docs: bool = False
+
+
 class _Config(msgspec.Struct, rename="kebab", forbid_unknown_fields=True):
     owner_id: int
     owner_guild_ids: list[int]
@@ -35,6 +43,8 @@ class _Config(msgspec.Struct, rename="kebab", forbid_unknown_fields=True):
     lavalink: list[LavalinkConfig] | LavalinkConfig
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     log_file: bool = False
+    # No `[api]` table means no API, so the bot also runs without the dashboard
+    api: ApiConfig | None = None
 
 
 def _load() -> _Config:
@@ -88,6 +98,7 @@ bot_token: str = _config.bot_token
 db_url: str = _resolve_db_url(_config.database_url)
 log_level: str = _config.log_level
 log_file: bool = _config.log_file
+api: ApiConfig | None = _config.api
 
 # Colors
 color = ColorConfig(
