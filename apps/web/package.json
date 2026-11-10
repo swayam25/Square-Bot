@@ -35,6 +35,7 @@
         "vite": "^8.3.0"
     },
     "dependencies": {
+        "@redis/client": "^6.3.1",
         "@square/api-client": "workspace:*"
     }
 }

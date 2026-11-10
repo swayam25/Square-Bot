@@ -186,6 +186,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@redis/client':
+        specifier: ^6.3.1
+        version: 6.3.1
       '@square/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
@@ -433,6 +436,18 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
+
+  '@redis/client@6.3.1':
+    resolution: {integrity: sha512-masbfVKULdoAofwddepZxRhWa4w6zvBHn6TRn90TRPrRkVIlGCur3pFqwWaCbMxtYI9twepkz63e/T/tEH8GjA==}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@node-rs/xxhash': ^1.1.0
+      '@opentelemetry/api': '>=1 <2'
+    peerDependenciesMeta:
+      '@node-rs/xxhash':
+        optional: true
+      '@opentelemetry/api':
+        optional: true
 
   '@rolldown/binding-android-arm-eabi@1.2.18':
     resolution: {integrity: sha512-ubTG+4KlidvioxjOFdsdEa2F6JVGZb8m2ByJUqQ7fYzUeT1cEn194POcsQ10PKH4p//q0YQn4SB3YpSuzcA1Yg==}
@@ -1817,6 +1832,8 @@ snapshots:
   '@oxc-project/types@0.156.0': {}
 
   '@polka/url@1.0.0-next.29': {}
+
+  '@redis/client@6.3.1': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.18':
     optional: true
