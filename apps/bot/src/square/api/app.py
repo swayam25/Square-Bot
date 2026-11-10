@@ -1,6 +1,7 @@
 import logging
+import msgspec
 from importlib.metadata import version
-from litestar import Litestar, Router
+from litestar import Litestar, Request, Router
 from litestar.datastructures import State
 from litestar.di import Provide
 from litestar.exceptions import HTTPException
@@ -11,6 +12,7 @@ from litestar.types import Scope
 from square.api.auth import provide_actor, provide_client, secret_guard
 from square.api.routes import handlers
 from square.core import Client
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +53,21 @@ def _openapi() -> OpenAPIConfig:
         title="Square API",
         version=version("square"),
         path="/docs",
-        render_plugins=[ScalarRenderPlugin()],
+        render_plugins=[
+            _Scalar(
+                version="1.76.0",
+                options={
+                    "theme": "kepler",
+                    "darkMode": True,
+                    "hideDarkModeToggle": True,
+                    "showOperationId": True,
+                    "showDeveloperTools": "never",
+                    "authentication": {"preferredSecurityScheme": "secret"},
+                    "agent": {"disabled": True},
+                    "telemetry": False,
+                },
+            )
+        ],
         # The handler's name becomes the generated client's function name, e.g. `my_guilds` -> `myGuilds()`
         operation_id_creator=lambda handler, _method, _path: handler.handler_name,
         components=Components(
@@ -62,6 +78,25 @@ def _openapi() -> OpenAPIConfig:
             },
         ),
     )
+
+
+class _Scalar(ScalarRenderPlugin):
+    # Litestar's page links its own branding stylesheet, which overrides Scalar's themes
+    def render(self, request: Request, openapi_schema: dict[str, Any]) -> bytes:
+        config = msgspec.json.encode({"url": self.get_openapi_json_route(request), **(self.options or {})}).decode()
+        return f"""<!doctype html>
+<html>
+<head>
+<title>{openapi_schema["info"]["title"]}</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div id="app"></div>
+<script src="{self.js_url}"></script>
+<script>Scalar.createApiReference("#app", {config})</script>
+</body>
+</html>""".encode()
 
 
 def _log_exception(exc: Exception, scope: Scope) -> None:
