@@ -653,7 +653,7 @@ class MusicContainer(ui.Container):
         """
         Builds the position/duration progress bar line. Streams get a fully filled bar with a LIVE badge.
 
-        The filled part waves while playing and lies flat while paused, like a wavy progress indicator.
+        The filled part waves while playing and lies flat while paused, like the progress bar on the now-playing card.
         """
         active = str(emoji.still_bar if player.paused else emoji.filled_bar)
         if player.current.is_stream:

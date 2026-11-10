@@ -12,7 +12,6 @@ dependencies = [
     "babel>=2.18.0",
     "fonttools>=4.68.0",
     "jinja2>=3.1.6",
-    "materialyoucolor>=3.0.4",
     "msgspec>=0.21.1",
     "pillow>=13.0.0",
     "psutil>=7.2.2",

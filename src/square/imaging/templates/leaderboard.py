@@ -1,9 +1,10 @@
 import msgspec
 from square.imaging.canvas import open_image
-from square.imaging.components import Kit, Tone
-from square.imaging.layout import Box, Column, Expand, Fill, Node, Row
-from square.imaging.tokens import Shape, Type
-from square.utils.helpers import fmt_number
+from square.imaging.components import Kit
+from square.imaging.layout import Box, Column, Expand, Fill, Node, Row, Spacer
+from square.imaging.theme import MIST_300, ORANGE_300, RGB
+from square.imaging.tokens import Radius, Type
+from square.utils.helpers import fmt_count
 
 
 class Inviter(msgspec.Struct, frozen=True):
@@ -27,86 +28,114 @@ class Leaderboard(msgspec.Struct, frozen=True):
     inviters: list[Inviter]
 
 
-_PODIUM: dict[int, tuple[str, Tone]] = {1: ("1st", "primary"), 2: ("2nd", "secondary"), 3: ("3rd", "tertiary")}
+# Step heights (`h-36`, `h-30`, `h-24`) so the top 3 stand on a stage
+_STEPS = {1: 144, 2: 120, 3: 96}
+
+
+def _podium_ink(ui: Kit, rank: int) -> RGB:
+    """Gold, silver and bronze: the warning color, `mist-300` and `orange-300`."""
+    return {1: ui.theme.warning, 2: MIST_300, 3: ORANGE_300}[rank]
 
 
 def _place(ui: Kit, inviter: Inviter) -> Node:
-    label, tone = _PODIUM[inviter.rank]
-    lead = inviter.rank == 1
-    on = ui.container(tone)[1]
-    avatar = ui.avatar(open_image(inviter.avatar), inviter.name, 72 if lead else 56, tone=tone, inverted=True)
+    """One podium spot: the avatar, name and total above a tinted step showing the place."""
+    ink = _podium_ink(ui, inviter.rank)
+    step = Box(
+        Column(
+            ui.text(str(inviter.rank), Type.DISPLAY_PLACE, ink, align="center"),
+            ui.text(("1st", "2nd", "3rd")[inviter.rank - 1].upper(), Type.MONO_XS_LABEL, ink, align="center"),
+            gap=2,
+        ),
+        padding=(16, 0, 0, 0),
+        fill=ui.theme.tint(ink, 0.1),
+        radius=Radius.XL2,
+        height=_STEPS[inviter.rank],
+        align="start",
+    )
     return Expand(
-        ui.card(
-            ui.text(label, Type.LABEL_LARGE, on),
-            ui.crowned(avatar, 72) if lead else avatar,
-            ui.text(inviter.name, Type.TITLE_MEDIUM, on),
-            ui.text(fmt_number(inviter.total), Type.DISPLAY_SMALL if lead else Type.HEADLINE_LARGE, on),
-            ui.text("invites", Type.LABEL_MEDIUM, on),
-            variant=tone,
-            align="center",
-            padding=(12, 24 if lead else 16),
-            gap=6,
-            radius=Shape.EXTRA_LARGE if lead else Shape.LARGE,
+        Column(
+            Row(Spacer(), ui.avatar(open_image(inviter.avatar), inviter.name, 56), Spacer()),
+            Column(
+                ui.text(inviter.name, Type.BASE_SEMIBOLD, align="center"),
+                ui.muted(fmt_count(inviter.total), Type.MONO_SM_MEDIUM, align="center"),
+                gap=2,
+            ),
+            step,
+            gap=16,
         )
     )
 
 
-def _bonus_chip(ui: Kit, bonus: int) -> Node:
-    """Moderators can take invites away too, so a negative bonus reads as a penalty."""
-    if bonus > 0:
-        return ui.chip(f"+{fmt_number(bonus)} bonus", "success", icon="add")
-    return ui.chip(f"{fmt_number(bonus)} bonus", "error", icon="remove")
+def _splits(inviters: list[Inviter]) -> list[str]:
+    """
+    Each row's breakdown, e.g. "388 regular · 12 left · 3 fake · +50 bonus", lined up as columns across the page.
+
+    Every count is padded to its column's widest, which lines up because the mono font gives each character the same
+    width. The bonus column only shows when someone on the page has one, and is blank for the rest.
+    """
+    columns = [
+        ("regular", [fmt_count(inviter.regular) for inviter in inviters]),
+        ("left", [fmt_count(inviter.left) for inviter in inviters]),
+        ("fake", [fmt_count(inviter.fake) for inviter in inviters]),
+    ]
+    bonus = [
+        f"{'+' if inviter.bonus > 0 else ''}{fmt_count(inviter.bonus)}" if inviter.bonus else "" for inviter in inviters
+    ]
+    if any(bonus):
+        columns.append(("bonus", bonus))
+    widths = [max(map(len, counts)) for _, counts in columns]
+    rows = []
+    for i in range(len(inviters)):
+        parts = [
+            f"{counts[i]:>{width}} {label}" if counts[i] else " " * (width + 1 + len(label))
+            for (label, counts), width in zip(columns, widths, strict=True)
+        ]
+        row = parts[0]
+        for part in parts[1:]:
+            row += (" · " if part.strip() else "   ") + part
+        rows.append(row)
+    return rows
 
 
-def _row(ui: Kit, inviter: Inviter) -> Node:
-    s = ui.scheme
-    return ui.list_item(
-        inviter.name,
-        leading=Row(
-            Box(ui.text(str(inviter.rank), Type.TITLE_MEDIUM, s.on_surface_variant, align="center"), width=28),
-            ui.avatar(open_image(inviter.avatar), inviter.name, 40),
-            gap=12,
-        ),
-        supporting=ui.chips(
-            ui.chip(f"{fmt_number(inviter.regular)} regular", icon="user_add_white"),
-            ui.chip(f"{fmt_number(inviter.left)} left", "warning", icon="user_remove_white") if inviter.left else None,
-            ui.chip(f"{fmt_number(inviter.fake)} fake", "error", icon="fake") if inviter.fake else None,
-            _bonus_chip(ui, inviter.bonus) if inviter.bonus else None,
-        ),
-        trailing=Column(
-            ui.text(fmt_number(inviter.total), Type.HEADLINE_SMALL, s.primary, align="end"),
-            ui.text("invites", Type.LABEL_SMALL, s.on_surface_variant, align="end"),
+def _row(ui: Kit, inviter: Inviter, split: str) -> Node:
+    """`h-12` with a `white/10` line on top: rank, avatar, name, breakdown and total."""
+    return Column(
+        Box(Spacer(1), fill=ui.theme.line, height=1),
+        Box(
+            Row(
+                Box(ui.muted(str(inviter.rank), Type.MONO_SM), width=24),
+                ui.avatar(open_image(inviter.avatar), inviter.name, 32),
+                Expand(ui.text(inviter.name, Type.BASE_MEDIUM)),
+                ui.muted(split, Type.MONO_XS),
+                Box(ui.text(fmt_count(inviter.total), Type.MONO_BASE, align="end"), width=64),
+                gap=16,
+            ),
+            padding=(8, 0),
+            height=48,
         ),
     )
 
 
 def build(ui: Kit, data: Leaderboard) -> Node:
     """The invite leaderboard: a podium for the top 3 on the first page, then one row per inviter."""
-    s = ui.scheme
     podium = data.inviters[:3] if data.page == 1 and len(data.inviters) >= 3 else []
     rest = data.inviters[len(podium) :]
+    subtitle = Row(
+        ui.muted(f"{data.guild_name} · "),
+        ui.muted(fmt_count(data.member_count), Type.MONO_SM),
+        Expand(ui.muted(" members")),
+    )
     return Column(
         ui.header(
-            "Invite Leaderboard",
-            Row(
-                ui.text(f"{data.guild_name} ·", Type.BODY_MEDIUM, s.on_surface_variant),
-                ui.icon("members", 18, s.on_surface_variant),
-                Expand(ui.text(f"{fmt_number(data.member_count)} members", Type.BODY_MEDIUM, s.on_surface_variant)),
-                gap=6,
-            ),
-            leading=ui.guild_icon(open_image(data.guild_icon), data.guild_name, 48),
-            trailing=ui.chip(f"Page {data.page} of {data.pages}", "secondary"),
+            "Invite leaderboard",
+            subtitle,
+            leading=ui.guild_icon(open_image(data.guild_icon), data.guild_name, 40),
+            trailing=ui.muted(f"{data.page} / {data.pages}", Type.MONO_SM),
         ),
-        Column(
-            Row(*(_place(ui, podium[i]) for i in (1, 0, 2)), gap=8, align="end") if podium else None,
-            *(_row(ui, inviter) for inviter in rest),
-            gap=8,
-        ),
+        Row(*(_place(ui, podium[i]) for i in (1, 0, 2)), gap=8, align="end") if podium else None,
+        Column(*(_row(ui, inviter, split) for inviter, split in zip(rest, _splits(rest), strict=True)))
+        if rest
+        else None,
         Fill(),
-        ui.text(
-            f"Fake invites are accounts younger than {data.fake_days} days when they joined.",
-            Type.BODY_SMALL,
-            s.on_surface_variant,
-        ),
-        gap=16,
+        gap=24,
     )

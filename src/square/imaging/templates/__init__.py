@@ -36,8 +36,8 @@ def sample_leaderboard() -> leaderboard.Leaderboard:
 
 
 def _sample_icon() -> bytes:
-    """A stand-in server icon: a teal square with a white ring, enough to check size and corner rounding."""
-    image = Image.new("RGBA", (128, 128), (0x1C, 0x4F, 0x5A, 255))
+    """A stand-in server icon: a cyan-900 square with a white ring, enough to check size and corner rounding."""
+    image = Image.new("RGBA", (128, 128), (0x10, 0x4E, 0x64, 255))
     ImageDraw.Draw(image).ellipse((32, 32, 96, 96), outline=(255, 255, 255, 255), width=14)
     buffer = BytesIO()
     image.save(buffer, "PNG")

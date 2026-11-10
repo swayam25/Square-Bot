@@ -744,43 +744,6 @@ wheels = [
 ]
 
 [[package]]
-name = "materialyoucolor"
-version = "3.0.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pillow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/23/2e63e7bdfcc1aa7ba955386ad09e3bd8a535a1092d7af501659b63cb6282/materialyoucolor-3.0.4.tar.gz", hash = "sha256:30b8dde034dce180845b0eaf52f72c5b22cd5b60bd7aff96804febae4e266276", size = 128892, upload-time = "2026-08-04T13:34:41.372Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/22/209bdd523c8f710ffc76558194d900c7fad004d43ebc46066c215e7b6761/materialyoucolor-3.0.4-cp314-cp314-android_24_arm64_v8a.whl", hash = "sha256:8afb469e297b6d3ee47f8e6149943aaa8829838d934e5bc53caf4d4d2f599713", size = 420513, upload-time = "2026-08-05T20:42:08.58Z" },
-    { url = "https://files.pythonhosted.org/packages/b1/e8/ff5b1d0635a67545e7d765c50826fdb293536b690a28bb302be05f675fe7/materialyoucolor-3.0.4-cp314-cp314-android_24_x86_64.whl", hash = "sha256:76b325ef0fc89d21f828acc7e309ce3a8b14908b8922a99022aa1384acae2b19", size = 398073, upload-time = "2026-08-05T20:42:25.501Z" },
-    { url = "https://files.pythonhosted.org/packages/71/3e/592899bd120dac8bd722e586661f5f2b74d58174e12d4ad831455e2bc0ce/materialyoucolor-3.0.4-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:8669170b05c9dad7ea429d92a8ac86921fdcc3d4fbb73f1326f7eabfb8b07e4b", size = 216859, upload-time = "2026-08-05T19:54:11.493Z" },
-    { url = "https://files.pythonhosted.org/packages/3b/17/9a2b30a417b2908aead3bd0218fb0e58683a88fff8d5979364dc04f3422f/materialyoucolor-3.0.4-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:f7b79de72f75c850ceca2c387b5c2099fffa6774352aca53b4433e2ea80d9e9b", size = 207342, upload-time = "2026-08-05T19:54:12.859Z" },
-    { url = "https://files.pythonhosted.org/packages/91/f1/f7d17fd5825a283778c6529c3a2af57eca6fbb9d1ee8a688210ce8cae239/materialyoucolor-3.0.4-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:cf4494a5741527927071098cb9527ed25531339b838594b493357cb54c0ca352", size = 235325, upload-time = "2026-08-05T19:54:14.337Z" },
-    { url = "https://files.pythonhosted.org/packages/a0/70/948662443591444c4e101a4058a29e0e3ab8db643af0ec01d9261d4caba0/materialyoucolor-3.0.4-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:69373753a3ae5dc8381be27edb7ea14dc8670399ffbce87b9e12dc3830c7d2fb", size = 1267764, upload-time = "2026-08-05T19:54:15.959Z" },
-    { url = "https://files.pythonhosted.org/packages/dc/ef/1c04bbad8e3543bdd4758f874742e4fd5e33da26bcbcc56a01ffb72a178d/materialyoucolor-3.0.4-cp314-cp314-win32.whl", hash = "sha256:d423a05b1b29c0ae677215508c5a8e55c61ea5098683e0186e3e0d6fa2a16387", size = 363204, upload-time = "2026-08-05T19:54:17.379Z" },
-    { url = "https://files.pythonhosted.org/packages/0c/9d/19eb831087920e5a2b5c585658369bfa445158e1e6c3339d64ca26cac82d/materialyoucolor-3.0.4-cp314-cp314-win_amd64.whl", hash = "sha256:4d3bd19fa9dca51410f8566dcaf93d16f0c007b39ad98e0609abf9206f66c274", size = 386553, upload-time = "2026-08-05T19:54:18.783Z" },
-    { url = "https://files.pythonhosted.org/packages/58/3a/3d7e2332ef7e8ef504b50e13a6fbd6419b363f4012941102d99a1e2c4a54/materialyoucolor-3.0.4-cp314-cp314t-macosx_10_15_x86_64.whl", hash = "sha256:1ad75c73d9c77dd123d7efadf0a531d3c3674e603ee352024eace0023fbf12c6", size = 220118, upload-time = "2026-08-05T19:54:20.326Z" },
-    { url = "https://files.pythonhosted.org/packages/41/2b/4a9244b610adccaf450ae43d7845464f34048007730cc2a522a0ada24e5a/materialyoucolor-3.0.4-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:922ad5ec97a2470945ed98c08c6227bd914f1f5c54d365ab93b80964745276ca", size = 211240, upload-time = "2026-08-05T19:54:21.638Z" },
-    { url = "https://files.pythonhosted.org/packages/ce/2f/9e27db764daba894dd97e50f8eb66ef8bb2ded506675a2a8d1b6e18a5eff/materialyoucolor-3.0.4-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:be9b4a3ba54f9bd206e492c4c4a72931207f0936b7f420b2a1f0398b496b8c7c", size = 235543, upload-time = "2026-08-05T19:54:23.041Z" },
-    { url = "https://files.pythonhosted.org/packages/11/02/9ece23bb287ccdc67c9cf44bc6921c68f7e5133c52898d08c0200e0bb59b/materialyoucolor-3.0.4-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:89f37261bb8cd4d35712ba5aad60e00780fc778ca10511aa1c1af17b6170955c", size = 1267850, upload-time = "2026-08-05T19:54:24.727Z" },
-    { url = "https://files.pythonhosted.org/packages/7b/18/3aa6743c838bf7c5c2fbbdf77312ec5eb6fdba48287970df2279976a2c82/materialyoucolor-3.0.4-cp314-cp314t-win32.whl", hash = "sha256:636eaf4982aadd4a7b7015b46823b678b91387ec4e4fc070b97c4eb0719c10ad", size = 365840, upload-time = "2026-08-05T19:54:26.369Z" },
-    { url = "https://files.pythonhosted.org/packages/2a/17/076a0418c3ffcefbdc94743ce29dcde73e120641f22b54c4c289f46daab3/materialyoucolor-3.0.4-cp314-cp314t-win_amd64.whl", hash = "sha256:845352eca361f64d8dfda18f8751c40d29c582597957d8d0600975b30d7640f4", size = 390714, upload-time = "2026-08-05T19:54:27.877Z" },
-    { url = "https://files.pythonhosted.org/packages/3c/bc/9521e7805a25cabc50a9f8470f0542d9600676abcf55ca7dddc7b6a36255/materialyoucolor-3.0.4-cp315-cp315-macosx_10_15_x86_64.whl", hash = "sha256:e97b91e998425e6175fa40f936777d118934edd22762db2d0e034ead23c722ad", size = 216859, upload-time = "2026-08-05T19:54:29.26Z" },
-    { url = "https://files.pythonhosted.org/packages/4c/0f/581ea4902dfa7f594190d7fc72d381c59396c289bd771358deb83297f3fd/materialyoucolor-3.0.4-cp315-cp315-macosx_11_0_arm64.whl", hash = "sha256:03a70858fa9f5a284c83cfe6d8b98a429b7081acb2c85aa18ce6b794ec55a790", size = 207538, upload-time = "2026-08-05T19:54:30.755Z" },
-    { url = "https://files.pythonhosted.org/packages/04/9c/9b88075657e11fcc6a846b21277e6d0eed5e5afd0728f4001dfd0a06d2b1/materialyoucolor-3.0.4-cp315-cp315-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b5f4f2f3eb6333dfa4c24b75f3f26584ed7e7ef6ceec40da7d7f6698093fc181", size = 237405, upload-time = "2026-08-05T19:54:32.327Z" },
-    { url = "https://files.pythonhosted.org/packages/ec/07/a99a150e1666a16780ad7e79b80a4a8cc93bd82892ec98bc49edd2ad6493/materialyoucolor-3.0.4-cp315-cp315-musllinux_1_2_x86_64.whl", hash = "sha256:77bb2f5139a94c49f645e04383026c1c17a0e1764ae98d6e543be0e2dca0a180", size = 1269371, upload-time = "2026-08-05T19:54:33.869Z" },
-    { url = "https://files.pythonhosted.org/packages/67/d1/e47df3c5494ae9c6d0028f26a09ac2c46ccce3f53d0bbd73c3924364bd44/materialyoucolor-3.0.4-cp315-cp315-win32.whl", hash = "sha256:566fe1353b4408783d77477055e8b6a9b25941cad8e2de75078fcc1947facb09", size = 363138, upload-time = "2026-08-05T19:54:35.354Z" },
-    { url = "https://files.pythonhosted.org/packages/fa/45/7596a68ecaa1ba9e6be1c2d444bb19ee312e9cedef8ee65bfda79413c395/materialyoucolor-3.0.4-cp315-cp315-win_amd64.whl", hash = "sha256:412504c55803bd6850377d5a0b17846746cf900da70f9beb51e92e8be8992d5a", size = 386554, upload-time = "2026-08-05T19:54:36.833Z" },
-    { url = "https://files.pythonhosted.org/packages/bc/90/ec1b63e87c0c5a27a0906dea6fe42e5f310b9e0cea87fdef1df5dfd4ffbb/materialyoucolor-3.0.4-cp315-cp315t-macosx_10_15_x86_64.whl", hash = "sha256:53e910b2bfde5dcb44bd42367aed81f89abada739a98ac7d7149eaafc8b62f6c", size = 220146, upload-time = "2026-08-05T19:54:38.216Z" },
-    { url = "https://files.pythonhosted.org/packages/d8/e0/a987c70e0f5a2fb8d66fd2c73b3c6b5de92bafaa2ba424cbe2eaf8085bf2/materialyoucolor-3.0.4-cp315-cp315t-macosx_11_0_arm64.whl", hash = "sha256:20b6bb8c0c205f2479830547dab89253e932ba0f24aaf9824517dcd37060a556", size = 211365, upload-time = "2026-08-05T19:54:39.563Z" },
-    { url = "https://files.pythonhosted.org/packages/00/8d/d4839641bff562559951c3c5c73137288f36876e3e349632281943c8cafd/materialyoucolor-3.0.4-cp315-cp315t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f1ee29003870cb4b63ca29a667647d04452471293368e3174f5cf4e6cab70949", size = 237765, upload-time = "2026-08-05T19:54:41.003Z" },
-    { url = "https://files.pythonhosted.org/packages/65/f6/be2dafe1bd7d6f8010fd074178589ea79686ab557ee6d40e50cb26fea735/materialyoucolor-3.0.4-cp315-cp315t-musllinux_1_2_x86_64.whl", hash = "sha256:53719a2c91c674cc483f48f850c6a20f21556c765a6bf00961500c294fed8f00", size = 1269721, upload-time = "2026-08-05T19:54:42.546Z" },
-    { url = "https://files.pythonhosted.org/packages/33/ba/abe7d4408fd95841bdf65173b324bd3756f72d86f919310a8a68da24a3c3/materialyoucolor-3.0.4-cp315-cp315t-win32.whl", hash = "sha256:2762518ce94bdf0f5bf8bd5f8b71d1925c7142cc26090fb03ed882cb4cb57833", size = 365806, upload-time = "2026-08-05T19:54:44.128Z" },
-    { url = "https://files.pythonhosted.org/packages/09/70/4032965878148702cf09eb93d38c503633f1e9cb07e3ca8c6d592b0adb18/materialyoucolor-3.0.4-cp315-cp315t-win_amd64.whl", hash = "sha256:42299074741e0eebb50eaf2e91156379f785e220c5d3c5f98c8a08bcafb7f12a", size = 390688, upload-time = "2026-08-05T19:54:45.565Z" },
-]
-
-[[package]]
 name = "mdurl"
 version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1358,7 +1321,6 @@ dependencies = [
     { name = "babel" },
     { name = "fonttools" },
     { name = "jinja2" },
-    { name = "materialyoucolor" },
     { name = "msgspec" },
     { name = "pillow" },
     { name = "psutil" },
@@ -1382,7 +1344,6 @@ requires-dist = [
     { name = "babel", specifier = ">=2.18.0" },
     { name = "fonttools", specifier = ">=4.68.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
-    { name = "materialyoucolor", specifier = ">=3.0.4" },
     { name = "msgspec", specifier = ">=0.21.1" },
     { name = "pillow", specifier = ">=13.0.0" },
     { name = "psutil", specifier = ">=7.2.2" },

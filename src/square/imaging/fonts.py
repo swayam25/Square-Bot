@@ -3,6 +3,7 @@ from fontTools.ttLib import TTFont
 from functools import cache
 from importlib.resources import files
 from PIL import ImageFont
+from square.imaging.tokens import Family
 
 _DIR = files(__package__) / "fonts"
 
@@ -12,9 +13,15 @@ _DIR = files(__package__) / "fonts"
 EMOJI = "NotoColorEmoji.ttf"
 EMOJI_PX = 109
 
-# Tried in order for every character. Discord names lean on math letters (𝓴𝓪𝓲) and symbols, which Roboto lacks.
-# NOTE: No CJK font yet (~16 MB), so those names render as boxes until one is added here.
-CHAIN = ("Roboto.ttf", "NotoSansMath.ttf", "NotoSansSymbols.ttf", "NotoSansSymbols2.ttf", EMOJI)
+# The website's CSS font stacks: each family's own font, then Noto Sans and the rest of Noto, so anything Saira or
+# JetBrains Mono lacks (Cyrillic, Devanagari, Discord's math letters like 𝓴𝓪𝓲, symbols, emoji) still draws.
+# NOTE: No CJK font yet (~16 MB), so those names render as boxes until one is added to `_NOTO`.
+_NOTO = ("NotoSans.ttf", "NotoSansMath.ttf", "NotoSansSymbols.ttf", "NotoSansSymbols2.ttf", EMOJI)
+CHAINS: dict[Family, tuple[str, ...]] = {
+    "display": ("Saira.ttf", *_NOTO),
+    "sans": _NOTO,
+    "mono": ("JetBrainsMono.ttf", *_NOTO),
+}
 
 _TEXT_STYLE = "\ufe0e"
 _EMOJI_STYLE = "\ufe0f"
@@ -73,7 +80,7 @@ def font(name: str, px: int, weight: int = 400) -> ImageFont.FreeTypeFont:
     Loads a bundled font at a pixel size, setting its weight axis when it has one.
 
     Args:
-        name (str): A file name from `CHAIN`.
+        name (str): A file name from `CHAINS`.
         px (int): The size in pixels. Must be `EMOJI_PX` for `EMOJI`.
         weight (int): The CSS-style weight, clamped to what the font supports.
     """
@@ -109,13 +116,14 @@ def _wants_emoji(char: str, following: str) -> bool:
     return following == _EMOJI_STYLE or code >= 0x1F000 or code in _EMOJI_DEFAULT_BMP
 
 
-def runs(text: str) -> list[tuple[str, str]]:
+def runs(text: str, family: Family = "sans") -> list[tuple[str, str]]:
     """
-    Splits text into `(font name, substring)` runs, each drawn with the first font in `CHAIN` that covers it.
+    Splits text into `(font name, substring)` runs, each drawn with the first font in the family's chain that covers it.
 
     Emoji go to `EMOJI` first when Unicode says they default to emoji, see `_wants_emoji`. Characters no font
-    covers stay with Roboto and render as boxes.
+    covers stay with the family's own font and render as boxes.
     """
+    chain = CHAINS[family]
     result: list[tuple[str, str]] = []
     for index, char in enumerate(text):
         if result and _joins_previous(char):
@@ -127,7 +135,7 @@ def runs(text: str) -> list[tuple[str, str]]:
         if _wants_emoji(char, text[index + 1 : index + 2]):
             name = EMOJI
         else:
-            name = next((name for name in CHAIN if ord(char) in _coverage(name)), CHAIN[0])
+            name = next((name for name in chain if ord(char) in _coverage(name)), chain[0])
         if result and result[-1][0] == name:
             result[-1] = (name, result[-1][1] + char)
         else:

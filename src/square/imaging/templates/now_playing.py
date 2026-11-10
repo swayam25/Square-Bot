@@ -3,10 +3,10 @@ from PIL import Image
 from square.imaging.canvas import open_image
 from square.imaging.components import Kit
 from square.imaging.layout import Box, Column, Expand, Fill, Node, Picture, Row, Spacer
-from square.imaging.tokens import Shape, Type
+from square.imaging.tokens import Radius, Type
 
-_ARTWORK = 168
-_COVER = 40
+_ARTWORK = 160
+_COVER = 32
 _FILTERS_SHOWN = 2
 # Lavalink source names with a brand logo in `assets/emojis`. Others get a music note
 _LOGOS = {"youtube", "spotify", "soundcloud"}
@@ -62,19 +62,32 @@ def _trim_letterbox(image: Image.Image) -> Image.Image:
 def _artwork(ui: Kit, data: bytes | None, size: float, radius: float) -> Node:
     if image := open_image(data):
         return Picture(_trim_letterbox(image), size, radius=radius)
-    fill, color = ui.container("secondary")
-    return Box(ui.icon("music", size * 0.5, color), fill=fill, radius=radius, width=size, height=size)
+    t = ui.theme
+    return Box(ui.icon("music", size * 0.4, t.accent), fill=t.surface_2, radius=radius, width=size, height=size)
+
+
+def _up_next(ui: Kit, data: NowPlaying) -> Box:
+    """The next track on a `surface-2` tile, `h-12 rounded-2xl`, under a mono eyebrow."""
+    eyebrow = f"Up next · {data.queued} queued" if data.queued else "Up next"
+    title = ui.text(data.up_next, Type.SM_MEDIUM) if data.up_next else ui.muted("Nothing queued", Type.SM_MEDIUM)
+    cover = _artwork(ui, data.up_next_artwork, _COVER, Radius.LG) if data.up_next else None
+    return Box(
+        Row(cover, Column(ui.eyebrow(eyebrow), title), gap=8),
+        padding=(0, 16, 0, 8 if cover else 16),
+        fill=ui.theme.surface_2,
+        radius=Radius.XL2,
+        height=48,
+    )
 
 
 def build(ui: Kit, data: NowPlaying) -> Node:
     """The current track: artwork, title and requester, a wavy progress bar, the player's settings and what's next."""
-    s = ui.scheme
     if data.stream:
-        state = ui.chip("Live", "error")
+        state = ui.chip("Live", "danger", icon="live")
     elif data.paused:
-        state = ui.chip("Paused", "warning")
+        state = ui.chip("Paused", "warning", icon="pause")
     else:
-        state = ui.chip("Playing", "primary")
+        state = ui.chip("Playing", "accent", icon="play")
     if data.source in _LOGOS:
         source = ui.chip(source_label(data.source), icon=data.source, tint=False)
     else:
@@ -82,61 +95,49 @@ def build(ui: Kit, data: NowPlaying) -> Node:
     requester = (
         Row(
             ui.avatar(open_image(data.requester_avatar), data.requester, 24),
-            Expand(ui.text(f"Requested by {data.requester}", Type.BODY_MEDIUM, s.on_surface_variant)),
+            Expand(ui.muted(f"Requested by {data.requester}")),
             gap=8,
         )
         if data.requester
         else None
     )
     track = Row(
-        _artwork(ui, data.artwork, _ARTWORK, Shape.LARGE),
+        _artwork(ui, data.artwork, _ARTWORK, Radius.XL2),
         Expand(
             Column(
-                ui.chips(state, source),
-                Spacer(8),
-                ui.text(data.title, Type.HEADLINE_SMALL),
-                ui.text(data.author, Type.TITLE_MEDIUM, s.on_surface_variant),
+                Row(state, source, gap=8),
+                Spacer(16),
+                ui.text(data.title, Type.DISPLAY_2XL),
+                Spacer(2),
+                ui.muted(data.author, Type.BASE),
                 Fill(),
                 requester,
-                gap=4,
             )
         ),
-        gap=20,
+        gap=24,
         align="stretch",
     )
     times = Row(
-        ui.text(data.elapsed, Type.LABEL_LARGE, s.on_surface_variant),
+        ui.muted(data.elapsed, Type.MONO_XS),
         Spacer(),
-        ui.text("Live" if data.stream else data.duration, Type.LABEL_LARGE, s.on_surface_variant),
+        ui.muted("Live" if data.stream else data.duration, Type.MONO_XS),
     )
-    # A paused track lies flat, like the still bar on the player card
+    # A paused track lies flat
     progress = Column(ui.progress(1 if data.stream else data.progress, wavy=not data.paused), times, gap=8)
-
-    def toggle(label: str, icon: str, on: bool) -> Node:
-        return ui.chip(label, "secondary" if on else None, icon=icon)
 
     looping = data.loop != "Disabled"
     filters = " · ".join(data.filters[:_FILTERS_SHOWN])
     if (hidden := len(data.filters) - _FILTERS_SHOWN) > 0:
         filters += f" +{hidden}"
-    settings = ui.chips(
-        ui.chip(f"Volume {data.volume}%", icon="voice"),
-        toggle(
+    settings = [
+        ui.chip(f"{data.volume}%", icon="voice", style=Type.MONO_XS_MEDIUM),
+        ui.chip("Shuffle", "on" if data.shuffle else "muted", icon="shuffle"),
+        ui.chip(
             f"Loop {data.loop.lower()}" if looping else "Loop off",
-            "loop_one" if data.loop == "Track" else "loop",
-            looping,
+            "on" if looping else "muted",
+            icon="loop_one" if data.loop == "Track" else "loop",
         ),
-        toggle("Shuffle", "shuffle", data.shuffle),
-        toggle("Autoplay", "autoplay", data.autoplay),
-        ui.chip(filters, "tertiary", icon="equalizer") if filters else None,
-    )
-    up_next = ui.list_item(
-        data.up_next or "Nothing queued",
-        leading=Row(
-            ui.text("Up next", Type.LABEL_LARGE, s.primary),
-            _artwork(ui, data.up_next_artwork, _COVER, Shape.SMALL) if data.up_next else None,
-            gap=16,
-        ),
-        trailing=ui.chip(f"{data.queued} in queue", icon="queue_white") if data.queued else None,
-    )
-    return Column(track, progress, settings, up_next, gap=20)
+        ui.chip("Autoplay", "on" if data.autoplay else "muted", icon="autoplay"),
+        ui.chip(filters, "violet", icon="equalizer") if filters else None,
+    ]
+    return Column(track, progress, Column(Row(*settings, gap=8), _up_next(ui, data), gap=16), gap=24)
