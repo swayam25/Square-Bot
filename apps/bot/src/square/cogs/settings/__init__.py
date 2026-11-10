@@ -5,8 +5,7 @@ from square.core import Client
 from square.core.cog import Cog
 from square.core.settings import Callback, SettingsPage, button
 from square.core.view import DesignerView, error_view, show_loading
-from square.db.funcs.guild import remove_guild
-from square.music import request, stay
+from square.settings import reset_all
 from square.utils.emoji import emoji
 
 HOME = "home"  # Picker value for the Back option. Any value that isn't a page name opens the home page.
@@ -120,12 +119,8 @@ class SettingsPanel(DesignerView):
         if not await show_loading(self, interaction, "Resetting..."):
             return
         try:
-            for page in self.pages:
-                await page.reset(interaction)
-            await remove_guild(self.guild.id)
-            request.forget(self.guild.id)
-            stay.forget(self.guild.id)
-            self.bot.dispatch("log_channels_update", self.guild.id)
+            if notes := await reset_all(self.bot, self.guild, self.author):
+                await self.error(interaction, "\n".join(notes))
         finally:
             await self.refresh(interaction)
 

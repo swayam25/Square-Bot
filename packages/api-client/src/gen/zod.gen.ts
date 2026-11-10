@@ -3,6 +3,33 @@
 import * as z from "zod";
 
 /**
+ * Channel
+ */
+export const zChannel = z.object({
+    id: z.string().regex(/^\d{17,20}$/),
+    name: z.string(),
+    type: z.enum(["text", "news", "voice", "stage_voice", "category", "forum", "media"]),
+    parentId: z.string().nullable(),
+    position: z.int(),
+});
+
+/**
+ * GeneralPatch
+ */
+export const zGeneralPatch = z.object({
+    autoroleId: z.string().nullish(),
+    mediaOnlyChannelId: z.string().nullish(),
+});
+
+/**
+ * GeneralSettings
+ */
+export const zGeneralSettings = z.object({
+    autoroleId: z.string().nullable(),
+    mediaOnlyChannelId: z.string().nullable(),
+});
+
+/**
  * Guild
  */
 export const zGuild = z.object({
@@ -22,26 +49,133 @@ export const zHealth = z.object({
 });
 
 /**
- * Settings
+ * InvitePatch
  */
-export const zSettings = z.object({
-    ticketCmds: z.boolean(),
-    mediaOnlyChannelId: z.string().nullable(),
-    autorole: z.string().nullable(),
+export const zInvitePatch = z.object({
+    tracker: z.boolean().optional(),
+    fakeDays: z.int().lte(365).optional(),
+});
+
+/**
+ * InviteSettings
+ */
+export const zInviteSettings = z.object({
+    tracker: z.boolean(),
+    fakeDays: z.int(),
+});
+
+/**
+ * LogChannels
+ */
+export const zLogChannels = z.object({
+    moderation: z.string().nullish(),
+    members: z.string().nullish(),
+    messages: z.string().nullish(),
+    channels: z.string().nullish(),
+    roles: z.string().nullish(),
+    server: z.string().nullish(),
+    voice: z.string().nullish(),
+    invites: z.string().nullish(),
+    automod: z.string().nullish(),
+    tickets: z.string().nullish(),
+});
+
+/**
+ * LogChannelsPatch
+ */
+export const zLogChannelsPatch = z.object({
+    moderation: z.string().nullish(),
+    members: z.string().nullish(),
+    messages: z.string().nullish(),
+    channels: z.string().nullish(),
+    roles: z.string().nullish(),
+    server: z.string().nullish(),
+    voice: z.string().nullish(),
+    invites: z.string().nullish(),
+    automod: z.string().nullish(),
+    tickets: z.string().nullish(),
+});
+
+/**
+ * LogPatch
+ */
+export const zLogPatch = z.object({
+    channels: zLogChannelsPatch,
+});
+
+/**
+ * LogSettings
+ */
+export const zLogSettings = z.object({
+    channels: zLogChannels,
+});
+
+/**
+ * MusicPatch
+ */
+export const zMusicPatch = z.object({
+    stayChannelId: z.string().nullish(),
+    djMode: z.boolean().optional(),
+    djRoleIds: z.array(z.string()).max(5).optional(),
+});
+
+/**
+ * MusicSettings
+ */
+export const zMusicSettings = z.object({
+    requestChannelId: z.string().nullable(),
+    stayChannelId: z.string().nullable(),
     djMode: z.boolean(),
-    djRoles: z.array(z.string()),
-    musicChannelId: z.string().nullable(),
-    musicMessageId: z.string().nullable(),
-    musicStayChannelId: z.string().nullable(),
-    inviteTracker: z.boolean(),
-    inviteFakeDays: z.int(),
-    ticketCategoryId: z.string().nullable(),
-    ticketSupportRoleIds: z.array(z.string()),
-    ticketPanelChannelId: z.string().nullable(),
-    ticketPanelMessageId: z.string().nullable(),
-    ticketMaxOpen: z.int(),
-    ticketConfirmClose: z.boolean(),
-    logChannels: z.record(z.string(), z.string()),
+    djRoleIds: z.array(z.string()),
+});
+
+/**
+ * Notes
+ */
+export const zNotes = z.object({
+    notes: z.array(z.string()),
+});
+
+/**
+ * Problem
+ */
+export const zProblem = z.object({
+    detail: z.string(),
+});
+
+/**
+ * Role
+ */
+export const zRole = z.object({
+    id: z.string().regex(/^\d{17,20}$/),
+    name: z.string(),
+    color: z.string().nullable(),
+    position: z.int(),
+    managed: z.boolean(),
+    assignable: z.boolean(),
+});
+
+/**
+ * TicketPatch
+ */
+export const zTicketPatch = z.object({
+    enabled: z.boolean().optional(),
+    categoryId: z.string().nullish(),
+    supportRoleIds: z.array(z.string()).max(10).optional(),
+    maxOpen: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(5)]).optional(),
+    confirmClose: z.boolean().optional(),
+});
+
+/**
+ * TicketSettings
+ */
+export const zTicketSettings = z.object({
+    enabled: z.boolean(),
+    categoryId: z.string().nullable(),
+    supportRoleIds: z.array(z.string()),
+    maxOpen: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(5)]),
+    confirmClose: z.boolean(),
+    panelChannelId: z.string().nullable(),
 });
 
 /**
@@ -58,15 +192,311 @@ export const zMyGuildsHeaders = z.object({
  */
 export const zMyGuildsResponse = z.array(zGuild);
 
-export const zGuildSettingsHeaders = z.object({
+export const zGuildChannelsHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),
 });
 
-export const zGuildSettingsPath = z.object({
+export const zGuildChannelsPath = z.object({
     guild_id: z.string().regex(/^\d{17,20}$/),
 });
 
 /**
  * Request fulfilled, document follows
  */
-export const zGuildSettingsResponse = zSettings;
+export const zGuildChannelsResponse = z.array(zChannel);
+
+export const zGuildRolesHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGuildRolesPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGuildRolesResponse = z.array(zRole);
+
+export const zResetGeneralSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zResetGeneralSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zResetGeneralSettingsResponse = zGeneralSettings;
+
+export const zGetGeneralSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGetGeneralSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGetGeneralSettingsResponse = zGeneralSettings;
+
+export const zUpdateGeneralSettingsBody = zGeneralPatch;
+
+export const zUpdateGeneralSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateGeneralSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateGeneralSettingsResponse = zGeneralSettings;
+
+export const zResetLogSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zResetLogSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zResetLogSettingsResponse = zLogSettings;
+
+export const zGetLogSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGetLogSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGetLogSettingsResponse = zLogSettings;
+
+export const zUpdateLogSettingsBody = zLogPatch;
+
+export const zUpdateLogSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateLogSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateLogSettingsResponse = zLogSettings;
+
+export const zResetInviteSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zResetInviteSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zResetInviteSettingsResponse = zInviteSettings;
+
+export const zGetInviteSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGetInviteSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGetInviteSettingsResponse = zInviteSettings;
+
+export const zUpdateInviteSettingsBody = zInvitePatch;
+
+export const zUpdateInviteSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateInviteSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateInviteSettingsResponse = zInviteSettings;
+
+export const zResetInviteCountsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zResetInviteCountsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zResetInviteCountsResponse = zInviteSettings;
+
+export const zResetMusicSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zResetMusicSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zResetMusicSettingsResponse = zNotes;
+
+export const zGetMusicSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGetMusicSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGetMusicSettingsResponse = zMusicSettings;
+
+export const zUpdateMusicSettingsBody = zMusicPatch;
+
+export const zUpdateMusicSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateMusicSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateMusicSettingsResponse = zMusicSettings;
+
+export const zRemoveRequestChannelHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zRemoveRequestChannelPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zRemoveRequestChannelResponse = zNotes;
+
+export const zCreateRequestChannelHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zCreateRequestChannelPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Document created, URL follows
+ */
+export const zCreateRequestChannelResponse = zMusicSettings;
+
+export const zResetTicketSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zResetTicketSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zResetTicketSettingsResponse = zNotes;
+
+export const zGetTicketSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGetTicketSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGetTicketSettingsResponse = zTicketSettings;
+
+export const zUpdateTicketSettingsBody = zTicketPatch;
+
+export const zUpdateTicketSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateTicketSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateTicketSettingsResponse = zTicketSettings;
+
+export const zRemoveTicketPanelHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zRemoveTicketPanelPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zRemoveTicketPanelResponse = zNotes;
+
+export const zCreateTicketPanelHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zCreateTicketPanelPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Document created, URL follows
+ */
+export const zCreateTicketPanelResponse = zTicketSettings;
+
+export const zResetAllSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zResetAllSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zResetAllSettingsResponse = zNotes;

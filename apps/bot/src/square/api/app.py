@@ -12,6 +12,7 @@ from litestar.types import Scope
 from square.api.auth import provide_actor, provide_client, secret_guard
 from square.api.routes import handlers
 from square.core import Client
+from square.settings.errors import SettingError
 from typing import Any
 
 log = logging.getLogger(__name__)
@@ -100,5 +101,6 @@ class _Scalar(ScalarRenderPlugin):
 
 
 def _log_exception(exc: Exception, scope: Scope) -> None:
-    if not isinstance(exc, HTTPException):
+    # Refused settings changes are answered with a 422, not bugs
+    if not isinstance(exc, HTTPException | SettingError):
         log.error("API request to %s failed", scope["path"], exc_info=exc)

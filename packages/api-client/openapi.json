@@ -121,13 +121,13 @@
         ]
       }
     },
-    "/guilds/{guild_id}/settings": {
+    "/guilds/{guild_id}/channels": {
       "get": {
         "tags": [
           "Guilds"
         ],
-        "summary": "A server's settings",
-        "operationId": "guild_settings",
+        "summary": "A server's channels, for pickers",
+        "operationId": "guild_channels",
         "parameters": [
           {
             "name": "guild_id",
@@ -161,7 +161,2133 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Settings"
+                  "items": {
+                    "$ref": "#/components/schemas/Channel"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/roles": {
+      "get": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "A server's roles, highest first, for pickers",
+        "operationId": "guild_roles",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Role"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/settings/general": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Auto role and media-only channel",
+        "operationId": "get_general_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Reset general settings",
+        "operationId": "reset_general_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Change the auto role or media-only channel",
+        "operationId": "update_general_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeneralPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/settings/logs": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Where each kind of log goes",
+        "operationId": "get_log_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Turn every log off",
+        "operationId": "reset_log_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Send log types to channels, or turn them off",
+        "operationId": "update_log_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/settings/invites": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Invite tracker and fake account age",
+        "operationId": "get_invite_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Reset invite settings",
+        "operationId": "reset_invite_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Change the invite tracker or fake account age",
+        "operationId": "update_invite_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/settings/invites/counts": {
+      "delete": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Reset everyone's invite counts",
+        "operationId": "reset_invite_counts",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/settings/music": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Request channel, 24/7 channel and DJ mode",
+        "operationId": "get_music_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MusicSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Reset music settings, deleting the request channel",
+        "operationId": "reset_music_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Change the 24/7 channel or DJ settings",
+        "operationId": "update_music_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MusicPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MusicSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/settings/music/request-channel": {
+      "post": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Create the music request channel",
+        "operationId": "create_request_channel",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Document created, URL follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MusicSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Delete the music request channel",
+        "operationId": "remove_request_channel",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/settings/tickets": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Ticket commands, setup and panel",
+        "operationId": "get_ticket_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Reset ticket settings, removing the panel",
+        "operationId": "reset_ticket_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Change ticket settings",
+        "operationId": "update_ticket_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/settings/tickets/panel": {
+      "post": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Create the ticket panel channel",
+        "operationId": "create_ticket_panel",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Document created, URL follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Remove the ticket panel",
+        "operationId": "remove_ticket_panel",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/settings": {
+      "delete": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Reset every setting",
+        "operationId": "reset_all_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notes"
                 }
               }
             }
@@ -216,6 +2342,119 @@
   },
   "components": {
     "schemas": {
+      "Channel": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "news",
+              "voice",
+              "stage_voice",
+              "category",
+              "forum",
+              "media"
+            ]
+          },
+          "parentId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "position": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "parentId",
+          "position",
+          "type"
+        ],
+        "title": "Channel"
+      },
+      "GeneralPatch": {
+        "properties": {
+          "autoroleId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "mediaOnlyChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "GeneralPatch"
+      },
+      "GeneralSettings": {
+        "properties": {
+          "autoroleId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "mediaOnlyChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          }
+        },
+        "type": "object",
+        "required": [
+          "autoroleId",
+          "mediaOnlyChannelId"
+        ],
+        "title": "GeneralSettings"
+      },
       "Guild": {
         "properties": {
           "id": {
@@ -276,12 +2515,47 @@
         ],
         "title": "Health"
       },
-      "Settings": {
+      "InvitePatch": {
         "properties": {
-          "ticketCmds": {
+          "tracker": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "fakeDays": {
+            "oneOf": [
+              {
+                "type": "integer"
+              }
+            ],
+            "maximum": 365
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "InvitePatch"
+      },
+      "InviteSettings": {
+        "properties": {
+          "tracker": {
             "type": "boolean"
           },
-          "mediaOnlyChannelId": {
+          "fakeDays": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fakeDays",
+          "tracker"
+        ],
+        "title": "InviteSettings"
+      },
+      "LogChannels": {
+        "properties": {
+          "moderation": {
             "oneOf": [
               {
                 "type": "string"
@@ -293,7 +2567,322 @@
             "pattern": "^\\d{17,20}$",
             "description": "A Discord ID"
           },
-          "autorole": {
+          "members": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "messages": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "channels": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "roles": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "server": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "voice": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "invites": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "automod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "tickets": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "LogChannels"
+      },
+      "LogChannelsPatch": {
+        "properties": {
+          "moderation": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "members": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "messages": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "channels": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "roles": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "server": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "voice": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "invites": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "automod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "tickets": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "LogChannelsPatch"
+      },
+      "LogPatch": {
+        "properties": {
+          "channels": {
+            "$ref": "#/components/schemas/LogChannelsPatch"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channels"
+        ],
+        "title": "LogPatch"
+      },
+      "LogSettings": {
+        "properties": {
+          "channels": {
+            "$ref": "#/components/schemas/LogChannels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channels"
+        ],
+        "title": "LogSettings"
+      },
+      "MusicPatch": {
+        "properties": {
+          "stayChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "djMode": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "djRoleIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 5
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "MusicPatch"
+      },
+      "MusicSettings": {
+        "properties": {
+          "requestChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "stayChannelId": {
             "oneOf": [
               {
                 "type": "string"
@@ -308,130 +2897,205 @@
           "djMode": {
             "type": "boolean"
           },
-          "djRoles": {
+          "djRoleIds": {
             "items": {
               "type": "string"
             },
             "type": "array"
-          },
-          "musicChannelId": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "musicMessageId": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "musicStayChannelId": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "inviteTracker": {
-            "type": "boolean"
-          },
-          "inviteFakeDays": {
-            "type": "integer"
-          },
-          "ticketCategoryId": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "ticketSupportRoleIds": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "ticketPanelChannelId": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "ticketPanelMessageId": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "ticketMaxOpen": {
-            "type": "integer"
-          },
-          "ticketConfirmClose": {
-            "type": "boolean"
-          },
-          "logChannels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
           }
         },
         "type": "object",
         "required": [
-          "autorole",
           "djMode",
-          "djRoles",
-          "inviteFakeDays",
-          "inviteTracker",
-          "logChannels",
-          "mediaOnlyChannelId",
-          "musicChannelId",
-          "musicMessageId",
-          "musicStayChannelId",
-          "ticketCategoryId",
-          "ticketCmds",
-          "ticketConfirmClose",
-          "ticketMaxOpen",
-          "ticketPanelChannelId",
-          "ticketPanelMessageId",
-          "ticketSupportRoleIds"
+          "djRoleIds",
+          "requestChannelId",
+          "stayChannelId"
         ],
-        "title": "Settings"
+        "title": "MusicSettings"
+      },
+      "Notes": {
+        "properties": {
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notes"
+        ],
+        "title": "Notes"
+      },
+      "Problem": {
+        "properties": {
+          "detail": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "Problem"
+      },
+      "Role": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "position": {
+            "type": "integer"
+          },
+          "managed": {
+            "type": "boolean"
+          },
+          "assignable": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assignable",
+          "color",
+          "id",
+          "managed",
+          "name",
+          "position"
+        ],
+        "title": "Role"
+      },
+      "TicketPatch": {
+        "properties": {
+          "enabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "categoryId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "supportRoleIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 10
+          },
+          "maxOpen": {
+            "oneOf": [
+              {
+                "type": "integer",
+                "enum": [
+                  1,
+                  2,
+                  3,
+                  5
+                ]
+              }
+            ]
+          },
+          "confirmClose": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "TicketPatch"
+      },
+      "TicketSettings": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "categoryId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "supportRoleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "maxOpen": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3,
+              5
+            ]
+          },
+          "confirmClose": {
+            "type": "boolean"
+          },
+          "panelChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          }
+        },
+        "type": "object",
+        "required": [
+          "categoryId",
+          "confirmClose",
+          "enabled",
+          "maxOpen",
+          "panelChannelId",
+          "supportRoleIds"
+        ],
+        "title": "TicketSettings"
       }
     },
     "securitySchemes": {

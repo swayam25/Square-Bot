@@ -3,14 +3,80 @@
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from "./client";
 import { client } from "./client.gen";
 import type {
-    GuildSettingsData,
-    GuildSettingsErrors,
-    GuildSettingsResponses,
+    CreateRequestChannelData,
+    CreateRequestChannelErrors,
+    CreateRequestChannelResponses,
+    CreateTicketPanelData,
+    CreateTicketPanelErrors,
+    CreateTicketPanelResponses,
+    GetGeneralSettingsData,
+    GetGeneralSettingsErrors,
+    GetGeneralSettingsResponses,
+    GetInviteSettingsData,
+    GetInviteSettingsErrors,
+    GetInviteSettingsResponses,
+    GetLogSettingsData,
+    GetLogSettingsErrors,
+    GetLogSettingsResponses,
+    GetMusicSettingsData,
+    GetMusicSettingsErrors,
+    GetMusicSettingsResponses,
+    GetTicketSettingsData,
+    GetTicketSettingsErrors,
+    GetTicketSettingsResponses,
+    GuildChannelsData,
+    GuildChannelsErrors,
+    GuildChannelsResponses,
+    GuildRolesData,
+    GuildRolesErrors,
+    GuildRolesResponses,
     HealthData,
     HealthResponses,
     MyGuildsData,
     MyGuildsErrors,
     MyGuildsResponses,
+    RemoveRequestChannelData,
+    RemoveRequestChannelErrors,
+    RemoveRequestChannelResponses,
+    RemoveTicketPanelData,
+    RemoveTicketPanelErrors,
+    RemoveTicketPanelResponses,
+    ResetAllSettingsData,
+    ResetAllSettingsErrors,
+    ResetAllSettingsResponses,
+    ResetGeneralSettingsData,
+    ResetGeneralSettingsErrors,
+    ResetGeneralSettingsResponses,
+    ResetInviteCountsData,
+    ResetInviteCountsErrors,
+    ResetInviteCountsResponses,
+    ResetInviteSettingsData,
+    ResetInviteSettingsErrors,
+    ResetInviteSettingsResponses,
+    ResetLogSettingsData,
+    ResetLogSettingsErrors,
+    ResetLogSettingsResponses,
+    ResetMusicSettingsData,
+    ResetMusicSettingsErrors,
+    ResetMusicSettingsResponses,
+    ResetTicketSettingsData,
+    ResetTicketSettingsErrors,
+    ResetTicketSettingsResponses,
+    UpdateGeneralSettingsData,
+    UpdateGeneralSettingsErrors,
+    UpdateGeneralSettingsResponses,
+    UpdateInviteSettingsData,
+    UpdateInviteSettingsErrors,
+    UpdateInviteSettingsResponses,
+    UpdateLogSettingsData,
+    UpdateLogSettingsErrors,
+    UpdateLogSettingsResponses,
+    UpdateMusicSettingsData,
+    UpdateMusicSettingsErrors,
+    UpdateMusicSettingsResponses,
+    UpdateTicketSettingsData,
+    UpdateTicketSettingsErrors,
+    UpdateTicketSettingsResponses,
 } from "./types.gen";
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<
@@ -56,12 +122,296 @@ export const myGuilds = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * A server's settings
+ * A server's channels, for pickers
  */
-export const guildSettings = <ThrowOnError extends boolean = false>(
-    options: Options<GuildSettingsData, ThrowOnError>,
-): RequestResult<GuildSettingsResponses, GuildSettingsErrors, ThrowOnError> =>
-    (options.client ?? client).get<GuildSettingsResponses, GuildSettingsErrors, ThrowOnError>({
+export const guildChannels = <ThrowOnError extends boolean = false>(
+    options: Options<GuildChannelsData, ThrowOnError>,
+): RequestResult<GuildChannelsResponses, GuildChannelsErrors, ThrowOnError> =>
+    (options.client ?? client).get<GuildChannelsResponses, GuildChannelsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/channels",
+        ...options,
+    });
+
+/**
+ * A server's roles, highest first, for pickers
+ */
+export const guildRoles = <ThrowOnError extends boolean = false>(
+    options: Options<GuildRolesData, ThrowOnError>,
+): RequestResult<GuildRolesResponses, GuildRolesErrors, ThrowOnError> =>
+    (options.client ?? client).get<GuildRolesResponses, GuildRolesErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/roles",
+        ...options,
+    });
+
+/**
+ * Reset general settings
+ */
+export const resetGeneralSettings = <ThrowOnError extends boolean = false>(
+    options: Options<ResetGeneralSettingsData, ThrowOnError>,
+): RequestResult<ResetGeneralSettingsResponses, ResetGeneralSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).delete<ResetGeneralSettingsResponses, ResetGeneralSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/general",
+        ...options,
+    });
+
+/**
+ * Auto role and media-only channel
+ */
+export const getGeneralSettings = <ThrowOnError extends boolean = false>(
+    options: Options<GetGeneralSettingsData, ThrowOnError>,
+): RequestResult<GetGeneralSettingsResponses, GetGeneralSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).get<GetGeneralSettingsResponses, GetGeneralSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/general",
+        ...options,
+    });
+
+/**
+ * Change the auto role or media-only channel
+ */
+export const updateGeneralSettings = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateGeneralSettingsData, ThrowOnError>,
+): RequestResult<UpdateGeneralSettingsResponses, UpdateGeneralSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateGeneralSettingsResponses, UpdateGeneralSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/general",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Turn every log off
+ */
+export const resetLogSettings = <ThrowOnError extends boolean = false>(
+    options: Options<ResetLogSettingsData, ThrowOnError>,
+): RequestResult<ResetLogSettingsResponses, ResetLogSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).delete<ResetLogSettingsResponses, ResetLogSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/logs",
+        ...options,
+    });
+
+/**
+ * Where each kind of log goes
+ */
+export const getLogSettings = <ThrowOnError extends boolean = false>(
+    options: Options<GetLogSettingsData, ThrowOnError>,
+): RequestResult<GetLogSettingsResponses, GetLogSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).get<GetLogSettingsResponses, GetLogSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/logs",
+        ...options,
+    });
+
+/**
+ * Send log types to channels, or turn them off
+ */
+export const updateLogSettings = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateLogSettingsData, ThrowOnError>,
+): RequestResult<UpdateLogSettingsResponses, UpdateLogSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateLogSettingsResponses, UpdateLogSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/logs",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Reset invite settings
+ */
+export const resetInviteSettings = <ThrowOnError extends boolean = false>(
+    options: Options<ResetInviteSettingsData, ThrowOnError>,
+): RequestResult<ResetInviteSettingsResponses, ResetInviteSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).delete<ResetInviteSettingsResponses, ResetInviteSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/invites",
+        ...options,
+    });
+
+/**
+ * Invite tracker and fake account age
+ */
+export const getInviteSettings = <ThrowOnError extends boolean = false>(
+    options: Options<GetInviteSettingsData, ThrowOnError>,
+): RequestResult<GetInviteSettingsResponses, GetInviteSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).get<GetInviteSettingsResponses, GetInviteSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/invites",
+        ...options,
+    });
+
+/**
+ * Change the invite tracker or fake account age
+ */
+export const updateInviteSettings = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateInviteSettingsData, ThrowOnError>,
+): RequestResult<UpdateInviteSettingsResponses, UpdateInviteSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateInviteSettingsResponses, UpdateInviteSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/invites",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Reset everyone's invite counts
+ */
+export const resetInviteCounts = <ThrowOnError extends boolean = false>(
+    options: Options<ResetInviteCountsData, ThrowOnError>,
+): RequestResult<ResetInviteCountsResponses, ResetInviteCountsErrors, ThrowOnError> =>
+    (options.client ?? client).delete<ResetInviteCountsResponses, ResetInviteCountsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/invites/counts",
+        ...options,
+    });
+
+/**
+ * Reset music settings, deleting the request channel
+ */
+export const resetMusicSettings = <ThrowOnError extends boolean = false>(
+    options: Options<ResetMusicSettingsData, ThrowOnError>,
+): RequestResult<ResetMusicSettingsResponses, ResetMusicSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).delete<ResetMusicSettingsResponses, ResetMusicSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/music",
+        ...options,
+    });
+
+/**
+ * Request channel, 24/7 channel and DJ mode
+ */
+export const getMusicSettings = <ThrowOnError extends boolean = false>(
+    options: Options<GetMusicSettingsData, ThrowOnError>,
+): RequestResult<GetMusicSettingsResponses, GetMusicSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).get<GetMusicSettingsResponses, GetMusicSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/music",
+        ...options,
+    });
+
+/**
+ * Change the 24/7 channel or DJ settings
+ */
+export const updateMusicSettings = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateMusicSettingsData, ThrowOnError>,
+): RequestResult<UpdateMusicSettingsResponses, UpdateMusicSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateMusicSettingsResponses, UpdateMusicSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/music",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Delete the music request channel
+ */
+export const removeRequestChannel = <ThrowOnError extends boolean = false>(
+    options: Options<RemoveRequestChannelData, ThrowOnError>,
+): RequestResult<RemoveRequestChannelResponses, RemoveRequestChannelErrors, ThrowOnError> =>
+    (options.client ?? client).delete<RemoveRequestChannelResponses, RemoveRequestChannelErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/music/request-channel",
+        ...options,
+    });
+
+/**
+ * Create the music request channel
+ */
+export const createRequestChannel = <ThrowOnError extends boolean = false>(
+    options: Options<CreateRequestChannelData, ThrowOnError>,
+): RequestResult<CreateRequestChannelResponses, CreateRequestChannelErrors, ThrowOnError> =>
+    (options.client ?? client).post<CreateRequestChannelResponses, CreateRequestChannelErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/music/request-channel",
+        ...options,
+    });
+
+/**
+ * Reset ticket settings, removing the panel
+ */
+export const resetTicketSettings = <ThrowOnError extends boolean = false>(
+    options: Options<ResetTicketSettingsData, ThrowOnError>,
+): RequestResult<ResetTicketSettingsResponses, ResetTicketSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).delete<ResetTicketSettingsResponses, ResetTicketSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/tickets",
+        ...options,
+    });
+
+/**
+ * Ticket commands, setup and panel
+ */
+export const getTicketSettings = <ThrowOnError extends boolean = false>(
+    options: Options<GetTicketSettingsData, ThrowOnError>,
+): RequestResult<GetTicketSettingsResponses, GetTicketSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).get<GetTicketSettingsResponses, GetTicketSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/tickets",
+        ...options,
+    });
+
+/**
+ * Change ticket settings
+ */
+export const updateTicketSettings = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateTicketSettingsData, ThrowOnError>,
+): RequestResult<UpdateTicketSettingsResponses, UpdateTicketSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateTicketSettingsResponses, UpdateTicketSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/tickets",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Remove the ticket panel
+ */
+export const removeTicketPanel = <ThrowOnError extends boolean = false>(
+    options: Options<RemoveTicketPanelData, ThrowOnError>,
+): RequestResult<RemoveTicketPanelResponses, RemoveTicketPanelErrors, ThrowOnError> =>
+    (options.client ?? client).delete<RemoveTicketPanelResponses, RemoveTicketPanelErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/tickets/panel",
+        ...options,
+    });
+
+/**
+ * Create the ticket panel channel
+ */
+export const createTicketPanel = <ThrowOnError extends boolean = false>(
+    options: Options<CreateTicketPanelData, ThrowOnError>,
+): RequestResult<CreateTicketPanelResponses, CreateTicketPanelErrors, ThrowOnError> =>
+    (options.client ?? client).post<CreateTicketPanelResponses, CreateTicketPanelErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/tickets/panel",
+        ...options,
+    });
+
+/**
+ * Reset every setting
+ */
+export const resetAllSettings = <ThrowOnError extends boolean = false>(
+    options: Options<ResetAllSettingsData, ThrowOnError>,
+): RequestResult<ResetAllSettingsResponses, ResetAllSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).delete<ResetAllSettingsResponses, ResetAllSettingsErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/settings",
         ...options,

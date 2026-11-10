@@ -5,6 +5,51 @@ export type ClientOptions = {
 };
 
 /**
+ * Channel
+ */
+export type Channel = {
+    /**
+     * A Discord ID
+     */
+    id: string;
+    name: string;
+    type: "text" | "news" | "voice" | "stage_voice" | "category" | "forum" | "media";
+    /**
+     * A Discord ID
+     */
+    parentId: string | null;
+    position: number;
+};
+
+/**
+ * GeneralPatch
+ */
+export type GeneralPatch = {
+    /**
+     * A Discord ID
+     */
+    autoroleId?: string | null;
+    /**
+     * A Discord ID
+     */
+    mediaOnlyChannelId?: string | null;
+};
+
+/**
+ * GeneralSettings
+ */
+export type GeneralSettings = {
+    /**
+     * A Discord ID
+     */
+    autoroleId: string | null;
+    /**
+     * A Discord ID
+     */
+    mediaOnlyChannelId: string | null;
+};
+
+/**
  * Guild
  */
 export type Guild = {
@@ -27,52 +72,214 @@ export type Health = {
 };
 
 /**
- * Settings
+ * InvitePatch
  */
-export type Settings = {
-    ticketCmds: boolean;
+export type InvitePatch = {
+    tracker?: boolean;
+    fakeDays?: number;
+};
+
+/**
+ * InviteSettings
+ */
+export type InviteSettings = {
+    tracker: boolean;
+    fakeDays: number;
+};
+
+/**
+ * LogChannels
+ */
+export type LogChannels = {
     /**
      * A Discord ID
      */
-    mediaOnlyChannelId: string | null;
+    moderation?: string | null;
     /**
      * A Discord ID
      */
-    autorole: string | null;
+    members?: string | null;
+    /**
+     * A Discord ID
+     */
+    messages?: string | null;
+    /**
+     * A Discord ID
+     */
+    channels?: string | null;
+    /**
+     * A Discord ID
+     */
+    roles?: string | null;
+    /**
+     * A Discord ID
+     */
+    server?: string | null;
+    /**
+     * A Discord ID
+     */
+    voice?: string | null;
+    /**
+     * A Discord ID
+     */
+    invites?: string | null;
+    /**
+     * A Discord ID
+     */
+    automod?: string | null;
+    /**
+     * A Discord ID
+     */
+    tickets?: string | null;
+};
+
+/**
+ * LogChannelsPatch
+ */
+export type LogChannelsPatch = {
+    /**
+     * A Discord ID
+     */
+    moderation?: string | null;
+    /**
+     * A Discord ID
+     */
+    members?: string | null;
+    /**
+     * A Discord ID
+     */
+    messages?: string | null;
+    /**
+     * A Discord ID
+     */
+    channels?: string | null;
+    /**
+     * A Discord ID
+     */
+    roles?: string | null;
+    /**
+     * A Discord ID
+     */
+    server?: string | null;
+    /**
+     * A Discord ID
+     */
+    voice?: string | null;
+    /**
+     * A Discord ID
+     */
+    invites?: string | null;
+    /**
+     * A Discord ID
+     */
+    automod?: string | null;
+    /**
+     * A Discord ID
+     */
+    tickets?: string | null;
+};
+
+/**
+ * LogPatch
+ */
+export type LogPatch = {
+    channels: LogChannelsPatch;
+};
+
+/**
+ * LogSettings
+ */
+export type LogSettings = {
+    channels: LogChannels;
+};
+
+/**
+ * MusicPatch
+ */
+export type MusicPatch = {
+    /**
+     * A Discord ID
+     */
+    stayChannelId?: string | null;
+    djMode?: boolean;
+    djRoleIds?: Array<string>;
+};
+
+/**
+ * MusicSettings
+ */
+export type MusicSettings = {
+    /**
+     * A Discord ID
+     */
+    requestChannelId: string | null;
+    /**
+     * A Discord ID
+     */
+    stayChannelId: string | null;
     djMode: boolean;
-    djRoles: Array<string>;
+    djRoleIds: Array<string>;
+};
+
+/**
+ * Notes
+ */
+export type Notes = {
+    notes: Array<string>;
+};
+
+/**
+ * Problem
+ */
+export type Problem = {
+    detail: string;
+};
+
+/**
+ * Role
+ */
+export type Role = {
     /**
      * A Discord ID
      */
-    musicChannelId: string | null;
+    id: string;
+    name: string;
+    color: string | null;
+    position: number;
+    managed: boolean;
+    assignable: boolean;
+};
+
+/**
+ * TicketPatch
+ */
+export type TicketPatch = {
+    enabled?: boolean;
     /**
      * A Discord ID
      */
-    musicMessageId: string | null;
+    categoryId?: string | null;
+    supportRoleIds?: Array<string>;
+    maxOpen?: 1 | 2 | 3 | 5;
+    confirmClose?: boolean;
+};
+
+/**
+ * TicketSettings
+ */
+export type TicketSettings = {
+    enabled: boolean;
     /**
      * A Discord ID
      */
-    musicStayChannelId: string | null;
-    inviteTracker: boolean;
-    inviteFakeDays: number;
+    categoryId: string | null;
+    supportRoleIds: Array<string>;
+    maxOpen: 1 | 2 | 3 | 5;
+    confirmClose: boolean;
     /**
      * A Discord ID
      */
-    ticketCategoryId: string | null;
-    ticketSupportRoleIds: Array<string>;
-    /**
-     * A Discord ID
-     */
-    ticketPanelChannelId: string | null;
-    /**
-     * A Discord ID
-     */
-    ticketPanelMessageId: string | null;
-    ticketMaxOpen: number;
-    ticketConfirmClose: boolean;
-    logChannels: {
-        [key: string]: string;
-    };
+    panelChannelId: string | null;
 };
 
 export type HealthData = {
@@ -131,7 +338,1025 @@ export type MyGuildsResponses = {
 
 export type MyGuildsResponse = MyGuildsResponses[keyof MyGuildsResponses];
 
-export type GuildSettingsData = {
+export type GuildChannelsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/channels";
+};
+
+export type GuildChannelsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GuildChannelsError = GuildChannelsErrors[keyof GuildChannelsErrors];
+
+export type GuildChannelsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Array<Channel>;
+};
+
+export type GuildChannelsResponse = GuildChannelsResponses[keyof GuildChannelsResponses];
+
+export type GuildRolesData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/roles";
+};
+
+export type GuildRolesErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GuildRolesError = GuildRolesErrors[keyof GuildRolesErrors];
+
+export type GuildRolesResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Array<Role>;
+};
+
+export type GuildRolesResponse = GuildRolesResponses[keyof GuildRolesResponses];
+
+export type ResetGeneralSettingsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/general";
+};
+
+export type ResetGeneralSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ResetGeneralSettingsError = ResetGeneralSettingsErrors[keyof ResetGeneralSettingsErrors];
+
+export type ResetGeneralSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: GeneralSettings;
+};
+
+export type ResetGeneralSettingsResponse = ResetGeneralSettingsResponses[keyof ResetGeneralSettingsResponses];
+
+export type GetGeneralSettingsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/general";
+};
+
+export type GetGeneralSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GetGeneralSettingsError = GetGeneralSettingsErrors[keyof GetGeneralSettingsErrors];
+
+export type GetGeneralSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: GeneralSettings;
+};
+
+export type GetGeneralSettingsResponse = GetGeneralSettingsResponses[keyof GetGeneralSettingsResponses];
+
+export type UpdateGeneralSettingsData = {
+    body: GeneralPatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/general";
+};
+
+export type UpdateGeneralSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type UpdateGeneralSettingsError = UpdateGeneralSettingsErrors[keyof UpdateGeneralSettingsErrors];
+
+export type UpdateGeneralSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: GeneralSettings;
+};
+
+export type UpdateGeneralSettingsResponse = UpdateGeneralSettingsResponses[keyof UpdateGeneralSettingsResponses];
+
+export type ResetLogSettingsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/logs";
+};
+
+export type ResetLogSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ResetLogSettingsError = ResetLogSettingsErrors[keyof ResetLogSettingsErrors];
+
+export type ResetLogSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: LogSettings;
+};
+
+export type ResetLogSettingsResponse = ResetLogSettingsResponses[keyof ResetLogSettingsResponses];
+
+export type GetLogSettingsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/logs";
+};
+
+export type GetLogSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GetLogSettingsError = GetLogSettingsErrors[keyof GetLogSettingsErrors];
+
+export type GetLogSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: LogSettings;
+};
+
+export type GetLogSettingsResponse = GetLogSettingsResponses[keyof GetLogSettingsResponses];
+
+export type UpdateLogSettingsData = {
+    body: LogPatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/logs";
+};
+
+export type UpdateLogSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type UpdateLogSettingsError = UpdateLogSettingsErrors[keyof UpdateLogSettingsErrors];
+
+export type UpdateLogSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: LogSettings;
+};
+
+export type UpdateLogSettingsResponse = UpdateLogSettingsResponses[keyof UpdateLogSettingsResponses];
+
+export type ResetInviteSettingsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/invites";
+};
+
+export type ResetInviteSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ResetInviteSettingsError = ResetInviteSettingsErrors[keyof ResetInviteSettingsErrors];
+
+export type ResetInviteSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: InviteSettings;
+};
+
+export type ResetInviteSettingsResponse = ResetInviteSettingsResponses[keyof ResetInviteSettingsResponses];
+
+export type GetInviteSettingsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/invites";
+};
+
+export type GetInviteSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GetInviteSettingsError = GetInviteSettingsErrors[keyof GetInviteSettingsErrors];
+
+export type GetInviteSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: InviteSettings;
+};
+
+export type GetInviteSettingsResponse = GetInviteSettingsResponses[keyof GetInviteSettingsResponses];
+
+export type UpdateInviteSettingsData = {
+    body: InvitePatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/invites";
+};
+
+export type UpdateInviteSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type UpdateInviteSettingsError = UpdateInviteSettingsErrors[keyof UpdateInviteSettingsErrors];
+
+export type UpdateInviteSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: InviteSettings;
+};
+
+export type UpdateInviteSettingsResponse = UpdateInviteSettingsResponses[keyof UpdateInviteSettingsResponses];
+
+export type ResetInviteCountsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/invites/counts";
+};
+
+export type ResetInviteCountsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ResetInviteCountsError = ResetInviteCountsErrors[keyof ResetInviteCountsErrors];
+
+export type ResetInviteCountsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: InviteSettings;
+};
+
+export type ResetInviteCountsResponse = ResetInviteCountsResponses[keyof ResetInviteCountsResponses];
+
+export type ResetMusicSettingsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/music";
+};
+
+export type ResetMusicSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ResetMusicSettingsError = ResetMusicSettingsErrors[keyof ResetMusicSettingsErrors];
+
+export type ResetMusicSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Notes;
+};
+
+export type ResetMusicSettingsResponse = ResetMusicSettingsResponses[keyof ResetMusicSettingsResponses];
+
+export type GetMusicSettingsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/music";
+};
+
+export type GetMusicSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GetMusicSettingsError = GetMusicSettingsErrors[keyof GetMusicSettingsErrors];
+
+export type GetMusicSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: MusicSettings;
+};
+
+export type GetMusicSettingsResponse = GetMusicSettingsResponses[keyof GetMusicSettingsResponses];
+
+export type UpdateMusicSettingsData = {
+    body: MusicPatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/music";
+};
+
+export type UpdateMusicSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type UpdateMusicSettingsError = UpdateMusicSettingsErrors[keyof UpdateMusicSettingsErrors];
+
+export type UpdateMusicSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: MusicSettings;
+};
+
+export type UpdateMusicSettingsResponse = UpdateMusicSettingsResponses[keyof UpdateMusicSettingsResponses];
+
+export type RemoveRequestChannelData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/music/request-channel";
+};
+
+export type RemoveRequestChannelErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type RemoveRequestChannelError = RemoveRequestChannelErrors[keyof RemoveRequestChannelErrors];
+
+export type RemoveRequestChannelResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Notes;
+};
+
+export type RemoveRequestChannelResponse = RemoveRequestChannelResponses[keyof RemoveRequestChannelResponses];
+
+export type CreateRequestChannelData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/music/request-channel";
+};
+
+export type CreateRequestChannelErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type CreateRequestChannelError = CreateRequestChannelErrors[keyof CreateRequestChannelErrors];
+
+export type CreateRequestChannelResponses = {
+    /**
+     * Document created, URL follows
+     */
+    201: MusicSettings;
+};
+
+export type CreateRequestChannelResponse = CreateRequestChannelResponses[keyof CreateRequestChannelResponses];
+
+export type ResetTicketSettingsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/tickets";
+};
+
+export type ResetTicketSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ResetTicketSettingsError = ResetTicketSettingsErrors[keyof ResetTicketSettingsErrors];
+
+export type ResetTicketSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Notes;
+};
+
+export type ResetTicketSettingsResponse = ResetTicketSettingsResponses[keyof ResetTicketSettingsResponses];
+
+export type GetTicketSettingsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/tickets";
+};
+
+export type GetTicketSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GetTicketSettingsError = GetTicketSettingsErrors[keyof GetTicketSettingsErrors];
+
+export type GetTicketSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: TicketSettings;
+};
+
+export type GetTicketSettingsResponse = GetTicketSettingsResponses[keyof GetTicketSettingsResponses];
+
+export type UpdateTicketSettingsData = {
+    body: TicketPatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/tickets";
+};
+
+export type UpdateTicketSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type UpdateTicketSettingsError = UpdateTicketSettingsErrors[keyof UpdateTicketSettingsErrors];
+
+export type UpdateTicketSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: TicketSettings;
+};
+
+export type UpdateTicketSettingsResponse = UpdateTicketSettingsResponses[keyof UpdateTicketSettingsResponses];
+
+export type RemoveTicketPanelData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/tickets/panel";
+};
+
+export type RemoveTicketPanelErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type RemoveTicketPanelError = RemoveTicketPanelErrors[keyof RemoveTicketPanelErrors];
+
+export type RemoveTicketPanelResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Notes;
+};
+
+export type RemoveTicketPanelResponse = RemoveTicketPanelResponses[keyof RemoveTicketPanelResponses];
+
+export type CreateTicketPanelData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/tickets/panel";
+};
+
+export type CreateTicketPanelErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type CreateTicketPanelError = CreateTicketPanelErrors[keyof CreateTicketPanelErrors];
+
+export type CreateTicketPanelResponses = {
+    /**
+     * Document created, URL follows
+     */
+    201: TicketSettings;
+};
+
+export type CreateTicketPanelResponse = CreateTicketPanelResponses[keyof CreateTicketPanelResponses];
+
+export type ResetAllSettingsData = {
     body?: never;
     headers: {
         /**
@@ -149,7 +1374,7 @@ export type GuildSettingsData = {
     url: "/guilds/{guild_id}/settings";
 };
 
-export type GuildSettingsErrors = {
+export type ResetAllSettingsErrors = {
     /**
      * Validation Exception
      */
@@ -165,13 +1390,13 @@ export type GuildSettingsErrors = {
     };
 };
 
-export type GuildSettingsError = GuildSettingsErrors[keyof GuildSettingsErrors];
+export type ResetAllSettingsError = ResetAllSettingsErrors[keyof ResetAllSettingsErrors];
 
-export type GuildSettingsResponses = {
+export type ResetAllSettingsResponses = {
     /**
      * Request fulfilled, document follows
      */
-    200: Settings;
+    200: Notes;
 };
 
-export type GuildSettingsResponse = GuildSettingsResponses[keyof GuildSettingsResponses];
+export type ResetAllSettingsResponse = ResetAllSettingsResponses[keyof ResetAllSettingsResponses];

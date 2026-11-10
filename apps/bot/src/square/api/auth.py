@@ -61,3 +61,10 @@ def provide_guild(
     if not member.guild_permissions.manage_guild:
         raise PermissionDeniedException("Manage Server permission required")
     return guild
+
+
+def provide_member(guild: discord.Guild, actor: int) -> discord.Member:
+    """The actor as a member of the guild, e.g. for audit log reasons. `provide_guild` already checked they're in it."""
+    if (member := guild.get_member(actor)) is None:
+        raise NotFoundException("Guild not found")
+    return member

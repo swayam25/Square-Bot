@@ -2,11 +2,9 @@ import discord
 from discord import ui
 from square.core.settings import SettingsPage, modal, pencil, row, title, toggle
 from square.db import cache
-from square.db.funcs.invites import reset_invites, set_fake_days, set_tracker
-from square.utils import invites
+from square.settings import invites
+from square.settings.errors import SettingError
 from square.utils.emoji import emoji
-
-MAX_FAKE_DAYS = 365
 
 
 class InvitesPage(SettingsPage):
@@ -31,8 +29,7 @@ class InvitesPage(SettingsPage):
         ]
 
     async def _toggle(self, interaction: discord.Interaction) -> None:
-        await set_tracker(self.guild.id, not cache.get(self.guild.id).invite_tracker)
-        await invites.refresh(self.guild)  # Starts or stops caching this server's invite uses
+        await invites.set_tracker(self.guild, not cache.get(self.guild.id).invite_tracker)
         await self.panel.refresh(interaction)
 
     async def _edit_days(self, interaction: discord.Interaction) -> None:
@@ -40,20 +37,20 @@ class InvitesPage(SettingsPage):
 
         async def submit(submitted: discord.Interaction) -> None:
             value = (days.value or "").strip()
-            if not value.isdigit() or int(value) > MAX_FAKE_DAYS:
-                await self.panel.error(submitted, f"Enter a whole number of days from 0 to {MAX_FAKE_DAYS}.")
+            try:
+                # A non-number goes through as -1 so it gets the same "0 to N days" message
+                await invites.set_fake_days(self.guild, int(value) if value.isdigit() else -1)
+            except SettingError as exc:
+                await self.panel.error(submitted, str(exc))
                 return
-            await set_fake_days(self.guild.id, int(value))
             await self.panel.refresh(submitted)
 
         label = ui.Label("Days", days, description="Accounts younger than this when they join count as fake.")
         await interaction.response.send_modal(modal("Fake account age", label, on_submit=submit))
 
     async def _reset_counts(self, interaction: discord.Interaction) -> None:
-        await reset_invites(self.guild.id)
+        await invites.reset_counts(self.guild)
         await self.panel.refresh(interaction)
 
     async def reset(self, interaction: discord.Interaction) -> None:
-        await set_tracker(self.guild.id, False)
-        await set_fake_days(self.guild.id, 7)
-        await invites.refresh(self.guild)
+        await invites.reset(self.guild)

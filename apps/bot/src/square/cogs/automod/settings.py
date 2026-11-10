@@ -2,7 +2,8 @@ import discord
 from discord import ui
 from square.core.settings import SettingsPage, channel_picker, mention_or_off, modal, pencil, role_picker, row, title
 from square.db import cache
-from square.db.funcs.guild import set_autorole, set_media_only
+from square.settings import general
+from square.settings.errors import SettingError
 from square.utils.emoji import emoji
 
 
@@ -36,10 +37,11 @@ class GeneralPage(SettingsPage):
         async def submit(submitted: discord.Interaction) -> None:
             picked = picker.values or []
             role = picked[0] if picked and isinstance(picked[0], discord.Role) else None
-            if role and (role.is_default() or role.managed or role >= self.guild.me.top_role):
-                await self.panel.error(submitted, f"I can't give out {role.mention}, it's above my role or managed.")
+            try:
+                await general.set_autorole(self.guild, role)
+            except SettingError as exc:
+                await self.panel.error(submitted, str(exc))
                 return
-            await set_autorole(self.guild.id, role.id if role else None)
             await self.panel.refresh(submitted)
 
         label = ui.Label("Role", picker, description="Given to every member who joins. Leave empty to turn it off.")
@@ -51,19 +53,15 @@ class GeneralPage(SettingsPage):
         async def submit(submitted: discord.Interaction) -> None:
             picked = picker.values or []
             channel = picked[0] if picked and isinstance(picked[0], discord.TextChannel) else None
-            if channel:
-                perms = channel.permissions_for(self.guild.me)
-                if not (perms.send_messages and perms.manage_messages):
-                    await self.panel.error(
-                        submitted, f"I need `Send Messages` and `Manage Messages` in {channel.mention}."
-                    )
-                    return
-            await set_media_only(self.guild.id, channel.id if channel else None)
+            try:
+                await general.set_media_only(self.guild, channel)
+            except SettingError as exc:
+                await self.panel.error(submitted, str(exc))
+                return
             await self.panel.refresh(submitted)
 
         label = ui.Label("Channel", picker, description="Only media and links may be posted here. Empty turns it off.")
         await interaction.response.send_modal(modal("Media-only channel", label, on_submit=submit))
 
     async def reset(self, interaction: discord.Interaction) -> None:
-        await set_autorole(self.guild.id, None)
-        await set_media_only(self.guild.id, None)
+        await general.reset(self.guild)

@@ -2,7 +2,8 @@ import discord
 from discord import ui
 from square.core.settings import SettingsPage, channel_picker, modal, pencil, title
 from square.db import cache
-from square.db.funcs.logs import remove_log_channel, set_all_log_channels
+from square.settings import logs
+from square.settings.errors import SettingError
 from square.utils.emoji import emoji
 from square.utils.server_log import LogType
 
@@ -35,22 +36,16 @@ class LogsPage(SettingsPage):
         picker = channel_picker([discord.ChannelType.text])
 
         async def submit(submitted: discord.Interaction) -> None:
-            keys = [str(key) for key in types.values or []]
+            keys = {str(key) for key in types.values or []}
             picked = picker.values or []
             channel = picked[0] if picked and isinstance(picked[0], discord.TextChannel) else None
-            if channel:
-                perms = channel.permissions_for(self.guild.me)
-                if not (perms.send_messages and perms.manage_webhooks):
-                    # Logs are posted through a webhook named after the bot
-                    await self.panel.error(
-                        submitted, f"I need `Send Messages` and `Manage Webhooks` in {channel.mention}."
-                    )
-                    return
-                await set_all_log_channels(self.guild.id, keys, channel.id)
-            else:
-                for key in keys:
-                    await remove_log_channel(self.guild.id, key)
-            self.panel.bot.dispatch("log_channels_update", self.guild.id)
+            try:
+                await logs.set_channels(
+                    self.panel.bot, self.guild, {log_type: channel for log_type in LogType if log_type.key in keys}
+                )
+            except SettingError as exc:
+                await self.panel.error(submitted, str(exc))
+                return
             await self.panel.refresh(submitted)
 
         await interaction.response.send_modal(
@@ -63,5 +58,4 @@ class LogsPage(SettingsPage):
         )
 
     async def reset(self, interaction: discord.Interaction) -> None:
-        await remove_log_channel(self.guild.id)
-        self.panel.bot.dispatch("log_channels_update", self.guild.id)
+        await logs.reset(self.panel.bot, self.guild)
