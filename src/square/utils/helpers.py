@@ -97,6 +97,15 @@ def fmt_number(value: int | float) -> str:
     return format_compact_decimal(round(value / unit, 1) * unit, locale="en", fraction_digits=1)
 
 
+def fmt_count(value: int) -> str:
+    """
+    Formats a count in full up to 9,999 and compactly after, like `fmt_number`: 1,284, 12.3K, 2.4M.
+
+    For counts on cards and the website, where four digits still fit but longer ones would crowd the layout.
+    """
+    return f"{value:,}" if abs(value) < 10_000 else fmt_number(value)
+
+
 def member_counts(guild: discord.Guild) -> tuple[int, int, int]:
     """
     Counts a guild's members in one pass over the member cache.
