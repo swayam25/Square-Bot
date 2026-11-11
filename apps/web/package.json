@@ -19,9 +19,9 @@
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@iconify-json/material-symbols": "^1.2.98",
-        "@iconify-json/simple-icons": "^1.2.101",
-        "@sveltejs/adapter-node": "^6.0.0",
-        "@sveltejs/kit": "^3.0.0",
+        "@iconify-json/simple-icons": "^1.2.102",
+        "@sveltejs/adapter-node": "^6.0.2",
+        "@sveltejs/kit": "^3.2.0",
         "@sveltejs/vite-plugin-svelte": "^7.2.0",
         "@tailwindcss/vite": "^4.3.0",
         "@types/node": "^26",
@@ -34,7 +34,7 @@
         "svelte-check": "^4.6.0",
         "tailwindcss": "^4.3.0",
         "typescript": "^6.0.3",
-        "typescript-eslint": "^8.60.1",
+        "typescript-eslint": "^8.72.2",
         "unplugin-icons": "^24.0.0",
         "vite": "^8.3.0"
     },
