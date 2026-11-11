@@ -44,6 +44,9 @@ import type {
     JumpToTrackData,
     JumpToTrackErrors,
     JumpToTrackResponses,
+    MemberJoinsData,
+    MemberJoinsErrors,
+    MemberJoinsResponses,
     MoveTrackData,
     MoveTrackErrors,
     MoveTrackResponses,
@@ -220,6 +223,18 @@ export const guildRoles = <ThrowOnError extends boolean = false>(
     (options.client ?? client).get<GuildRolesResponses, GuildRolesErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/roles",
+        ...options,
+    });
+
+/**
+ * Members who joined each day over the last 30 days
+ */
+export const memberJoins = <ThrowOnError extends boolean = false>(
+    options: Options<MemberJoinsData, ThrowOnError>,
+): RequestResult<MemberJoinsResponses, MemberJoinsErrors, ThrowOnError> =>
+    (options.client ?? client).get<MemberJoinsResponses, MemberJoinsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/stats/joins",
         ...options,
     });
 

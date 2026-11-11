@@ -10,8 +10,7 @@ from discord import ui
 from discord.commands import slash_command
 from pathlib import Path
 from square.core import Client
-from square.core.settings import button
-from square.core.view import DesignerView, show_loading
+from square.core.view import DesignerView, button, show_loading
 from square.utils import check, config
 from square.utils.emoji import (
     EMOJI_DIR,

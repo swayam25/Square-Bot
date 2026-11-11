@@ -2,6 +2,7 @@ owner-id = 0
 owner-guild-ids = []
 system-channel-id = 0
 support-server-url = "https://discord.gg"
+dashboard-url = "http://localhost:5173"
 
 bot-token = ""
 database-url = "asyncpg://postgres:youcannotpass@db:5432/square"

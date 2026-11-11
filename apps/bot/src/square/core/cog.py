@@ -1,5 +1,4 @@
 from discord.ext import commands
-from square.core.settings import SettingsPage
 from square.utils.emoji import Icon
 
 
@@ -20,8 +19,6 @@ class Cog(commands.Cog):
     __cog_emoji__: Icon | None = None
     __cog_order__: int = 0
     __cog_dev_only__: bool = False
-    # Pages this cog adds to the `/settings` panel
-    settings_pages: tuple[type[SettingsPage], ...] = ()
 
     def __init_subclass__(cls, *, emoji: Icon | None = None, order: int = 0, dev_only: bool = False, **kwargs):
         super().__init_subclass__(**kwargs)

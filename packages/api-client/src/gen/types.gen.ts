@@ -112,6 +112,14 @@ export type InviteSettings = {
 };
 
 /**
+ * JoinDay
+ */
+export type JoinDay = {
+    date: string;
+    count: number;
+};
+
+/**
  * LogChannels
  */
 export type LogChannels = {
@@ -222,6 +230,14 @@ export type LogSettings = {
  */
 export type LoopMode = {
     mode: "off" | "track" | "queue";
+};
+
+/**
+ * MemberJoins
+ */
+export type MemberJoins = {
+    days: Array<JoinDay>;
+    members: number;
 };
 
 /**
@@ -581,6 +597,51 @@ export type GuildRolesResponses = {
 };
 
 export type GuildRolesResponse = GuildRolesResponses[keyof GuildRolesResponses];
+
+export type MemberJoinsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/stats/joins";
+};
+
+export type MemberJoinsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type MemberJoinsError = MemberJoinsErrors[keyof MemberJoinsErrors];
+
+export type MemberJoinsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: MemberJoins;
+};
+
+export type MemberJoinsResponse = MemberJoinsResponses[keyof MemberJoinsResponses];
 
 export type ResetGeneralSettingsData = {
     body?: never;

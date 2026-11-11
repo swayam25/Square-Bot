@@ -11,7 +11,6 @@ from sonolink.models import Playlist
 from square import imaging
 from square.cogs.music.eq import Equalizer
 from square.cogs.music.listeners import Listeners
-from square.cogs.music.settings import MusicPage
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView
@@ -53,7 +52,6 @@ class Music(
     emoji=emoji.music,
     order=6,
 ):
-    settings_pages = (MusicPage,)
     # Estimated on-screen chat lines an attachment/embed/sticker occupies - tall enough that one big block relocates the player on its own.
     block_lines = 10
     # Characters per rendered chat line, used to estimate wrapping of long messages.

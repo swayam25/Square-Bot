@@ -11,10 +11,10 @@ from litestar.openapi.spec import Components, SecurityScheme
 from litestar.types import Scope
 from square.api import live
 from square.api.auth import provide_actor, provide_client, secret_guard
+from square.api.resolve import SettingError
 from square.api.routes import handlers
 from square.core import Client
 from square.music.errors import MusicError
-from square.settings.errors import SettingError
 from typing import Any
 
 log = logging.getLogger(__name__)

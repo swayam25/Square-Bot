@@ -1,7 +1,7 @@
 <script module lang="ts">
     import type { Component } from "svelte";
 
-    export type Option = { value: string; label: string; icon?: Component; hint?: string };
+    export type Option = { value: string; label: string; icon?: Component; color?: string; hint?: string };
 </script>
 
 <script lang="ts">
@@ -54,8 +54,18 @@
     }
 </script>
 
+{#snippet marker(option: Option)}
+    {#if option.icon}
+        <option.icon class="size-5 shrink-0 text-mist-400" />
+    {:else if option.color}
+        <span class="flex size-5 shrink-0 items-center justify-center"
+            ><span class="size-2 rounded-full" style:background-color={option.color}></span></span
+        >
+    {/if}
+{/snippet}
+
 {#snippet label(option: Option)}
-    {#if option.icon}<option.icon class="size-5 shrink-0 text-mist-400" />{/if}
+    {@render marker(option)}
     <span class="min-w-0 flex-1 truncate">{option.label}</span>
     {#if option.hint}<span class="shrink-0 font-mono text-xs text-mist-400">{option.hint}</span>{/if}
 {/snippet}
@@ -64,7 +74,7 @@
     <div class={className}>
         <Drawer bind:open {title} triggerClass={[field, "pr-2 text-left", disabled && "pointer-events-none opacity-50"]}>
             {#snippet trigger()}
-                {#if selected?.icon}<selected.icon class="size-5 shrink-0 text-mist-400" />{/if}
+                {#if selected}{@render marker(selected)}{/if}
                 <span class={["min-w-0 flex-1 truncate", !selected && "text-mist-400"]}>{selected?.label ?? placeholder}</span>
                 <MaterialSymbolsKeyboardArrowDownRounded class="size-6 shrink-0 text-mist-400" />
             {/snippet}
@@ -106,7 +116,7 @@
         class={className}
     >
         <Combobox.Control class={[field, "cursor-pointer pr-2"]}>
-            {#if selected?.icon && !open}<selected.icon class="size-5 shrink-0 text-mist-400" />{/if}
+            {#if selected && !open}{@render marker(selected)}{/if}
             <Combobox.Input
                 aria-label={title}
                 placeholder={open && selected ? selected.label : placeholder}

@@ -75,7 +75,7 @@ def forget(guild_id: int) -> None:
     """
     Drops the cached binding without touching the database.
 
-    For when the row is already gone - the guild was left, or `/settings reset all` deleted it.
+    For when the row is already gone - the guild was left, or a full settings reset deleted it.
     """
     _bindings.pop(guild_id, None)
     _cancel_rejoin(guild_id)

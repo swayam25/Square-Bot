@@ -311,6 +311,98 @@
         ]
       }
     },
+    "/guilds/{guild_id}/stats/joins": {
+      "get": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "Members who joined each day over the last 30 days",
+        "operationId": "member_joins",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberJoins"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
     "/guilds/{guild_id}/settings/general": {
       "get": {
         "tags": [
@@ -5564,6 +5656,22 @@
         ],
         "title": "InviteSettings"
       },
+      "JoinDay": {
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "date"
+        ],
+        "title": "JoinDay"
+      },
       "LogChannels": {
         "properties": {
           "moderation": {
@@ -5858,6 +5966,25 @@
           "mode"
         ],
         "title": "LoopMode"
+      },
+      "MemberJoins": {
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/JoinDay"
+            },
+            "type": "array"
+          },
+          "members": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "days",
+          "members"
+        ],
+        "title": "MemberJoins"
       },
       "MusicPatch": {
         "properties": {

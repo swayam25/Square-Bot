@@ -1,8 +1,10 @@
 import discord
+from collections import Counter
+from datetime import timedelta
 from litestar import Router, get
 from litestar.di import Provide
 from square.api.auth import provide_guild
-from square.api.schemas import Channel, Guild, Role, channels_out, guild_out, roles_out
+from square.api.schemas import Channel, Guild, JoinDay, MemberJoins, Role, channels_out, guild_out, roles_out
 from square.core import Client
 
 
@@ -21,9 +23,23 @@ async def guild_roles(guild: discord.Guild) -> list[Role]:
     return roles_out(guild)
 
 
+JOIN_DAYS = 30
+
+
+@get("/stats/joins", summary="Members who joined each day over the last 30 days")
+async def member_joins(guild: discord.Guild) -> MemberJoins:
+    first = discord.utils.utcnow().date() - timedelta(days=JOIN_DAYS - 1)
+    counts = Counter(day for member in guild.members if member.joined_at and (day := member.joined_at.date()) >= first)
+    days = [first + timedelta(days=offset) for offset in range(JOIN_DAYS)]
+    return MemberJoins(
+        days=[JoinDay(date=day.isoformat(), count=counts[day]) for day in days],
+        members=guild.member_count or 0,
+    )
+
+
 router = Router(
     "/guilds/{guild_id:str}",
     tags=["Guilds"],
     dependencies={"guild": Provide(provide_guild, sync_to_thread=False)},
-    route_handlers=[guild_channels, guild_roles],
+    route_handlers=[guild_channels, guild_roles, member_joins],
 )

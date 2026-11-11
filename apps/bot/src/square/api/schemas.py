@@ -8,7 +8,6 @@ from square.core import Client
 from square.music.core import SquarePlayer, get_player, requester_id
 from square.music.dj import MAX_ROLES
 from square.music.history import history_tracks
-from square.settings import invites, tickets
 from square.utils.server_log import LogType
 from typing import Annotated, Literal, get_args
 
@@ -21,6 +20,9 @@ Loop = Literal["off", "track", "queue"]
 _LOOP: dict[QueueMode, Loop] = {QueueMode.NORMAL: "off", QueueMode.LOOP: "track", QueueMode.LOOP_ALL: "queue"}
 
 QUEUE_LIMIT = 100
+MAX_FAKE_DAYS = 365
+MAX_SUPPORT_ROLES = 10
+MaxOpen = Literal[1, 2, 3, 5]
 
 
 class Schema(msgspec.Struct, rename="camel", kw_only=True, forbid_unknown_fields=True):
@@ -56,6 +58,16 @@ class Role(Schema):
     position: int
     managed: bool
     assignable: bool  # Below the bot's top role and not managed, so the bot can give it out
+
+
+class JoinDay(Schema):
+    date: str  # UTC day, YYYY-MM-DD
+    count: int
+
+
+class MemberJoins(Schema):
+    days: list[JoinDay]  # Oldest first. Only members still in the server, since Discord keeps no record of leavers
+    members: int
 
 
 class Track(Schema):
@@ -167,7 +179,7 @@ class InviteSettings(Schema):
 
 class InvitePatch(Schema):
     tracker: bool | UnsetType = UNSET
-    fake_days: Annotated[int, msgspec.Meta(ge=0, le=invites.MAX_FAKE_DAYS)] | UnsetType = UNSET
+    fake_days: Annotated[int, msgspec.Meta(ge=0, le=MAX_FAKE_DAYS)] | UnsetType = UNSET
 
 
 class MusicSettings(Schema):
@@ -187,7 +199,7 @@ class TicketSettings(Schema):
     enabled: bool
     category_id: Snowflake | None
     support_role_ids: list[Snowflake]
-    max_open: tickets.MaxOpen
+    max_open: MaxOpen
     confirm_close: bool
     panel_channel_id: Snowflake | None
 
@@ -195,8 +207,8 @@ class TicketSettings(Schema):
 class TicketPatch(Schema):
     enabled: bool | UnsetType = UNSET
     category_id: Snowflake | None | UnsetType = UNSET
-    support_role_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=tickets.MAX_SUPPORT_ROLES)] | UnsetType = UNSET
-    max_open: tickets.MaxOpen | UnsetType = UNSET
+    support_role_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_SUPPORT_ROLES)] | UnsetType = UNSET
+    max_open: MaxOpen | UnsetType = UNSET
     confirm_close: bool | UnsetType = UNSET
 
 

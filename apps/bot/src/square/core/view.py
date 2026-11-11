@@ -1,9 +1,12 @@
-from discord import AllowedMentions, ApplicationContext, Interaction
-from discord.ui import Container, Item, TextDisplay
+from collections.abc import Awaitable, Callable
+from discord import AllowedMentions, ApplicationContext, ButtonStyle, Interaction
+from discord.ui import Button, Container, DesignerModal, Item, Label, TextDisplay
 from discord.ui import DesignerView as BaseDesignerView
 from discord.ui.view import V
 from square.utils import config
 from square.utils.emoji import emoji
+
+Callback = Callable[[Interaction], Awaitable[None]]
 
 
 class DesignerView(BaseDesignerView):
@@ -111,3 +114,16 @@ def error_view(text: str) -> DesignerView:
 def success_view(text: str) -> DesignerView:
     """Square's standard success reply: the success emoji and the text in a green container."""
     return DesignerView(Container(TextDisplay(f"{emoji.success} {text}"), color=config.color.green))
+
+
+def button(callback: Callback, **kwargs) -> Button:
+    btn = Button(style=kwargs.pop("style", ButtonStyle.grey), **kwargs)
+    btn.callback = callback  # py-cord's way to attach a handler
+    return btn
+
+
+def modal(title: str, *labels: Label, on_submit: Callback) -> DesignerModal:
+    """A modal of labelled pickers or inputs (up to 5), calling `on_submit` with the submit interaction."""
+    form = DesignerModal(*labels, title=title, timeout=600)
+    form.callback = on_submit
+    return form

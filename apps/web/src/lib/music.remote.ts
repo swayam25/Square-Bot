@@ -1,6 +1,6 @@
-import { bot } from "#lib/server/bot.ts";
+import { actor, bot, refused } from "#lib/server/bot.ts";
 import { watch, watchStatus } from "#lib/server/live.ts";
-import { command, getRequestEvent, query } from "$app/server";
+import { command, query } from "$app/server";
 import * as sdk from "@square/api-client";
 import * as schema from "@square/api-client/zod";
 import { error } from "@sveltejs/kit";
@@ -8,12 +8,6 @@ import { z } from "zod";
 
 const guildId = z.string().regex(/^\d{17,20}$/);
 const forGuild = z.object({ guild: guildId });
-
-function actor() {
-    const { session } = getRequestEvent().locals;
-    if (!session) error(401, "Log in first");
-    return session.user.id;
-}
 
 export const livePlayer = query.live(guildId, (guild) => watch(guild, actor(), "player"));
 
@@ -37,9 +31,7 @@ function control<Input extends z.ZodObject<{ guild: typeof guildId }>>(
         const { guild, ...body } = args as z.output<Input>;
         const result = await send(body, { client: bot, path: { guild_id: guild }, headers: { "x-actor-id": actor() } });
         if (result.data) return result.data.message;
-        if (!result.response) error(503, "Square is offline right now");
-        const problem = schema.zProblem.safeParse(result.error);
-        error(result.response.status, problem.success ? problem.data.detail : "Square couldn't do that");
+        refused(result);
     });
 }
 

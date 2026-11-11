@@ -1,7 +1,6 @@
 import discord
 from discord import ui
 from discord.ext import commands
-from square.cogs.logging.settings import LogsPage
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView
@@ -37,8 +36,6 @@ def log_view(
 
 
 class Logging(Cog):
-    settings_pages = (LogsPage,)
-
     def __init__(self, client: Client):
         self.client = client
 

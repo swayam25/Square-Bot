@@ -5,7 +5,6 @@ from discord import ui
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
 from square import imaging
-from square.cogs.invites.settings import InvitesPage
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView, error_view, show_loading, success_view
@@ -185,8 +184,6 @@ class LeaderboardView(DesignerView):
 
 
 class Invites(Cog, name="Invites", description="See who invited whom, with leaderboards.", emoji=emoji.invite, order=8):
-    settings_pages = (InvitesPage,)
-
     def __init__(self, client: Client):
         self.client = client
 
@@ -197,7 +194,10 @@ class Invites(Cog, name="Invites", description="See who invited whom, with leade
         """The server, or None (after replying) when the tracker is off there."""
         if ctx.guild is not None and cache.get(ctx.guild.id).invite_tracker:
             return ctx.guild
-        await ctx.respond(view=error_view("The invite tracker is off. Turn it on in `/settings`."), ephemeral=True)
+        await ctx.respond(
+            view=error_view("The invite tracker is off. Turn it on from the dashboard (`/settings` has the link)."),
+            ephemeral=True,
+        )
         return None
 
     @staticmethod

@@ -2,8 +2,12 @@
 
 import discord
 import re
-from square.settings.errors import SettingError
 from typing import Any
+
+
+class SettingError(Exception):
+    """A change the bot refuses, like a role above its own. The message is meant for the person who asked."""
+
 
 _MENTION = re.compile(r"<(#|@&|@!?)(\d+)>")
 _CUSTOM_EMOJI = re.compile(r"<a?:\w+:\d+>\s*")

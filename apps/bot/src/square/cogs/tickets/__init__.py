@@ -6,11 +6,9 @@ from discord import ui
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
 from square.cogs.tickets import actions, cards, panel
-from square.cogs.tickets.settings import TicketsPage
 from square.core import Client
 from square.core.cog import Cog
-from square.core.settings import modal
-from square.core.view import DesignerView, error_view, show_loading, success_view
+from square.core.view import DesignerView, error_view, modal, show_loading, success_view
 from square.db import cache
 from square.db.funcs.tickets import fetch_ticket
 from square.db.schema import TicketTable
@@ -22,8 +20,6 @@ LEGACY_IDS = {"ticket_close", "ticket_transcript"}
 
 
 class Tickets(Cog, name="Tickets", description="Need help? Open a ticket and ask.", emoji=emoji.ticket, order=7):
-    settings_pages = (TicketsPage,)
-
     def __init__(self, client: Client):
         self.client = client
         self._adopting: asyncio.Task | None = None

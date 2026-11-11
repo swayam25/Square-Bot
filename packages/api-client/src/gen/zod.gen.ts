@@ -89,6 +89,14 @@ export const zInviteSettings = z.object({
 });
 
 /**
+ * JoinDay
+ */
+export const zJoinDay = z.object({
+    date: z.string(),
+    count: z.int(),
+});
+
+/**
  * LogChannels
  */
 export const zLogChannels = z.object({
@@ -139,6 +147,14 @@ export const zLogSettings = z.object({
  */
 export const zLoopMode = z.object({
     mode: z.enum(["off", "track", "queue"]),
+});
+
+/**
+ * MemberJoins
+ */
+export const zMemberJoins = z.object({
+    days: z.array(zJoinDay),
+    members: z.int(),
 });
 
 /**
@@ -362,6 +378,19 @@ export const zGuildRolesPath = z.object({
  * Request fulfilled, document follows
  */
 export const zGuildRolesResponse = z.array(zRole);
+
+export const zMemberJoinsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zMemberJoinsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zMemberJoinsResponse = zMemberJoins;
 
 export const zResetGeneralSettingsHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),
