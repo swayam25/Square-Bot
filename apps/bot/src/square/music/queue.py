@@ -1,12 +1,14 @@
 import discord
 import math
+from collections.abc import Awaitable
 from discord import ui
 from itertools import islice
 from square.core import Client
 from square.core.view import DesignerView
-from square.music import dj, request
+from square.music import controls, request
 from square.music.core import SquarePlayer, fmt_time, get_player, requester_id
-from square.music.utils import music_interaction_check, music_log, reply
+from square.music.errors import MusicError
+from square.music.utils import music_interaction_check, reply
 from square.utils import config
 from square.utils.emoji import emoji
 
@@ -16,7 +18,7 @@ async def _update_queue_view(interaction: discord.Interaction, queue_view: Queue
     await interaction.response.edit_message(view=queue_view)
 
 
-def _nudge_card(player: SquarePlayer, guild_id: int) -> None:
+def nudge_card(player: SquarePlayer, guild_id: int) -> None:
     """
     Repaints the player card after a button reorders or drops a track.
 
@@ -43,21 +45,31 @@ class QueueBtnCallback:
         await i.response.edit_message(view=queue_view)
 
     @staticmethod
+    async def _run(interaction: discord.Interaction, action: Awaitable[str]) -> bool:
+        """Runs a control, telling the member why when it's refused."""
+        try:
+            await action
+        except MusicError as exc:
+            await reply(interaction, f"{emoji.error} {exc}", color=config.color.red)
+            return False
+        return True
+
+    @staticmethod
     async def move_up_callback(
         interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
     ):
         if track_index <= 0:
             return
-        if not await dj.require_dj(interaction, player):
-            return
         new_index = track_index - 1
-        player.queue.swap(track_index, new_index)
+        if not await QueueBtnCallback._run(
+            interaction, controls.move(interaction.guild, interaction.user, track_index, new_index)
+        ):
+            return
         if track_index == queue_view.visible_action_button:
             queue_view.visible_action_button = new_index
         current_page_start = (queue_view.page - 1) * queue_view.items_per_page
         if new_index < current_page_start:
             queue_view.page = (new_index // queue_view.items_per_page) + 1
-        _nudge_card(player, interaction.guild_id)
         await _update_queue_view(interaction, queue_view)
 
     @staticmethod
@@ -66,17 +78,17 @@ class QueueBtnCallback:
     ):
         if track_index >= len(player.queue) - 1:
             return
-        if not await dj.require_dj(interaction, player):
-            return
         new_index = track_index + 1
-        player.queue.swap(track_index, new_index)
+        if not await QueueBtnCallback._run(
+            interaction, controls.move(interaction.guild, interaction.user, track_index, new_index)
+        ):
+            return
         if track_index == queue_view.visible_action_button:
             queue_view.visible_action_button = new_index
         current_page_start = (queue_view.page - 1) * queue_view.items_per_page
         current_page_end = current_page_start + queue_view.items_per_page - 1
         if new_index > current_page_end:
             queue_view.page = (new_index // queue_view.items_per_page) + 1
-        _nudge_card(player, interaction.guild_id)
         await _update_queue_view(interaction, queue_view)
 
     @staticmethod
@@ -85,15 +97,15 @@ class QueueBtnCallback:
     ):
         if track_index >= len(player.queue):
             return
-        if not await dj.require_dj(interaction, player, track=player.queue[track_index]):
+        if not await QueueBtnCallback._run(
+            interaction, controls.remove(interaction.guild, interaction.user, track_index)
+        ):
             return
-        player.queue.remove_at(track_index)
         queue_view.visible_action_button = None
         total_pages = max(1, math.ceil(len(player.queue) / queue_view.items_per_page))
         if queue_view.page > total_pages and total_pages > 0:
             queue_view.page = total_pages
         queue_view.build()
-        _nudge_card(player, interaction.guild_id)
         await interaction.response.edit_message(view=queue_view)
 
     @staticmethod
@@ -102,17 +114,14 @@ class QueueBtnCallback:
     ):
         if track_index >= len(player.queue):
             return
-        if not await dj.require_dj(interaction, player):
+        if not await QueueBtnCallback._run(
+            interaction, controls.jump(interaction.guild, interaction.user, track_index)
+        ):
             return
-        await player.skip_to(track_index)
         total_pages = max(1, math.ceil(len(player.queue) / queue_view.items_per_page))
         if queue_view.page > total_pages and total_pages > 0:
             queue_view.page = total_pages
         await _update_queue_view(interaction, queue_view)
-        await music_log(
-            interaction.guild_id,
-            f"{emoji.play} {interaction.user.mention} is now playing track `{track_index + 1}` from the queue.",
-        )
 
 
 class QueueContainer(ui.Container):
@@ -309,8 +318,6 @@ class QueueListView(DesignerView):
                 row.add_item(btn)
 
     async def more_select_callback(self, interaction: discord.Interaction):
-        if not await dj.require_dj(interaction, self.player):
-            return
         selected_value = interaction.data["values"][0]
         if selected_value == "remove_by_requester":
             await interaction.response.send_modal(
@@ -325,34 +332,26 @@ class QueueListView(DesignerView):
                 )
             )
             modal.callback = lambda i: self.requester_modal_callback(i, interaction)
-        else:
-            await interaction.response.defer()
+            return
+        await interaction.response.defer()
+        action = {
+            "clear_queue": controls.clear_queue,
+            "reverse_queue": controls.reverse_queue,
+            "sort_by_duration": controls.sort_queue,
+            "remove_duplicates": controls.dedupe_queue,
+        }[selected_value]
+        if await QueueBtnCallback._run(interaction, action(interaction.guild, interaction.user)):
             self.visible_action_button = None
-            if selected_value == "clear_queue":
-                self.player.queue.clear()
-            elif selected_value == "reverse_queue":
-                self.player.queue.reverse()
-            elif selected_value == "sort_by_duration":
-                self.player.queue.sort(key=lambda track: track.length)
-            elif selected_value == "remove_duplicates":
-                if self.player.queue.dedupe() == 0:
-                    await reply(
-                        interaction, f"{emoji.error} No duplicate tracks found in the queue.", color=config.color.red
-                    )
             self.build()
             await interaction.edit(view=self)
 
     async def requester_modal_callback(self, interaction: discord.Interaction, view_interaction: discord.Interaction):
         user_id = int(interaction.data["components"][0]["component"]["values"][0])
-        removed_count = self.player.queue.remove([user_id], key=lambda track: requester_id(self.player, track))
-        self.visible_action_button = None
-        if removed_count == 0:
-            await reply(
-                interaction,
-                f"{emoji.error} No tracks found requested by <@{user_id}> in the queue.",
-                color=config.color.red,
-            )
-        else:
+        if await QueueBtnCallback._run(
+            interaction, controls.remove_requested_by(interaction.guild, interaction.user, user_id)
+        ):
+            await interaction.response.defer()
+            self.visible_action_button = None
             self.build()
             await view_interaction.edit(view=self)
 

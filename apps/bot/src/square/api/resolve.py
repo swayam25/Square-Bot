@@ -5,18 +5,29 @@ import re
 from square.settings.errors import SettingError
 from typing import Any
 
-_MENTION = re.compile(r"<(#|@&)(\d+)>")
+_MENTION = re.compile(r"<(#|@&|@!?)(\d+)>")
+_CUSTOM_EMOJI = re.compile(r"<a?:\w+:\d+>\s*")
 
 
 def plain(guild: discord.Guild, text: str) -> str:
-    """Swaps channel and role mentions in a message for names, since the dashboard can't render mentions."""
+    """
+    Makes a bot message readable outside Discord.
+
+    Mentions become names and custom emoji go, since the dashboard can render neither. Markdown stays.
+    """
 
     def name(match: re.Match[str]) -> str:
         kind, item_id = match[1], int(match[2])
-        item = guild.get_channel(item_id) if kind == "#" else guild.get_role(item_id)
-        return f"{'#' if kind == '#' else '@'}{item.name}" if item else match[0]
+        if kind == "#":
+            item = guild.get_channel(item_id)
+            return f"#{item.name}" if item else match[0]
+        if kind == "@&":
+            role = guild.get_role(item_id)
+            return f"@{role.name}" if role else match[0]
+        member = guild.get_member(item_id)
+        return f"@{member.display_name}" if member else "@unknown"
 
-    return _MENTION.sub(name, text)
+    return _MENTION.sub(name, _CUSTOM_EMOJI.sub("", text)).strip()
 
 
 def _channel(guild: discord.Guild, channel_id: str | None, kind: Any, what: str) -> Any:

@@ -3,6 +3,7 @@ import discord
 import math
 import re
 import sonolink
+from collections.abc import Awaitable
 from discord import ui
 from discord.commands import option, slash_command
 from discord.ext import commands
@@ -16,28 +17,20 @@ from square.core.cog import Cog
 from square.core.view import DesignerView
 from square.imaging import assets
 from square.imaging.templates import now_playing as track_card
-from square.music import dj, request, store
+from square.music import controls, request
 from square.music.core import (
     LOOP_LABELS,
     SquarePlayer,
     fmt_time,
     get_player,
-    loop_action,
-    loop_emoji,
     register_nodes,
     requester_id,
 )
+from square.music.errors import MusicError
 from square.music.filters import EQ_PRESETS
 from square.music.history import HistoryListView, history_tracks
-from square.music.play import clean_query, ensure_connected, is_link, resolve_and_enqueue, resolve_query, search_tracks
-from square.music.player import (
-    request_skip,
-    schedule_render,
-    slash_log,
-    start_progress,
-    stop_player,
-    stop_verb,
-)
+from square.music.play import clean_query, is_link, search_tracks
+from square.music.player import slash_log
 from square.music.queue import QueueListView
 from square.music.utils import container, get_source, reply
 from square.utils import config
@@ -67,20 +60,6 @@ class Music(
     chars_per_line = 60
     # Relocate the player once this many estimated chat lines have stacked below it.
     relocate_lines = 10
-    # Commands the whole channel hears the result of. DJ mode limits these, and every `/eq` filter, to DJs.
-    dj_commands = {
-        "autoplay",
-        "clear-queue",
-        "loop",
-        "pause",
-        "resume",
-        "seek",
-        "shuffle",
-        "skip-to",
-        "stop",
-        "volume",
-    }
-
     loop_modes = {
         "Disable": sonolink.QueueMode.NORMAL,
         "Track": sonolink.QueueMode.LOOP,
@@ -107,59 +86,38 @@ class Music(
         self.failover.stop()
 
     # Ensures voice parameters
-    async def ensure_voice(self, ctx: discord.ApplicationContext, *, need_queue: bool = False) -> SquarePlayer | None:
+    async def ensure_voice(self, ctx: discord.ApplicationContext) -> SquarePlayer | None:
         """
-        Checks all the voice parameters. `/play` connects instead, through :func:`ensure_connected`.
+        The player, for commands that only show it.
+
+        Controls, `/play` included, go through :mod:`square.music.controls` instead.
 
         Args:
             ctx (:class:`ApplicationContext`): The invoking command.
-            need_queue (bool): Also refuse when nothing is queued.
         """
-
-        def _err(text: str) -> DesignerView:
-            return container(text, config.color.red)
-
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            await ctx.respond(view=_err(f"{emoji.error} Join a voice channel first."), ephemeral=True)
+        try:
+            return controls.require_player(ctx.guild, ctx.author)
+        except MusicError as exc:
+            await reply(ctx, f"{emoji.error} {exc}", color=config.color.red)
             return None
 
-        player = get_player(self.client, ctx.guild.id)
-        bot_channel = self.current_voice_channel(ctx)
-
-        if player is None or bot_channel is None or (not player.current and ctx.command.name != "stop"):
-            await ctx.respond(
-                view=_err(f"{emoji.error} Nothing is being played at the current moment."), ephemeral=True
-            )
-            return None
-        if ctx.author.voice.channel != bot_channel:
-            await ctx.respond(view=_err(f"{emoji.error} You are not in my voice channel."), ephemeral=True)
-            return None
-
-        name = ctx.command.qualified_name
-        if (name in self.dj_commands or name.startswith("eq ")) and not await dj.require_dj(ctx, player):
-            return None
-        if need_queue and not len(player.queue):
-            await ctx.respond(view=_err(f"{emoji.error} Queue is empty."), ephemeral=True)
-            return None
-
-        return player
+    async def _control(self, ctx: discord.ApplicationContext, action: Awaitable[str]) -> None:
+        """Runs a control for a slash command and answers privately with how it went."""
+        await ctx.defer(ephemeral=True)
+        try:
+            await reply(ctx, await action)
+        except MusicError as exc:
+            await reply(ctx, f"{emoji.error} {exc}", color=config.color.red)
 
     @staticmethod
-    async def _queue_index(ctx: discord.ApplicationContext, player: SquarePlayer, track: str) -> int | None:
+    def _queue_index(track: str) -> int:
         """
-        Reads a queue position from an autocomplete pick (`3. Title`) or a typed number.
+        Reads a queue position from an autocomplete pick (`3. Title`) or a typed number, as a zero-based index.
 
-        Returns:
-            int | None: The zero-based index, or None after telling the member it's out of range.
+        Anything unreadable comes back as -1, which the control refuses with the valid range.
         """
         match = re.match(r"\s*(\d+)", track)
-        position = int(match[1]) if match else 0
-        if 1 <= position <= len(player.queue):
-            return position - 1
-        await reply(
-            ctx, f"{emoji.error} Track number must be between `1` and `{len(player.queue)}`.", color=config.color.red
-        )
-        return None
+        return int(match[1]) - 1 if match else -1
 
     @staticmethod
     async def _check_page(ctx: discord.ApplicationContext, page: int, items: int) -> bool:
@@ -230,15 +188,6 @@ class Music(
         else:
             await ctx.respond(view=container(content, color))
 
-    async def _abandon_play(
-        self, player: SquarePlayer, guild: discord.Guild, connected_now: bool, claimed: bool
-    ) -> None:
-        """Undoes what a failed `/play` set up, so the next one starts from a clean slate."""
-        if connected_now:
-            await stop_player(player, guild)
-        elif claimed and not player.current:
-            store.play_ch(guild.id, None, "set")
-
     # Play
     @slash_command(name="play")
     @option("query", description="Enter your track name/link or playlist link", autocomplete=search)
@@ -252,34 +201,15 @@ class Music(
             return
         quiet = bound is not None
         await ctx.defer(ephemeral=quiet)
-        if quiet:
-            request.prime(self.client, ctx.guild.id)
-        search = asyncio.create_task(resolve_query(self.client, query))
-        player, err, connected_now = await ensure_connected(self.client, ctx.author)
-        if err:
-            search.cancel()
-            await self._play_reply(ctx, err, config.color.red, quiet)
-            return
-        # Not keyed on `connected_now`: a 24/7 bot is already connected when a session starts.
-        claimed = not quiet and store.play_ch(ctx.guild.id) is None
-        if claimed:
-            store.play_ch(ctx.guild.id, ctx.channel, "set")
         try:
-            result = await resolve_and_enqueue(self.client, player, search, ctx.author.id)
-        except Exception:
-            await self._abandon_play(player, ctx.guild, connected_now, claimed)
-            raise
-        if not result.ok:
-            await self._play_reply(ctx, result.content, result.color, quiet)
-            await self._abandon_play(player, ctx.guild, connected_now, claimed)
+            result = await controls.play(self.client, ctx.guild, ctx.author, query, channel=ctx.channel)
+        except MusicError as exc:
+            await self._play_reply(ctx, f"{emoji.error} {exc}", config.color.red, quiet)
             return
         if quiet:
             await slash_log(ctx, result.content, color=result.color, render=False)
         else:
             await ctx.respond(view=container(result.content, result.color))
-        # Only a bound card lists what is up next, so only it changes when a track is queued.
-        if not result.started and request.setup_mode(ctx.guild.id):
-            schedule_render(self.client, ctx.guild.id)
 
     # Now playing
     @slash_command(name="now-playing")
@@ -342,94 +272,47 @@ class Music(
     @slash_command(name="stop")
     async def stop(self, ctx: discord.ApplicationContext):
         """Stops the music and clears the queue."""
-        await ctx.defer(ephemeral=True)
-        player = await self.ensure_voice(ctx)
-        if player:
-            await asyncio.gather(
-                slash_log(ctx, f"{emoji.stop} {stop_verb(ctx.guild.id).capitalize()} the player.", render=False),
-                stop_player(player, ctx.guild),
-            )
+        await self._control(ctx, controls.stop(ctx.guild, ctx.author))
 
     # Seek
     @slash_command(name="seek")
     @option("duration", description="How far to jump, forwards or backwards. Ex: 10s, +1m, -30s, -1m20s etc....")
     async def seek(self, ctx: discord.ApplicationContext, duration: str):
         """Seeks forwards or backwards in the current track."""
-        player = await self.ensure_voice(ctx)
-        if player:
-            if player.current.is_stream:
-                await reply(ctx, f"{emoji.error} Can't seek a live stream.", color=config.color.red)
-                return
-            timedelta = parse_duration(duration, signed=True)
-            offset_ms = timedelta.total_seconds() * 1000
-            track_time = int(player.position + offset_ms)
-            if track_time >= player.current.length:
-                await self.skip(ctx=ctx)
-                return
-            track_time = max(0, track_time)
-            await player.seek(track_time)
-            start_progress(self.client, ctx.guild.id)
-            await slash_log(
-                ctx,
-                f"{emoji.rewind if offset_ms < 0 else emoji.forward} Moved track to `{fmt_time(track_time)}`.",
-            )
+        offset_ms = int(parse_duration(duration, signed=True).total_seconds() * 1000)
+        await self._control(ctx, controls.seek_by(ctx.guild, ctx.author, offset_ms))
 
     # Skip
     @slash_command(name="skip")
     async def skip(self, ctx: discord.ApplicationContext):
         """Skips the current playing track, or opens a vote when you aren't a DJ."""
-        player = await self.ensure_voice(ctx)
-        if player:
-            await request_skip(ctx, player)
+        await self._control(ctx, controls.skip(ctx.guild, ctx.author, channel=ctx.channel))
 
     # Skip to
     @slash_command(name="skip-to")
     @option("track", description="Enter your track index number to skip", autocomplete=track_autocomplete)
     async def skip_to(self, ctx: discord.ApplicationContext, track: str):
         """Skips to a given track in the queue."""
-        player = await self.ensure_voice(ctx, need_queue=True)
-        if player:
-            index = await self._queue_index(ctx, player, track)
-            if index is not None:
-                await ctx.defer(ephemeral=True)
-                await player.skip_to(index)
-                await slash_log(ctx, f"{emoji.skip} Skipped to track `{index + 1}`.", render=False)
+        await self._control(ctx, controls.jump(ctx.guild, ctx.author, self._queue_index(track)))
 
     # Pause
     @slash_command(name="pause")
     async def pause(self, ctx: discord.ApplicationContext):
         """Pauses the player."""
-        player = await self.ensure_voice(ctx)
-        if player:
-            if player.paused:
-                await reply(ctx, f"{emoji.error} Player is already paused.", color=config.color.red)
-            else:
-                await ctx.defer(ephemeral=True)
-                await player.pause()
-                await slash_log(ctx, f"{emoji.pause} Player paused.")
+        await self._control(ctx, controls.set_paused(ctx.guild, ctx.author, True))
 
     # Resume
     @slash_command(name="resume")
     async def resume(self, ctx: discord.ApplicationContext):
         """Resumes the player."""
-        player = await self.ensure_voice(ctx)
-        if player:
-            if player.paused:
-                await ctx.defer(ephemeral=True)
-                await player.resume()
-                await slash_log(ctx, f"{emoji.play} Player resumed.")
-            else:
-                await reply(ctx, f"{emoji.error} Player isn't paused.", color=config.color.red)
+        await self._control(ctx, controls.set_paused(ctx.guild, ctx.author, False))
 
     # Volume
     @slash_command(name="volume")
     @option("volume", description="Enter your volume amount from 1 - 100", min_value=1, max_value=100)
     async def volume(self, ctx: discord.ApplicationContext, volume: int):
         """Changes the player's volume 1 - 100."""
-        player = await self.ensure_voice(ctx)
-        if player:
-            await player.set_volume(volume)
-            await slash_log(ctx, f"{emoji.voice} Volume changed to `{player.volume}%`.")
+        await self._control(ctx, controls.set_volume(ctx.guild, ctx.author, volume))
 
     # Queue
     @slash_command(name="queue")
@@ -457,52 +340,33 @@ class Music(
     @slash_command(name="clear-queue")
     async def clear_queue(self, ctx: discord.ApplicationContext):
         """Clears the player's queue."""
-        player = await self.ensure_voice(ctx, need_queue=True)
-        if player:
-            player.queue.clear()
-            await slash_log(ctx, f"{emoji.success} Cleared the queue.", color=config.color.green)
+        await self._control(ctx, controls.clear_queue(ctx.guild, ctx.author))
 
     # Shuffle
     @slash_command(name="shuffle")
     async def shuffle(self, ctx: discord.ApplicationContext):
         """Toggle shuffle for the player's queue."""
-        player = await self.ensure_voice(ctx, need_queue=True)
-        if player:
-            await ctx.defer(ephemeral=True)
-            shuffled = player.toggle_shuffle()
-            await slash_log(ctx, f"{emoji.shuffle} {'Enabled' if shuffled else 'Disabled'} shuffle.")
+        await self._control(ctx, controls.set_shuffle(ctx.guild, ctx.author))
 
     # Autoplay
     @slash_command(name="autoplay")
     async def autoplay(self, ctx: discord.ApplicationContext):
         """Toggles autoplay."""
-        player = await self.ensure_voice(ctx)
-        if player:
-            enabled = player.toggle_autoplay()
-            await slash_log(ctx, f"{emoji.autoplay} {'Enabled' if enabled else 'Disabled'} autoplay.")
+        await self._control(ctx, controls.set_autoplay(ctx.guild, ctx.author))
 
     # Loop
     @slash_command(name="loop")
     @option("mode", description="Enter loop mode", choices=list(loop_modes))
     async def loop(self, ctx: discord.ApplicationContext, mode: str):
         """Loops the current track or the whole queue."""
-        player = await self.ensure_voice(ctx, need_queue=mode == "Queue")
-        if player:
-            await ctx.defer(ephemeral=True)
-            player.queue_mode = self.loop_modes[mode]
-            await slash_log(ctx, f"{loop_emoji(player.queue_mode)} {loop_action(player.queue_mode).capitalize()}.")
+        await self._control(ctx, controls.set_loop(ctx.guild, ctx.author, self.loop_modes[mode]))
 
     # Remove
     @slash_command(name="remove")
     @option("track", description="Select the track to remove", autocomplete=track_autocomplete)
     async def remove(self, ctx: discord.ApplicationContext, track: str):
         """Removes a track from the player's queue with the given index."""
-        player = await self.ensure_voice(ctx, need_queue=True)
-        if player:
-            index = await self._queue_index(ctx, player, track)
-            if index is not None and await dj.require_dj(ctx, player, track=player.queue[index]):
-                removed = player.queue.remove_at(index)
-                await slash_log(ctx, f"{emoji.remove} Removed **{removed.title}**.", color=config.color.red)
+        await self._control(ctx, controls.remove(ctx.guild, ctx.author, self._queue_index(track)))
 
 
 def setup(client: Client):

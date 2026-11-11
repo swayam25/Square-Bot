@@ -13,17 +13,28 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from litestar import WebSocket, websocket
 from litestar.exceptions import NotFoundException, PermissionDeniedException, WebSocketDisconnect
-from square.api.auth import provide_guild
-from square.api.schemas import PlayerState, QueueState, Snowflake, player_out, queue_out
+from square.api.auth import provide_member_guild
+from square.api.schemas import (
+    PlayerState,
+    QueueState,
+    Snowflake,
+    Track,
+    history_out,
+    live_player,
+    player_out,
+    queue_out,
+)
 from square.core import Client
 from typing import Literal
 
 log = logging.getLogger(__name__)
 
-Topic = Literal["player", "queue"]
-_SNAPSHOTS: dict[Topic, Callable[[Client, discord.Guild], PlayerState | QueueState]] = {
+Topic = Literal["player", "queue", "history"]
+Snapshot = PlayerState | QueueState | list[Track]
+_SNAPSHOTS: dict[Topic, Callable[[Client, discord.Guild], Snapshot]] = {
     "player": player_out,
     "queue": queue_out,
+    "history": lambda client, guild: history_out(live_player(client, guild.id)),
 }
 
 
@@ -40,8 +51,8 @@ class Unsubscribe(msgspec.Struct, tag="unsub", tag_field="op"):
 
 class Update(msgspec.Struct, omit_defaults=True):
     id: int
-    data: PlayerState | QueueState | None = None
-    # The subscription is over: the guild is gone for this user, or they lost Manage Server
+    data: Snapshot | None = None
+    # The subscription is over: the guild is gone for this user, or they lost access to the topic
     error: Literal["not_found", "forbidden"] | None = None
 
 
@@ -68,9 +79,10 @@ class _Connection:
         """Sends the subscription's snapshot, unless nothing changed since the last one."""
         if (sub := self.subscriptions.get(sub_id)) is None:
             return
-        # Access is checked on every push, so losing Manage Server ends the stream instead of leaking updates
+        # Access is checked on every push, so leaving the server ends the stream instead of leaking updates.
+        # Every topic so far is music, which any member may watch
         try:
-            guild = provide_guild(self.client, str(sub.guild_id), sub.actor)
+            guild = provide_member_guild(self.client, str(sub.guild_id), sub.actor)
         except NotFoundException:
             await self._end(sub_id, "not_found")
             return
@@ -93,7 +105,7 @@ class _Connection:
             await self.socket.send_data(_encoder.encode(update).decode(), mode="text")
 
 
-def _dedupe_key(data: PlayerState | QueueState) -> bytes:
+def _dedupe_key(data: Snapshot) -> bytes:
     """
     The snapshot minus the clock.
 

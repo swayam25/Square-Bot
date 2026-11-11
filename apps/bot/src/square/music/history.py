@@ -4,8 +4,9 @@ from discord import ui
 from sonolink.models import Playable
 from square.core import Client
 from square.core.view import DesignerView
-from square.music.core import SquarePlayer, fmt_time, get_player, requester_id, tag_requester
-from square.music.utils import music_interaction_check, music_log, reply
+from square.music.core import SquarePlayer, fmt_time, get_player, requester_id
+from square.music.utils import music_interaction_check, reply
+from square.utils import config
 from square.utils.emoji import emoji
 
 
@@ -115,12 +116,17 @@ class HistoryListView(DesignerView):
     async def replay_callback(self, interaction: discord.Interaction, track: Playable):
         """Queues a played track again, crediting whoever pressed replay as its requester."""
         await interaction.response.defer()
-        self.player.queue.put(tag_requester(self.client, track, interaction.user.id))
-        await reply(interaction, f"{emoji.reload} Queued **{track.title}** again.")
-        await music_log(
-            interaction.guild_id,
-            f"{emoji.reload} {interaction.user.mention} queued [**{track.title}**]({track.uri}) again.",
-        )
+        # Local: `music/controls.py` imports this module
+        from square.music import controls
+        from square.music.errors import MusicError
+
+        index = next((i for i, played in enumerate(history_tracks(self.player)) if played is track), -1)
+        try:
+            await reply(
+                interaction, await controls.replay(interaction.guild, interaction.user, index, track.identifier)
+            )
+        except MusicError as exc:
+            await reply(interaction, f"{emoji.error} {exc}", color=config.color.red)
 
     async def interaction_callback(self, interaction: discord.Interaction, action: str):
         total_pages = max(1, math.ceil(len(history_tracks(self.player)) / self.items_per_page))

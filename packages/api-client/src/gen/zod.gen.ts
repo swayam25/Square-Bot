@@ -14,6 +14,29 @@ export const zChannel = z.object({
 });
 
 /**
+ * Done
+ */
+export const zDone = z.object({
+    message: z.string(),
+});
+
+/**
+ * EqPreset
+ */
+export const zEqPreset = z.object({
+    name: z.string(),
+    label: z.string(),
+});
+
+/**
+ * EqToggle
+ */
+export const zEqToggle = z.object({
+    preset: z.string(),
+    enabled: z.boolean(),
+});
+
+/**
  * GeneralPatch
  */
 export const zGeneralPatch = z.object({
@@ -37,6 +60,7 @@ export const zGuild = z.object({
     name: z.string(),
     iconUrl: z.string().nullable(),
     memberCount: z.int(),
+    canManage: z.boolean(),
 });
 
 /**
@@ -111,6 +135,13 @@ export const zLogSettings = z.object({
 });
 
 /**
+ * LoopMode
+ */
+export const zLoopMode = z.object({
+    mode: z.enum(["off", "track", "queue"]),
+});
+
+/**
  * MusicPatch
  */
 export const zMusicPatch = z.object({
@@ -137,10 +168,56 @@ export const zNotes = z.object({
 });
 
 /**
+ * Paused
+ */
+export const zPaused = z.object({
+    paused: z.boolean(),
+});
+
+/**
+ * PlayQuery
+ */
+export const zPlayQuery = z.object({
+    query: z.string().min(1).max(500),
+});
+
+/**
+ * PlaylistInfo
+ */
+export const zPlaylistInfo = z.object({
+    name: z.string(),
+    trackCount: z.int(),
+});
+
+/**
  * Problem
  */
 export const zProblem = z.object({
     detail: z.string(),
+});
+
+/**
+ * QueueMove
+ */
+export const zQueueMove = z.object({
+    index: z.int().gte(0),
+    identifier: z.string(),
+    to: z.int().gte(0),
+});
+
+/**
+ * QueuedTrack
+ */
+export const zQueuedTrack = z.object({
+    index: z.int().gte(0),
+    identifier: z.string(),
+});
+
+/**
+ * Requester
+ */
+export const zRequester = z.object({
+    userId: z.string().regex(/^\d{17,20}$/),
 });
 
 /**
@@ -153,6 +230,13 @@ export const zRole = z.object({
     position: z.int(),
     managed: z.boolean(),
     assignable: z.boolean(),
+});
+
+/**
+ * Seek
+ */
+export const zSeek = z.object({
+    positionMs: z.int().gte(0),
 });
 
 /**
@@ -176,6 +260,13 @@ export const zTicketSettings = z.object({
     maxOpen: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(5)]),
     confirmClose: z.boolean(),
     panelChannelId: z.string().nullable(),
+});
+
+/**
+ * Toggle
+ */
+export const zToggle = z.object({
+    enabled: z.boolean(),
 });
 
 /**
@@ -206,6 +297,7 @@ export const zPlayerState = z.object({
     loop: z.enum(["off", "track", "queue"]),
     shuffle: z.boolean(),
     autoplay: z.boolean(),
+    eq: z.array(z.string()),
 });
 
 /**
@@ -214,6 +306,21 @@ export const zPlayerState = z.object({
 export const zQueueState = z.object({
     tracks: z.array(zTrack),
     total: z.int(),
+});
+
+/**
+ * SearchResults
+ */
+export const zSearchResults = z.object({
+    playlist: zPlaylistInfo.nullable(),
+    tracks: z.array(zTrack),
+});
+
+/**
+ * Volume
+ */
+export const zVolume = z.object({
+    volume: z.int().gte(1).lte(100),
 });
 
 /**
@@ -564,3 +671,345 @@ export const zMusicQueuePath = z.object({
  * Request fulfilled, document follows
  */
 export const zMusicQueueResponse = zQueueState;
+
+export const zMusicHistoryHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zMusicHistoryPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zMusicHistoryResponse = z.array(zTrack);
+
+export const zSearchMusicHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSearchMusicPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSearchMusicQuery = z.object({
+    q: z.string().min(1).max(500),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zSearchMusicResponse = zSearchResults;
+
+export const zPlayQueryBody = zPlayQuery;
+
+export const zPlayQueryHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zPlayQueryPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zPlayQueryResponse = zDone;
+
+export const zReplayTrackBody = zQueuedTrack;
+
+export const zReplayTrackHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zReplayTrackPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zReplayTrackResponse = zDone;
+
+export const zEqPresetsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zEqPresetsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zEqPresetsResponse = z.array(zEqPreset);
+
+export const zPausePlayerBody = zPaused;
+
+export const zPausePlayerHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zPausePlayerPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zPausePlayerResponse = zDone;
+
+export const zStopPlayerHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zStopPlayerPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zStopPlayerResponse = zDone;
+
+export const zSkipTrackHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSkipTrackPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zSkipTrackResponse = zDone;
+
+export const zPreviousTrackHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zPreviousTrackPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zPreviousTrackResponse = zDone;
+
+export const zSeekTrackBody = zSeek;
+
+export const zSeekTrackHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSeekTrackPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zSeekTrackResponse = zDone;
+
+export const zSetVolumeBody = zVolume;
+
+export const zSetVolumeHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSetVolumePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zSetVolumeResponse = zDone;
+
+export const zSetLoopBody = zLoopMode;
+
+export const zSetLoopHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSetLoopPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zSetLoopResponse = zDone;
+
+export const zSetShuffleBody = zToggle;
+
+export const zSetShuffleHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSetShufflePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zSetShuffleResponse = zDone;
+
+export const zSetAutoplayBody = zToggle;
+
+export const zSetAutoplayHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSetAutoplayPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zSetAutoplayResponse = zDone;
+
+export const zSetEqBody = zEqToggle;
+
+export const zSetEqHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSetEqPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zSetEqResponse = zDone;
+
+export const zResetEqHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zResetEqPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zResetEqResponse = zDone;
+
+export const zJumpToTrackBody = zQueuedTrack;
+
+export const zJumpToTrackHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zJumpToTrackPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zJumpToTrackResponse = zDone;
+
+export const zRemoveTrackBody = zQueuedTrack;
+
+export const zRemoveTrackHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zRemoveTrackPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zRemoveTrackResponse = zDone;
+
+export const zMoveTrackBody = zQueueMove;
+
+export const zMoveTrackHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zMoveTrackPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zMoveTrackResponse = zDone;
+
+export const zClearQueueHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zClearQueuePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zClearQueueResponse = zDone;
+
+export const zReverseQueueHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zReverseQueuePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zReverseQueueResponse = zDone;
+
+export const zSortQueueHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSortQueuePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zSortQueueResponse = zDone;
+
+export const zDedupeQueueHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zDedupeQueuePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zDedupeQueueResponse = zDone;
+
+export const zRemoveRequesterTracksBody = zRequester;
+
+export const zRemoveRequesterTracksHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zRemoveRequesterTracksPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zRemoveRequesterTracksResponse = zDone;

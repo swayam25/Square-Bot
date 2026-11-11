@@ -1,5 +1,5 @@
 import { BOT_API_SECRET, BOT_API_URL } from "$app/env/private";
-import type { PlayerState, QueueState } from "@square/api-client";
+import type { PlayerState, QueueState, Track } from "@square/api-client";
 import { error } from "@sveltejs/kit";
 import WebSocket from "ws";
 
@@ -12,6 +12,7 @@ import WebSocket from "ws";
 export interface Topics {
     player: PlayerState;
     queue: QueueState;
+    history: Track[];
 }
 
 type Update = { id: number; data?: unknown; error?: "not_found" | "forbidden" };

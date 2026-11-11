@@ -6,14 +6,9 @@ from square.api.schemas import Channel, Guild, Role, channels_out, guild_out, ro
 from square.core import Client
 
 
-@get("/me/guilds", summary="Servers the user can manage", tags=["Guilds"])
+@get("/me/guilds", summary="Servers the user shares with Square", tags=["Guilds"])
 async def my_guilds(client: Client, actor: int) -> list[Guild]:
-    guilds = []
-    for guild in client.guilds:
-        member = guild.get_member(actor)
-        if member and member.guild_permissions.manage_guild:
-            guilds.append(guild_out(guild))
-    return guilds
+    return [guild_out(guild, member) for guild in client.guilds if (member := guild.get_member(actor))]
 
 
 @get("/channels", summary="A server's channels, for pickers")

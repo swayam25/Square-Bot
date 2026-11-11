@@ -1,10 +1,6 @@
 import discord
-from sonolink.models import Playable
 from square.db.funcs.dj import fetch_dj
-from square.music.core import SquarePlayer, requester_id
-from square.music.utils import reply
-from square.utils import config
-from square.utils.emoji import emoji
+from square.music.core import SquarePlayer
 
 MAX_ROLES = 5
 
@@ -53,31 +49,3 @@ async def is_dj(member: discord.Member, player: SquarePlayer | None = None) -> b
     if any(role.id in role_ids for role in member.roles):
         return True
     return player is not None and listeners(player) == [member]
-
-
-async def require_dj(
-    source: discord.ApplicationContext | discord.Interaction,
-    player: SquarePlayer,
-    *,
-    track: Playable | None = None,
-) -> bool:
-    """
-    Gate for DJ-restricted actions, answering the member ephemerally when they aren't allowed.
-
-    Passing a track also lets whoever requested it act on their own track.
-
-    Args:
-        source (:class:`ApplicationContext` | :class:`Interaction`): The invoking command or interaction.
-        player (:class:`SquarePlayer`): The active player for the guild.
-        track (:class:`Playable` | None): The track being acted on, if the action is scoped to one.
-
-    Returns:
-        bool: True when the action may proceed.
-    """
-    member = source.author if isinstance(source, discord.ApplicationContext) else source.user
-    if await is_dj(member, player):
-        return True
-    if track is not None and requester_id(player, track) == member.id:
-        return True
-    await reply(source, f"{emoji.error} Only a DJ can do that.", color=config.color.red)
-    return False

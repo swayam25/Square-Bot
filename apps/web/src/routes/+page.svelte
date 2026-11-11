@@ -12,7 +12,7 @@
     <h2>Your servers</h2>
     <ul>
         {#each data.guilds as guild (guild.id)}
-            <li><a href="/guilds/{guild.id}">{guild.name}</a> · {guild.memberCount} members</li>
+            <li><a href="/guilds/{guild.id}">{guild.name}</a> · {guild.memberCount} members{guild.canManage ? " · you manage it" : ""}</li>
         {:else}
             <li>None yet</li>
         {/each}

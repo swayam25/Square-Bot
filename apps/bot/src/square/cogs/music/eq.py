@@ -1,49 +1,32 @@
 import discord
+from collections.abc import Awaitable, Callable
 from discord import SlashCommandGroup
 from discord.commands import option
 from square.core import Client
+from square.music import controls
 from square.music.core import (
     get_player,
 )
 from square.music.filters import EQ_PRESETS
-from square.music.player import (
-    slash_log,
-)
-from square.music.utils import reply
-from square.utils import config
-from square.utils.emoji import emoji
 
 
 class Equalizer:
     """The `/eq` command group for audio filter presets."""
 
     client: Client
+    _control: Callable[[discord.ApplicationContext, Awaitable[str]], Awaitable[None]]  # From the Music cog
 
     # Equalizer slash cmd group
     eq = SlashCommandGroup(name="eq", description="Equalizer commands.")
 
     async def _apply_preset(self, ctx: discord.ApplicationContext, name: str):
         """Turns a preset on, swapping out whichever active one drives the same filter."""
-        player = await self.ensure_voice(ctx)
-        if not player:
-            return
-        preset = EQ_PRESETS[name]
-        replaced = [n for n in player.presets if n != name and EQ_PRESETS[n].slot == preset.slot]
-        for n in replaced:
-            del player.presets[n]
-        player.presets[name] = preset.filters
-        await player.apply_presets()
-        swap = f", replacing **{EQ_PRESETS[replaced[0]].label}**" if replaced else ""
-        await slash_log(ctx, f"{emoji.equalizer} Applied **{preset.label}** equalizer{swap}.")
+        await self._control(ctx, controls.set_eq(ctx.guild, ctx.author, name, True))
 
     @eq.command(name="reset")
     async def reset(self, ctx: discord.ApplicationContext):
         """Resets the equalizer to default."""
-        player = await self.ensure_voice(ctx)
-        if player:
-            player.presets.clear()
-            await player.apply_presets()
-            await slash_log(ctx, f"{emoji.equalizer} Reset equalizer to default settings.")
+        await self._control(ctx, controls.reset_eq(ctx.guild, ctx.author))
 
     async def filter_autocomplete(self, ctx: discord.AutocompleteContext):
         """Offers the active presets by name."""
@@ -61,14 +44,7 @@ class Equalizer:
     @option("name", description="Name of the equalizer to remove.", autocomplete=filter_autocomplete)
     async def remove_eq(self, ctx: discord.ApplicationContext, name: str):
         """Removes an equalizer by name."""
-        player = await self.ensure_voice(ctx)
-        if player:
-            if name in player.presets:
-                del player.presets[name]
-                await player.apply_presets()
-                await slash_log(ctx, f"{emoji.equalizer} Removed **{EQ_PRESETS[name].label}** equalizer.")
-            else:
-                await reply(ctx, f"{emoji.error} **{name}** equalizer not found.", color=config.color.red)
+        await self._control(ctx, controls.set_eq(ctx.guild, ctx.author, name, False))
 
     @eq.command(name="bassboost")
     async def eq_bassboost(self, ctx: discord.ApplicationContext):

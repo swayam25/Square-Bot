@@ -22,6 +22,29 @@ export type Channel = {
 };
 
 /**
+ * Done
+ */
+export type Done = {
+    message: string;
+};
+
+/**
+ * EqPreset
+ */
+export type EqPreset = {
+    name: string;
+    label: string;
+};
+
+/**
+ * EqToggle
+ */
+export type EqToggle = {
+    preset: string;
+    enabled: boolean;
+};
+
+/**
  * GeneralPatch
  */
 export type GeneralPatch = {
@@ -60,6 +83,7 @@ export type Guild = {
     name: string;
     iconUrl: string | null;
     memberCount: number;
+    canManage: boolean;
 };
 
 /**
@@ -194,6 +218,13 @@ export type LogSettings = {
 };
 
 /**
+ * LoopMode
+ */
+export type LoopMode = {
+    mode: "off" | "track" | "queue";
+};
+
+/**
  * MusicPatch
  */
 export type MusicPatch = {
@@ -229,6 +260,20 @@ export type Notes = {
 };
 
 /**
+ * Paused
+ */
+export type Paused = {
+    paused: boolean;
+};
+
+/**
+ * PlayQuery
+ */
+export type PlayQuery = {
+    query: string;
+};
+
+/**
  * PlayerState
  */
 export type PlayerState = {
@@ -244,6 +289,15 @@ export type PlayerState = {
     loop: "off" | "track" | "queue";
     shuffle: boolean;
     autoplay: boolean;
+    eq: Array<string>;
+};
+
+/**
+ * PlaylistInfo
+ */
+export type PlaylistInfo = {
+    name: string;
+    trackCount: number;
 };
 
 /**
@@ -254,11 +308,38 @@ export type Problem = {
 };
 
 /**
+ * QueueMove
+ */
+export type QueueMove = {
+    index: number;
+    identifier: string;
+    to: number;
+};
+
+/**
  * QueueState
  */
 export type QueueState = {
     tracks: Array<Track>;
     total: number;
+};
+
+/**
+ * QueuedTrack
+ */
+export type QueuedTrack = {
+    index: number;
+    identifier: string;
+};
+
+/**
+ * Requester
+ */
+export type Requester = {
+    /**
+     * A Discord ID
+     */
+    userId: string;
 };
 
 /**
@@ -274,6 +355,21 @@ export type Role = {
     position: number;
     managed: boolean;
     assignable: boolean;
+};
+
+/**
+ * SearchResults
+ */
+export type SearchResults = {
+    playlist: PlaylistInfo | null;
+    tracks: Array<Track>;
+};
+
+/**
+ * Seek
+ */
+export type Seek = {
+    positionMs: number;
 };
 
 /**
@@ -309,6 +405,13 @@ export type TicketSettings = {
 };
 
 /**
+ * Toggle
+ */
+export type Toggle = {
+    enabled: boolean;
+};
+
+/**
  * Track
  */
 export type Track = {
@@ -324,6 +427,13 @@ export type Track = {
      * A Discord ID
      */
     requesterId: string | null;
+};
+
+/**
+ * Volume
+ */
+export type Volume = {
+    volume: number;
 };
 
 export type HealthData = {
@@ -1534,3 +1644,1256 @@ export type MusicQueueResponses = {
 };
 
 export type MusicQueueResponse = MusicQueueResponses[keyof MusicQueueResponses];
+
+export type MusicHistoryData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/history";
+};
+
+export type MusicHistoryErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type MusicHistoryError = MusicHistoryErrors[keyof MusicHistoryErrors];
+
+export type MusicHistoryResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Array<Track>;
+};
+
+export type MusicHistoryResponse = MusicHistoryResponses[keyof MusicHistoryResponses];
+
+export type SearchMusicData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query: {
+        /**
+         * A track name, or a track or playlist link
+         */
+        q: string;
+    };
+    url: "/guilds/{guild_id}/music/search";
+};
+
+export type SearchMusicErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type SearchMusicError = SearchMusicErrors[keyof SearchMusicErrors];
+
+export type SearchMusicResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: SearchResults;
+};
+
+export type SearchMusicResponse = SearchMusicResponses[keyof SearchMusicResponses];
+
+export type PlayQueryData = {
+    body: PlayQuery;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/play";
+};
+
+export type PlayQueryErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type PlayQueryError = PlayQueryErrors[keyof PlayQueryErrors];
+
+export type PlayQueryResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type PlayQueryResponse = PlayQueryResponses[keyof PlayQueryResponses];
+
+export type ReplayTrackData = {
+    body: QueuedTrack;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/history/replay";
+};
+
+export type ReplayTrackErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type ReplayTrackError = ReplayTrackErrors[keyof ReplayTrackErrors];
+
+export type ReplayTrackResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type ReplayTrackResponse = ReplayTrackResponses[keyof ReplayTrackResponses];
+
+export type EqPresetsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/eq-presets";
+};
+
+export type EqPresetsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type EqPresetsError = EqPresetsErrors[keyof EqPresetsErrors];
+
+export type EqPresetsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Array<EqPreset>;
+};
+
+export type EqPresetsResponse = EqPresetsResponses[keyof EqPresetsResponses];
+
+export type PausePlayerData = {
+    body: Paused;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/pause";
+};
+
+export type PausePlayerErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type PausePlayerError = PausePlayerErrors[keyof PausePlayerErrors];
+
+export type PausePlayerResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type PausePlayerResponse = PausePlayerResponses[keyof PausePlayerResponses];
+
+export type StopPlayerData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/stop";
+};
+
+export type StopPlayerErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type StopPlayerError = StopPlayerErrors[keyof StopPlayerErrors];
+
+export type StopPlayerResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type StopPlayerResponse = StopPlayerResponses[keyof StopPlayerResponses];
+
+export type SkipTrackData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/skip";
+};
+
+export type SkipTrackErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type SkipTrackError = SkipTrackErrors[keyof SkipTrackErrors];
+
+export type SkipTrackResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type SkipTrackResponse = SkipTrackResponses[keyof SkipTrackResponses];
+
+export type PreviousTrackData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/previous";
+};
+
+export type PreviousTrackErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type PreviousTrackError = PreviousTrackErrors[keyof PreviousTrackErrors];
+
+export type PreviousTrackResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type PreviousTrackResponse = PreviousTrackResponses[keyof PreviousTrackResponses];
+
+export type SeekTrackData = {
+    body: Seek;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/seek";
+};
+
+export type SeekTrackErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type SeekTrackError = SeekTrackErrors[keyof SeekTrackErrors];
+
+export type SeekTrackResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type SeekTrackResponse = SeekTrackResponses[keyof SeekTrackResponses];
+
+export type SetVolumeData = {
+    body: Volume;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/volume";
+};
+
+export type SetVolumeErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type SetVolumeError = SetVolumeErrors[keyof SetVolumeErrors];
+
+export type SetVolumeResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type SetVolumeResponse = SetVolumeResponses[keyof SetVolumeResponses];
+
+export type SetLoopData = {
+    body: LoopMode;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/loop";
+};
+
+export type SetLoopErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type SetLoopError = SetLoopErrors[keyof SetLoopErrors];
+
+export type SetLoopResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type SetLoopResponse = SetLoopResponses[keyof SetLoopResponses];
+
+export type SetShuffleData = {
+    body: Toggle;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/shuffle";
+};
+
+export type SetShuffleErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type SetShuffleError = SetShuffleErrors[keyof SetShuffleErrors];
+
+export type SetShuffleResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type SetShuffleResponse = SetShuffleResponses[keyof SetShuffleResponses];
+
+export type SetAutoplayData = {
+    body: Toggle;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/autoplay";
+};
+
+export type SetAutoplayErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type SetAutoplayError = SetAutoplayErrors[keyof SetAutoplayErrors];
+
+export type SetAutoplayResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type SetAutoplayResponse = SetAutoplayResponses[keyof SetAutoplayResponses];
+
+export type SetEqData = {
+    body: EqToggle;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/eq";
+};
+
+export type SetEqErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type SetEqError = SetEqErrors[keyof SetEqErrors];
+
+export type SetEqResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type SetEqResponse = SetEqResponses[keyof SetEqResponses];
+
+export type ResetEqData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/eq/reset";
+};
+
+export type ResetEqErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type ResetEqError = ResetEqErrors[keyof ResetEqErrors];
+
+export type ResetEqResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type ResetEqResponse = ResetEqResponses[keyof ResetEqResponses];
+
+export type JumpToTrackData = {
+    body: QueuedTrack;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/queue/jump";
+};
+
+export type JumpToTrackErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type JumpToTrackError = JumpToTrackErrors[keyof JumpToTrackErrors];
+
+export type JumpToTrackResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type JumpToTrackResponse = JumpToTrackResponses[keyof JumpToTrackResponses];
+
+export type RemoveTrackData = {
+    body: QueuedTrack;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/queue/remove";
+};
+
+export type RemoveTrackErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type RemoveTrackError = RemoveTrackErrors[keyof RemoveTrackErrors];
+
+export type RemoveTrackResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type RemoveTrackResponse = RemoveTrackResponses[keyof RemoveTrackResponses];
+
+export type MoveTrackData = {
+    body: QueueMove;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/queue/move";
+};
+
+export type MoveTrackErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type MoveTrackError = MoveTrackErrors[keyof MoveTrackErrors];
+
+export type MoveTrackResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type MoveTrackResponse = MoveTrackResponses[keyof MoveTrackResponses];
+
+export type ClearQueueData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/queue/clear";
+};
+
+export type ClearQueueErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type ClearQueueError = ClearQueueErrors[keyof ClearQueueErrors];
+
+export type ClearQueueResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type ClearQueueResponse = ClearQueueResponses[keyof ClearQueueResponses];
+
+export type ReverseQueueData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/queue/reverse";
+};
+
+export type ReverseQueueErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type ReverseQueueError = ReverseQueueErrors[keyof ReverseQueueErrors];
+
+export type ReverseQueueResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type ReverseQueueResponse = ReverseQueueResponses[keyof ReverseQueueResponses];
+
+export type SortQueueData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/queue/sort";
+};
+
+export type SortQueueErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type SortQueueError = SortQueueErrors[keyof SortQueueErrors];
+
+export type SortQueueResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type SortQueueResponse = SortQueueResponses[keyof SortQueueResponses];
+
+export type DedupeQueueData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/queue/dedupe";
+};
+
+export type DedupeQueueErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type DedupeQueueError = DedupeQueueErrors[keyof DedupeQueueErrors];
+
+export type DedupeQueueResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type DedupeQueueResponse = DedupeQueueResponses[keyof DedupeQueueResponses];
+
+export type RemoveRequesterTracksData = {
+    body: Requester;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/music/queue/remove-requester";
+};
+
+export type RemoveRequesterTracksErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The queue changed since it was read
+     */
+    409: Problem;
+    /**
+     * The bot refused the control
+     */
+    422: Problem;
+};
+
+export type RemoveRequesterTracksError = RemoveRequesterTracksErrors[keyof RemoveRequesterTracksErrors];
+
+export type RemoveRequesterTracksResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Done;
+};
+
+export type RemoveRequesterTracksResponse = RemoveRequesterTracksResponses[keyof RemoveRequesterTracksResponses];

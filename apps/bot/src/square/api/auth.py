@@ -47,24 +47,29 @@ def provide_actor(
     return int(actor_id)
 
 
-def provide_guild(
-    client: Client,
-    guild_id: Annotated[str, Parameter(pattern=r"^\d{17,20}$", description="A Discord ID")],
-    actor: int,
-) -> discord.Guild:
-    """The guild, if the actor can manage it. Same rule as Discord: Manage Server, which admins and the owner have."""
+GuildId = Annotated[str, Parameter(pattern=r"^\d{17,20}$", description="A Discord ID")]
+
+
+def provide_member_guild(client: Client, guild_id: GuildId, actor: int) -> discord.Guild:
+    """The guild, if the actor is a member of it. Enough for music, which has its own rules per control."""
     guild = client.get_guild(int(guild_id))
-    member = guild.get_member(actor) if guild else None
     # One answer for "bot isn't there" and "you aren't there", so neither is revealed
-    if guild is None or member is None:
+    if guild is None or guild.get_member(actor) is None:
         raise NotFoundException("Guild not found")
-    if not member.guild_permissions.manage_guild:
+    return guild
+
+
+def provide_guild(client: Client, guild_id: GuildId, actor: int) -> discord.Guild:
+    """The guild, if the actor can manage it. Same rule as Discord: Manage Server, which admins and the owner have."""
+    guild = provide_member_guild(client, guild_id, actor)
+    member = guild.get_member(actor)
+    if member is None or not member.guild_permissions.manage_guild:
         raise PermissionDeniedException("Manage Server permission required")
     return guild
 
 
 def provide_member(guild: discord.Guild, actor: int) -> discord.Member:
-    """The actor as a member of the guild, e.g. for audit log reasons. `provide_guild` already checked they're in it."""
+    """The actor as a member of the guild. The guild dependency already checked they're in it."""
     if (member := guild.get_member(actor)) is None:
         raise NotFoundException("Guild not found")
     return member

@@ -1,9 +1,13 @@
+import { bot } from "#lib/server/bot.ts";
 import { watch, watchStatus } from "#lib/server/live.ts";
-import { getRequestEvent, query } from "$app/server";
+import { command, getRequestEvent, query } from "$app/server";
+import * as sdk from "@square/api-client";
+import * as schema from "@square/api-client/zod";
 import { error } from "@sveltejs/kit";
 import { z } from "zod";
 
 const guildId = z.string().regex(/^\d{17,20}$/);
+const forGuild = z.object({ guild: guildId });
 
 function actor() {
     const { session } = getRequestEvent().locals;
@@ -15,7 +19,71 @@ export const livePlayer = query.live(guildId, (guild) => watch(guild, actor(), "
 
 export const liveQueue = query.live(guildId, (guild) => watch(guild, actor(), "queue"));
 
+export const liveHistory = query.live(guildId, (guild) => watch(guild, actor(), "history"));
+
 export const liveStatus = query.live(() => {
     actor();
     return watchStatus();
 });
+
+type Base = { client: typeof bot; path: { guild_id: string }; headers: { "x-actor-id": string } };
+type Result = { data?: { message: string }; error?: unknown; response?: Response };
+
+/**
+ * A music control as a remote command. Resolves with the bot's confirmation, or fails with the status and message
+ * the bot refused with, e.g. "Only a DJ can do that."
+ */
+function control<Input extends z.ZodObject<{ guild: typeof guildId }>>(
+    input: Input,
+    send: (body: Omit<z.infer<Input>, "guild">, base: Base) => Promise<Result>,
+) {
+    return command(input, async (args) => {
+        const { guild, ...body } = args as z.output<Input>;
+        const result = await send(body, { client: bot, path: { guild_id: guild }, headers: { "x-actor-id": actor() } });
+        if (result.data) return result.data.message;
+        if (!result.response) error(503, "Square is offline right now");
+        const problem = schema.zProblem.safeParse(result.error);
+        error(result.response.status, problem.success ? problem.data.detail : "Square couldn't do that");
+    });
+}
+
+export const eqPresets = query(guildId, async (guild) => {
+    const { data } = await sdk.eqPresets({ client: bot, path: { guild_id: guild }, headers: { "x-actor-id": actor() } });
+    if (!data) error(503, "Square is offline right now");
+    return data;
+});
+
+export const searchMusic = query(forGuild.extend({ query: z.string().min(1).max(500) }), async ({ guild, query }) => {
+    const { data } = await sdk.searchMusic({
+        client: bot,
+        path: { guild_id: guild },
+        headers: { "x-actor-id": actor() },
+        query: { q: query },
+    });
+    if (!data) error(503, "Search isn't available right now");
+    return data;
+});
+
+export const playQuery = control(schema.zPlayQuery.extend(forGuild.shape), (body, base) => sdk.playQuery({ ...base, body }));
+export const replayTrack = control(schema.zQueuedTrack.extend(forGuild.shape), (body, base) => sdk.replayTrack({ ...base, body }));
+
+export const setPaused = control(schema.zPaused.extend(forGuild.shape), (body, base) => sdk.pausePlayer({ ...base, body }));
+export const stopPlayer = control(forGuild, (_, base) => sdk.stopPlayer(base));
+export const skipTrack = control(forGuild, (_, base) => sdk.skipTrack(base));
+export const previousTrack = control(forGuild, (_, base) => sdk.previousTrack(base));
+export const seekTrack = control(schema.zSeek.extend(forGuild.shape), (body, base) => sdk.seekTrack({ ...base, body }));
+export const setVolume = control(schema.zVolume.extend(forGuild.shape), (body, base) => sdk.setVolume({ ...base, body }));
+export const setLoop = control(schema.zLoopMode.extend(forGuild.shape), (body, base) => sdk.setLoop({ ...base, body }));
+export const setShuffle = control(schema.zToggle.extend(forGuild.shape), (body, base) => sdk.setShuffle({ ...base, body }));
+export const setAutoplay = control(schema.zToggle.extend(forGuild.shape), (body, base) => sdk.setAutoplay({ ...base, body }));
+export const setEq = control(schema.zEqToggle.extend(forGuild.shape), (body, base) => sdk.setEq({ ...base, body }));
+export const resetEq = control(forGuild, (_, base) => sdk.resetEq(base));
+
+export const jumpToTrack = control(schema.zQueuedTrack.extend(forGuild.shape), (body, base) => sdk.jumpToTrack({ ...base, body }));
+export const removeTrack = control(schema.zQueuedTrack.extend(forGuild.shape), (body, base) => sdk.removeTrack({ ...base, body }));
+export const moveTrack = control(schema.zQueueMove.extend(forGuild.shape), (body, base) => sdk.moveTrack({ ...base, body }));
+export const clearQueue = control(forGuild, (_, base) => sdk.clearQueue(base));
+export const reverseQueue = control(forGuild, (_, base) => sdk.reverseQueue(base));
+export const sortQueue = control(forGuild, (_, base) => sdk.sortQueue(base));
+export const dedupeQueue = control(forGuild, (_, base) => sdk.dedupeQueue(base));
+export const removeRequesterTracks = control(schema.zRequester.extend(forGuild.shape), (body, base) => sdk.removeRequesterTracks({ ...base, body }));

@@ -3,10 +3,11 @@ import msgspec
 import time
 from msgspec import UNSET, UnsetType
 from sonolink import QueueMode
-from sonolink.models import Playable
+from sonolink.models import Playable, Playlist
 from square.core import Client
 from square.music.core import SquarePlayer, get_player, requester_id
 from square.music.dj import MAX_ROLES
+from square.music.history import history_tracks
 from square.settings import invites, tickets
 from square.utils.server_log import LogType
 from typing import Annotated, Literal, get_args
@@ -37,6 +38,7 @@ class Guild(Schema):
     name: str
     icon_url: str | None
     member_count: int
+    can_manage: bool  # Settings need Manage Server. Music only needs membership, with its own rules per control
 
 
 class Channel(Schema):
@@ -78,11 +80,22 @@ class PlayerState(Schema):
     loop: Loop
     shuffle: bool
     autoplay: bool
+    eq: list[str]  # Active presets, by the names `GET /music/eq-presets` lists
 
 
 class QueueState(Schema):
     tracks: list[Track]  # Only the first `QUEUE_LIMIT`, so a huge queue doesn't flood every update
     total: int
+
+
+class PlaylistInfo(Schema):
+    name: str
+    track_count: int
+
+
+class SearchResults(Schema):
+    playlist: PlaylistInfo | None  # Set when the query was a playlist link, which queues as a whole
+    tracks: list[Track]
 
 
 class Problem(Schema):
@@ -191,12 +204,13 @@ def id_of(item: discord.abc.Snowflake | None) -> str | None:
     return None if item is None else str(item.id)
 
 
-def guild_out(guild: discord.Guild) -> Guild:
+def guild_out(guild: discord.Guild, member: discord.Member) -> Guild:
     return Guild(
         id=str(guild.id),
         name=guild.name,
         icon_url=guild.icon.url if guild.icon else None,
         member_count=guild.member_count or 0,
+        can_manage=member.guild_permissions.manage_guild,
     )
 
 
@@ -230,8 +244,8 @@ def roles_out(guild: discord.Guild) -> list[Role]:
     ]
 
 
-def _track(player: SquarePlayer, track: Playable) -> Track:
-    rid = requester_id(player, track)
+def _track(player: SquarePlayer | None, track: Playable) -> Track:
+    rid = requester_id(player, track) if player else None
     return Track(
         identifier=track.identifier,
         title=track.title,
@@ -245,13 +259,13 @@ def _track(player: SquarePlayer, track: Playable) -> Track:
     )
 
 
-def _live_player(client: Client, guild_id: int) -> SquarePlayer | None:
+def live_player(client: Client, guild_id: int) -> SquarePlayer | None:
     player = get_player(client, guild_id)
     return player if player and player.connected else None
 
 
 def player_out(client: Client, guild: discord.Guild) -> PlayerState:
-    if (player := _live_player(client, guild.id)) is None:
+    if (player := live_player(client, guild.id)) is None:
         return PlayerState(
             voice_channel_id=None,
             track=None,
@@ -262,6 +276,7 @@ def player_out(client: Client, guild: discord.Guild) -> PlayerState:
             loop="off",
             shuffle=False,
             autoplay=False,
+            eq=[],
         )
     return PlayerState(
         voice_channel_id=id_of(player.channel),
@@ -273,12 +288,28 @@ def player_out(client: Client, guild: discord.Guild) -> PlayerState:
         loop=_LOOP[player.queue_mode],
         shuffle=player.shuffled,
         autoplay=player.autoplay_on,
+        eq=list(player.presets),
     )
 
 
 def queue_out(client: Client, guild: discord.Guild) -> QueueState:
-    if (player := _live_player(client, guild.id)) is None:
+    if (player := live_player(client, guild.id)) is None:
         return QueueState(tracks=[], total=0)
     queue = player.queue
     # Indexed rather than `queue.tracks`, which copies the whole queue
     return QueueState(tracks=[_track(player, queue[i]) for i in range(min(len(queue), QUEUE_LIMIT))], total=len(queue))
+
+
+def history_out(player: SquarePlayer | None) -> list[Track]:
+    return [_track(player, track) for track in history_tracks(player)] if player else []
+
+
+def search_out(data: object, limit: int) -> SearchResults:
+    """A search result as the dashboard shows it. Requesters are left out, since nobody has queued these yet."""
+    if isinstance(data, Playlist):
+        return SearchResults(
+            playlist=PlaylistInfo(name=data.name, track_count=len(data)),
+            tracks=[_track(None, track) for track in data.tracks[:limit]],
+        )
+    found = data if isinstance(data, list) else [data] if data else []
+    return SearchResults(playlist=None, tracks=[_track(None, track) for track in found[:limit]])

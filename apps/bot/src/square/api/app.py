@@ -13,6 +13,7 @@ from square.api import live
 from square.api.auth import provide_actor, provide_client, secret_guard
 from square.api.routes import handlers
 from square.core import Client
+from square.music.errors import MusicError
 from square.settings.errors import SettingError
 from typing import Any
 
@@ -104,6 +105,6 @@ class _Scalar(ScalarRenderPlugin):
 
 
 def _log_exception(exc: Exception, scope: Scope) -> None:
-    # Refused settings changes are answered with a 422, not bugs
-    if not isinstance(exc, HTTPException | SettingError):
+    # Refused settings changes and music controls are answered with a 409/422, not bugs
+    if not isinstance(exc, HTTPException | SettingError | MusicError):
         log.error("API request to %s failed", scope["path"], exc_info=exc)

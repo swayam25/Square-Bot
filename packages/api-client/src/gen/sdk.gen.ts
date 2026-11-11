@@ -3,12 +3,21 @@
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from "./client";
 import { client } from "./client.gen";
 import type {
+    ClearQueueData,
+    ClearQueueErrors,
+    ClearQueueResponses,
     CreateRequestChannelData,
     CreateRequestChannelErrors,
     CreateRequestChannelResponses,
     CreateTicketPanelData,
     CreateTicketPanelErrors,
     CreateTicketPanelResponses,
+    DedupeQueueData,
+    DedupeQueueErrors,
+    DedupeQueueResponses,
+    EqPresetsData,
+    EqPresetsErrors,
+    EqPresetsResponses,
     GetGeneralSettingsData,
     GetGeneralSettingsErrors,
     GetGeneralSettingsResponses,
@@ -32,6 +41,15 @@ import type {
     GuildRolesResponses,
     HealthData,
     HealthResponses,
+    JumpToTrackData,
+    JumpToTrackErrors,
+    JumpToTrackResponses,
+    MoveTrackData,
+    MoveTrackErrors,
+    MoveTrackResponses,
+    MusicHistoryData,
+    MusicHistoryErrors,
+    MusicHistoryResponses,
     MusicPlayerData,
     MusicPlayerErrors,
     MusicPlayerResponses,
@@ -41,15 +59,36 @@ import type {
     MyGuildsData,
     MyGuildsErrors,
     MyGuildsResponses,
+    PausePlayerData,
+    PausePlayerErrors,
+    PausePlayerResponses,
+    PlayQueryData,
+    PlayQueryErrors,
+    PlayQueryResponses,
+    PreviousTrackData,
+    PreviousTrackErrors,
+    PreviousTrackResponses,
     RemoveRequestChannelData,
     RemoveRequestChannelErrors,
     RemoveRequestChannelResponses,
+    RemoveRequesterTracksData,
+    RemoveRequesterTracksErrors,
+    RemoveRequesterTracksResponses,
     RemoveTicketPanelData,
     RemoveTicketPanelErrors,
     RemoveTicketPanelResponses,
+    RemoveTrackData,
+    RemoveTrackErrors,
+    RemoveTrackResponses,
+    ReplayTrackData,
+    ReplayTrackErrors,
+    ReplayTrackResponses,
     ResetAllSettingsData,
     ResetAllSettingsErrors,
     ResetAllSettingsResponses,
+    ResetEqData,
+    ResetEqErrors,
+    ResetEqResponses,
     ResetGeneralSettingsData,
     ResetGeneralSettingsErrors,
     ResetGeneralSettingsResponses,
@@ -68,6 +107,39 @@ import type {
     ResetTicketSettingsData,
     ResetTicketSettingsErrors,
     ResetTicketSettingsResponses,
+    ReverseQueueData,
+    ReverseQueueErrors,
+    ReverseQueueResponses,
+    SearchMusicData,
+    SearchMusicErrors,
+    SearchMusicResponses,
+    SeekTrackData,
+    SeekTrackErrors,
+    SeekTrackResponses,
+    SetAutoplayData,
+    SetAutoplayErrors,
+    SetAutoplayResponses,
+    SetEqData,
+    SetEqErrors,
+    SetEqResponses,
+    SetLoopData,
+    SetLoopErrors,
+    SetLoopResponses,
+    SetShuffleData,
+    SetShuffleErrors,
+    SetShuffleResponses,
+    SetVolumeData,
+    SetVolumeErrors,
+    SetVolumeResponses,
+    SkipTrackData,
+    SkipTrackErrors,
+    SkipTrackResponses,
+    SortQueueData,
+    SortQueueErrors,
+    SortQueueResponses,
+    StopPlayerData,
+    StopPlayerErrors,
+    StopPlayerResponses,
     UpdateGeneralSettingsData,
     UpdateGeneralSettingsErrors,
     UpdateGeneralSettingsResponses,
@@ -116,7 +188,7 @@ export const health = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Servers the user can manage
+ * Servers the user shares with Square
  */
 export const myGuilds = <ThrowOnError extends boolean = false>(
     options: Options<MyGuildsData, ThrowOnError>,
@@ -445,4 +517,344 @@ export const musicQueue = <ThrowOnError extends boolean = false>(
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/music/queue",
         ...options,
+    });
+
+/**
+ * Tracks played this session, newest first
+ */
+export const musicHistory = <ThrowOnError extends boolean = false>(
+    options: Options<MusicHistoryData, ThrowOnError>,
+): RequestResult<MusicHistoryResponses, MusicHistoryErrors, ThrowOnError> =>
+    (options.client ?? client).get<MusicHistoryResponses, MusicHistoryErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/history",
+        ...options,
+    });
+
+/**
+ * Search for tracks, or see what a link points to
+ */
+export const searchMusic = <ThrowOnError extends boolean = false>(
+    options: Options<SearchMusicData, ThrowOnError>,
+): RequestResult<SearchMusicResponses, SearchMusicErrors, ThrowOnError> =>
+    (options.client ?? client).get<SearchMusicResponses, SearchMusicErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/search",
+        ...options,
+    });
+
+/**
+ * Search for a query and queue it, joining the member's voice channel
+ */
+export const playQuery = <ThrowOnError extends boolean = false>(
+    options: Options<PlayQueryData, ThrowOnError>,
+): RequestResult<PlayQueryResponses, PlayQueryErrors, ThrowOnError> =>
+    (options.client ?? client).post<PlayQueryResponses, PlayQueryErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/play",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Queue a played track again
+ */
+export const replayTrack = <ThrowOnError extends boolean = false>(
+    options: Options<ReplayTrackData, ThrowOnError>,
+): RequestResult<ReplayTrackResponses, ReplayTrackErrors, ThrowOnError> =>
+    (options.client ?? client).post<ReplayTrackResponses, ReplayTrackErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/history/replay",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * The equalizer presets, in the order the dashboard should list them
+ */
+export const eqPresets = <ThrowOnError extends boolean = false>(
+    options: Options<EqPresetsData, ThrowOnError>,
+): RequestResult<EqPresetsResponses, EqPresetsErrors, ThrowOnError> =>
+    (options.client ?? client).get<EqPresetsResponses, EqPresetsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/eq-presets",
+        ...options,
+    });
+
+/**
+ * Pause or resume
+ */
+export const pausePlayer = <ThrowOnError extends boolean = false>(
+    options: Options<PausePlayerData, ThrowOnError>,
+): RequestResult<PausePlayerResponses, PausePlayerErrors, ThrowOnError> =>
+    (options.client ?? client).post<PausePlayerResponses, PausePlayerErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/pause",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Stop the player
+ */
+export const stopPlayer = <ThrowOnError extends boolean = false>(
+    options: Options<StopPlayerData, ThrowOnError>,
+): RequestResult<StopPlayerResponses, StopPlayerErrors, ThrowOnError> =>
+    (options.client ?? client).post<StopPlayerResponses, StopPlayerErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/stop",
+        ...options,
+    });
+
+/**
+ * Skip, or vote to skip for members who aren't DJs
+ */
+export const skipTrack = <ThrowOnError extends boolean = false>(
+    options: Options<SkipTrackData, ThrowOnError>,
+): RequestResult<SkipTrackResponses, SkipTrackErrors, ThrowOnError> =>
+    (options.client ?? client).post<SkipTrackResponses, SkipTrackErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/skip",
+        ...options,
+    });
+
+/**
+ * Go back to the last track
+ */
+export const previousTrack = <ThrowOnError extends boolean = false>(
+    options: Options<PreviousTrackData, ThrowOnError>,
+): RequestResult<PreviousTrackResponses, PreviousTrackErrors, ThrowOnError> =>
+    (options.client ?? client).post<PreviousTrackResponses, PreviousTrackErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/previous",
+        ...options,
+    });
+
+/**
+ * Jump to a position in the track
+ */
+export const seekTrack = <ThrowOnError extends boolean = false>(
+    options: Options<SeekTrackData, ThrowOnError>,
+): RequestResult<SeekTrackResponses, SeekTrackErrors, ThrowOnError> =>
+    (options.client ?? client).post<SeekTrackResponses, SeekTrackErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/seek",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Set the volume
+ */
+export const setVolume = <ThrowOnError extends boolean = false>(
+    options: Options<SetVolumeData, ThrowOnError>,
+): RequestResult<SetVolumeResponses, SetVolumeErrors, ThrowOnError> =>
+    (options.client ?? client).post<SetVolumeResponses, SetVolumeErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/volume",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Loop nothing, the track or the queue
+ */
+export const setLoop = <ThrowOnError extends boolean = false>(
+    options: Options<SetLoopData, ThrowOnError>,
+): RequestResult<SetLoopResponses, SetLoopErrors, ThrowOnError> =>
+    (options.client ?? client).post<SetLoopResponses, SetLoopErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/loop",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Turn shuffle on or off
+ */
+export const setShuffle = <ThrowOnError extends boolean = false>(
+    options: Options<SetShuffleData, ThrowOnError>,
+): RequestResult<SetShuffleResponses, SetShuffleErrors, ThrowOnError> =>
+    (options.client ?? client).post<SetShuffleResponses, SetShuffleErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/shuffle",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Turn autoplay on or off
+ */
+export const setAutoplay = <ThrowOnError extends boolean = false>(
+    options: Options<SetAutoplayData, ThrowOnError>,
+): RequestResult<SetAutoplayResponses, SetAutoplayErrors, ThrowOnError> =>
+    (options.client ?? client).post<SetAutoplayResponses, SetAutoplayErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/autoplay",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Turn an equalizer preset on or off
+ */
+export const setEq = <ThrowOnError extends boolean = false>(
+    options: Options<SetEqData, ThrowOnError>,
+): RequestResult<SetEqResponses, SetEqErrors, ThrowOnError> =>
+    (options.client ?? client).post<SetEqResponses, SetEqErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/eq",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Turn every equalizer preset off
+ */
+export const resetEq = <ThrowOnError extends boolean = false>(
+    options: Options<ResetEqData, ThrowOnError>,
+): RequestResult<ResetEqResponses, ResetEqErrors, ThrowOnError> =>
+    (options.client ?? client).post<ResetEqResponses, ResetEqErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/eq/reset",
+        ...options,
+    });
+
+/**
+ * Play a queued track now
+ */
+export const jumpToTrack = <ThrowOnError extends boolean = false>(
+    options: Options<JumpToTrackData, ThrowOnError>,
+): RequestResult<JumpToTrackResponses, JumpToTrackErrors, ThrowOnError> =>
+    (options.client ?? client).post<JumpToTrackResponses, JumpToTrackErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/queue/jump",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Remove a queued track
+ */
+export const removeTrack = <ThrowOnError extends boolean = false>(
+    options: Options<RemoveTrackData, ThrowOnError>,
+): RequestResult<RemoveTrackResponses, RemoveTrackErrors, ThrowOnError> =>
+    (options.client ?? client).post<RemoveTrackResponses, RemoveTrackErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/queue/remove",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Move a queued track
+ */
+export const moveTrack = <ThrowOnError extends boolean = false>(
+    options: Options<MoveTrackData, ThrowOnError>,
+): RequestResult<MoveTrackResponses, MoveTrackErrors, ThrowOnError> =>
+    (options.client ?? client).post<MoveTrackResponses, MoveTrackErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/queue/move",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Clear the queue
+ */
+export const clearQueue = <ThrowOnError extends boolean = false>(
+    options: Options<ClearQueueData, ThrowOnError>,
+): RequestResult<ClearQueueResponses, ClearQueueErrors, ThrowOnError> =>
+    (options.client ?? client).post<ClearQueueResponses, ClearQueueErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/queue/clear",
+        ...options,
+    });
+
+/**
+ * Reverse the queue
+ */
+export const reverseQueue = <ThrowOnError extends boolean = false>(
+    options: Options<ReverseQueueData, ThrowOnError>,
+): RequestResult<ReverseQueueResponses, ReverseQueueErrors, ThrowOnError> =>
+    (options.client ?? client).post<ReverseQueueResponses, ReverseQueueErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/queue/reverse",
+        ...options,
+    });
+
+/**
+ * Sort the queue, shortest first
+ */
+export const sortQueue = <ThrowOnError extends boolean = false>(
+    options: Options<SortQueueData, ThrowOnError>,
+): RequestResult<SortQueueResponses, SortQueueErrors, ThrowOnError> =>
+    (options.client ?? client).post<SortQueueResponses, SortQueueErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/queue/sort",
+        ...options,
+    });
+
+/**
+ * Remove duplicate tracks from the queue
+ */
+export const dedupeQueue = <ThrowOnError extends boolean = false>(
+    options: Options<DedupeQueueData, ThrowOnError>,
+): RequestResult<DedupeQueueResponses, DedupeQueueErrors, ThrowOnError> =>
+    (options.client ?? client).post<DedupeQueueResponses, DedupeQueueErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/queue/dedupe",
+        ...options,
+    });
+
+/**
+ * Remove every track one member queued
+ */
+export const removeRequesterTracks = <ThrowOnError extends boolean = false>(
+    options: Options<RemoveRequesterTracksData, ThrowOnError>,
+): RequestResult<RemoveRequesterTracksResponses, RemoveRequesterTracksErrors, ThrowOnError> =>
+    (options.client ?? client).post<RemoveRequesterTracksResponses, RemoveRequesterTracksErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/music/queue/remove-requester",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
     });
