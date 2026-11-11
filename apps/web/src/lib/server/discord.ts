@@ -33,16 +33,11 @@ export function authorizationUrl(redirectUri: string, state: string, codeChallen
         state,
         code_challenge: codeChallenge,
         code_challenge_method: "S256",
-        // Returning users skip the consent screen
         prompt: "none",
     }).toString();
     return url;
 }
 
-/**
- * Checks the callback's `state` and `iss`, then trades the code for tokens. Throws `oauth.AuthorizationResponseError`
- * when Discord sent back an error, like the user pressing Cancel.
- */
 export async function exchangeCode(callbackUrl: URL, redirectUri: string, state: string, codeVerifier: string) {
     const params = oauth.validateAuthResponse(as, client, callbackUrl, state);
     const response = await oauth.authorizationCodeGrantRequest(as, client, clientAuth, params, redirectUri, codeVerifier);
@@ -73,9 +68,6 @@ async function api<T>(route: string, accessToken: string): Promise<T> {
 
 export const fetchUser = (accessToken: string) => api<RESTGetAPICurrentUserResult>(Routes.user(), accessToken);
 
-/**
- * Servers the user owns or has Manage Server in, according to Discord.
- */
 export async function fetchManageableGuilds(accessToken: string) {
     const guilds = await api<RESTGetAPICurrentUserGuildsResult>(Routes.userGuilds(), accessToken);
     const manage = PermissionFlagsBits.Administrator | PermissionFlagsBits.ManageGuild;
@@ -88,9 +80,6 @@ export async function fetchManageableGuilds(accessToken: string) {
         }));
 }
 
-/**
- * The link that adds Square to a server, preselecting `guildId` when given.
- */
 export function inviteUrl(guildId?: string) {
     const url = new URL(OAuth2Routes.authorizationURL);
     url.search = new URLSearchParams({
@@ -102,10 +91,6 @@ export function inviteUrl(guildId?: string) {
     return url;
 }
 
-/**
- * The user's avatar, or null when they never set one, so the Avatar component draws the same pastel initial the
- * bot's image cards use.
- */
 export function avatarUrl(user: { id: string; avatar: string | null }) {
     return user.avatar ? RouteBases.cdn + CDNRoutes.userAvatar(user.id, user.avatar, ImageFormat.WebP) + "?size=128" : null;
 }

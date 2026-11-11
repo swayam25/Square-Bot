@@ -18,9 +18,6 @@ export interface Session {
 // Redis only ever sees the hash, so a leaked dump holds no usable cookies
 const key = (token: string) => `session:${createHash("sha256").update(token).digest("hex")}`;
 
-/**
- * Starts a session and sets its cookie. It ends with the Discord access token, so there's no refresh token to rotate.
- */
 export async function createSession(cookies: Cookies, session: Session, expiresIn = MAX_AGE) {
     const token = randomBytes(32).toString("base64url");
     const maxAge = Math.min(expiresIn, MAX_AGE);

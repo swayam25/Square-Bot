@@ -7,8 +7,7 @@
 @import "@fontsource/noto-sans-symbols";
 @import "@fontsource/noto-sans-symbols-2";
 
-/* Twemoji 17 built as a color font, the same file the bot draws with (see `fonts.py` there). The range is every
-   character it has above Latin-1, minus the ones people type as text (™ ‼ ↔ ↩), the same rule as the bot's */
+/* Same Twemoji build and range as the bot (`fonts.py`): text-style characters like ™ ‼ ↔ ↩ are left out */
 @font-face {
     font-family: "Twemoji";
     src: url("../lib/assets/fonts/Twemoji.woff2") format("woff2");
@@ -32,19 +31,10 @@
 @theme {
     --color-accent: #1fceec;
 
-    /*
-     * Tonal surfaces in the mist hue, stepping lighter as things sit higher. They replace borders, so the steps are
-     * small and close to the mist-950 page: anything placed on a surface has to stay clearly lighter than it.
-     */
     --color-surface-1: oklch(18% 0.007 222);
     --color-surface-2: oklch(21.5% 0.009 220);
     --color-surface-3: oklch(25.5% 0.011 218);
 
-    /*
-     * Same stacks as the bot's image cards. Twemoji comes first, limited to its own characters by `unicode-range`, so
-     * an emoji never draws from Geist or the system emoji font, and pages without one never download it. Noto only
-     * fills in what Geist lacks (Greek, Devanagari, ✦ ♛, math letters like 𝓴𝓪𝓲); browsers fetch its files on demand
-     */
     --font-display:
         "Twemoji", "Saira Variable", "Geist Variable", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif;
     --font-sans: "Twemoji", "Geist Variable", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif;
@@ -55,11 +45,6 @@
     --text-2xs: 10px;
     --text-2xs--line-height: 12px;
 
-    /*
-     * Damped springs sampled into linear(), so motion overshoots and settles like a real spring. Computed from the
-     * bounce/response model: `spring` is response 0.35s, bounce 0.3 (settles in 580ms, peaks at 1.046) for things
-     * people press or open; `smooth` is response 0.5s, no bounce (740ms) for things that travel, like pages.
-     */
     --ease-spring: linear(
         0,
         0.03,
@@ -149,13 +134,13 @@
 
     --animate-fade-in: fade-in 200ms ease-out;
     --animate-fade-out: fade-out 150ms ease-in;
-    --animate-pop-in: pop-in 580ms var(--ease-spring);
+    --animate-pop-in: pop-in 400ms var(--ease-spring);
     --animate-pop-out: pop-out 150ms ease-in;
-    --animate-slide-up: slide-up 740ms var(--ease-smooth);
+    --animate-slide-up: slide-up 400ms var(--ease-smooth);
     --animate-slide-down: slide-down 250ms ease-in;
-    --animate-rise: rise 740ms var(--ease-smooth) both;
-    --animate-float: float 6s ease-in-out infinite;
-    --animate-grow: grow 740ms var(--ease-smooth) both;
+    --animate-rise: rise 400ms var(--ease-smooth) both;
+    --animate-grow: grow 400ms var(--ease-smooth) both;
+    --animate-spin-in: spin-in 1s var(--ease-smooth) both;
 
     @keyframes fade-in {
         from {
@@ -194,9 +179,11 @@
             scale: 0 1;
         }
     }
-    @keyframes float {
-        50% {
-            translate: 0 -8px;
+    @keyframes spin-in {
+        from {
+            opacity: 0;
+            scale: 0.6;
+            rotate: -60deg;
         }
     }
     @keyframes rise {
@@ -207,7 +194,6 @@
     }
 }
 
-/* Host for the `ripple` attachment in #lib/motion.ts: clips the wave to the element and keeps it under the content */
 @utility ripple {
     position: relative;
     overflow: hidden;
@@ -220,12 +206,11 @@
         position: absolute;
         z-index: -1;
         border-radius: 50%;
-        background: currentcolor;
+        background: radial-gradient(closest-side, currentcolor 70%, transparent);
         pointer-events: none;
     }
 }
 
-/* Staggered entrances: give siblings `animate-rise` and `style="--i: n"` */
 @utility stagger {
     animation-delay: calc(var(--i, 0) * 60ms);
 }
@@ -234,6 +219,13 @@
     html {
         color-scheme: dark;
         @apply bg-mist-950 font-sans text-mist-100 antialiased;
+    }
+
+    /* Mouse users get `PageScrollbar.svelte` instead. Touch screens keep their native overlay scrollbar */
+    @media (pointer: fine) {
+        html {
+            scrollbar-width: none;
+        }
     }
 
     ::selection {
@@ -247,12 +239,11 @@
     }
 }
 
-/* Page transitions (see `pageTransition` in #lib/motion.ts). The floating header has its own name, so it holds still */
 ::view-transition-old(root) {
     animation: 150ms ease-in both fade-out;
 }
 ::view-transition-new(root) {
-    animation: 740ms var(--ease-smooth) both rise;
+    animation: 400ms var(--ease-smooth) both rise;
 }
 ::view-transition-group(site-header) {
     animation: none;

@@ -18,8 +18,8 @@
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@iconify-json/material-symbols": "^1.2.98",
         "@iconify-json/simple-icons": "^1.2.101",
-        "@iconify-json/tabler": "^1.2.43",
         "@sveltejs/adapter-node": "^6.0.0",
         "@sveltejs/kit": "^3.0.0",
         "@sveltejs/vite-plugin-svelte": "^7.2.0",

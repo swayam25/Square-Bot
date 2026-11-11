@@ -3,11 +3,7 @@ import type { PlayerState, QueueState, Track } from "@square/api-client";
 import { error } from "@sveltejs/kit";
 import WebSocket from "ws";
 
-/**
- * One WebSocket to the bot carries every live query on this server. It reconnects on its own and resubscribes, so a
- * bot restart doesn't end anyone's live query: they keep their last value and pick up again once the bot is back.
- * NOTE: a live query that throws is over for good in the browser, so outages are reported through `watchStatus`.
- */
+// NOTE: a live query that throws is over for good in the browser, so outages go through `watchStatus` instead
 
 export interface Topics {
     player: PlayerState;
@@ -58,11 +54,10 @@ function connect() {
         const update: Update = JSON.parse(raw.toString());
         subscriptions.get(update.id)?.push(update);
     });
-    // `close` always follows, and that's where the retry happens
     ws.on("error", (err) => console.error("Bot live socket error:", err.message));
     ws.on("close", () => {
         clearTimeout(alive);
-        if (shared.squareLiveSocket !== ws) return; // Replaced by a reloaded copy of this module
+        if (shared.squareLiveSocket !== ws) return;
         socket = null;
         setOnline(false);
         if (subscriptions.size || statusListeners.size) {
@@ -77,10 +72,6 @@ function ensureSocket() {
     return socket;
 }
 
-/**
- * Streams a topic's snapshots for a guild, as seen by `actor`. Only the newest unread snapshot is kept, like a live
- * query. Fails with 403/404 when the user loses access, and with 503 when the bot doesn't answer the first time.
- */
 export async function* watch<T extends keyof Topics>(guild: string, actor: string, topic: T): AsyncGenerator<Topics[T]> {
     const id = ++nextId;
     const message = JSON.stringify({ op: "sub", id, guild, actor, topic });
@@ -100,7 +91,6 @@ export async function* watch<T extends keyof Topics>(guild: string, actor: strin
         for (let first = true; ; first = false) {
             if (!latest) {
                 const arrived = new Promise<void>((resolve) => (wake = resolve));
-                // The first snapshot comes straight back. Later ones can take as long as the music does
                 const timeout = first ? setTimeout(() => wake?.(), 5_000) : undefined;
                 await arrived;
                 clearTimeout(timeout);
@@ -118,9 +108,6 @@ export async function* watch<T extends keyof Topics>(guild: string, actor: strin
     }
 }
 
-/**
- * Whether the bot is reachable, now and whenever that changes.
- */
 export async function* watchStatus(): AsyncGenerator<boolean> {
     let changed: (() => void) | undefined;
     const listener = () => changed?.();

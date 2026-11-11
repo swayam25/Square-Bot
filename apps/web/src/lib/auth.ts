@@ -1,11 +1,6 @@
-// Discord's login page sets a Cross-Origin-Opener-Policy that cuts the popup off from `window.opener`, so the popup
-// reports back over a same-origin BroadcastChannel instead of `postMessage`
+// Discord's login page cuts the popup off from `window.opener`, so it reports back over a BroadcastChannel
 export const AUTH_CHANNEL = "square:auth";
 
-/**
- * Opens Discord login in a centered popup. Returns `false` when the browser blocked it, so the caller can let the
- * link do a normal full-page login instead.
- */
 export function openLoginPopup() {
     const width = 500;
     const height = 780;

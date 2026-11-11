@@ -21,7 +21,6 @@
         trigger?: Snippet;
         triggerClass?: ClassValue;
         children: Snippet;
-        /** Actions, primary last. Stacked full width on phones, in a row on desktop */
         footer?: Snippet;
     } = $props();
 </script>

@@ -14,7 +14,7 @@
         return (crc ^ 0xffffffff) >>> 0;
     }
 
-    /** Same as the bot: NFKC folds styled letters like 𝓶 into plain ones, then the first letter or digit wins */
+    // Same as the bot: NFKC folds styled letters like 𝓶 into plain ones
     function initial(name: string) {
         return (
             name
@@ -38,10 +38,6 @@
     });
 </script>
 
-<!--
-    No ring or outline around avatars, ever. While a picture loads it's a pulsing skeleton: flashing the pastel initial
-    first would show someone else's look for a moment. The initial is only for people with no picture or a broken one.
--->
 <Avatar.Root
     onStatusChange={(details) => (status = details.status)}
     class={["relative inline-flex shrink-0 overflow-hidden rounded-full", className]}

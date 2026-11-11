@@ -15,31 +15,22 @@
     }: {
         /** 0 to 1 */
         value: number;
-        /** Wavy and flowing while playing, a flat line while paused */
         playing?: boolean;
-        /** Streams have no length: a full wave and no track */
         live?: boolean;
         label?: string;
-        /** Spoken value for screen readers, like "1:32 of 4:12" */
         valuetext?: string;
-        /** How far one arrow key press moves, as a fraction */
         step?: number;
-        /** Makes the bar a slider. Called once per drag, on release, so a seek isn't sent for every pixel */
         onseek?: (value: number) => void;
-        /** Where the pointer is while dragging, so the caller can show that time before the seek lands */
         seeking?: number | null;
         class?: ClassValue;
     } = $props();
 
-    // The spec's geometry, same as the bot's now-playing card: stroke 5, amplitude 3, wavelength 32, gap 12 before the track
     const HEIGHT = 16;
     const MID = HEIGHT / 2;
     const AMPLITUDE = 3;
     const WAVELENGTH = 32;
     const GAP = 12;
-    // Edge of the 4px handle to the round cap of either line, so the handle sits in a gap instead of on the line
     const HANDLE_GAP = 8;
-    // One wavelength every 1.2s, so the wave drifts rather than races
     const FLOW = WAVELENGTH / 1200;
 
     let root = $state<HTMLDivElement>();
@@ -49,7 +40,6 @@
     let focused = $state(false);
 
     const seekable = $derived(!!onseek && !live);
-    // The wave settles flat while dragging so the exact spot is easy to read, then springs back once let go
     const amplitude = new Spring(AMPLITUDE, { stiffness: 0.12, damping: 0.5 });
     const handle = new Spring(0, { stiffness: 0.2, damping: 0.6 });
 
@@ -68,7 +58,6 @@
         let d = "";
         for (let at = from; at < to + 2; at += 2) {
             const point = Math.min(at, to);
-            // Starts going up, like the bot's card
             const y = MID - amplitude.current * Math.sin(((point + phase) / WAVELENGTH) * 2 * Math.PI);
             d += `${d ? "L" : "M"}${point.toFixed(1)} ${y.toFixed(2)}`;
         }
@@ -140,7 +129,6 @@
 {/snippet}
 
 {#if seekable}
-    <!-- The hit area reaches past the 16px bar, so it's easy to grab on touch screens -->
     <div
         bind:this={root}
         bind:clientWidth={width}

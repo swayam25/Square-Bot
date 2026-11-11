@@ -2,10 +2,9 @@
     import Button from "#lib/components/Button.svelte";
     import SiteHeader from "#lib/components/SiteHeader.svelte";
     import { page } from "$app/state";
-    import TablerHome from "~icons/tabler/home";
-    import TablerRefresh from "~icons/tabler/refresh";
+    import MaterialSymbolsHomeRounded from "~icons/material-symbols/home-rounded";
+    import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
 
-    // SvelteKit's own messages ("Not Found") aren't written for people, so known statuses get ours
     const titles: Record<number, [string, string]> = {
         400: ["That didn't work", "Something about that request was off. Go back and try again."],
         401: ["Log in first", "This page needs you to be logged in with Discord."],
@@ -16,7 +15,6 @@
 
     const status = $derived(page.status);
     const [title, fallback] = $derived(titles[status] ?? ["Something went wrong", "An unexpected error got in the way. Try again in a moment."]);
-    // Our own `error(...)` calls say something specific, so those are worth showing as they are
     const detail = $derived(page.error?.message && page.error.message !== "Not Found" && status !== 500 ? page.error.message : fallback);
     const retryable = $derived(status >= 500 || status === 429);
 </script>
@@ -35,10 +33,10 @@
     </div>
     <div class="flex w-full animate-rise flex-col gap-2 stagger sm:w-auto sm:flex-row" style="--i: 2">
         {#if retryable}
-            <Button variant="primary" onclick={() => location.reload()}><TablerRefresh />Try again</Button>
-            <Button href="/"><TablerHome />Go home</Button>
+            <Button variant="primary" onclick={() => location.reload()}><MaterialSymbolsRefreshRounded />Try again</Button>
+            <Button href="/"><MaterialSymbolsHomeRounded />Go home</Button>
         {:else}
-            <Button variant="primary" href="/"><TablerHome />Go home</Button>
+            <Button variant="primary" href="/"><MaterialSymbolsHomeRounded />Go home</Button>
         {/if}
     </div>
 </main>

@@ -6,7 +6,6 @@
 
     let { tone = "neutral", class: className, children }: { tone?: Tone; class?: ClassValue; children: Snippet } = $props();
 
-    // The spec's chip tones: a soft fill with matching ink
     const tones: Record<Tone, string> = {
         neutral: "bg-white/10 text-mist-100",
         muted: "bg-white/10 text-mist-400",
@@ -19,7 +18,6 @@
     };
 </script>
 
-<!-- `px-3` with an icon, `px-4` for text only: padding looks even either way -->
 <span
     class={[
         "inline-flex h-8 shrink-0 items-center gap-2 rounded-full px-4 text-xs font-medium whitespace-nowrap has-[svg]:px-3 [&_svg]:size-4",

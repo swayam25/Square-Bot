@@ -23,7 +23,6 @@
     } = $props();
 </script>
 
-<!-- Mobile only: on desktop the same content is a popover or a dialog, see Popup and Dialog -->
 <Drawer.Root bind:open>
     {#if trigger}
         <Drawer.Trigger class={triggerClass}>{@render trigger()}</Drawer.Trigger>
@@ -31,8 +30,7 @@
     <Portal>
         <Drawer.Backdrop class="fixed inset-0 z-50 bg-mist-950/60 data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
         <Drawer.Positioner class="fixed inset-x-0 bottom-0 z-50">
-            <!-- The `after:` strip carries the surface below the sheet, so pulling it up past its height stretches it
-                 instead of opening a gap at the bottom of the screen -->
+            <!-- The `after:` strip fills the gap under the sheet when it's pulled past its height -->
             <Drawer.Content
                 class="relative flex max-h-[calc(100dvh-4rem)] flex-col rounded-t-[28px] bg-surface-1 pb-[env(safe-area-inset-bottom)] shadow-2xl shadow-black/50 outline-none after:absolute after:inset-x-0 after:top-full after:h-dvh after:bg-surface-1 data-[state=closed]:animate-slide-down data-[state=open]:animate-slide-up"
             >

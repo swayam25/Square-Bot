@@ -17,7 +17,6 @@
         children,
     }: {
         open?: boolean;
-        /** Heads the drawer on phones, and names the popover for screen readers on desktop */
         title: string;
         trigger: Snippet;
         triggerClass?: ClassValue;
@@ -35,7 +34,7 @@
             <Popover.Positioner class="z-50">
                 <Popover.Content
                     aria-label={title}
-                    class="w-72 origin-(--transform-origin) rounded-3xl bg-surface-1 p-2 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
+                    class="w-72 origin-(--transform-origin) rounded-2xl bg-surface-1 p-2 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
                 >
                     {@render children()}
                 </Popover.Content>

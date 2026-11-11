@@ -33,7 +33,6 @@
         return () => clearInterval(timer);
     });
 
-    // The clock only runs on its own while the bot is there to say it's still playing
     function position(state: Awaited<typeof player>, online: boolean) {
         const elapsed = state.paused || !online ? 0 : now - state.positionAt;
         return Math.min(state.positionMs + elapsed, state.track?.lengthMs ?? 0);

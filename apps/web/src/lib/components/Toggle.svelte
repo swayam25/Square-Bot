@@ -11,14 +11,12 @@
     }: {
         checked?: boolean;
         disabled?: boolean;
-        /** For screen readers when there's no visible label */
         label?: string;
         children?: Snippet;
         onCheckedChange?: (checked: boolean) => void;
     } = $props();
 </script>
 
-<!-- The spec's switch: a 64x32 track with a short pill knob (half the track) that springs across and stretches while held -->
 <Switch.Root
     bind:checked
     {disabled}

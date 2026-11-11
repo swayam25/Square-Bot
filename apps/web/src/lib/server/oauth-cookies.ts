@@ -3,7 +3,6 @@ import type { Cookies } from "@sveltejs/kit";
 const STATE = "oauth_state";
 const VERIFIER = "oauth_verifier";
 const POPUP = "oauth_popup";
-// Only the callback needs them, and only for the few minutes a login takes
 const options = { path: "/auth/callback", httpOnly: true, sameSite: "lax", maxAge: 10 * 60 } as const;
 
 export function setOAuthCookies(cookies: Cookies, state: string, codeVerifier: string, popup: boolean) {
@@ -13,9 +12,6 @@ export function setOAuthCookies(cookies: Cookies, state: string, codeVerifier: s
     else cookies.delete(POPUP, { path: options.path });
 }
 
-/**
- * Reads the login's `state`, PKCE verifier and popup flag once and clears them.
- */
 export function takeOAuthCookies(cookies: Cookies) {
     const state = cookies.get(STATE);
     const codeVerifier = cookies.get(VERIFIER);

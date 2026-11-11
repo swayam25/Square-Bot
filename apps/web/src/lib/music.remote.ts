@@ -29,10 +29,6 @@ export const liveStatus = query.live(() => {
 type Base = { client: typeof bot; path: { guild_id: string }; headers: { "x-actor-id": string } };
 type Result = { data?: { message: string }; error?: unknown; response?: Response };
 
-/**
- * A music control as a remote command. Resolves with the bot's confirmation, or fails with the status and message
- * the bot refused with, e.g. "Only a DJ can do that."
- */
 function control<Input extends z.ZodObject<{ guild: typeof guildId }>>(
     input: Input,
     send: (body: Omit<z.infer<Input>, "guild">, base: Base) => Promise<Result>,

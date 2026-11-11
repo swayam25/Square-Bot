@@ -16,7 +16,6 @@
         ghost: "font-medium text-mist-400 hover:bg-surface-2 hover:text-mist-100",
     };
 
-    // Taller on phones, where a 40px target is a miss waiting to happen
     const classes = $derived([
         "ripple inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm whitespace-nowrap select-none",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-50",

@@ -232,12 +232,12 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.14.0(jiti@2.7.0))
+      '@iconify-json/material-symbols':
+        specifier: ^1.2.98
+        version: 1.2.98
       '@iconify-json/simple-icons':
         specifier: ^1.2.101
         version: 1.2.101
-      '@iconify-json/tabler':
-        specifier: ^1.2.43
-        version: 1.2.43
       '@sveltejs/adapter-node':
         specifier: ^6.0.0
         version: 6.0.1(@sveltejs/kit@3.1.1(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3(@typescript-eslint/types@8.72.1))(vite@8.3.7(@types/node@26.6.6)(jiti@2.7.0)))(svelte@5.57.3(@typescript-eslint/types@8.72.1))(typescript@6.0.3)(vite@8.3.7(@types/node@26.6.6)(jiti@2.7.0)))
@@ -488,11 +488,11 @@ packages:
       prettier-plugin-ember-template-tag:
         optional: true
 
+  '@iconify-json/material-symbols@1.2.98':
+    resolution: {integrity: sha512-ycgn080/EGstyYcJFu+HN0TYI+ts/KFPb+An0dzpwZit4M/BoFO9U54BwBmrS2Qo/3g9NYV4Y/g1BT425tNgEw==}
+
   '@iconify-json/simple-icons@1.2.101':
     resolution: {integrity: sha512-MXJkMZDancJ/9I+Bgdthi9kXvn3AwWStxoTHwEPwAFQ9kMLBASO1BSstg52fNtjXeizm1Wi91R+QnWxNGkWHPQ==}
-
-  '@iconify-json/tabler@1.2.43':
-    resolution: {integrity: sha512-EKhyOj6nASi25ZjuRpEhPL1fwiKVtg/e/VX6v6X3FPKpjG9og26ypW8ItnWYSTn6fdNuQe3VPeyuThWlP6QuWw==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -2376,11 +2376,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@iconify-json/simple-icons@1.2.101':
+  '@iconify-json/material-symbols@1.2.98':
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/tabler@1.2.43':
+  '@iconify-json/simple-icons@1.2.101':
     dependencies:
       '@iconify/types': 2.0.0
 
