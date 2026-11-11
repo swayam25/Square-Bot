@@ -16,11 +16,11 @@
     import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
     import MaterialSymbolsDescriptionRounded from "~icons/material-symbols/description-rounded";
-    import MaterialSymbolsGridViewRounded from "~icons/material-symbols/grid-view-rounded";
     import MaterialSymbolsHomeRounded from "~icons/material-symbols/home-rounded";
     import MaterialSymbolsLogoutRounded from "~icons/material-symbols/logout-rounded";
     import MaterialSymbolsMusicNoteRounded from "~icons/material-symbols/music-note-rounded";
     import MaterialSymbolsPersonAddRounded from "~icons/material-symbols/person-add-rounded";
+    import MaterialSymbolsPlayShapesRounded from "~icons/material-symbols/play-shapes-rounded";
     import MaterialSymbolsTuneRounded from "~icons/material-symbols/tune-rounded";
     import MaterialSymbolsUnfoldMoreRounded from "~icons/material-symbols/unfold-more-rounded";
     import type { LayoutProps } from "./$types";
@@ -134,7 +134,7 @@
     </nav>
     <hr class="my-2 border-white/10" />
     <a href="/guild" class="ripple flex h-12 items-center gap-4 rounded-xl px-4 text-sm font-medium hover:bg-white/10" {@attach ripple}>
-        <MaterialSymbolsGridViewRounded class="size-5 text-mist-400" />All servers
+        <MaterialSymbolsPlayShapesRounded class="size-5 text-mist-400" />All servers
     </a>
 {/snippet}
 
