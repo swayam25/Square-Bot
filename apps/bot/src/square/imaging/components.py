@@ -170,8 +170,8 @@ class Kit:
         return SplitBar(list(segments), self.theme.surface_2, label=text)
 
     def progress(self, value: float, *, wavy: bool = False) -> Progress:
-        """Track progress in the accent over a `surface-3` track. `value` runs from 0 to 1."""
-        return Progress(value, self.theme.accent, self.theme.surface_3, wavy=wavy)
+        """Track progress in the accent over a `white/10` track. `value` runs from 0 to 1."""
+        return Progress(value, self.theme.accent, self.theme.line, wavy=wavy)
 
     def eyebrow(self, text: str) -> Text:
         """A small uppercase mono label, like "UP NEXT"."""

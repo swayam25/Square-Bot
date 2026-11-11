@@ -1,5 +1,4 @@
 import math
-from functools import lru_cache
 from io import BytesIO
 from PIL import Image, ImageChops, ImageDraw, ImageOps
 from square.imaging import fonts
@@ -20,28 +19,10 @@ def _font(name: str, style: TextStyle):
     return fonts.font(name, round(style.size * _K), style.weight)
 
 
-def _emoji_scale(style: TextStyle) -> float:
-    """Emoji are drawn at `fonts.EMOJI_PX` and shrunk by this to match the text's size."""
-    return style.size * _K / fonts.EMOJI_PX
-
-
 def _run_width(name: str, chunk: str, style: TextStyle) -> float:
     """A run's width in canvas pixels, letter spacing included."""
     spacing = style.tracking * style.size * _K * len(chunk)
-    if name == fonts.EMOJI:
-        return fonts.font(name, fonts.EMOJI_PX).getlength(chunk) * _emoji_scale(style) + spacing
     return _font(name, style).getlength(chunk) + spacing
-
-
-@lru_cache(maxsize=256)
-def _emoji_tile(chunk: str, scale: float) -> tuple[Image.Image, float]:
-    """An emoji run in color, scaled to size, and how far above the baseline its top sits."""
-    emoji = fonts.font(fonts.EMOJI, fonts.EMOJI_PX)
-    ascent, descent = emoji.getmetrics()
-    tile = Image.new("RGBA", (math.ceil(emoji.getlength(chunk)), ascent + descent))
-    ImageDraw.Draw(tile).text((0, ascent), chunk, font=emoji, embedded_color=True, anchor="ls")
-    size = (max(round(tile.width * scale), 1), max(round(tile.height * scale), 1))
-    return tile.resize(size, Image.Resampling.LANCZOS), ascent * scale
 
 
 def text_width(text: str, style: TextStyle) -> float:
@@ -176,8 +157,8 @@ class Canvas:
         pen = x * _K
         for name, chunk in fonts.runs(text, style.family):
             if name == fonts.EMOJI:
-                tile, rise = _emoji_tile(chunk, _emoji_scale(style))
-                self._image.alpha_composite(tile, (round(pen), round(line - rise)))
+                # Whole run at once, so the font's ligatures can join flags and ZWJ sequences
+                self._draw.text((pen, line), chunk, font=_font(name, style), embedded_color=True, anchor="ls")
                 pen += _run_width(name, chunk, style)
             elif spacing:
                 # Pillow has no letter spacing, so tracked text goes one character at a time like CSS spaces it

@@ -7,65 +7,22 @@ from square.imaging.tokens import Family
 
 _DIR = files(__package__) / "fonts"
 
-# Color bitmaps (CBDT), which Pillow can only load at the size they were drawn at, so callers scale the result.
-# From googlefonts/noto-emoji `2D/fonts/NotoColorEmoji.ttf` (v2.057, Emoji 18). Use that CBDT file when updating, not
-# `Noto-COLRv1.ttf` or the google/fonts copy: Pillow draws COLRv1 glyphs in plain black.
-EMOJI = "NotoColorEmoji.ttf"
-EMOJI_PX = 109
+# Built as COLRv0 on purpose: FreeType draws COLRv1 layers plain black.
+EMOJI = "Twemoji.ttf"
 
-# The website's CSS font stacks: each family's own font, then Noto Sans and the rest of Noto, so anything Saira or
-# JetBrains Mono lacks (Cyrillic, Devanagari, Discord's math letters like 𝓴𝓪𝓲, symbols, emoji) still draws.
-# NOTE: No CJK font yet (~16 MB), so those names render as boxes until one is added to `_NOTO`.
-_NOTO = ("NotoSans.ttf", "NotoSansMath.ttf", "NotoSansSymbols.ttf", "NotoSansSymbols2.ttf", EMOJI)
+# Mirrors the website's font stacks, so keep both in sync.
+# NOTE: No CJK font yet (~16 MB), so CJK renders as boxes until one is added here.
+_FALLBACK = ("Geist.ttf", "NotoSans.ttf", "NotoSansMath.ttf", "NotoSansSymbols.ttf", "NotoSansSymbols2.ttf", EMOJI)
 CHAINS: dict[Family, tuple[str, ...]] = {
-    "display": ("Saira.ttf", *_NOTO),
-    "sans": _NOTO,
-    "mono": ("JetBrainsMono.ttf", *_NOTO),
+    "display": ("Saira.ttf", *_FALLBACK),
+    "sans": _FALLBACK,
+    "mono": ("JetBrainsMono.ttf", *_FALLBACK),
 }
 
-_TEXT_STYLE = "\ufe0e"
-_EMOJI_STYLE = "\ufe0f"
-# Code points below U+1F000 that are emoji by default (Emoji_Presentation=Yes in Unicode 18.0's emoji-data.txt).
-# The symbol fonts also have glyphs for these, so without this list ⭐ or ⚡ would come out as plain outlines.
-_EMOJI_DEFAULT_BMP = frozenset(
-    code
-    for first, last in (
-        (0x231A, 0x231B),
-        (0x23E9, 0x23EC),
-        (0x23F0, 0x23F0),
-        (0x23F3, 0x23F3),
-        (0x25FD, 0x25FE),
-        (0x2614, 0x2615),
-        (0x2648, 0x2653),
-        (0x267F, 0x267F),
-        (0x2693, 0x2693),
-        (0x26A1, 0x26A1),
-        (0x26AA, 0x26AB),
-        (0x26BD, 0x26BE),
-        (0x26C4, 0x26C5),
-        (0x26CE, 0x26CE),
-        (0x26D4, 0x26D4),
-        (0x26EA, 0x26EA),
-        (0x26F2, 0x26F3),
-        (0x26F5, 0x26F5),
-        (0x26FA, 0x26FA),
-        (0x26FD, 0x26FD),
-        (0x2705, 0x2705),
-        (0x270A, 0x270B),
-        (0x2728, 0x2728),
-        (0x274C, 0x274C),
-        (0x274E, 0x274E),
-        (0x2753, 0x2755),
-        (0x2757, 0x2757),
-        (0x2795, 0x2797),
-        (0x27B0, 0x27B0),
-        (0x27BF, 0x27BF),
-        (0x2B1B, 0x2B1C),
-        (0x2B50, 0x2B50),
-        (0x2B55, 0x2B55),
-    )  # fmt: skip
-    for code in range(first, last + 1)
-)
+_TEXT_STYLE = "︎"
+_EMOJI_STYLE = "️"
+# People type these as text (™ ‼ ↔ ↩), so they need a U+FE0F to draw as emoji. The website's `unicode-range` skips them too.
+_TEXT_FIRST = frozenset({0x203C, 0x2049, 0x2122, 0x2139, *range(0x2194, 0x219A), 0x21A9, 0x21AA})
 
 
 @cache
@@ -76,14 +33,7 @@ def _coverage(name: str) -> frozenset[int]:
 
 @cache
 def font(name: str, px: int, weight: int = 400) -> ImageFont.FreeTypeFont:
-    """
-    Loads a bundled font at a pixel size, setting its weight axis when it has one.
-
-    Args:
-        name (str): A file name from `CHAINS`.
-        px (int): The size in pixels. Must be `EMOJI_PX` for `EMOJI`.
-        weight (int): The CSS-style weight, clamped to what the font supports.
-    """
+    """Loads a bundled font, clamping `weight` to the font's weight axis when it has one."""
     loaded = ImageFont.truetype(str(_DIR / name), px)
     try:
         axes = loaded.get_variation_axes()
@@ -99,30 +49,19 @@ def font(name: str, px: int, weight: int = 400) -> ImageFont.FreeTypeFont:
 
 
 def _joins_previous(char: str) -> bool:
-    """Marks, variation selectors and joiners must stay in the same run as the character they modify."""
     return unicodedata.category(char) in ("Mn", "Me", "Cf")
 
 
 def _wants_emoji(char: str, following: str) -> bool:
-    """
-    Whether a character should draw as a color emoji, following Unicode's presentation rules.
-
-    A trailing U+FE0F asks for emoji (❤️, 1️⃣) and U+FE0E for text. Without one, everything from U+1F000 up and the
-    few older symbols in `_EMOJI_DEFAULT_BMP` default to emoji.
-    """
+    """Above Latin-1 Twemoji wins even where Geist has a glyph (❤ ★), like on Discord. Below it, only U+FE0F asks."""
     code = ord(char)
     if code not in _coverage(EMOJI) or following == _TEXT_STYLE:
         return False
-    return following == _EMOJI_STYLE or code >= 0x1F000 or code in _EMOJI_DEFAULT_BMP
+    return (code > 0xFF and code not in _TEXT_FIRST) or following == _EMOJI_STYLE
 
 
 def runs(text: str, family: Family = "sans") -> list[tuple[str, str]]:
-    """
-    Splits text into `(font name, substring)` runs, each drawn with the first font in the family's chain that covers it.
-
-    Emoji go to `EMOJI` first when Unicode says they default to emoji, see `_wants_emoji`. Characters no font
-    covers stay with the family's own font and render as boxes.
-    """
+    """Splits text into `(font name, substring)` runs using the first font in the chain that covers each character."""
     chain = CHAINS[family]
     result: list[tuple[str, str]] = []
     for index, char in enumerate(text):

@@ -22,7 +22,7 @@ class Type:
     DISPLAY_2XL = TextStyle(24, 32, 600, "display", -0.025)
     DISPLAY_XL = TextStyle(20, 28, 600, "display")
     DISPLAY_PLACE = TextStyle(36, 40, 700, "display")
-    # Noto Sans, for everything people read
+    # Geist, for everything people read
     BASE = TextStyle(16, 24)
     BASE_MEDIUM = TextStyle(16, 24, 500)
     BASE_SEMIBOLD = TextStyle(16, 24, 600)
@@ -53,5 +53,5 @@ class Radius:
     LG = 8  # rounded-lg
     XL = 12  # rounded-xl
     XL2 = 16  # rounded-2xl
-    XL3 = 24  # rounded-3xl
+    XL4 = 32  # rounded-4xl
     FULL = -1  # rounded-full

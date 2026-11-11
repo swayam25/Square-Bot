@@ -1,8 +1,8 @@
 """
 Card images in the same design as Square's website.
 
-Tailwind's `mist` greys and type scale, the accent and status colors from `config.toml`, and Saira, Noto Sans and
-JetBrains Mono.
+Tailwind's `mist` greys and type scale, the accent and status colors from `config.toml`, Saira, Geist and JetBrains
+Mono, with Twemoji for emoji.
 
 A template is a function `(Kit, data) -> Node` that builds a layout tree from plain data. Async work (avatars, DB)
 happens before rendering, so templates stay pure and can be previewed with fake data, see `python -m square.imaging`.

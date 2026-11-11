@@ -1,3 +1,4 @@
+import math
 from abc import ABC, abstractmethod
 from PIL import Image
 from square.imaging.canvas import Canvas, Corners, baseline, fit_text, text_width
@@ -315,8 +316,8 @@ class Progress(Node):
     A track's progress: the played part, a gap, the rest of the track, and a dot marking the end.
 
     `wavy` draws the played part as a wave, the way a playing track looks, and a flat line when paused. At `value` 1
-    (a live stream) the wave runs the full width with no track. The geometry matches the website's SVG: a stroke of
-    `thickness`, a wave of quadratic arcs `wavelength` long and `amplitude` high.
+    (a live stream) the wave runs the full width with no track. The geometry is the website's `WavyProgress` at rest:
+    a stroke of `thickness`, a sine wave `wavelength` long and `amplitude` high sampled every 2 px, first going up.
     """
 
     def __init__(
@@ -340,39 +341,35 @@ class Progress(Node):
     def measure(self, width: float) -> float:
         return self.height
 
-    def _wave(self, start: float, end: float, mid: float) -> list[tuple[float, float]]:
-        """Alternating quadratic arcs from `start` to `end`, first bending up, cut off mid-arc at `end`."""
-        half = self.wavelength / 2
+    def _wave(self, origin: float, start: float, end: float, mid: float) -> list[tuple[float, float]]:
+        """The sine from `start` to `end`, its phase counted from the bar's left edge `origin` like the SVG's x."""
         points: list[tuple[float, float]] = []
-        sign, x0 = -1, start
-        while x0 < end:
-            span = min(half, end - x0)
-            steps = max(int(span), 1)
-            for i in range(steps + 1):
-                t = span / half * i / steps
-                # The control point sits mid-arc, so x runs straight and y is a parabola peaking at `amplitude`
-                points.append((x0 + half * t, mid + sign * 2 * self.amplitude * 2 * t * (1 - t)))
-            sign, x0 = -sign, x0 + half
+        at = start
+        while at < end + 2:
+            point = min(at, end)
+            points.append((point, mid - self.amplitude * math.sin((point - origin) / self.wavelength * 2 * math.pi)))
+            at += 2
         return points
 
     def draw(self, canvas: Canvas, x: float, y: float, width: float, height: float) -> None:
         mid, t = y + height / 2, self.thickness
-        start = x + t / 2 + 0.5
-        played = max(x + width * self.value, start) if self.value < 1 else x + width - t / 2 - 0.5
-        if self.value > 0:
-            if self.wavy:
-                canvas.stroke(self._wave(start, played, mid), t, self.active)
-            else:
-                canvas.rect(start - t / 2, mid - t / 2, played - start + t, t, fill=self.active, radius=Radius.FULL)
+        # Both ends sit 3 px in, so the round caps and the end dot stay inside the box
+        start = x + 3
+        played = start + self.value * (width - 6)
+        # Like the website, a bar at 0 still shows the played part's round cap as a dot
+        if self.wavy and played > start:
+            canvas.stroke(self._wave(x, start, played, mid), t, self.active)
+        else:
+            canvas.rect(start - t / 2, mid - t / 2, played - start + t, t, fill=self.active, radius=Radius.FULL)
         if self.value >= 1:
             return
         track_end = x + width - self.gap
-        track_start = played + self.gap if self.value > 0 else start
+        track_start = played + self.gap
         if track_start < track_end:
             canvas.rect(
                 track_start - t / 2, mid - t / 2, track_end - track_start + t, t, fill=self.track, radius=Radius.FULL
             )
-        canvas.rect(x + width - 4 - t / 2, mid - t / 2, t, t, fill=self.active, radius=Radius.FULL)
+        canvas.rect(x + width - 3 - t / 2, mid - t / 2, t, t, fill=self.active, radius=Radius.FULL)
 
 
 class Fill(Node):

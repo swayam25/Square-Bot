@@ -23,9 +23,6 @@ def blend(color: RGB, alpha: float, base: RGB) -> RGB:
 # Tailwind v4 colors, converted from the oklch values in `tailwindcss/theme.css`
 WHITE: RGB = rgb(0xFFFFFF)
 MIST_950: RGB = rgb(0x090B0C)
-MIST_900: RGB = rgb(0x161B1D)
-MIST_800: RGB = rgb(0x22292B)
-MIST_700: RGB = rgb(0x394447)
 MIST_400: RGB = rgb(0x9CA8AB)
 MIST_300: RGB = rgb(0xD0D6D8)
 MIST_100: RGB = rgb(0xF1F3F3)
@@ -37,6 +34,9 @@ ORANGE_300: RGB = rgb(0xFFB86A)
 EMERALD_400: RGB = rgb(0x00D492)
 AMBER_400: RGB = rgb(0xFFB900)
 RED_400: RGB = rgb(0xFF6467)
+SURFACE_1: RGB = rgb(0x0E1214)
+SURFACE_2: RGB = rgb(0x151A1C)
+SURFACE_3: RGB = rgb(0x1D2426)
 # Fallback avatar circles, picked per name so a member keeps one color
 AVATAR_FILLS: tuple[RGB, ...] = tuple(
     rgb(value)
@@ -67,9 +67,9 @@ class Theme:
     warning: RGB = AMBER_400
     danger: RGB = RED_400
     bg: RGB = MIST_950
-    surface: RGB = MIST_900
-    surface_2: RGB = MIST_800
-    surface_3: RGB = MIST_700
+    surface: RGB = SURFACE_1
+    surface_2: RGB = SURFACE_2
+    surface_3: RGB = SURFACE_3
     text: RGB = MIST_100
     muted: RGB = MIST_400
     on_accent: RGB = CYAN_950
