@@ -2,7 +2,7 @@
     "extends": "$app/tsconfig",
     "compilerOptions": {
         "strict": true,
-        "types": ["$app/types", "node"]
+        "types": ["$app/types", "node", "unplugin-icons/types/svelte"]
     },
     "include": ["src", "vite.config.ts", "prettier.config.js", "eslint.config.js"]
 }

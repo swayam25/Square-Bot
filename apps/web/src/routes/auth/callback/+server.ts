@@ -10,14 +10,14 @@ export const GET: RequestHandler = async ({ cookies, url }) => {
     if (!login) error(400, "This login link expired. Try logging in again.");
 
     // A popup login ends on a page that tells the opener and closes itself
-    const done = login.popup ? "/auth/done" : "/";
+    const done = login.popup ? "/auth/done" : "/servers";
     const redirectUri = new URL("/auth/callback", url).href;
     let tokens: oauth.TokenEndpointResponse;
     try {
         tokens = await exchangeCode(url, redirectUri, login.state, login.codeVerifier);
     } catch (err) {
         // The user pressed Cancel on Discord's screen
-        if (err instanceof oauth.AuthorizationResponseError && err.error === "access_denied") redirect(303, done);
+        if (err instanceof oauth.AuthorizationResponseError && err.error === "access_denied") redirect(303, login.popup ? done : "/");
         // Wrong `state` or `iss`, a reused code, and the like
         if (
             err instanceof oauth.AuthorizationResponseError ||

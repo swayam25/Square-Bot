@@ -88,14 +88,24 @@ export async function fetchManageableGuilds(accessToken: string) {
         }));
 }
 
-export function inviteUrl(guildId: string) {
+/**
+ * The link that adds Square to a server, preselecting `guildId` when given.
+ */
+export function inviteUrl(guildId?: string) {
     const url = new URL(OAuth2Routes.authorizationURL);
     url.search = new URLSearchParams({
         client_id: DISCORD_CLIENT_ID,
         scope: [OAuth2Scopes.Bot, OAuth2Scopes.ApplicationsCommands].join(" "),
         permissions: PermissionFlagsBits.Administrator.toString(),
-        guild_id: guildId,
-        disable_guild_select: "true",
+        ...(guildId && { guild_id: guildId, disable_guild_select: "true" }),
     }).toString();
     return url;
+}
+
+/**
+ * The user's avatar, or null when they never set one, so the Avatar component draws the same pastel initial the
+ * bot's image cards use.
+ */
+export function avatarUrl(user: { id: string; avatar: string | null }) {
+    return user.avatar ? RouteBases.cdn + CDNRoutes.userAvatar(user.id, user.avatar, ImageFormat.WebP) + "?size=128" : null;
 }
