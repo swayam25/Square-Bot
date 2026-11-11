@@ -1,6 +1,6 @@
 <script lang="ts">
-    import Chip from "#lib/components/Chip.svelte";
-    import WavyProgress from "#lib/components/WavyProgress.svelte";
+    import Chip from "#lib/components/ui/Chip.svelte";
+    import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
     import { demo, time } from "#lib/demo.svelte.ts";
     import { ripple } from "#lib/motion.ts";
     import MaterialSymbolsPauseRounded from "~icons/material-symbols/pause-rounded";

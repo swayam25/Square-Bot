@@ -33,9 +33,9 @@
 </script>
 
 <script lang="ts">
-    import Avatar from "#lib/components/Avatar.svelte";
-    import Chip from "#lib/components/Chip.svelte";
-    import WavyProgress from "#lib/components/WavyProgress.svelte";
+    import Avatar from "#lib/components/ui/Avatar.svelte";
+    import Chip from "#lib/components/ui/Chip.svelte";
+    import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
     import MaterialSymbolsAutoplayRounded from "~icons/material-symbols/autoplay-rounded";
     import MaterialSymbolsEqualizerRounded from "~icons/material-symbols/equalizer-rounded";
     import MaterialSymbolsMusicNoteRounded from "~icons/material-symbols/music-note-rounded";

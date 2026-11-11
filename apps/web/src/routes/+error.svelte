@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Button from "#lib/components/Button.svelte";
+    import Button from "#lib/components/ui/Button.svelte";
     import SiteHeader from "#lib/components/SiteHeader.svelte";
     import { page } from "$app/state";
     import MaterialSymbolsHomeRounded from "~icons/material-symbols/home-rounded";

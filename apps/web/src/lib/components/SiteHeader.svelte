@@ -1,9 +1,9 @@
 <script lang="ts">
     import square from "#lib/assets/square.svg";
     import { openLoginPopup } from "#lib/auth.ts";
-    import Avatar from "#lib/components/Avatar.svelte";
-    import Button from "#lib/components/Button.svelte";
-    import Popup from "#lib/components/Popup.svelte";
+    import Avatar from "#lib/components/ui/Avatar.svelte";
+    import Button from "#lib/components/ui/Button.svelte";
+    import Popup from "#lib/components/ui/Popup.svelte";
     import { ripple } from "#lib/motion.ts";
     import MaterialSymbolsLoginRounded from "~icons/material-symbols/login-rounded";
     import MaterialSymbolsLogoutRounded from "~icons/material-symbols/logout-rounded";

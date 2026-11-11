@@ -22,9 +22,9 @@
 </script>
 
 <script lang="ts">
-    import Avatar from "#lib/components/Avatar.svelte";
-    import Chip from "#lib/components/Chip.svelte";
-    import SplitBar from "#lib/components/SplitBar.svelte";
+    import Avatar from "#lib/components/ui/Avatar.svelte";
+    import Chip from "#lib/components/ui/Chip.svelte";
+    import SplitBar from "#lib/components/ui/SplitBar.svelte";
 
     let { data }: { data: Invites } = $props();
 

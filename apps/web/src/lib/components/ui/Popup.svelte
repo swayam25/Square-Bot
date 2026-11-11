@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Drawer from "#lib/components/Drawer.svelte";
+    import Drawer from "#lib/components/ui/Drawer.svelte";
     import { mobile } from "#lib/media.ts";
     import { Popover } from "@ark-ui/svelte/popover";
     import { Portal } from "@ark-ui/svelte/portal";
