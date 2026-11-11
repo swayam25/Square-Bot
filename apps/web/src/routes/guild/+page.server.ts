@@ -17,9 +17,11 @@ async function manageableGuilds(session: Session) {
     return guilds;
 }
 
+const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+
 export const load: PageServerLoad = async ({ locals, cookies }) => {
     const session = locals.session;
-    if (!session) return { user: null };
+    if (!session) redirect(303, "/login");
 
     const [square, discord] = await Promise.allSettled([
         myGuilds({ client: bot, headers: { "x-actor-id": session.user.id } }),
@@ -38,8 +40,11 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 
     const added = new Set(square.value.data.map((guild) => guild.id));
     return {
-        user: session.user,
-        guilds: square.value.data,
-        invitable: discord.value.filter((guild) => !added.has(guild.id)).map((guild) => ({ ...guild, inviteUrl: inviteUrl(guild.id).href })),
+        inviteUrl: inviteUrl().href,
+        guilds: square.value.data.toSorted(byName),
+        invitable: discord.value
+            .filter((guild) => !added.has(guild.id))
+            .map((guild) => ({ ...guild, inviteUrl: inviteUrl(guild.id).href }))
+            .toSorted(byName),
     };
 };

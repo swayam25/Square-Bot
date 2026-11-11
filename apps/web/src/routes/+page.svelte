@@ -2,16 +2,16 @@
     import swayamAvatar from "#lib/assets/discord/swayam.webp";
     import square from "#lib/assets/square.svg";
     import { openLoginPopup } from "#lib/auth.ts";
-    import Button from "#lib/components/ui/Button.svelte";
     import DiscordMedia from "#lib/components/discord/DiscordMedia.svelte";
     import DiscordMessage from "#lib/components/discord/DiscordMessage.svelte";
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
     import InviteCard from "#lib/components/discord/InviteCard.svelte";
     import NowPlayingCard from "#lib/components/discord/NowPlayingCard.svelte";
     import PlayerPreview from "#lib/components/PlayerPreview.svelte";
-    import Shape from "#lib/components/ui/Shape.svelte";
     import SiteFooter from "#lib/components/SiteFooter.svelte";
     import SiteHeader from "#lib/components/SiteHeader.svelte";
+    import Button from "#lib/components/ui/Button.svelte";
+    import Shape from "#lib/components/ui/Shape.svelte";
     import { demo, time, TRACKS } from "#lib/demo.svelte.ts";
     import MaterialSymbolsCheckCircleRounded from "~icons/material-symbols/check-circle-rounded";
     import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
@@ -108,7 +108,7 @@
             <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <Button variant="primary" size="lg" href={data.inviteUrl}><SimpleIconsDiscord />Add to Discord</Button>
                 {#if data.user}
-                    <Button size="lg" href="/servers"><MaterialSymbolsDashboardRounded />Open dashboard</Button>
+                    <Button size="lg" href="/guild"><MaterialSymbolsDashboardRounded />Open dashboard</Button>
                 {:else}
                     <Button size="lg" href="/login" data-sveltekit-reload onclick={(event) => openLoginPopup() && event.preventDefault()}>
                         <MaterialSymbolsDashboardRounded />Open dashboard

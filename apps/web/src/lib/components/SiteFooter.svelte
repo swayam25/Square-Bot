@@ -25,7 +25,7 @@
     const REPO = "https://github.com/swayam25/Square-Bot";
     const links = $derived([
         { href: inviteUrl, label: "Add to Discord", icon: SimpleIconsDiscord },
-        { href: "/servers", label: "Dashboard", icon: MaterialSymbolsDashboardRounded },
+        { href: "/guild", label: "Dashboard", icon: MaterialSymbolsDashboardRounded },
         { href: REPO, label: "GitHub", icon: SimpleIconsGithub },
         { href: `${REPO}/issues/new`, label: "Report a bug", icon: MaterialSymbolsBugReportRounded },
     ]);

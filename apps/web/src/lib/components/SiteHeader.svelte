@@ -38,7 +38,7 @@
                 </div>
                 <nav class="flex flex-col gap-1">
                     <a
-                        href="/servers"
+                        href="/guild"
                         class="ripple flex h-10 items-center gap-4 rounded-xl px-4 text-sm font-medium hover:bg-white/10"
                         {@attach ripple}
                     >

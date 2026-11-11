@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ cookies, url }) => {
     const login = takeOAuthCookies(cookies);
     if (!login) error(400, "This login link expired. Try logging in again.");
 
-    const done = login.popup ? "/auth/done" : "/servers";
+    const done = login.popup ? "/auth/done" : "/guild";
     const redirectUri = new URL("/auth/callback", url).href;
     let tokens: oauth.TokenEndpointResponse;
     try {

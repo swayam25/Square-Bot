@@ -76,7 +76,7 @@ export async function fetchManageableGuilds(accessToken: string) {
         .map((guild) => ({
             id: guild.id,
             name: guild.name,
-            iconUrl: guild.icon ? RouteBases.cdn + CDNRoutes.guildIcon(guild.id, guild.icon, ImageFormat.WebP) : null,
+            iconUrl: guild.icon ? RouteBases.cdn + CDNRoutes.guildIcon(guild.id, guild.icon, ImageFormat.WebP) + "?size=128" : null,
         }));
 }
 

@@ -208,7 +208,7 @@ def guild_out(guild: discord.Guild, member: discord.Member) -> Guild:
     return Guild(
         id=str(guild.id),
         name=guild.name,
-        icon_url=guild.icon.url if guild.icon else None,
+        icon_url=guild.icon.replace(size=128, static_format="webp").url if guild.icon else None,
         member_count=guild.member_count or 0,
         can_manage=member.guild_permissions.manage_guild,
     )
