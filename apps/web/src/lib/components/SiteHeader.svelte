@@ -18,7 +18,7 @@
     >
         <a href="/" class="ripple flex h-12 items-center gap-2 rounded-full pr-4 pl-2 hover:bg-surface-2" aria-label="Square home" {@attach ripple}>
             <img src={square} alt="" class="size-8" />
-            <span class="font-display text-lg font-semibold">Square</span>
+            <span class="font-display text-xl font-semibold">Square</span>
         </a>
         <span class="flex-1"></span>
         {#if user}
