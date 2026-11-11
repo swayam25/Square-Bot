@@ -5,11 +5,12 @@
     import Button from "#lib/components/ui/Button.svelte";
     import Popup from "#lib/components/ui/Popup.svelte";
     import { ripple } from "#lib/motion.ts";
+    import { page } from "$app/state";
     import MaterialSymbolsLoginRounded from "~icons/material-symbols/login-rounded";
     import MaterialSymbolsLogoutRounded from "~icons/material-symbols/logout-rounded";
     import MaterialSymbolsPlayShapesRounded from "~icons/material-symbols/play-shapes-rounded";
 
-    let { user }: { user: { name: string; username: string; avatarUrl: string | null } | null | undefined } = $props();
+    const user = $derived(page.data.user);
 </script>
 
 <header class="pointer-events-none fixed inset-x-0 top-0 z-40 px-4 pt-4">

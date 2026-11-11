@@ -36,7 +36,7 @@
     <title>Your servers · Square</title>
 </svelte:head>
 
-<SiteHeader user={data.user} />
+<SiteHeader />
 
 <main class="mx-auto flex max-w-6xl flex-col gap-20 px-4 pt-32 pb-24 md:px-6 md:pt-40">
     <section aria-labelledby="servers" class="flex animate-rise flex-col gap-8">

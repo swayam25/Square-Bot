@@ -23,7 +23,7 @@
     <title>{title} · Square</title>
 </svelte:head>
 
-<SiteHeader user={page.data.user} />
+<SiteHeader />
 
 <main class="mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center gap-8 px-4 pt-28 pb-16 text-center">
     <span class="animate-rise font-mono text-5xl font-medium tracking-tight text-accent stagger" style="--i: 0">{status}</span>

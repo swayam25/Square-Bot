@@ -93,7 +93,7 @@
     />
 </svelte:head>
 
-<SiteHeader user={data.user} />
+<SiteHeader />
 
 <div class="isolate overflow-x-clip">
     <section class="mx-auto flex max-w-6xl flex-col items-center gap-20 px-4 pt-36 pb-24 md:px-6 md:pt-44 lg:flex-row lg:gap-12">
