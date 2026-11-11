@@ -85,9 +85,9 @@ def build(ui: Kit, data: NowPlaying) -> Node:
     if data.stream:
         state = ui.chip("Live", "danger", icon="live")
     elif data.paused:
-        state = ui.chip("Paused", "warning", icon="pause")
+        state = ui.chip("Paused", "warning", icon="play")
     else:
-        state = ui.chip("Playing", "accent", icon="play")
+        state = ui.chip("Playing", "accent", icon="pause")
     if data.source in _LOGOS:
         source = ui.chip(source_label(data.source), icon=data.source, tint=False)
     else:
