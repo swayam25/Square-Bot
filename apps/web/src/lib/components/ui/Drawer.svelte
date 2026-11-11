@@ -1,6 +1,6 @@
 <script lang="ts">
+    import Portal from "#lib/components/ui/Portal.svelte";
     import { Drawer } from "@ark-ui/svelte/drawer";
-    import { Portal } from "@ark-ui/svelte/portal";
     import type { Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
 

@@ -1,6 +1,5 @@
 <script lang="ts">
     import { openPopup } from "#lib/auth.ts";
-    import SiteHeader from "#lib/components/SiteHeader.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import GuildIcon from "#lib/components/ui/GuildIcon.svelte";
@@ -36,10 +35,8 @@
     <title>Your servers · Square</title>
 </svelte:head>
 
-<SiteHeader />
-
 <main class="mx-auto flex max-w-6xl flex-col gap-20 px-4 pt-32 pb-24 md:px-6 md:pt-40">
-    <section aria-labelledby="servers" class="flex animate-rise flex-col gap-8">
+    <section aria-labelledby="servers" class="flex flex-col gap-8">
         <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div class="flex flex-col gap-2">
                 <h1 id="servers" class="font-display text-3xl font-semibold tracking-tight md:text-4xl">Your servers</h1>
@@ -108,7 +105,7 @@
             <p class="text-mist-400">No servers match "{search.trim()}".</p>
         {:else}
             <div class="relative isolate flex flex-col items-center gap-6 py-16 text-center">
-                <Shape lobes={12} depth={0.05} class="absolute top-1/2 left-1/2 -z-10 size-72 -translate-1/2 animate-spin-in text-accent/10" />
+                <Shape lobes={12} depth={0.05} class="absolute top-1/2 left-1/2 -z-10 size-72 -translate-1/2 text-accent/10" />
                 <div class="flex flex-col gap-2">
                     <h2 class="font-display text-2xl font-semibold tracking-tight">Square isn't in any of your servers yet</h2>
                     <p class="max-w-md text-mist-400">Add it to a server you manage, or ask a server owner to add it.</p>
@@ -121,7 +118,7 @@
     </section>
 
     {#if invitable.length}
-        <section aria-labelledby="add" class="flex animate-rise flex-col gap-8">
+        <section aria-labelledby="add" class="flex flex-col gap-8">
             <div class="flex flex-col gap-2">
                 <h2 id="add" class="font-display text-2xl font-semibold tracking-tight">Add Square</h2>
                 <p class="text-mist-400">Servers you manage that don't have Square yet.</p>

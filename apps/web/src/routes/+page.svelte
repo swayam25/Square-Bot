@@ -9,7 +9,6 @@
     import NowPlayingCard from "#lib/components/discord/NowPlayingCard.svelte";
     import PlayerPreview from "#lib/components/PlayerPreview.svelte";
     import SiteFooter from "#lib/components/SiteFooter.svelte";
-    import SiteHeader from "#lib/components/SiteHeader.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Shape from "#lib/components/ui/Shape.svelte";
     import { demo, time, TRACKS } from "#lib/demo.svelte.ts";
@@ -31,7 +30,7 @@
     const discordContainer = "flex w-full max-w-[600px] flex-col gap-2 rounded-lg border border-[#323237] bg-[#242429] p-4";
     const discordEmoji = "mr-[0.05em] ml-[0.1em] inline size-[1.375em] align-bottom";
     const discordButton =
-        "inline-flex h-8 min-w-[60px] items-center justify-center gap-2 rounded-lg px-4 py-0.5 text-sm font-medium whitespace-nowrap text-white duration transition-all";
+        "inline-flex h-8 min-w-[60px] items-center justify-center gap-2 rounded-lg px-4 py-0.5 text-sm font-medium whitespace-nowrap text-white transition-colors";
 
     const features = [
         {
@@ -93,8 +92,6 @@
     />
 </svelte:head>
 
-<SiteHeader />
-
 <div class="isolate overflow-x-clip">
     <section class="mx-auto flex max-w-6xl flex-col items-center gap-20 px-4 pt-36 pb-24 md:px-6 md:pt-44 lg:flex-row lg:gap-12">
         <div class="flex flex-1 flex-col items-center gap-8 text-center lg:items-start lg:text-left">
@@ -131,10 +128,10 @@
         <div class="flex w-full flex-1 justify-center lg:justify-end">
             <div class="relative w-full max-w-md">
                 <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
-                    <Shape lobes={12} depth={0.05} class="absolute top-1/2 left-1/2 size-120 -translate-1/2 animate-spin-in text-accent/10" />
-                    <Shape lobes={4} depth={0.2} class="absolute -top-10 -left-8 size-24 rotate-12 animate-spin-in text-violet-500/40" />
-                    <Shape lobes={6} depth={0.14} class="absolute -right-6 -bottom-8 size-20 animate-spin-in text-amber-400/30" />
-                    <span class="absolute -bottom-4 -left-10 h-8 w-20 -rotate-24 animate-spin-in rounded-full bg-emerald-400/30"></span>
+                    <Shape lobes={12} depth={0.05} class="absolute top-1/2 left-1/2 size-120 -translate-1/2 text-accent/10" />
+                    <Shape lobes={4} depth={0.2} class="absolute -top-10 -left-8 size-24 rotate-12 text-violet-500/40" />
+                    <Shape lobes={6} depth={0.14} class="absolute -right-6 -bottom-8 size-20 text-amber-400/30" />
+                    <span class="absolute -bottom-4 -left-10 h-8 w-20 -rotate-24 rounded-full bg-emerald-400/30"></span>
                 </div>
                 <PlayerPreview />
             </div>

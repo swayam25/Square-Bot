@@ -1,5 +1,4 @@
 <script lang="ts">
-    import SiteHeader from "#lib/components/SiteHeader.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import { page } from "$app/state";
     import MaterialSymbolsHomeRounded from "~icons/material-symbols/home-rounded";
@@ -23,15 +22,13 @@
     <title>{title} · Square</title>
 </svelte:head>
 
-<SiteHeader />
-
 <main class="mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center gap-8 px-4 pt-28 pb-16 text-center">
-    <span class="animate-rise font-mono text-5xl font-medium tracking-tight text-accent stagger" style="--i: 0">{status}</span>
-    <div class="flex animate-rise flex-col gap-2 stagger" style="--i: 1">
+    <span class="font-mono text-5xl font-medium tracking-tight text-accent">{status}</span>
+    <div class="flex flex-col gap-2">
         <h1 class="font-display text-3xl font-semibold tracking-tight">{title}</h1>
         <p class="text-base text-mist-400">{detail}</p>
     </div>
-    <div class="flex w-full animate-rise flex-col gap-2 stagger sm:w-auto sm:flex-row" style="--i: 2">
+    <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
         {#if retryable}
             <Button variant="primary" onclick={() => location.reload()}><MaterialSymbolsRefreshRounded />Try again</Button>
             <Button href="/"><MaterialSymbolsHomeRounded />Go home</Button>

@@ -1,12 +1,12 @@
 <script lang="ts">
     import Drawer from "#lib/components/ui/Drawer.svelte";
+    import Portal from "#lib/components/ui/Portal.svelte";
     import { mobile } from "#lib/media.ts";
     import { Popover } from "@ark-ui/svelte/popover";
-    import { Portal } from "@ark-ui/svelte/portal";
     import type { Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
 
-    type Placement = "bottom-start" | "bottom-end" | "top-start" | "top-end" | "bottom" | "top" | "left" | "right";
+    type Placement = "bottom-start" | "bottom-end" | "top-start" | "top-end" | "bottom" | "top" | "left" | "right" | "right-start" | "right-end";
 
     let {
         open = $bindable(false),
@@ -14,6 +14,7 @@
         trigger,
         triggerClass,
         placement = "bottom-end",
+        contentClass = "w-72",
         children,
     }: {
         open?: boolean;
@@ -21,6 +22,7 @@
         trigger: Snippet;
         triggerClass?: ClassValue;
         placement?: Placement;
+        contentClass?: ClassValue;
         children: Snippet;
     } = $props();
 </script>
@@ -34,7 +36,10 @@
             <Popover.Positioner class="z-50">
                 <Popover.Content
                     aria-label={title}
-                    class="w-72 origin-(--transform-origin) rounded-2xl bg-surface-1 p-2 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
+                    class={[
+                        "origin-(--transform-origin) rounded-2xl bg-surface-2 p-2 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
+                        contentClass,
+                    ]}
                 >
                     {@render children()}
                 </Popover.Content>

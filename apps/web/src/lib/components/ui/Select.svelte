@@ -7,11 +7,11 @@
 <script lang="ts">
     import Drawer from "#lib/components/ui/Drawer.svelte";
     import Input, { field, fieldText } from "#lib/components/ui/Input.svelte";
+    import Portal from "#lib/components/ui/Portal.svelte";
     import { mobile } from "#lib/media.ts";
     import { ripple } from "#lib/motion.ts";
     import { createListCollection } from "@ark-ui/svelte/collection";
     import { Combobox } from "@ark-ui/svelte/combobox";
-    import { Portal } from "@ark-ui/svelte/portal";
     import type { ClassValue } from "svelte/elements";
     import MaterialSymbolsCheckRounded from "~icons/material-symbols/check-rounded";
     import MaterialSymbolsKeyboardArrowDownRounded from "~icons/material-symbols/keyboard-arrow-down-rounded";
@@ -119,7 +119,7 @@
         <Portal>
             <Combobox.Positioner class="z-50">
                 <Combobox.Content
-                    class="max-h-72 origin-(--transform-origin) overflow-y-auto overscroll-contain rounded-2xl bg-surface-1 p-2 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
+                    class="max-h-72 origin-(--transform-origin) overflow-y-auto overscroll-contain rounded-2xl bg-surface-2 p-2 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
                 >
                     {#each collection.items as option (option.value)}
                         <Combobox.Item

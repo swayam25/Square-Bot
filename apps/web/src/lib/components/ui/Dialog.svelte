@@ -1,8 +1,8 @@
 <script lang="ts">
     import Drawer from "#lib/components/ui/Drawer.svelte";
+    import Portal from "#lib/components/ui/Portal.svelte";
     import { mobile } from "#lib/media.ts";
     import { Dialog } from "@ark-ui/svelte/dialog";
-    import { Portal } from "@ark-ui/svelte/portal";
     import type { Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
 

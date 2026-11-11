@@ -1,4 +1,3 @@
-import type { OnNavigate } from "$app/navigation";
 import type { Attachment } from "svelte/attachments";
 
 // Needs the `ripple` utility from `layout.css`, which clips the wave to the element
@@ -52,19 +51,3 @@ export const ripple: Attachment<HTMLElement> = (node) => {
     node.addEventListener("pointerdown", press);
     return () => node.removeEventListener("pointerdown", press);
 };
-
-export function pageTransition(navigation: OnNavigate): Promise<void> | void {
-    const from = navigation.from?.url.pathname;
-    const to = navigation.to?.url.pathname;
-    if (!from || !to || from === to || !document.startViewTransition) return;
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    return new Promise((resolve) => {
-        const transition = document.startViewTransition(async () => {
-            resolve();
-            await navigation.complete;
-        });
-        // A failed navigation rejects these and reports its own error
-        transition.ready.catch(() => {});
-        transition.finished.catch(() => {});
-    });
-}

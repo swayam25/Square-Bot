@@ -15,7 +15,7 @@
 
 <header class="pointer-events-none fixed inset-x-0 top-0 z-40 px-4 pt-4">
     <nav
-        class="pointer-events-auto mx-auto flex h-16 max-w-6xl items-center gap-2 rounded-full bg-mist-950/70 p-2 shadow-lg shadow-black/20 backdrop-blur-xl [view-transition-name:site-header]"
+        class="pointer-events-auto mx-auto flex h-16 max-w-6xl items-center gap-2 rounded-full bg-mist-950/70 p-2 shadow-lg shadow-black/20 backdrop-blur-xl"
     >
         <a href="/" class="ripple flex h-12 items-center gap-2 rounded-full pr-4 pl-2 hover:bg-surface-2" aria-label="Square home" {@attach ripple}>
             <img src={square} alt="" class="size-8" />

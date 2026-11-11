@@ -3,8 +3,9 @@
     import { AUTH_CHANNEL } from "#lib/auth.ts";
     import Loader from "#lib/components/Loader.svelte";
     import PageScrollbar from "#lib/components/PageScrollbar.svelte";
-    import { pageTransition } from "#lib/motion.ts";
-    import { onNavigate, refreshAll } from "$app/navigation";
+    import SiteHeader from "#lib/components/SiteHeader.svelte";
+    import { refreshAll } from "$app/navigation";
+    import { page } from "$app/state";
     import sans from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
     import mono from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
     import display from "@fontsource-variable/saira/files/saira-latin-wght-normal.woff2?url";
@@ -14,7 +15,7 @@
 
     let { children }: LayoutProps = $props();
 
-    onNavigate(pageTransition);
+    const dashboard = $derived(!page.error && !!page.route.id?.startsWith("/guild/[guildId]"));
 
     onMount(() => {
         const channel = new BroadcastChannel(AUTH_CHANNEL);
@@ -30,7 +31,12 @@
     {/each}
 </svelte:head>
 
-{@render children()}
+{#if !dashboard}<SiteHeader />{/if}
+
+<!-- Dashboard pages fade only their content, in the `{#key page.url.pathname}` block inside `<main>` of `guild/[guildId]/+layout.svelte`, so the sidebar never re-renders. Fading here too doubles it -->
+{#key dashboard ? "dashboard" : page.url.pathname}
+    <div class={[!dashboard && "animate-page-in"]}>{@render children()}</div>
+{/key}
 
 <PageScrollbar />
 <Loader />
