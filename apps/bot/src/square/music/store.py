@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import time
 from dataclasses import dataclass
 from square.core.view import DesignerView
 from typing import Any, Literal
@@ -17,6 +18,25 @@ store: dict[
     int,
     dict[str, Any],
 ] = {}
+
+
+@dataclass(frozen=True, slots=True)
+class Failure:
+    title: str
+    reason: str | None
+    at: int  # Unix ms
+
+
+# Kept out of `store`, since a failing track often ends the session and the teardown clears everything in there
+_failures: dict[int, Failure] = {}
+
+
+def failure(guild_id: int) -> Failure | None:
+    return _failures.get(guild_id)
+
+
+def record_failure(guild_id: int, title: str, reason: str | None) -> None:
+    _failures[guild_id] = Failure(title=title, reason=reason or None, at=round(time.time() * 1000))
 
 
 # Play channel

@@ -1,7 +1,9 @@
 import asyncio
 import discord
 import logging
+import re
 import sonolink
+import time
 from discord.ext import commands, tasks
 from square.core import Client
 from square.music import request, stay, store
@@ -41,6 +43,17 @@ log = logging.getLogger(__name__)
 # Seconds after the bot leaves voice before a player nothing tore down is treated as kicked.
 KICK_GRACE = 2.0
 FAILOVER_INTERVAL = 5.0
+
+
+_NO_CAUSE = "All clients failed to load the item."
+
+
+def _cause(message: str | None) -> str | None:
+    """Strips the YouTube source's version prefix and per-client stack traces, leaving one readable line."""
+    if not message:
+        return None
+    line = re.sub(r"^\([^)]*\)\s*", "", message.strip()).split("\n", 1)[0].strip()
+    return None if line == _NO_CAUSE else line[:200] or None
 
 
 class Listeners:
@@ -167,8 +180,7 @@ class Listeners:
         With an untouched channel the card is edited in place as usual.
         """
         guild_id = player.guild.id
-        track = player.current
-        if track is None:
+        if not await player.settle(event.track, time.monotonic()):
             return
         relocate = store.chat_weight(guild_id) > 0
         if relocate:
@@ -191,13 +203,18 @@ class Listeners:
             if guild:
                 await stop_player(player, guild)
 
+    def _report_failure(self, guild_id: int, track: sonolink.models.Playable, reason: str | None) -> None:
+        store.record_failure(guild_id, track.title, reason)
+        self.client.dispatch("music_update", guild_id)
+
     @commands.Cog.listener()
     async def on_sonolink_track_exception(self, player: SquarePlayer, event: sonolink.gateway.TrackExceptionEvent):
         track = event.track
-        reason = event.exception.message
+        reason = _cause(event.exception.message)
+        self._report_failure(player.guild.id, track, reason)
         await music_log(
             player.guild.id,
-            f"{emoji.error} Couldn't play [**{track.title}**]({track.uri}).{f'\n-# {reason[:200]}' if reason else ''}",
+            f"{emoji.error} Couldn't play [**{track.title}**]({track.uri}).{f'\n-# {reason}' if reason else ''}",
             color=config.color.red,
         )
 
@@ -208,6 +225,7 @@ class Listeners:
         # A track that already moved on was handled by Lavalink, and skipping now would cost the next one.
         if player.current != track:
             return
+        self._report_failure(player.guild.id, track, "It stopped sending audio, so it was skipped.")
         await music_log(
             player.guild.id,
             f"{emoji.error} [**{track.title}**]({track.uri}) got stuck, skipping it.",

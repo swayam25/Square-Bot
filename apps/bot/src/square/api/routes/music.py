@@ -73,6 +73,8 @@ class Done(Schema):
 class EqPreset(Schema):
     name: str
     label: str
+    description: str
+    slot: str  # Presets sharing a slot replace each other when turned on
 
 
 class Paused(Schema):
@@ -180,7 +182,10 @@ async def replay_track(guild: discord.Guild, member: discord.Member, data: Queue
 
 @get("/eq-presets", summary="The equalizer presets, in the order the dashboard should list them")
 async def eq_presets(guild: discord.Guild) -> list[EqPreset]:  # Asked for so membership is checked
-    return [EqPreset(name=name, label=preset.label) for name, preset in EQ_PRESETS.items()]
+    return [
+        EqPreset(name=name, label=preset.label, description=preset.description, slot=preset.slot)
+        for name, preset in EQ_PRESETS.items()
+    ]
 
 
 @post("/pause", summary="Pause or resume", status_code=200, responses=REFUSED)

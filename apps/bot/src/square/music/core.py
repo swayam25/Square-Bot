@@ -2,6 +2,7 @@ import asyncio
 import discord
 import sonolink
 import time
+from sonolink.gateway.player.handlers._autoplay import AutoPlayHandler
 from sonolink.models import Filters, HistorySettings, InactivitySettings, Playable
 from square.core import Client
 from square.utils import config
@@ -12,12 +13,48 @@ INACTIVITY_TIMEOUT = 60
 _MOVE_CLOSE_CODES = (4014, 4022)
 
 
+class SquareAutoPlay(AutoPlayHandler):
+    """Seeds autoplay from the track's own service. Sonolink builds a YouTube radio from any ID, Spotify ones included."""
+
+    _twin: str | None = None
+
+    async def _fill_auto_queue(self) -> Playable | None:
+        history = self._player.queue.history
+        seed = self._player.current or (history[-1] if history else None)
+        source = getattr(seed, "source_name", None)
+        self._twin = await self._youtube_twin(seed) if source == "applemusic" else None
+        if source == "spotify":
+            self._settings.provider = sonolink.SearchProvider.SPOTIFY
+        elif self._twin:
+            # Pre-filled, since sonolink formats this with the Apple Music ID
+            self._settings.provider = sonolink.SearchProvider.YOUTUBE.format(identifier=self._twin)
+        else:
+            self._settings.provider = sonolink.SearchProvider.YOUTUBE
+        return await super()._fill_auto_queue()
+
+    async def _apply_discovery(self, tracks: list[Playable]) -> Playable | None:
+        # A radio starts with its seed video, which is the song that just played
+        return await super()._apply_discovery([track for track in tracks if track.identifier != self._twin])
+
+    async def _youtube_twin(self, track: Playable) -> str | None:
+        try:
+            search = await self._player.node.search_track(
+                f"{track.author} - {track.title}", source=sonolink.TrackSourceType.YOUTUBE_MUSIC
+            )
+        except Exception:
+            return None
+        if search.is_error() or search.is_empty() or not isinstance(search.result, list):
+            return None
+        return search.result[0].identifier
+
+
 class SquarePlayer(sonolink.Player):
     """Custom Sonolink player with additional features for the bot."""
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("history_settings", HistorySettings(enabled=True, max_items=50))
         super().__init__(*args, **kwargs)
+        self._autoplay_handler = SquareAutoPlay(self, settings=self._autoplay_handler._settings)
         self.presets: dict[str, Filters] = {}
         self._empty_task: asyncio.Task | None = None
 
@@ -51,6 +88,27 @@ class SquarePlayer(sonolink.Player):
         """Flips autoplay and returns whether it is now on."""
         self.autoplay = sonolink.AutoPlayMode.DISABLED if self.autoplay_on else sonolink.AutoPlayMode.ENABLED
         return self.autoplay_on
+
+    async def settle(self, started: Playable, began: float) -> bool:
+        """
+        Waits for sonolink to catch up with a track Lavalink just started, and returns whether it is playing.
+
+        Lavalink can announce a track before the play request returns, so `current` may still be the previous one and
+        its last position update can land after the new track began.
+
+        Args:
+            started (:class:`Playable`): The track from the start event.
+            began (float): `time.monotonic()` when the event arrived.
+        """
+        for _ in range(20):
+            if self.current is None or self.current.identifier == started.identifier:
+                break
+            await asyncio.sleep(0.1)
+        if self.current is None:
+            return False
+        self._last_position = started.position
+        self._last_update = began
+        return True
 
     async def apply_presets(self) -> None:
         """Applies the combination of all active equalizer presets, or clean audio when none remain."""

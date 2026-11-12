@@ -8,6 +8,7 @@ for whoever asked. Refusals raise `MusicError` with a message for them.
 
 import asyncio
 import discord
+import logging
 import sonolink
 from sonolink.models import Playable
 from square.core import Client
@@ -27,6 +28,10 @@ if TYPE_CHECKING:
     from square.music.play import Enqueued
 
 VOLUME_RANGE = (0, 100)  # 0 is the dashboard's mute; /volume still asks for 1 - 100
+CARD_GRACE = 2.0  # Seconds a control waits on the card repaint before answering anyway
+
+log = logging.getLogger(__name__)
+_painting: set[asyncio.Future] = set()  # Strong refs, or a repaint that outlives its control gets garbage collected
 
 
 def require_player(
@@ -73,10 +78,26 @@ async def _done(
     color: int | None = None,
     render: bool = True,
 ) -> str:
-    """Posts the public log line, repaints the card and returns the member's confirmation."""
-    log = music_log(player.guild.id, f"{icon} {member.mention} {action}.", color=color)
-    await asyncio.gather(log, *([playback.render_player(player.client, player.guild.id)] if render else []))
+    """
+    Posts the public log line, repaints the card and returns the member's confirmation.
+
+    Waits at most `CARD_GRACE` for Discord, since a few quick presses get card edits rate limited for seconds.
+    """
+    line = music_log(player.guild.id, f"{icon} {member.mention} {action}.", color=color)
+    painting = asyncio.gather(line, *([playback.render_player(player.client, player.guild.id)] if render else []))
+    finished, _ = await asyncio.wait({painting}, timeout=CARD_GRACE)
+    if finished:
+        painting.result()
+    else:
+        _painting.add(painting)
+        painting.add_done_callback(_painted)
     return f"{icon} {action[0].upper()}{action[1:]}."
+
+
+def _painted(painting: asyncio.Future) -> None:
+    _painting.discard(painting)
+    if not painting.cancelled() and (error := painting.exception()):
+        log.error("Card repaint failed after its control had answered", exc_info=error)
 
 
 async def set_paused(guild: discord.Guild, member: discord.Member, paused: bool | None = None) -> str:

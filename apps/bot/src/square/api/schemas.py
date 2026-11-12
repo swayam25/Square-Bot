@@ -6,6 +6,7 @@ from sonolink import QueueMode
 from sonolink.models import Playable, Playlist
 from square.core import Client
 from square.modules import Module
+from square.music import store
 from square.music.core import SquarePlayer, get_player, requester_id
 from square.music.dj import MAX_ROLES
 from square.music.history import history_tracks
@@ -93,6 +94,12 @@ class Track(Schema):
     requester: Person | None
 
 
+class TrackFailure(Schema):
+    title: str
+    reason: str | None
+    at: int  # Unix ms. Also what tells two failures apart
+
+
 class PlayerState(Schema):
     voice_channel_id: Snowflake | None
     track: Track | None
@@ -105,6 +112,7 @@ class PlayerState(Schema):
     autoplay: bool
     eq: list[str]  # Active presets, by the names `GET /music/eq-presets` lists
     listeners: list[Person]  # Everyone but bots in the bot's voice channel
+    failure: TrackFailure | None  # Outlives the player, since a failure often ends it
 
 
 class QueueState(Schema):
@@ -317,6 +325,11 @@ def _track(player: SquarePlayer | None, track: Playable) -> Track:
     )
 
 
+def _failure(guild_id: int) -> TrackFailure | None:
+    failed = store.failure(guild_id)
+    return TrackFailure(title=failed.title, reason=failed.reason, at=failed.at) if failed else None
+
+
 def live_player(client: Client, guild_id: int) -> SquarePlayer | None:
     player = get_player(client, guild_id)
     return player if player and player.connected else None
@@ -336,6 +349,7 @@ def player_out(client: Client, guild: discord.Guild) -> PlayerState:
             autoplay=False,
             eq=[],
             listeners=[],
+            failure=_failure(guild.id),
         )
     return PlayerState(
         voice_channel_id=id_of(player.channel),
@@ -349,6 +363,7 @@ def player_out(client: Client, guild: discord.Guild) -> PlayerState:
         autoplay=player.autoplay_on,
         eq=list(player.presets),
         listeners=_listeners(player),
+        failure=_failure(guild.id),
     )
 
 
