@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from square.music.play import Enqueued
 
-VOLUME_RANGE = (1, 100)
+VOLUME_RANGE = (0, 100)  # 0 is the dashboard's mute; /volume still asks for 1 - 100
 
 
 def require_player(

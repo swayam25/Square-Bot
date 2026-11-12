@@ -5,6 +5,7 @@ from msgspec import UNSET, UnsetType
 from sonolink import QueueMode
 from sonolink.models import Playable, Playlist
 from square.core import Client
+from square.modules import Module
 from square.music.core import SquarePlayer, get_player, requester_id
 from square.music.dj import MAX_ROLES
 from square.music.history import history_tracks
@@ -17,9 +18,12 @@ Snowflake = Annotated[str, msgspec.Meta(pattern=r"^\d{17,20}$", description="A D
 ChannelKind = Literal["text", "news", "voice", "stage_voice", "category", "forum", "media"]
 _CHANNEL_KINDS: frozenset[str] = frozenset(get_args(ChannelKind))
 Loop = Literal["off", "track", "queue"]
+# Search sources the Lavalink node answers for. SoundCloud and Deezer are left out: the node errors or finds nothing
+SearchSource = Literal["youtube_music", "youtube", "spotify", "apple_music"]
 _LOOP: dict[QueueMode, Loop] = {QueueMode.NORMAL: "off", QueueMode.LOOP: "track", QueueMode.LOOP_ALL: "queue"}
 
 QUEUE_LIMIT = 100
+PLAYLIST_LIMIT = 500
 MAX_FAKE_DAYS = 365
 MAX_SUPPORT_ROLES = 10
 MaxOpen = Literal[1, 2, 3, 5]
@@ -70,6 +74,12 @@ class MemberJoins(Schema):
     members: int
 
 
+class Person(Schema):
+    id: Snowflake
+    name: str  # Server nickname when they still have one, else their display name
+    avatar_url: str
+
+
 class Track(Schema):
     identifier: str
     title: str
@@ -79,7 +89,8 @@ class Track(Schema):
     length_ms: int
     is_stream: bool
     source: str
-    requester_id: Snowflake | None
+    isrc: str | None  # Set for Spotify and Apple Music tracks, which makes lyrics lookups exact
+    requester: Person | None
 
 
 class PlayerState(Schema):
@@ -93,11 +104,13 @@ class PlayerState(Schema):
     shuffle: bool
     autoplay: bool
     eq: list[str]  # Active presets, by the names `GET /music/eq-presets` lists
+    listeners: list[Person]  # Everyone but bots in the bot's voice channel
 
 
 class QueueState(Schema):
     tracks: list[Track]  # Only the first `QUEUE_LIMIT`, so a huge queue doesn't flood every update
     total: int
+    autoplay: list[Track]  # Autoplay's picks, played once the queue runs out. Empty while autoplay is off
 
 
 class PlaylistInfo(Schema):
@@ -173,12 +186,10 @@ class LogPatch(Schema):
 
 
 class InviteSettings(Schema):
-    tracker: bool
     fake_days: int
 
 
 class InvitePatch(Schema):
-    tracker: bool | UnsetType = UNSET
     fake_days: Annotated[int, msgspec.Meta(ge=0, le=MAX_FAKE_DAYS)] | UnsetType = UNSET
 
 
@@ -196,7 +207,6 @@ class MusicPatch(Schema):
 
 
 class TicketSettings(Schema):
-    enabled: bool
     category_id: Snowflake | None
     support_role_ids: list[Snowflake]
     max_open: MaxOpen
@@ -205,11 +215,28 @@ class TicketSettings(Schema):
 
 
 class TicketPatch(Schema):
-    enabled: bool | UnsetType = UNSET
     category_id: Snowflake | None | UnsetType = UNSET
     support_role_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_SUPPORT_ROLES)] | UnsetType = UNSET
     max_open: MaxOpen | UnsetType = UNSET
     confirm_close: bool | UnsetType = UNSET
+
+
+class ModuleSettings(Schema):
+    logs: bool
+    tickets: bool
+    invites: bool
+
+
+class ModulePatch(Schema):
+    logs: bool | UnsetType = UNSET
+    tickets: bool | UnsetType = UNSET
+    invites: bool | UnsetType = UNSET
+
+
+# A new `Module` needs a field in both structs above, so the bot refuses to start until it has one
+for _struct in (ModuleSettings, ModulePatch):
+    if set(_struct.__struct_fields__) != {module.value for module in Module}:
+        raise RuntimeError(f"{_struct.__name__} must have exactly one field per Module")
 
 
 def id_of(item: discord.abc.Snowflake | None) -> str | None:
@@ -256,6 +283,24 @@ def roles_out(guild: discord.Guild) -> list[Role]:
     ]
 
 
+def _person_out(user: discord.User | discord.Member) -> Person:
+    return Person(
+        id=str(user.id),
+        name=user.display_name,
+        avatar_url=user.display_avatar.replace(size=64, static_format="webp").url,
+    )
+
+
+def _person(player: SquarePlayer, user_id: int) -> Person | None:
+    user = player.guild.get_member(user_id) or player.client.get_user(user_id)
+    return None if user is None else _person_out(user)
+
+
+def _listeners(player: SquarePlayer) -> list[Person]:
+    members = getattr(player.channel, "members", [])
+    return [_person_out(m) for m in sorted(members, key=lambda m: m.display_name.casefold()) if not m.bot]
+
+
 def _track(player: SquarePlayer | None, track: Playable) -> Track:
     rid = requester_id(player, track) if player else None
     return Track(
@@ -267,7 +312,8 @@ def _track(player: SquarePlayer | None, track: Playable) -> Track:
         length_ms=track.length,
         is_stream=track.is_stream,
         source=track.source_name,
-        requester_id=None if rid is None else str(rid),
+        isrc=track.isrc,
+        requester=None if player is None or rid is None else _person(player, rid),
     )
 
 
@@ -289,6 +335,7 @@ def player_out(client: Client, guild: discord.Guild) -> PlayerState:
             shuffle=False,
             autoplay=False,
             eq=[],
+            listeners=[],
         )
     return PlayerState(
         voice_channel_id=id_of(player.channel),
@@ -301,15 +348,21 @@ def player_out(client: Client, guild: discord.Guild) -> PlayerState:
         shuffle=player.shuffled,
         autoplay=player.autoplay_on,
         eq=list(player.presets),
+        listeners=_listeners(player),
     )
 
 
 def queue_out(client: Client, guild: discord.Guild) -> QueueState:
     if (player := live_player(client, guild.id)) is None:
-        return QueueState(tracks=[], total=0)
+        return QueueState(tracks=[], total=0, autoplay=[])
     queue = player.queue
+    picks = list(queue.autoplay_tracks)[:QUEUE_LIMIT] if player.autoplay_on else []
     # Indexed rather than `queue.tracks`, which copies the whole queue
-    return QueueState(tracks=[_track(player, queue[i]) for i in range(min(len(queue), QUEUE_LIMIT))], total=len(queue))
+    return QueueState(
+        tracks=[_track(player, queue[i]) for i in range(min(len(queue), QUEUE_LIMIT))],
+        total=len(queue),
+        autoplay=[_track(player, track) for track in picks],
+    )
 
 
 def history_out(player: SquarePlayer | None) -> list[Track]:
@@ -317,11 +370,15 @@ def history_out(player: SquarePlayer | None) -> list[Track]:
 
 
 def search_out(data: object, limit: int) -> SearchResults:
-    """A search result as the dashboard shows it. Requesters are left out, since nobody has queued these yet."""
+    """
+    A search result as the dashboard shows it. Requesters are left out, since nobody has queued these yet.
+
+    `limit` caps plain matches; a playlist lists its tracks so they can be picked one by one.
+    """
     if isinstance(data, Playlist):
         return SearchResults(
             playlist=PlaylistInfo(name=data.name, track_count=len(data)),
-            tracks=[_track(None, track) for track in data.tracks[:limit]],
+            tracks=[_track(None, track) for track in data.tracks[:PLAYLIST_LIMIT]],
         )
     found = data if isinstance(data, list) else [data] if data else []
     return SearchResults(playlist=None, tracks=[_track(None, track) for track in found[:limit]])

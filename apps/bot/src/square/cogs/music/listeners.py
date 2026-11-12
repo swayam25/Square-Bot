@@ -239,7 +239,8 @@ class Listeners:
         """
         Keeps an open skip vote honest as listeners come, go, and deafen, since the threshold moves with them.
 
-        Also follows the bot when it is moved or kicked, and tells the player when its channel empties or fills.
+        Also follows the bot when it is moved or kicked, tells the player when its channel empties or fills, and
+        tells live dashboards who is listening.
         """
         if member.id == self.client.user.id:
             await self._on_bot_voice_update(member.guild, after)
@@ -255,6 +256,7 @@ class Listeners:
         if before.channel != after.channel:
             # Sonolink only re-checks on track ends and the bot's own voice changes.
             player._check_inactivity()
+            self.client.dispatch("music_update", member.guild.id)
         vote = store.skip_vote(member.guild.id)
         if vote:
             await vote.refresh()
@@ -276,6 +278,7 @@ class Listeners:
                 return
         if player and player.channel != after.channel:
             player.channel = after.channel
+            self.client.dispatch("music_update", guild.id)
             await set_track_status(player)
             vote = store.skip_vote(guild.id)
             if vote:

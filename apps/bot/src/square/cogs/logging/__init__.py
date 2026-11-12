@@ -239,7 +239,7 @@ class Logging(Cog):
         guild = self.client.get_guild(payload.guild_id)
         if guild is None:
             return
-        if server_log.LogType.MESSAGES.key not in cache.get(guild.id).log_channels:
+        if cache.log_channel(guild.id, server_log.LogType.MESSAGES.key) is None:
             return  # Nothing to log to, so skip rendering the transcript
         # Only cached messages still carry their content, the rest are listed by ID
         msgs = list(payload.cached_messages)

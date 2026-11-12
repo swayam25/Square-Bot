@@ -1,5 +1,6 @@
 from square.db import cache
 from square.db.schema import GuildTable
+from square.modules import Module
 
 
 async def fetch_guild_ids() -> list[int]:
@@ -44,18 +45,20 @@ async def fetch_guild_settings(guild_id: int) -> GuildTable:
     return guild
 
 
-async def set_ticket_cmds(guild_id: int, enabled: bool) -> None:
+async def set_module(guild_id: int, module: Module, on: bool) -> None:
     """
-    Enables or disables ticket commands for a guild.
+    Turns a module on or off for a guild.
 
     Args:
         guild_id (int): The guild ID to perform action on.
-        enabled (bool): Whether to enable or disable ticket commands.
+        module (:class:`Module`): The module to switch.
+        on (bool): Whether to turn it on.
     """
     guild = await fetch_guild_settings(guild_id)
-    guild.ticket_cmds = enabled
+    modules = [value for value in guild.modules if value != module]
+    guild.modules = [*modules, module.value] if on else modules
     await guild.save()
-    cache.entry(guild_id).ticket_cmds = enabled
+    cache.entry(guild_id).modules = list(guild.modules)
 
 
 async def set_media_only(guild_id: int, channel_id: int | None) -> None:

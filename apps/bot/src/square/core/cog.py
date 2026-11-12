@@ -1,4 +1,7 @@
+import discord
 from discord.ext import commands
+from square.db import cache
+from square.modules import Module, ModuleOff
 from square.utils.emoji import Icon
 
 
@@ -7,7 +10,8 @@ class Cog(commands.Cog):
     Base cog for Square.
 
     py-cord's own class keywords set the name & description (`name=`, `description=` or the docstring). This adds
-    the help menu details: a cog with an `emoji` is a help category, the rest stay out of the menu.
+    the help menu details: a cog with an `emoji` is a help category, the rest stay out of the menu. A cog with a
+    `module` refuses its commands in servers that turned that module off.
 
     Example:
         ```py
@@ -19,10 +23,26 @@ class Cog(commands.Cog):
     __cog_emoji__: Icon | None = None
     __cog_order__: int = 0
     __cog_dev_only__: bool = False
+    __cog_module__: Module | None = None
 
-    def __init_subclass__(cls, *, emoji: Icon | None = None, order: int = 0, dev_only: bool = False, **kwargs):
+    def __init_subclass__(
+        cls,
+        *,
+        emoji: Icon | None = None,
+        order: int = 0,
+        dev_only: bool = False,
+        module: Module | None = None,
+        **kwargs,
+    ):
         super().__init_subclass__(**kwargs)
         cls.__cog_emoji__, cls.__cog_order__, cls.__cog_dev_only__ = emoji, order, dev_only
+        cls.__cog_module__ = module
+
+    def cog_check(self, ctx: discord.ApplicationContext) -> bool:
+        module = self.__cog_module__
+        if module and ctx.guild and not cache.enabled(ctx.guild.id, module):
+            raise ModuleOff(module)
+        return True
 
     @property
     def help_emoji(self) -> Icon | None:

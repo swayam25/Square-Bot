@@ -12,6 +12,7 @@ from square.core.view import DesignerView, error_view, modal, show_loading, succ
 from square.db import cache
 from square.db.funcs.tickets import fetch_ticket
 from square.db.schema import TicketTable
+from square.modules import Module, ModuleOff
 from square.music.utils import delete_quietly
 from square.utils.emoji import emoji
 
@@ -19,7 +20,14 @@ from square.utils.emoji import emoji
 LEGACY_IDS = {"ticket_close", "ticket_transcript"}
 
 
-class Tickets(Cog, name="Tickets", description="Need help? Open a ticket and ask.", emoji=emoji.ticket, order=7):
+class Tickets(
+    Cog,
+    name="Tickets",
+    description="Need help? Open a ticket and ask.",
+    emoji=emoji.ticket,
+    order=7,
+    module=Module.TICKETS,
+):
     def __init__(self, client: Client):
         self.client = client
         self._adopting: asyncio.Task | None = None
@@ -125,7 +133,11 @@ class Tickets(Cog, name="Tickets", description="Need help? Open a ticket and ask
         if interaction.type is not discord.InteractionType.component:
             return
         custom_id = str((interaction.data or {}).get("custom_id", ""))
-        if custom_id in LEGACY_IDS:
+        if not (custom_id in LEGACY_IDS or custom_id.startswith("ticket:")):
+            return
+        if interaction.guild_id and not cache.enabled(interaction.guild_id, Module.TICKETS):
+            await self._reply(interaction, error_view(str(ModuleOff(Module.TICKETS))))
+        elif custom_id in LEGACY_IDS:
             await self._legacy(interaction, custom_id)
         elif custom_id == "ticket:open":
             await self._open_from_panel(interaction)
@@ -285,11 +297,6 @@ class Tickets(Cog, name="Tickets", description="Need help? Open a ticket and ask
     async def create_ticket(self, ctx: discord.ApplicationContext, reason: str = "No reason provided"):
         """Opens a ticket."""
         if not ctx.guild or not isinstance(ctx.author, discord.Member):
-            return
-        if not cache.get(ctx.guild.id).ticket_cmds:
-            await ctx.respond(
-                view=error_view("Ticket commands are turned off. Use the ticket panel instead."), ephemeral=True
-            )
             return
         await ctx.defer(ephemeral=True)
         result = await actions.open_ticket(self.client, ctx.guild, ctx.author, reason)

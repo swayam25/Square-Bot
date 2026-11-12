@@ -23,20 +23,6 @@ class InviteCounts:
 _REGULAR = Q(left_at__isnull=True, fake=False)
 
 
-async def set_tracker(guild_id: int, enabled: bool) -> None:
-    """
-    Turns the invite tracker on or off.
-
-    Args:
-        guild_id (int): The guild ID to perform action on.
-        enabled (bool): Whether to track who invited whom.
-    """
-    guild = await fetch_guild_settings(guild_id)
-    guild.invite_tracker = enabled
-    await guild.save()
-    cache.entry(guild_id).invite_tracker = enabled
-
-
 async def set_fake_days(guild_id: int, days: int) -> None:
     """
     Sets how young an account can be when it joins before it counts as fake.

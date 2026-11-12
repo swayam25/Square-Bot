@@ -100,8 +100,8 @@ async def log(
 
 
 async def _channel(client: Client, guild: discord.Guild, log_type: LogType) -> discord.abc.Messageable | None:
-    """The guild's channel for the log type, from the settings cache. Drops the setting if the channel is gone."""
-    channel_id = cache.get(guild.id).log_channels.get(log_type.key)
+    """The log type's channel, or None when logs are off. Drops the setting if the channel is gone."""
+    channel_id = cache.log_channel(guild.id, log_type.key)
     if channel_id is None:
         return None
     channel = guild.get_channel_or_thread(channel_id)

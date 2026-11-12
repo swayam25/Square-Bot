@@ -1,17 +1,17 @@
 from dataclasses import dataclass, field, fields
 from square.db.schema import DJRoleTable, GuildTable, LogChannelTable
+from square.modules import DEFAULT_MODULES, Module
 
 
 @dataclass
 class GuildSettings:
-    ticket_cmds: bool = False
+    modules: list[str] = field(default_factory=lambda: list(DEFAULT_MODULES))
     media_only_channel_id: int | None = None
     autorole: int | None = None
     dj_mode: bool = False
     music_channel_id: int | None = None
     music_message_id: int | None = None
     music_stay_channel_id: int | None = None
-    invite_tracker: bool = False
     invite_fake_days: int = 7
     ticket_category_id: int | None = None
     ticket_support_role_ids: list[int] = field(default_factory=list)
@@ -66,9 +66,19 @@ def drop(guild_id: int) -> None:
     _settings.pop(guild_id, None)
 
 
-def guild_ids_with_invite_tracker() -> set[int]:
-    """IDs of every guild with the invite tracker on."""
-    return {guild_id for guild_id, settings in _settings.items() if settings.invite_tracker}
+def enabled(guild_id: int, module: Module) -> bool:
+    """Whether a guild has the module turned on."""
+    return module in get(guild_id).modules
+
+
+def guild_ids_with_module(module: Module) -> set[int]:
+    """IDs of every guild with the module turned on. Guilds without a row are left out, even for default modules."""
+    return {guild_id for guild_id, settings in _settings.items() if module in settings.modules}
+
+
+def log_channel(guild_id: int, log_type: str) -> int | None:
+    """The channel a log type posts to, or None when it has none or logs are turned off."""
+    return get(guild_id).log_channels.get(log_type) if enabled(guild_id, Module.LOGS) else None
 
 
 def guild_ids_with_ticket_panel() -> set[int]:
@@ -77,5 +87,9 @@ def guild_ids_with_ticket_panel() -> set[int]:
 
 
 def guild_ids_with_log(log_type: str) -> set[int]:
-    """IDs of every guild with a log channel set for the log type."""
-    return {guild_id for guild_id, settings in _settings.items() if log_type in settings.log_channels}
+    """IDs of every guild with logs on and a channel set for the log type."""
+    return {
+        guild_id
+        for guild_id, settings in _settings.items()
+        if log_type in settings.log_channels and Module.LOGS in settings.modules
+    }

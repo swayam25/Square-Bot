@@ -23,6 +23,7 @@ from square.api.schemas import (
     QueueState,
     Schema,
     SearchResults,
+    SearchSource,
     Snowflake,
     Track,
     history_out,
@@ -38,7 +39,7 @@ from square.music.errors import MusicError, QueueChanged
 from square.music.filters import EQ_PRESETS
 from square.music.play import clean_query, is_link, search_tracks
 from square.music.utils import music_log, split_log_text
-from typing import Annotated
+from typing import Annotated, get_args
 
 REFUSED = {
     409: ResponseSpec(
@@ -54,10 +55,19 @@ _LOOP: dict[Loop, sonolink.QueueMode] = {
 
 Index = Annotated[int, msgspec.Meta(ge=0)]
 SEARCH_LIMIT = 10
+SEARCH_SOURCES: dict[str, sonolink.TrackSourceType | str] = {
+    "youtube_music": sonolink.TrackSourceType.YOUTUBE_MUSIC,
+    "youtube": sonolink.TrackSourceType.YOUTUBE,
+    "spotify": sonolink.TrackSourceType.SPOTIFY,
+    "apple_music": "amsearch",  # Served by the node's LavaSrc plugin, which sonolink has no enum member for
+}
+if set(SEARCH_SOURCES) != set(get_args(SearchSource)):
+    raise RuntimeError("SEARCH_SOURCES must map exactly the SearchSource values")
 
 
 class Done(Schema):
-    message: str  # The same confirmation a slash command shows, readable outside Discord
+    message: str  # The same confirmation a slash command shows, as plain text
+    note: str | None = None  # Its small print, like where a queued track landed
 
 
 class EqPreset(Schema):
@@ -109,8 +119,13 @@ class Requester(Schema):
     user_id: Snowflake
 
 
+def _reply(guild: discord.Guild, content: str) -> Done:
+    message, note = resolve.split(guild, content)
+    return Done(message=message, note=note)
+
+
 async def _done(guild: discord.Guild, action: Awaitable[str]) -> Done:
-    return Done(message=resolve.plain(guild, await action))
+    return _reply(guild, await action)
 
 
 @get("/player", summary="What's playing right now. `/live` pushes the same shape as it changes")
@@ -133,10 +148,11 @@ async def search_music(
     client: Client,
     guild: discord.Guild,  # Asked for so membership is checked
     q: Annotated[str, Parameter(min_length=1, max_length=500, description="A track name, or a track or playlist link")],
+    source: Annotated[SearchSource, Parameter(description="Where to search. Links ignore it")] = "youtube_music",
 ) -> SearchResults:
     link = is_link(q)
     # No retries across nodes: this runs as the member types, so a slow node should cost one attempt, not all of them
-    result = await search_tracks(client, clean_query(q) if link else q, retry=False)
+    result = await search_tracks(client, clean_query(q) if link else q, source=SEARCH_SOURCES[source], retry=False)
     if result is None or result.is_error():
         raise ServiceUnavailableException("Search isn't available right now")
     if result.is_empty() or result.result is None:
@@ -154,7 +170,7 @@ async def play_query(client: Client, guild: discord.Guild, member: discord.Membe
     result = await controls.play(client, guild, member, data.query, channel=None)
     icon, text = split_log_text(result.content)
     await music_log(guild.id, f"{icon} {member.mention} {text}".strip(), color=result.color)
-    return Done(message=resolve.plain(guild, result.content))
+    return _reply(guild, result.content)
 
 
 @post("/history/replay", summary="Queue a played track again", status_code=200, responses=REFUSED)

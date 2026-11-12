@@ -16,6 +16,7 @@ from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView
 from square.db.funcs.dev import fetch_dev_ids
+from square.modules import ModuleOff
 from square.utils import check, config
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_perms
@@ -66,7 +67,7 @@ def _user_fault(error: BaseException) -> str | None:
             return "This only works in DMs."
         case commands.MaxConcurrencyReached():
             return "This is already running. Try again once it finishes."
-        case commands.UserInputError():
+        case commands.UserInputError() | ModuleOff():
             return f"{error}"
         case commands.CheckFailure() | discord.CheckFailure():
             return "You can't use this here."

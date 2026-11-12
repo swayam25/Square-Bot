@@ -21,6 +21,7 @@ from square.db.funcs.invites import (
 )
 from square.imaging import assets
 from square.imaging.templates import invite_card, leaderboard
+from square.modules import Module
 from square.utils import config, invites, server_log
 from square.utils.emoji import emoji
 
@@ -183,22 +184,18 @@ class LeaderboardView(DesignerView):
         await interaction.edit(view=self, file=file, attachments=[])
 
 
-class Invites(Cog, name="Invites", description="See who invited whom, with leaderboards.", emoji=emoji.invite, order=8):
+class Invites(
+    Cog,
+    name="Invites",
+    description="See who invited whom, with leaderboards.",
+    emoji=emoji.invite,
+    order=8,
+    module=Module.INVITES,
+):
     def __init__(self, client: Client):
         self.client = client
 
     invites = SlashCommandGroup(name="invites", description="Invite tracker commands.")
-
-    @staticmethod
-    async def _tracked_guild(ctx: discord.ApplicationContext) -> discord.Guild | None:
-        """The server, or None (after replying) when the tracker is off there."""
-        if ctx.guild is not None and cache.get(ctx.guild.id).invite_tracker:
-            return ctx.guild
-        await ctx.respond(
-            view=error_view("The invite tracker is off. Turn it on from the dashboard (`/settings` has the link)."),
-            ephemeral=True,
-        )
-        return None
 
     @staticmethod
     async def _managed_guild(ctx: discord.ApplicationContext) -> discord.Guild | None:
@@ -217,7 +214,7 @@ class Invites(Cog, name="Invites", description="See who invited whom, with leade
     @option("member", description="Whose invites to show. Defaults to you.", required=False)
     async def invites_user(self, ctx: discord.ApplicationContext, member: discord.Member | None = None):
         """Shows how many members someone has invited."""
-        if not (guild := await self._tracked_guild(ctx)):
+        if not (guild := ctx.guild):
             return
         target = member or ctx.author
         await ctx.defer()  # Fetching the avatar and rendering can outlast the 3 second reply window
@@ -254,7 +251,7 @@ class Invites(Cog, name="Invites", description="See who invited whom, with leade
     @option("page", description="The page to show.", min_value=1, required=False)
     async def invites_leaderboard(self, ctx: discord.ApplicationContext, page: int = 1):
         """Shows the server's top inviters."""
-        if not (guild := await self._tracked_guild(ctx)):
+        if not (guild := ctx.guild):
             return
         board = await fetch_leaderboard(guild.id)
         if not board:
@@ -269,7 +266,7 @@ class Invites(Cog, name="Invites", description="See who invited whom, with leade
     @option("member", description="The member to look up.")
     async def invites_who(self, ctx: discord.ApplicationContext, member: discord.Member):
         """Shows who invited a member."""
-        if not (guild := await self._tracked_guild(ctx)):
+        if not (guild := ctx.guild):
             return
         join = await fetch_join(guild.id, member.id)
         if join is None or join.inviter_id is None:
@@ -293,7 +290,7 @@ class Invites(Cog, name="Invites", description="See who invited whom, with leade
     @option("amount", description="How many to add. Negative numbers take some away.", min_value=-1000, max_value=1000)
     async def invites_bonus(self, ctx: discord.ApplicationContext, member: discord.Member, amount: int):
         """Adds or removes bonus invites."""
-        if not await self._tracked_guild(ctx) or not (guild := await self._managed_guild(ctx)):
+        if not (guild := await self._managed_guild(ctx)):
             return
         bonus = await add_bonus(guild.id, member.id, amount)
         await ctx.respond(view=success_view(f"Successfully set {member.mention}'s bonus invites to `{bonus}`."))
@@ -312,7 +309,7 @@ class Invites(Cog, name="Invites", description="See who invited whom, with leade
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
-        if member.bot or not cache.get(member.guild.id).invite_tracker:
+        if member.bot or not cache.enabled(member.guild.id, Module.INVITES):
             return
         used = await invites.used_invite(member)  # Shared with the member log, one lookup per join
         inviter_id, code = (used.inviter_id, used.code) if used else (None, None)
@@ -337,7 +334,7 @@ class Invites(Cog, name="Invites", description="See who invited whom, with leade
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
-        if not member.bot and cache.get(member.guild.id).invite_tracker:
+        if not member.bot and cache.enabled(member.guild.id, Module.INVITES):
             await record_leave(member.guild.id, member.id)
 
 

@@ -11,27 +11,45 @@ class SettingError(Exception):
 
 _MENTION = re.compile(r"<(#|@&|@!?)(\d+)>")
 _CUSTOM_EMOJI = re.compile(r"<a?:\w+:\d+>\s*")
+# Lazy label, so titles with their own brackets ("Song [Remix]") still match up to the link
+_LINK = re.compile(r"\[(.+?)\]\(<?https?://[^\s)>]+>?\)")
+_MARKERS = re.compile(r"\*\*|__|~~|`")
+_ESCAPED = re.compile(r"\\([*_`~|>\[\]()#-])")
+_LINE_PREFIX = re.compile(r"^(?:-#|#{1,3}|>)\s+")
+_TRAILING_TAG = re.compile(r"\s\[([^\[\]]+)\]\.$")
 
 
 def plain(guild: discord.Guild, text: str) -> str:
-    """
-    Makes a bot message readable outside Discord.
+    """Makes a bot message plain text for the dashboard: names for mentions, no emoji, no markdown, one line."""
+    return " ".join(part for part in split(guild, text) if part)
 
-    Mentions become names and custom emoji go, since the dashboard can render neither. Markdown stays.
-    """
+
+def split(guild: discord.Guild, text: str) -> tuple[str, str | None]:
+    """Like :func:`plain`, but keeps the `-#` subtext apart as a note for the toast's second line."""
 
     def name(match: re.Match[str]) -> str:
         kind, item_id = match[1], int(match[2])
         if kind == "#":
             item = guild.get_channel(item_id)
-            return f"#{item.name}" if item else match[0]
+            return f"#{item.name}" if item else "#unknown"
         if kind == "@&":
             role = guild.get_role(item_id)
-            return f"@{role.name}" if role else match[0]
+            return f"@{role.name}" if role else "@unknown"
         member = guild.get_member(item_id)
         return f"@{member.display_name}" if member else "@unknown"
 
-    return _MENTION.sub(name, _CUSTOM_EMOJI.sub("", text)).strip()
+    def clean(line: str) -> str:
+        line = _LINK.sub(r"\1", _CUSTOM_EMOJI.sub("", line))
+        line = _ESCAPED.sub(r"\1", _MARKERS.sub("", line))
+        line = _TRAILING_TAG.sub(r" (\1).", _LINE_PREFIX.sub("", line.strip()))
+        return " ".join(_MENTION.sub(name, line).split())
+
+    main: list[str] = []
+    notes: list[str] = []
+    for line in text.splitlines():
+        (notes if line.lstrip().startswith("-# ") else main).append(clean(line))
+    note = " ".join(n for n in notes if n)
+    return " ".join(m for m in main if m), note or None
 
 
 def _channel(guild: discord.Guild, channel_id: str | None, kind: Any, what: str) -> Any:

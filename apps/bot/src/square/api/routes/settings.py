@@ -17,6 +17,8 @@ from square.api.schemas import (
     LogChannels,
     LogPatch,
     LogSettings,
+    ModulePatch,
+    ModuleSettings,
     MusicPatch,
     MusicSettings,
     Notes,
@@ -36,6 +38,7 @@ from square.db.funcs import invites as invites_db
 from square.db.funcs import logs as logs_db
 from square.db.funcs import tickets as tickets_db
 from square.db.funcs.guild import remove_guild
+from square.modules import Module
 from square.music import request, stay
 from square.music.core import can_play_in, get_player
 from square.music.player import release_guild, render_player, stop_player
@@ -52,8 +55,8 @@ def _audit(member: discord.Member, action: str) -> None:
     log.info("Dashboard: %s (%s) %s in %s (%s)", member, member.id, action, member.guild, member.guild.id)
 
 
-def _notes(*notes: str | None) -> Notes:
-    return Notes(notes=[note for note in notes if note])
+def _notes(guild: discord.Guild, *notes: str | None) -> Notes:
+    return Notes(notes=[resolve.plain(guild, note) for note in notes if note])
 
 
 # General
@@ -181,32 +184,27 @@ async def reset_log_settings(client: Client, guild: discord.Guild, member: disco
 
 def _invites(guild: discord.Guild) -> InviteSettings:
     settings = cache.get(guild.id)
-    return InviteSettings(tracker=settings.invite_tracker, fake_days=settings.invite_fake_days)
+    return InviteSettings(fake_days=settings.invite_fake_days)
 
 
 async def _reset_invites(guild: discord.Guild) -> None:
-    await invites_db.set_tracker(guild.id, False)
     await invites_db.set_fake_days(guild.id, 7)
-    await refresh_invites(guild)
 
 
-@get("/invites", summary="Invite tracker and fake account age")
+@get("/invites", summary="Fake account age")
 async def get_invite_settings(guild: discord.Guild) -> InviteSettings:
     return _invites(guild)
 
 
-@patch("/invites", summary="Change the invite tracker or fake account age", responses=REFUSED)
+@patch("/invites", summary="Change the fake account age", responses=REFUSED)
 async def update_invite_settings(guild: discord.Guild, member: discord.Member, data: InvitePatch) -> InviteSettings:
     if data.fake_days is not UNSET:
         await invites_db.set_fake_days(guild.id, data.fake_days)
-    if data.tracker is not UNSET:
-        await invites_db.set_tracker(guild.id, data.tracker)
-        await refresh_invites(guild)  # Starts or stops caching this server's invite uses
     _audit(member, "updated invite settings")
     return _invites(guild)
 
 
-@delete("/invites", summary="Reset invite settings", status_code=200)
+@delete("/invites", summary="Reset the fake account age", status_code=200)
 async def reset_invite_settings(guild: discord.Guild, member: discord.Member) -> InviteSettings:
     await _reset_invites(guild)
     _audit(member, "reset invite settings")
@@ -326,7 +324,7 @@ async def update_music_settings(
 async def reset_music_settings(client: Client, guild: discord.Guild, member: discord.Member) -> Notes:
     note = await _reset_music(client, guild, member)
     _audit(member, "reset music settings")
-    return _notes(note)
+    return _notes(guild, note)
 
 
 @post("/music/request-channel", summary="Create the music request channel", responses=REFUSED)
@@ -375,7 +373,7 @@ async def create_request_channel(client: Client, guild: discord.Guild, member: d
 async def remove_request_channel(client: Client, guild: discord.Guild, member: discord.Member) -> Notes:
     note = await _remove_request_channel(client, guild, member)
     _audit(member, "removed the music request channel")
-    return _notes(note)
+    return _notes(guild, note)
 
 
 # Tickets
@@ -392,7 +390,6 @@ def _ticket_panel_channel(guild: discord.Guild) -> discord.abc.GuildChannel | No
 def _tickets(guild: discord.Guild) -> TicketSettings:
     settings = cache.get(guild.id)
     return TicketSettings(
-        enabled=settings.ticket_cmds,
         category_id=id_of(_ticket_category(guild)),
         support_role_ids=[str(role.id) for role in cards.support_roles(guild)],
         max_open=settings.ticket_max_open,
@@ -430,12 +427,11 @@ async def _remove_ticket_panel(guild: discord.Guild, actor: discord.abc.User) ->
 
 async def _reset_tickets(guild: discord.Guild, actor: discord.abc.User) -> str | None:
     note = await _remove_ticket_panel(guild, actor)
-    await guild_db.set_ticket_cmds(guild.id, False)
     await tickets_db.reset_ticket_settings(guild.id)
     return note
 
 
-@get("/tickets", summary="Ticket commands, setup and panel")
+@get("/tickets", summary="Ticket setup and panel")
 async def get_ticket_settings(guild: discord.Guild) -> TicketSettings:
     return _tickets(guild)
 
@@ -467,8 +463,6 @@ async def update_ticket_settings(guild: discord.Guild, member: discord.Member, d
             max_open=data.max_open if data.max_open is not UNSET else settings.ticket_max_open,
             confirm_close=data.confirm_close if data.confirm_close is not UNSET else settings.ticket_confirm_close,
         )
-    if data.enabled is not UNSET:
-        await guild_db.set_ticket_cmds(guild.id, data.enabled)
     _audit(member, "updated ticket settings")
     return _tickets(guild)
 
@@ -477,7 +471,7 @@ async def update_ticket_settings(guild: discord.Guild, member: discord.Member, d
 async def reset_ticket_settings(guild: discord.Guild, member: discord.Member) -> Notes:
     note = await _reset_tickets(guild, member)
     _audit(member, "reset ticket settings")
-    return _notes(note)
+    return _notes(guild, note)
 
 
 @post("/tickets/panel", summary="Create the ticket panel channel", responses=REFUSED)
@@ -519,7 +513,30 @@ async def create_ticket_panel(guild: discord.Guild, member: discord.Member) -> T
 async def remove_ticket_panel(guild: discord.Guild, member: discord.Member) -> Notes:
     note = await _remove_ticket_panel(guild, member)
     _audit(member, "removed the ticket panel")
-    return _notes(note)
+    return _notes(guild, note)
+
+
+# Modules
+
+
+def _modules(guild: discord.Guild) -> ModuleSettings:
+    return ModuleSettings(**{module.value: cache.enabled(guild.id, module) for module in Module})
+
+
+@get("/modules", summary="Which modules are turned on")
+async def get_module_settings(guild: discord.Guild) -> ModuleSettings:
+    return _modules(guild)
+
+
+@patch("/modules", summary="Turn modules on or off")
+async def update_module_settings(guild: discord.Guild, member: discord.Member, data: ModulePatch) -> ModuleSettings:
+    for module in Module:
+        if (on := getattr(data, module.value)) is not UNSET:
+            await guild_db.set_module(guild.id, module, on)
+    # Both the tracker and the member log need invite uses, so either switch can start or stop caching them
+    await refresh_invites(guild)
+    _audit(member, "updated modules")
+    return _modules(guild)
 
 
 # Everything
@@ -533,11 +550,12 @@ async def reset_all_settings(client: Client, guild: discord.Guild, member: disco
     notes = [await _reset_music(client, guild, member), await _reset_tickets(guild, member)]
     await _reset_invites(guild)
     await remove_guild(guild.id)
+    await refresh_invites(guild)  # Modules are back to their defaults, which may stop invite tracking
     request.forget(guild.id)
     stay.forget(guild.id)
     client.dispatch("log_channels_update", guild.id)
     _audit(member, "reset every setting")
-    return _notes(*notes)
+    return _notes(guild, *notes)
 
 
 def _refused(request: Request, exc: SettingError) -> Response[Problem]:
@@ -575,6 +593,8 @@ router = Router(
         reset_ticket_settings,
         create_ticket_panel,
         remove_ticket_panel,
+        get_module_settings,
+        update_module_settings,
         reset_all_settings,
     ],
 )

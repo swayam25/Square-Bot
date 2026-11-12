@@ -30,7 +30,7 @@ def secret_guard(secret: str) -> Guard:
 def provide_client(state: State) -> Client:
     client: Client | None = state.client
     if client is None or not client.is_ready():
-        raise ServiceUnavailableException("The bot is still starting")
+        raise ServiceUnavailableException("Square is still starting. Try again in a moment.")
     return client
 
 

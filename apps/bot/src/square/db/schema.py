@@ -1,3 +1,4 @@
+from square.modules import DEFAULT_MODULES
 from tortoise import fields
 from tortoise.models import Model
 
@@ -14,14 +15,13 @@ class DevTable(Model):
 class GuildTable(Model):
     id = fields.IntField(primary_key=True)
     guild_id = fields.BigIntField(unique=True)
-    ticket_cmds = fields.BooleanField(default=False)
+    modules: list[str] = fields.JSONField(default=lambda: list(DEFAULT_MODULES))  # Turned on, by `Module` value
     media_only_channel_id = fields.BigIntField(null=True)
     autorole = fields.BigIntField(null=True)
     dj_mode = fields.BooleanField(default=False)
     music_channel_id = fields.BigIntField(null=True)
     music_message_id = fields.BigIntField(null=True)
     music_stay_channel_id = fields.BigIntField(null=True)
-    invite_tracker = fields.BooleanField(default=False)
     invite_fake_days = fields.IntField(default=7)
     ticket_category_id = fields.BigIntField(null=True)
     ticket_support_role_ids: list[int] = fields.JSONField(default=list)
