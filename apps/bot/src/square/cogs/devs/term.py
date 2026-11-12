@@ -2,11 +2,8 @@ import math
 
 
 class Term:
-    """Terminal-style text rendering helpers for Discord code blocks."""
-
     @staticmethod
     def kv(rows: list[tuple[str, str]], cols: int = 2) -> list[str]:
-        """Lays key/value rows out down `cols` aligned columns."""
         if not rows:
             return []
         per_col = math.ceil(len(rows) / cols)
@@ -27,7 +24,6 @@ class Term:
 
     @staticmethod
     def grid(headers: list[str], rows: list[list[str]]) -> list[str]:
-        """Renders rows as an aligned column grid under a ruled header."""
         widths = [max(len(str(row[i])) for row in [headers, *rows]) for i in range(len(headers))]
 
         def render(cells) -> str:
@@ -39,10 +35,8 @@ class Term:
 
     @staticmethod
     def fence(section: list[str]) -> str:
-        """Wraps a section's lines in a code block."""
         return "```\n" + "\n".join(section).rstrip() + "\n```"
 
     @staticmethod
     def num(value: float) -> str:
-        """Formats a single value with just enough precision to stay informative."""
         return f"{value:.0f}" if abs(value) >= 100 or value == int(value) else f"{value:.1f}"

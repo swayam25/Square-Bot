@@ -26,24 +26,11 @@ PICKER_TIMEOUT = 60.0
 PICKER_RESULT_LINGER = 3.0
 
 url_rx = re.compile("https?:\\/\\/(?:www\\.)?.+")
-# Autocomplete entries carry the track duration, which is noise once submitted.
 _timestamp_rx = re.compile(r"\b\d{1,2}:\d{2}(?::\d{2})?\b|\s*-\s*\d{1,2}:\d{2}(?::\d{2})?\b")
 
 
 @dataclass(slots=True)
 class Enqueued:
-    """
-    The outcome of resolving a query and putting it on the queue.
-
-    Attributes:
-        ok (bool): Whether anything was queued.
-        content (str): A rendered, emoji-prefixed line describing the outcome, ready to show either
-            as a public reply or as a self-deleting toast.
-        color (int | None): The accent color the line should be shown in.
-        started (bool): Whether this call started playback, meaning a track start event is inbound
-            and will render the card on its own.
-    """
-
     ok: bool
     content: str
     color: int | None = None
@@ -51,23 +38,10 @@ class Enqueued:
 
 
 def clean_query(query: str) -> str:
-    """Strips the angle brackets and the trailing duration an autocomplete entry carries."""
     return _timestamp_rx.sub("", query.strip("<>"))
 
 
 def voice_error(member: discord.Member) -> str | None:
-    """
-    Says why a member can't ask for playback right now, or None when they can.
-
-    Separate from connecting, so a request can be turned away before anything is searched for and
-    long before the bot takes up a voice channel.
-
-    Args:
-        member (:class:`Member`): The member asking for playback.
-
-    Returns:
-        str | None: An emoji-prefixed error line, or None when the request may go ahead.
-    """
     if not member.voice or not member.voice.channel:
         return f"{emoji.error} Join a voice channel first."
     stay_id = stay.channel_id(member.guild.id)
@@ -119,12 +93,10 @@ async def ensure_connected(client: Client, member: discord.Member) -> tuple[Squa
 
 
 def is_link(query: str) -> bool:
-    """Whether a query is a URL, which resolves to one thing rather than a list to choose from."""
     return bool(url_rx.match(query.strip("<>")))
 
 
 def _search_nodes(client: Client) -> list[sonolink.Node]:
-    """Every connected node, lowest penalty first."""
     try:
         best = client.sonolink.get_best_node()
     except RuntimeError:
@@ -167,37 +139,16 @@ async def search_tracks(
 
 
 async def resolve_query(client: Client, query: str) -> tuple[object | None, str | None]:
-    """
-    Searches for a query and hands back whatever it resolved to, without queueing any of it.
-
-    Args:
-        client (:class:`Client`): The Discord bot client.
-        query (str): The raw track name, link, or playlist link.
-
-    Returns:
-        tuple[object | None, str | None]: A playlist, a list of matches, or a single track, and an
-        emoji-prefixed error line when the search came back empty or broken.
-    """
     result = await search_tracks(client, clean_query(query))
     if result is None or result.is_error():
         return None, f"{emoji.error} Failed to load the track. Please try again in a moment."
     data = result.result
-    # A link to an empty playlist loads fine and holds nothing
     if result.is_empty() or data is None or (isinstance(data, (Playlist, list)) and not len(data)):
         return None, f"{emoji.error} No track found from the given query."
     return data, None
 
 
 def _queue_note(player: SquarePlayer) -> str | None:
-    """
-    Says where a track queued behind the current one lands and roughly when it will play.
-
-    Args:
-        player (:class:`SquarePlayer`): The player, with a track on it and the new one not yet queued.
-
-    Returns:
-        str | None: The note, or None under shuffle, where the position means nothing.
-    """
     queue = player.queue
     if player.shuffled:
         return None
@@ -213,18 +164,6 @@ def _queue_note(player: SquarePlayer) -> str | None:
 
 
 async def enqueue(client: Client, player: SquarePlayer, data: object, requester_id: int) -> Enqueued:
-    """
-    Puts a resolved search result on the queue, starting playback when nothing is going yet.
-
-    Args:
-        client (:class:`Client`): The Discord bot client.
-        player (:class:`SquarePlayer`): The player to queue onto.
-        data (object): A playlist, a list of matches, or a single track, from :func:`resolve_query`.
-        requester_id (int): The user the queued tracks are credited to.
-
-    Returns:
-        :class:`Enqueued`: The outcome, rendered but not sent.
-    """
     if isinstance(data, Playlist):
         queued = [tag_requester(client, track, requester_id) for track in data.tracks]
         src_info = get_source(queued[0].source_name)
@@ -254,21 +193,6 @@ async def resolve_and_enqueue(
     search: Awaitable[tuple[object | None, str | None]],
     requester_id: int,
 ) -> Enqueued:
-    """
-    Queues the first thing a search comes back with, in one step.
-
-    For `/play`, where there is nothing to pick between.
-
-    Args:
-        client (:class:`Client`): The Discord bot client.
-        player (:class:`SquarePlayer`): The player to queue onto.
-        search (Awaitable): A pending :func:`resolve_query`, started early so it can overlap the
-            voice handshake.
-        requester_id (int): The user the queued tracks are credited to.
-
-    Returns:
-        :class:`Enqueued`: The outcome, rendered but not sent.
-    """
     data, err = await search
     if err:
         return Enqueued(False, err, config.color.red)
@@ -276,15 +200,6 @@ async def resolve_and_enqueue(
 
 
 class TrackPickerView(DesignerView):
-    """
-    Lets the author choose between the matches a typed track name came back with.
-
-    Args:
-        client (:class:`Client`): The Discord bot client.
-        request_msg (:class:`Message`): The request message that opened this picker.
-        tracks (list): The candidate tracks, in search order.
-    """
-
     def __init__(self, client: Client, request_msg: discord.Message, tracks: list):
         super().__init__(timeout=PICKER_TIMEOUT, disable_on_timeout=False)
         self.client = client
@@ -361,7 +276,6 @@ class TrackPickerView(DesignerView):
         await interaction.edit(view=self)
 
     async def settle(self, content: str, color: int | None) -> None:
-        """Shows the outcome in place of the list, then takes the picker away."""
         self.stop()
         self.clear_items()
         self.add_item(ui.Container(ui.TextDisplay(content), color=color))
@@ -388,7 +302,7 @@ class TrackPickerView(DesignerView):
         except Exception:
             if connected_now:
                 await stop_player(player, interaction.guild)
-            self.build()  # Lets them pick again
+            self.build()
             await interaction.edit(view=self)
             raise
         await self.settle(result.content.replace("Added", f"{interaction.user.mention} added", 1), result.color)

@@ -10,7 +10,6 @@ from rich.console import Console, ConsoleRenderable
 from rich.logging import RichHandler
 from rich.text import Text
 
-# Third-party loggers are noisy below these levels. Lower one here to debug it, e.g. "tortoise" to DEBUG prints SQL.
 LIBRARY_LEVELS = {
     "aerich": logging.WARNING,
     "asyncio": logging.WARNING,
@@ -26,8 +25,6 @@ PLAIN_FORMAT = logging.Formatter("%(asctime)s %(levelname)-8s %(name)-14s %(mess
 
 
 class _ConsoleHandler(RichHandler):
-    """Rich console output, with optional per-record styling (`extra={"style": ..., "accent": ...}`) for the banner."""
-
     def render_message(self, record: logging.LogRecord, message: str) -> ConsoleRenderable:
         text = super().render_message(record, message)
         if not isinstance(text, Text):
@@ -37,7 +34,6 @@ class _ConsoleHandler(RichHandler):
         if accent := getattr(record, "accent", None):
             text.highlight_words([accent], "bold yellow")
         if getattr(record, "no_wrap", False):
-            # Banner art in a narrow terminal: cut lines off rather than break the picture across rows
             text.no_wrap = True
             text.overflow = "crop"
         return text
@@ -51,13 +47,6 @@ class _LocalQueueHandler(QueueHandler):
 
 
 def setup_logging(level: str = "INFO", file: bool = False) -> None:
-    """
-    Routes every logger (Square's and the libraries') through one queue, written by a background thread.
-
-    Args:
-        level (str): The root level. The `SQUARE_LOG_LEVEL` env var overrides it, e.g. `DEBUG` for `just dev`.
-        file (bool): Also write plain-text logs to `.cache/logs/square.log`, rotated at 5 × 5 MB.
-    """
     # Rich only for a real terminal. Docker and pipes get plain lines: Rich would pad or wrap them to a fixed width.
     console: logging.Handler
     if Console().is_terminal:

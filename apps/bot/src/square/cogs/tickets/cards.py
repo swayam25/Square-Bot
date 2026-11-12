@@ -24,7 +24,7 @@ def channel_name(number: int) -> str:
 
 
 _LOCK = "🔒-"
-_PARTICIPANTS_SHOWN = 40  # Mentions past this could push the log card over the text limit
+_PARTICIPANTS_SHOWN = 40
 
 
 def unlocked_name(name: str) -> str:
@@ -32,7 +32,6 @@ def unlocked_name(name: str) -> str:
 
 
 def locked_name(name: str) -> str:
-    """The channel's current name behind a lock, so a ticket staff renamed keeps its name when closed."""
     return (_LOCK + unlocked_name(name))[:100]
 
 
@@ -50,7 +49,6 @@ def _who(user_id: int | None, fallback: str = "Nobody yet") -> str:
 
 
 def controls(ticket: TicketTable, guild: discord.Guild) -> DesignerView:
-    """The card pinned at the top of a ticket channel, with the actions for its current state."""
     if ticket.status == "open":
         staff = ", ".join(role.mention for role in support_roles(guild)) or "Staff"
         return DesignerView(
@@ -98,17 +96,6 @@ def log_card(
     messages: int | None = None,
     participants: list[int] | None = None,
 ) -> DesignerView:
-    """
-    The one Ticket Log message per ticket.
-
-    It's edited as the ticket is claimed and closed, so the log reads one card per ticket instead of a stream of events.
-
-    Args:
-        ticket (:class:`TicketTable`): The ticket.
-        transcript (str | None): The attached transcript's filename, shown as a file inside the card.
-        messages (int | None): How many messages the ticket had, once it's closed.
-        participants (list[int] | None): Members who wrote in it, once it's closed.
-    """
     if ticket.status == "open":
         lines = [
             f"{emoji.user} **Opened By**: <@{ticket.opener_id}>",
@@ -143,7 +130,6 @@ def log_card(
 
 
 def panel() -> DesignerView:
-    """The message members press to open a ticket."""
     return DesignerView(
         ui.Container(
             ui.TextDisplay("## Need Help?"),
@@ -156,7 +142,6 @@ def panel() -> DesignerView:
 
 
 def confirm(action: str, text: str) -> DesignerView:
-    """An ephemeral second click before closing or deleting a ticket."""
     return DesignerView(
         ui.Container(ui.TextDisplay(text), color=config.color.red),
         ui.ActionRow(_button(f"confirm-{action}", f"Yes, {action}", emoji.bin_white, discord.ButtonStyle.red)),

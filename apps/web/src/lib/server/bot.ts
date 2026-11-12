@@ -6,7 +6,6 @@ import { error } from "@sveltejs/kit";
 
 export const bot = createClient({ baseUrl: BOT_API_URL, auth: BOT_API_SECRET });
 
-// Reads answer from the bot's memory. Writes and searches wait on Discord or Lavalink, so they get longer
 const QUICK = 5_000;
 const PATIENT = 30_000;
 

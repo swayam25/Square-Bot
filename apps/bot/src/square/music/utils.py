@@ -11,15 +11,6 @@ from typing import Any
 
 
 def get_source(source_name: str | None) -> dict:
-    """
-    Resolves the emoji and accent color for a music source.
-
-    Args:
-        source_name (str | None): The track's source name (e.g. ``"youtube"``).
-
-    Returns:
-        dict: A mapping with the resolved ``emoji`` markdown and ``color`` accent.
-    """
     _sources = {
         "spotify": {"emoji": emoji.spotify, "color": config.color.green},
         "youtube": {"emoji": emoji.youtube, "color": config.color.red},
@@ -31,16 +22,6 @@ def get_source(source_name: str | None) -> dict:
 
 
 def container(content: str, color: int | None = None) -> DesignerView:
-    """
-    Wraps a text string into a :class:`DesignerView` container.
-
-    Args:
-        content (str): The text to display inside the container.
-        color (int | None): Optional accent color for the container border.
-
-    Returns:
-        :class:`DesignerView`: A view containing the styled container.
-    """
     c = ui.Container(ui.TextDisplay(content))
     if color is not None:
         c.color = color
@@ -53,16 +34,6 @@ async def reply(
     *,
     color: int | None = None,
 ) -> None:
-    """
-    Sends an ephemeral message to the invoker.
-
-    Works for both slash command contexts and button/select interactions, using followup if the response has already been sent.
-
-    Args:
-        source (:class:`ApplicationContext` | :class:`Interaction`): The invoking command or interaction.
-        content (str): The message text.
-        color (int | None): Optional accent color for the container.
-    """
     view = container(content, color)
     interaction = source.interaction if isinstance(source, discord.ApplicationContext) else source
     if interaction.response.is_done():
@@ -72,7 +43,6 @@ async def reply(
 
 
 async def delete_quietly(message: discord.Message | discord.PartialMessage) -> None:
-    """Deletes a message, shrugging off one that is already gone or out of reach."""
     try:
         await message.delete()
     except discord.HTTPException:
@@ -102,25 +72,11 @@ async def _send_log(channel: discord.abc.Messageable | None, content: str, color
     try:
         await channel.send(view=container(content, color), delete_after=5)
     except discord.HTTPException:
-        # Missing send permission in the player channel must not break the player action itself.
         pass
 
 
 def split_log_text(content: str) -> tuple[str, str]:
-    """
-    Splits a confirmation message into its leading emoji and the rest, lowercased.
-
-    A log line reads "<emoji> @user paused the player.", so the emoji is handed back rather than dropped along with
-    the sentence case, letting the caller put it in front of the mention.
-
-    Args:
-        content (str): The message text, optionally starting with a custom or unicode emoji.
-
-    Returns:
-        tuple[str, str]: The leading emoji, empty when there is none, and the remaining lowercased text.
-    """
     content = content.strip()
-    # Custom emoji, or a run of non-ASCII symbols: anything ASCII is real text, not a prefix worth lifting out.
     match = re.match(r"^(<a?:[^:]+:\d+>|[^\x00-\x7f\w]+)\s*", content)
     if not match:
         return "", _decapitalize(content)
@@ -141,25 +97,11 @@ def _decapitalize(text: str) -> str:
 
 
 async def music_interaction_check(view: DesignerView, player: SquarePlayer, interaction: discord.Interaction) -> bool:
-    """
-    Gate for all player and queue button interactions.
-
-    Verifies that something is currently playing, the user is in a voice channel, and the user is in the same voice channel as the bot.
-
-    Args:
-        view (:class:`DesignerView`): The view whose items are disabled on failure.
-        player (:class:`SquarePlayer`): The active player for the guild.
-        interaction (:class:`Interaction`): The incoming button or select interaction.
-
-    Returns:
-        bool: True if all checks pass, False otherwise (response already sent).
-    """
     if getattr(view, "live", True) is False:
-        # Already-disabled buttons; swallow the race rather than stripping the card below.
         try:
             await interaction.response.defer()
         except discord.HTTPException:
-            pass  # Acknowledged elsewhere, or the token expired. Either way the press is spent.
+            pass
         return False
     if not player or not player.current:
         view.disable_all_items()

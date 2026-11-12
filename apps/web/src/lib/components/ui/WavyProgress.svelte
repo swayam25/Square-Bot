@@ -13,7 +13,6 @@
         seeking = $bindable(null),
         class: className,
     }: {
-        /** 0 to 1 */
         value: number;
         playing?: boolean;
         live?: boolean;

@@ -39,7 +39,6 @@ from square.utils.helpers import fmt_count, parse_duration
 # Discord renders at most this many autocomplete choices, and caps each name and value at 100 characters.
 AUTOCOMPLETE_LIMIT = 25
 CHOICE_LIMIT = 100
-# Matches the five tracks a `/queue` and `/history` page shows.
 PAGE_SIZE = 5
 
 
@@ -52,11 +51,8 @@ class Music(
     emoji=emoji.music,
     order=6,
 ):
-    # Estimated on-screen chat lines an attachment/embed/sticker occupies - tall enough that one big block relocates the player on its own.
     block_lines = 10
-    # Characters per rendered chat line, used to estimate wrapping of long messages.
     chars_per_line = 60
-    # Relocate the player once this many estimated chat lines have stacked below it.
     relocate_lines = 10
     loop_modes = {
         "Disable": sonolink.QueueMode.NORMAL,
@@ -73,26 +69,15 @@ class Music(
         self._cooldown_warn = commands.CooldownMapping.from_cooldown(1, 15.0, commands.BucketType.member)
         register_nodes(client)
 
-    # Current voice
     def current_voice_channel(self, ctx: discord.ApplicationContext):
         if ctx.guild and ctx.guild.me.voice:
             return ctx.guild.me.voice.channel
         return None
 
-    # Unloading cog
     def cog_unload(self):
         self.failover.stop()
 
-    # Ensures voice parameters
     async def ensure_voice(self, ctx: discord.ApplicationContext) -> SquarePlayer | None:
-        """
-        The player, for commands that only show it.
-
-        Controls, `/play` included, go through :mod:`square.music.controls` instead.
-
-        Args:
-            ctx (:class:`ApplicationContext`): The invoking command.
-        """
         try:
             return controls.require_player(ctx.guild, ctx.author)
         except MusicError as exc:
@@ -100,7 +85,6 @@ class Music(
             return None
 
     async def _control(self, ctx: discord.ApplicationContext, action: Awaitable[str]) -> None:
-        """Runs a control for a slash command and answers privately with how it went."""
         await ctx.defer(ephemeral=True)
         try:
             await reply(ctx, await action)
@@ -109,17 +93,11 @@ class Music(
 
     @staticmethod
     def _queue_index(track: str) -> int:
-        """
-        Reads a queue position from an autocomplete pick (`3. Title`) or a typed number, as a zero-based index.
-
-        Anything unreadable comes back as -1, which the control refuses with the valid range.
-        """
         match = re.match(r"\s*(\d+)", track)
         return int(match[1]) - 1 if match else -1
 
     @staticmethod
     async def _check_page(ctx: discord.ApplicationContext, page: int, items: int) -> bool:
-        """Whether a list of `items` has the requested page, telling the member when it doesn't."""
         pages = max(1, math.ceil(items / PAGE_SIZE))
         if page <= pages:
             return True
@@ -128,15 +106,12 @@ class Music(
 
     @staticmethod
     def _choice_name(author: str, title: str, tail: str) -> str:
-        """Fits `author - title - tail` into an autocomplete choice name, trimming the title first."""
         room = max(3, CHOICE_LIMIT - len(author) - len(tail) - 6)  # " - " twice
         if len(title) > room:
             title = title[: room - 3] + "..."
         return f"{author} - {title} - {tail}"[:CHOICE_LIMIT]
 
-    # Search autocomplete
     async def search(self, ctx: discord.AutocompleteContext):
-        """Suggests tracks for a typed name, or shows what a pasted link points to."""
         value = ctx.value.strip()
         link = is_link(value)
         if link and len(value) > CHOICE_LIMIT:
@@ -164,9 +139,7 @@ class Music(
             choices.append(discord.OptionChoice(name=name, value=choice_value))
         return choices
 
-    # Track autocomplete
     async def track_autocomplete(self, ctx: discord.AutocompleteContext):
-        """Provides track indices for removal."""
         player = get_player(self.client, ctx.interaction.guild_id)
         if not player or not len(player.queue):
             return []
@@ -177,18 +150,16 @@ class Music(
             if needle in entry.lower():
                 result.append(entry)
                 if len(result) == AUTOCOMPLETE_LIMIT:
-                    break  # Discord shows 25; a long queue would build the rest for nothing.
+                    break
         return result
 
     @staticmethod
     async def _play_reply(ctx: discord.ApplicationContext, content: str, color: int | None, quiet: bool) -> None:
-        """Answers `/play` ephemerally in a request channel, publicly anywhere else."""
         if quiet:
             await reply(ctx, content, color=color)
         else:
             await ctx.respond(view=container(content, color))
 
-    # Play
     @slash_command(name="play")
     @option("query", description="Enter your track name/link or playlist link", autocomplete=search)
     async def play(self, ctx: discord.ApplicationContext, query: str):
@@ -211,7 +182,6 @@ class Music(
         else:
             await ctx.respond(view=container(result.content, result.color))
 
-    # Now playing
     @slash_command(name="now-playing")
     async def now_playing(self, ctx: discord.ApplicationContext):
         """Shows currently playing track."""
@@ -268,13 +238,11 @@ class Music(
             )
         await ctx.respond(view=view, file=file, ephemeral=True)
 
-    # Stop
     @slash_command(name="stop")
     async def stop(self, ctx: discord.ApplicationContext):
         """Stops the music and clears the queue."""
         await self._control(ctx, controls.stop(ctx.guild, ctx.author))
 
-    # Seek
     @slash_command(name="seek")
     @option("duration", description="How far to jump, forwards or backwards. Ex: 10s, +1m, -30s, -1m20s etc....")
     async def seek(self, ctx: discord.ApplicationContext, duration: str):
@@ -282,39 +250,33 @@ class Music(
         offset_ms = int(parse_duration(duration, signed=True).total_seconds() * 1000)
         await self._control(ctx, controls.seek_by(ctx.guild, ctx.author, offset_ms))
 
-    # Skip
     @slash_command(name="skip")
     async def skip(self, ctx: discord.ApplicationContext):
         """Skips the current playing track, or opens a vote when you aren't a DJ."""
         await self._control(ctx, controls.skip(ctx.guild, ctx.author, channel=ctx.channel))
 
-    # Skip to
     @slash_command(name="skip-to")
     @option("track", description="Enter your track index number to skip", autocomplete=track_autocomplete)
     async def skip_to(self, ctx: discord.ApplicationContext, track: str):
         """Skips to a given track in the queue."""
         await self._control(ctx, controls.jump(ctx.guild, ctx.author, self._queue_index(track)))
 
-    # Pause
     @slash_command(name="pause")
     async def pause(self, ctx: discord.ApplicationContext):
         """Pauses the player."""
         await self._control(ctx, controls.set_paused(ctx.guild, ctx.author, True))
 
-    # Resume
     @slash_command(name="resume")
     async def resume(self, ctx: discord.ApplicationContext):
         """Resumes the player."""
         await self._control(ctx, controls.set_paused(ctx.guild, ctx.author, False))
 
-    # Volume
     @slash_command(name="volume")
     @option("volume", description="Enter your volume amount from 1 - 100", min_value=1, max_value=100)
     async def volume(self, ctx: discord.ApplicationContext, volume: int):
         """Changes the player's volume 1 - 100."""
         await self._control(ctx, controls.set_volume(ctx.guild, ctx.author, volume))
 
-    # Queue
     @slash_command(name="queue")
     @option("page", description="Enter queue page number", default=1, required=False, min_value=1)
     async def queue(self, ctx: discord.ApplicationContext, page: int = 1):
@@ -323,7 +285,6 @@ class Music(
         if player and await self._check_page(ctx, page, len(player.queue)):
             await ctx.respond(view=QueueListView(client=self.client, source=ctx, page=page), ephemeral=True)
 
-    # History
     @slash_command(name="history")
     @option("page", description="Enter history page number", default=1, required=False, min_value=1)
     async def history(self, ctx: discord.ApplicationContext, page: int = 1):
@@ -336,32 +297,27 @@ class Music(
             elif await self._check_page(ctx, page, len(tracks)):
                 await ctx.respond(view=HistoryListView(client=self.client, source=ctx, page=page), ephemeral=True)
 
-    # Clear queue
     @slash_command(name="clear-queue")
     async def clear_queue(self, ctx: discord.ApplicationContext):
         """Clears the player's queue."""
         await self._control(ctx, controls.clear_queue(ctx.guild, ctx.author))
 
-    # Shuffle
     @slash_command(name="shuffle")
     async def shuffle(self, ctx: discord.ApplicationContext):
         """Toggle shuffle for the player's queue."""
         await self._control(ctx, controls.set_shuffle(ctx.guild, ctx.author))
 
-    # Autoplay
     @slash_command(name="autoplay")
     async def autoplay(self, ctx: discord.ApplicationContext):
         """Toggles autoplay."""
         await self._control(ctx, controls.set_autoplay(ctx.guild, ctx.author))
 
-    # Loop
     @slash_command(name="loop")
     @option("mode", description="Enter loop mode", choices=list(loop_modes))
     async def loop(self, ctx: discord.ApplicationContext, mode: str):
         """Loops the current track or the whole queue."""
         await self._control(ctx, controls.set_loop(ctx.guild, ctx.author, self.loop_modes[mode]))
 
-    # Remove
     @slash_command(name="remove")
     @option("track", description="Select the track to remove", autocomplete=track_autocomplete)
     async def remove(self, ctx: discord.ApplicationContext, track: str):

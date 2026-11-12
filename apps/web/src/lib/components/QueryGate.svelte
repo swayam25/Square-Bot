@@ -4,7 +4,6 @@
     import type { Snippet } from "svelte";
     import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
 
-    // Shows `children` once every query has a value. `ready` stays true while a query refreshes, so saved pages don't flash.
     let {
         queries,
         title,

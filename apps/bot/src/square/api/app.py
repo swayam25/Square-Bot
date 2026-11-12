@@ -105,6 +105,5 @@ class _Scalar(ScalarRenderPlugin):
 
 
 def _log_exception(exc: Exception, scope: Scope) -> None:
-    # Refused settings changes and music controls are answered with a 409/422, not bugs
     if not isinstance(exc, HTTPException | SettingError | MusicError):
         log.error("API request to %s failed", scope["path"], exc_info=exc)

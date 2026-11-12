@@ -1,5 +1,3 @@
-"""Writes the API's OpenAPI schema to a file, for generating the dashboard's client: `python -m square.api <path>`."""
-
 import json
 import sys
 from pathlib import Path

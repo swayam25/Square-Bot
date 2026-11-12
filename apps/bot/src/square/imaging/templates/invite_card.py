@@ -25,7 +25,6 @@ class InviteCard(msgspec.Struct, frozen=True):
 
 
 def build(ui: Kit, data: InviteCard) -> Node:
-    """One member's invites: their total, a bar splitting every invite by kind, and a tile per kind."""
     t = ui.theme
     kinds = (
         ("Regular", data.regular, t.accent),
@@ -45,7 +44,6 @@ def build(ui: Kit, data: InviteCard) -> Node:
         if data.rank
         else ui.chip("Unranked", "muted", style=Type.MONO_SM_MEDIUM)
     )
-    # Negative bonuses take invites away, so they can't be a share of the bar
     counted = [max(value, 0) for _, value, _ in kinds]
     share = round(100 * counted[0] / sum(counted)) if sum(counted) else 0
     return Column(

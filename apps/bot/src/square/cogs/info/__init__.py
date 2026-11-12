@@ -11,12 +11,10 @@ from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count, member_counts
 from typing import Literal
 
-# Starting time of bot
 start_time = time.time()
 
 
 def _mentions(mentions: list[str], limit: int = 40) -> str:
-    """Joins mentions, cut off at `limit` so a member with hundreds of roles still fits in a text display."""
     more = len(mentions) - limit
     return ", ".join(mentions[:limit]) + (f" and `{more}` more" if more > 0 else "")
 
@@ -28,7 +26,6 @@ class UserInfo:
         self.user = user
 
     async def get_user_info(self, type: Literal["main", "server"] = "server") -> tuple[list[str], list[ui.Button]]:
-        """Get user info lines and URL buttons for main/server profile."""
         if isinstance(self.user, discord.User):
             self.user = await self.client.fetch_user(self.user.id)
         else:
@@ -51,7 +48,6 @@ class UserInfo:
                     f"{emoji.boost} **Boosting Since**: {discord.utils.format_dt(self.user.premium_since, 'R') if self.user.premium_since else 'Not Boosting'}",
                 ]
             )
-            # Exclude @everyone
             other_roles = [
                 role for role in self.user.roles if role != self.user.guild.default_role and role != self.user.top_role
             ]
@@ -59,7 +55,6 @@ class UserInfo:
             if roles_str:
                 info_lines.append(f"{emoji.role} **Other Roles (`{len(other_roles)}`)**: {roles_str}")
 
-            # Key permissions
             key_perms: list[str] = [
                 "administrator",
                 "manage_guild",
@@ -123,7 +118,6 @@ class UserInfo:
         return info_lines, url_buttons
 
     def get_thumbnail_url(self, type: Literal["main", "server"] = "server") -> str:
-        """Get the thumbnail URL based on type."""
         if type == "server" and isinstance(self.user, discord.Member) and self.user.guild_avatar:
             return self.user.guild_avatar.url
         elif self.user.avatar:
@@ -132,7 +126,6 @@ class UserInfo:
             return self.user.default_avatar.url
 
     def get_banner_url(self, type: Literal["main", "server"] = "server") -> str | None:
-        """Get the banner URL based on type."""
         if type == "server" and isinstance(self.user, discord.Member) and self.user.guild_banner:
             return self.user.guild_banner.url
         elif self.user.banner:
@@ -151,7 +144,6 @@ class InfoView(DesignerView):
         self.items_per_page = 10
 
     async def build(self, type: Literal["main", "server", "permissions"] = "server"):
-        """Build the info view for main, server profile, or permissions."""
         self.clear_items()
 
         if type == "permissions":
@@ -214,7 +206,6 @@ class InfoView(DesignerView):
             self.add_item(row)
 
     async def _build_permissions_view(self):
-        """Build the permissions view with pagination."""
         if not isinstance(self.user_info.user, discord.Member):
             return
 
@@ -306,7 +297,6 @@ class InfoView(DesignerView):
         self.add_item(row)
 
     async def _handle_pagination(self, interaction: discord.Interaction, action: str, total_pages: int):
-        """Handle pagination for permissions view."""
         if action == "start":
             self.permissions_page = 1
         elif action == "previous":
@@ -322,7 +312,6 @@ class InfoView(DesignerView):
     async def _handle_callback(
         self, interaction: discord.Interaction, view_type: Literal["main", "server", "permissions"]
     ):
-        """Handle navigation between main, server profile, and permissions."""
         if view_type != "permissions":
             self.permissions_page = 1
         await self.build(view_type)
@@ -333,7 +322,6 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
     def __init__(self, client: Client):
         self.client = client
 
-    # Ping
     @slash_command(name="ping")
     async def ping(self, ctx: discord.ApplicationContext):
         """Shows heartbeats of the bot."""
@@ -344,7 +332,6 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         )
         await ctx.respond(view=view)
 
-    # Uptime
     @slash_command(name="uptime")
     async def uptime(self, ctx: discord.ApplicationContext):
         """Shows bot's uptime."""
@@ -357,7 +344,6 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         )
         await ctx.respond(view=view)
 
-    # Avatar
     @slash_command(name="avatar")
     @option("user", description="Mention the user whom you will see avatar", required=False)
     async def avatar(self, ctx: discord.ApplicationContext, user: discord.Member = None):
@@ -406,10 +392,8 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         view = await get_view()
         await ctx.respond(view=view)
 
-    # Info slash cmd group
     info = SlashCommandGroup(name="info", description="Info related commands.")
 
-    # User info
     @info.command(name="user")
     @option("user", description="Mention the member whom you will see info")
     async def user_info(self, ctx: discord.ApplicationContext, user: discord.Member | discord.User):
@@ -419,7 +403,6 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         await view.build()
         await ctx.respond(view=view)
 
-    # Server info
     @info.command(name="server")
     async def server_info(self, ctx: discord.ApplicationContext):
         """Shows info of the current server."""
@@ -464,7 +447,6 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
             links.append(ui.Button(style=discord.ButtonStyle.link, label="Banner URL", url=ctx.guild.banner.url))
         await ctx.respond(view=DesignerView(container, *([ui.ActionRow(*links)] if links else [])))
 
-    # Emoji info
     @info.command(name="emoji")
     @option("icon", description="Enter the emoji")
     async def emoji_info(self, ctx: discord.ApplicationContext, icon: discord.Emoji):

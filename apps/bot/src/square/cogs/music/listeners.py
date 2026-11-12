@@ -40,7 +40,6 @@ from square.utils import config
 from square.utils.emoji import emoji
 
 log = logging.getLogger(__name__)
-# Seconds after the bot leaves voice before a player nothing tore down is treated as kicked.
 KICK_GRACE = 2.0
 _reaping: set[asyncio.Task] = set()  # Strong refs: the loop only holds weak ones, so a sleeping task can be collected
 FAILOVER_INTERVAL = 5.0
@@ -50,7 +49,6 @@ _NO_CAUSE = "All clients failed to load the item."
 
 
 def _cause(message: str | None) -> str | None:
-    """Strips the YouTube source's version prefix and per-client stack traces, leaving one readable line."""
     if not message:
         return None
     line = re.sub(r"^\([^)]*\)\s*", "", message.strip()).split("\n", 1)[0].strip()
@@ -58,8 +56,6 @@ def _cause(message: str | None) -> str | None:
 
 
 class Listeners:
-    """Gateway, Lavalink and request-channel events that keep players and cards in sync."""
-
     client: Client
 
     @commands.Cog.listener()
@@ -70,7 +66,6 @@ class Listeners:
 
     @commands.Cog.listener()
     async def on_ready(self):
-        """Reloads the request channel bindings and takes their cards back over, then rejoins 24/7 channels."""
         if self._adopting and not self._adopting.done():
             return  # A resume re-fires this; two adoption sweeps would each post a card.
         await request.seed()
@@ -79,14 +74,12 @@ class Listeners:
         self._join_stay_channels()
 
     def _join_stay_channels(self) -> None:
-        """Sends the bot back into every 24/7 channel, unless a sweep is already doing that."""
         if self._staying and not self._staying.done():
             return
         self._staying = self.client.loop.create_task(stay.join_all(self.client))
 
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
-        """Drops the binding and stops playback when the request channel or the 24/7 channel is deleted."""
         guild = channel.guild
         if stay.is_stay_channel(guild.id, channel.id):
             await stay.unbind(guild.id)
@@ -101,13 +94,11 @@ class Listeners:
 
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
-        """Reposts the card when someone deletes it."""
         if payload.guild_id:
             await repaint_deleted_card(self.client, payload.guild_id, {payload.message_id})
 
     @commands.Cog.listener()
     async def on_raw_bulk_message_delete(self, payload: discord.RawBulkMessageDeleteEvent):
-        """Reposts the card when a purge takes it along with everything else."""
         if payload.guild_id:
             await repaint_deleted_card(self.client, payload.guild_id, payload.message_ids)
 
@@ -136,7 +127,6 @@ class Listeners:
             if player is not None and player._node is node:
                 continue
             try:
-                # The same call sonolink's own `move_to` makes on the node it leaves.
                 await node._manager.destroy_player(session_id=node._resume_session, guild_id=str(info.guild_id))
             except Exception:
                 pass
@@ -159,7 +149,7 @@ class Listeners:
             try:
                 node = self.client.sonolink.get_best_node()
             except RuntimeError:
-                return  # Nothing healthy to move to; sonolink keeps reconnecting the dead node.
+                return
             try:
                 await player.move_to(node)
             except Exception as exc:
@@ -173,13 +163,6 @@ class Listeners:
 
     @commands.Cog.listener()
     async def on_sonolink_track_start(self, player: SquarePlayer, event: sonolink.gateway.TrackStartEvent):
-        """
-        Renders the card for the new track, relocating it to the bottom when any chat has landed under it.
-
-        A track change is the one moment the card is worth re-sending cheaply: a single message below it is enough to
-        trigger a fresh send, so the new track always announces itself at the bottom of the channel.
-        With an untouched channel the card is edited in place as usual.
-        """
         guild_id = player.guild.id
         if not await player.settle(event.track, time.monotonic()):
             return
@@ -187,7 +170,6 @@ class Listeners:
         if relocate:
             pending = store.render_task(guild_id)
             if pending and not pending.done():
-                # This render supersedes the scheduled relocation - let it not fire a second send right after.
                 pending.cancel()
         await cancel_vote(guild_id)
         await asyncio.gather(
@@ -221,7 +203,6 @@ class Listeners:
 
     @commands.Cog.listener()
     async def on_sonolink_track_stuck(self, player: SquarePlayer, event: sonolink.gateway.TrackStuckEvent):
-        """Skips a track that stopped sending audio, since Lavalink leaves it hanging."""
         track = event.track
         # A track that already moved on was handled by Lavalink, and skipping now would cost the next one.
         if player.current != track:
@@ -255,12 +236,6 @@ class Listeners:
     async def on_voice_state_update(
         self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState
     ):
-        """
-        Keeps an open skip vote honest as listeners come, go, and deafen, since the threshold moves with them.
-
-        Also follows the bot when it is moved or kicked, tells the player when its channel empties or fills, and
-        tells live dashboards who is listening.
-        """
         if member.id == self.client.user.id:
             await self._on_bot_voice_update(member.guild, after)
             return
@@ -282,12 +257,10 @@ class Listeners:
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
-        # A role change can make or unmake a DJ, which the dashboard shows
         if before.roles != after.roles and get_player(self.client, after.guild.id):
             self.client.dispatch("music_update", after.guild.id)
 
     async def _on_bot_voice_update(self, guild: discord.Guild, after: discord.VoiceState) -> None:
-        """Follows the bot into whatever channel it was moved to, unless it belongs in its 24/7 channel."""
         player = get_player(self.client, guild.id)
         if after.channel is None:
             if stay.channel_id(guild.id) is not None:
@@ -312,7 +285,6 @@ class Listeners:
                 await vote.refresh()
 
     async def _reap_kicked(self, guild: discord.Guild, player: SquarePlayer) -> None:
-        """Clears away a player whose bot was disconnected without anything tearing it down."""
         # Our own disconnects land here a beat before their teardown does, hence the grace.
         await asyncio.sleep(KICK_GRACE)
         async with session_lock(guild.id):
@@ -331,7 +303,6 @@ class Listeners:
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
-        """Clears a deferred command reply from a request channel once its answer lands."""
         if (
             after.guild
             and before.flags.loading
@@ -359,7 +330,6 @@ class Listeners:
                 await delete_quietly(message)
             return
         if message.author.id == self.client.user.id:
-            # Own messages never hide the card: log toasts self-delete in 5s and the card itself is exempt.
             return
         if in_request_channel:
             await self._handle_request(message)
@@ -367,16 +337,6 @@ class Listeners:
         self._track_chat_weight(message)
 
     async def _handle_request(self, message: discord.Message) -> None:
-        """
-        Treats a message in the request channel as a track to queue, then clears it away.
-
-        Marked while it resolves, then deleted as soon as its outcome is posted, whether that is a
-        toast or the picker for a typed name that matched several tracks. Anything that is not a
-        request is simply removed.
-
-        Args:
-            message (:class:`Message`): The message posted in the bound request channel.
-        """
         if message.type not in (discord.MessageType.default, discord.MessageType.reply) or (
             message.author.bot or message.webhook_id
         ):
@@ -410,14 +370,13 @@ class Listeners:
         try:
             await message.add_reaction(emoji.loading)
         except discord.HTTPException:
-            pass  # No Add Reactions: the request still works, it just goes unmarked.
+            pass
         data, err = await resolve_query(self.client, query)
         if err:
             await self._request_log(message, f"{err} (`{discord.utils.escape_markdown(query)[:80]}`)", config.color.red)
             await delete_quietly(message)
             return
         if not is_link(query) and isinstance(data, list) and len(data) > 1:
-            # Nothing is connected yet: the picker resolves the player when a track is chosen.
             picker = TrackPickerView(self.client, message, data)
             picker.msg = await message.channel.send(view=picker)
             await delete_quietly(message)
@@ -442,18 +401,10 @@ class Listeners:
 
     @staticmethod
     async def _request_log(message: discord.Message, content: str, color: int | None) -> None:
-        """Posts a request failure into the channel, addressed to whoever asked."""
         log_emoji, text = split_log_text(content)
         await music_log(message.guild.id, f"{log_emoji} {message.author.mention} {text}".strip(), color=color)
 
     def _track_chat_weight(self, message: discord.Message) -> None:
-        """
-        Relocates the player to the bottom once enough chat has stacked up to push it out of view.
-
-        Each message adds its estimated on-screen height to the guild's chat weight; the player is only re-sent when the total crosses :attr:`relocate_lines` (a single image/embed/long message can cross it alone).
-        Light chatter below the threshold leaves the card edited in place, keeping delete/send API calls rare.
-        The next track start relocates on any accumulated weight though, so chatter never outlives the track it was posted under.
-        """
         play_msg, _ = store.play_msg(message.guild.id)
         if not play_msg or message.channel.id != play_msg.channel.id:
             return
@@ -463,7 +414,6 @@ class Listeners:
 
     @classmethod
     def _visual_lines(cls, message: discord.Message) -> int:
-        """Estimates how many on-screen chat lines a message occupies."""
         lines = 1
         if message.content:
             lines = sum(len(line) // cls.chars_per_line + 1 for line in message.content.splitlines()) or 1

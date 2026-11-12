@@ -20,7 +20,6 @@ def _font(name: str, style: TextStyle):
 
 
 def _run_width(name: str, chunk: str, style: TextStyle) -> float:
-    """A run's width in canvas pixels, letter spacing included."""
     spacing = style.tracking * style.size * _K * len(chunk)
     return _font(name, style).getlength(chunk) + spacing
 
@@ -30,11 +29,10 @@ def text_width(text: str, style: TextStyle) -> float:
 
 
 def fit_text(text: str, style: TextStyle, max_width: float) -> str:
-    """Cuts text to fit `max_width` px, ending it with an ellipsis when anything was cut."""
     if text_width(text, style) <= max_width:
         return text
     low, high = 0, len(text)
-    while low < high:  # The longest prefix that still fits with the ellipsis
+    while low < high:
         mid = (low + high + 1) // 2
         if text_width(text[:mid].rstrip() + _ELLIPSIS, style) <= max_width:
             low = mid
@@ -44,13 +42,11 @@ def fit_text(text: str, style: TextStyle, max_width: float) -> str:
 
 
 def baseline(style: TextStyle) -> float:
-    """How far below the top of its line box the text's baseline sits, in px."""
     ascent, descent = _font(fonts.CHAINS[style.family][0], style).getmetrics()
     return (style.line_height * _K + ascent - descent) / 2 / _K
 
 
 def open_image(data: bytes | None) -> Image.Image | None:
-    """Decodes image bytes, or returns None if there are none or they're broken."""
     if not data:
         return None
     try:
@@ -61,7 +57,6 @@ def open_image(data: bytes | None) -> Image.Image | None:
 
 
 def _corner_radii(radius: Corners, w: float, h: float) -> tuple[float, float, float, float]:
-    """Top-left, top-right, bottom-right, bottom-left radii, with `Radius.FULL` resolved to half the shorter side."""
     full = min(w, h) / 2
     tl, tr, br, bl = (
         full if r == Radius.FULL else min(r, full)
@@ -71,7 +66,6 @@ def _corner_radii(radius: Corners, w: float, h: float) -> tuple[float, float, fl
 
 
 def _rounded_outline(x0: float, y0: float, x1: float, y1: float, radii: tuple[float, ...]) -> list[tuple[float, float]]:
-    """The outline of a rectangle whose corners each have their own radius, as polygon points."""
     tl, tr, br, bl = radii
     points: list[tuple[float, float]] = []
     for cx, cy, r, start in (
@@ -88,8 +82,6 @@ def _rounded_outline(x0: float, y0: float, x1: float, y1: float, radii: tuple[fl
 
 
 class Canvas:
-    """A drawing surface measured in px. Transparent unless given a background."""
-
     def __init__(self, width: float, height: float, background: RGB | None = None):
         self.width, self.height = width, height
         fill = (*background, 255) if background else (0, 0, 0, 0)
@@ -106,13 +98,11 @@ class Canvas:
         fill: RGB | None = None,
         radius: Corners = 0,
     ) -> None:
-        """A rectangle, rounded by one radius or by one per corner (top-left first, clockwise)."""
         radii = _corner_radii(radius, w, h)
         box = (x * _K, y * _K, (x + w) * _K - 1, (y + h) * _K - 1)
         if len(set(radii)) == 1:
             self._draw.rounded_rectangle(box, radius=radii[0] * _K, fill=fill)
             return
-        # Pillow rounds every corner the same, so mixed corners are traced as a polygon
         if fill:
             self._draw.polygon(_rounded_outline(*box, tuple(r * _K for r in radii)), fill=fill)
 
@@ -137,7 +127,6 @@ class Canvas:
             self._draw.ellipse((px * _K - half, py * _K - half, px * _K + half, py * _K + half), fill=color)
 
     def picture(self, image: Image.Image, x: float, y: float, w: float, h: float, *, radius: float = 0) -> None:
-        """Pastes an image cropped to fill the box, with rounded corners when `radius` is set."""
         size = (round(w * _K), round(h * _K))
         fitted = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
         mask = Image.new("L", size, 0)
@@ -150,8 +139,6 @@ class Canvas:
         )
 
     def text(self, x: float, y: float, text: str, style: TextStyle, color: RGB) -> None:
-        """Draws one line of text vertically centered in a line box of `style.line_height`, starting at (x, y)."""
-        # Every run sits on the family font's baseline, so fallback fonts with other metrics stay in line
         line = (y + baseline(style)) * _K
         spacing = style.tracking * style.size * _K
         pen = x * _K
@@ -161,7 +148,6 @@ class Canvas:
                 self._draw.text((pen, line), chunk, font=_font(name, style), embedded_color=True, anchor="ls")
                 pen += _run_width(name, chunk, style)
             elif spacing:
-                # Pillow has no letter spacing, so tracked text goes one character at a time like CSS spaces it
                 for char in chunk:
                     self._draw.text((pen, line), char, font=_font(name, style), fill=color, anchor="ls")
                     pen += _run_width(name, char, style)

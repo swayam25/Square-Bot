@@ -19,8 +19,6 @@ manual_cancels = set()
 
 
 class TaskManagerView(DesignerView):
-    """View for managing running eval tasks."""
-
     def __init__(self, eval_cog, ctx: commands.Context, page: int = 1):
         super().__init__(ctx=ctx, check_author_interaction=True)
         self.eval_cog = eval_cog
@@ -40,23 +38,19 @@ class TaskManagerView(DesignerView):
             self.add_item(container)
             return
 
-        # Main container with tasks
         container = ui.Container()
         container.add_item(ui.TextDisplay("## Running Eval Tasks"))
 
-        # Calculate pagination
         total_pages = max(1, (total_tasks + self.items_per_page - 1) // self.items_per_page)
         start_idx = (self.page - 1) * self.items_per_page
         end_idx = start_idx + self.items_per_page
         page_tasks = tasks_list[start_idx:end_idx]
 
-        # Add task items
         for task_id, (task, task_ctx) in page_tasks:
             sec = ui.Section()
             status = "Starting" if task is None else ("Completed" if task.done() else "Running")
             sec.add_item(ui.TextDisplay(f"**Task `{task_id}`** [{status}]: {task_ctx.channel.mention}\n"))
 
-            # Delete button
             delete_btn = ui.Button(emoji=emoji.bin_white, style=discord.ButtonStyle.grey, custom_id=f"delete_{task_id}")
             delete_btn.callback = lambda i, tid=task_id: self._delete_task(i, tid)
             sec.set_accessory(delete_btn)
@@ -68,27 +62,22 @@ class TaskManagerView(DesignerView):
 
         self.add_item(container)
 
-        # Control buttons
         self._add_control_buttons(total_pages)
 
     def _add_control_buttons(self, total_pages):
-        """Add pagination and control buttons."""
         row2 = ui.ActionRow()
 
         if total_pages > 1:
             self.add_item(row1 := ui.ActionRow())
-            # Pagination buttons (if needed)
             for emoji_icon, action in [(emoji.start_white, "start"), (emoji.previous_white, "previous")]:
                 btn = ui.Button(emoji=emoji_icon, style=discord.ButtonStyle.grey)
                 btn.callback = lambda i, a=action: self._paginate(i, a)
                 row1.add_item(btn)
-            # More pagination buttons
             for emoji_icon, action in [(emoji.next_white, "next"), (emoji.end_white, "end")]:
                 btn = ui.Button(emoji=emoji_icon, style=discord.ButtonStyle.grey)
                 btn.callback = lambda i, a=action: self._paginate(i, a)
                 row1.add_item(btn)
 
-        # Control buttons
         for emoji_icon, label, callback, disabled in [
             (emoji.bin_white, "Stop All", self._stop_all, False),
             (None, "‎ ", None, True),
@@ -100,7 +89,6 @@ class TaskManagerView(DesignerView):
         self.add_item(row2)
 
     async def _delete_task(self, interaction: discord.Interaction, task_id: int):
-        """Delete a specific task."""
         success = self.eval_cog.stop_task(task_id)
         embed_view = DesignerView(
             ui.Container(
@@ -117,7 +105,6 @@ class TaskManagerView(DesignerView):
         await interaction.followup.send(view=embed_view, ephemeral=True)
 
     async def _stop_all(self, interaction: discord.Interaction):
-        """Stop all running tasks."""
         stopped_count = self.eval_cog.stop_all_tasks()
         self.clear_items()
         container = ui.Container(
@@ -129,13 +116,11 @@ class TaskManagerView(DesignerView):
         await interaction.delete_original_response(delay=5)
 
     async def _reload_tasks(self, interaction: discord.Interaction):
-        """Refresh the task list."""
         self.eval_cog.cleanup_completed_tasks()
         self.build()
         await interaction.edit(view=self)
 
     async def _paginate(self, interaction: discord.Interaction, action: str):
-        """Handle pagination."""
         total_tasks = len(running_tasks)
         total_pages = max(1, (total_tasks + self.items_per_page - 1) // self.items_per_page)
 
@@ -158,22 +143,18 @@ class Eval(Cog):
     def __init__(self, client: Client):
         self.client = client
 
-    # Task Management Methods (previously in TaskManager class)
     def add_task(self, task, ctx):
-        """Add a task to the running tasks."""
         task_id = max(running_tasks.keys(), default=0) + 1
         running_tasks[task_id] = (task, ctx)
         return task_id
 
     def cleanup_completed_tasks(self):
-        """Clean up completed tasks."""
         completed_ids = [task_id for task_id, (task, _) in running_tasks.items() if task is not None and task.done()]
         for task_id in completed_ids:
             manual_cancels.discard(task_id)
             del running_tasks[task_id]
 
     def stop_all_tasks(self):
-        """Stop all running tasks."""
         stopped_count = 0
         for task_id, (task, _) in list(running_tasks.items()):
             if task is not None and not task.done():
@@ -184,7 +165,6 @@ class Eval(Cog):
         return stopped_count
 
     def stop_task(self, task_id):
-        """Stop a specific task."""
         if task_id in running_tasks:
             task, _ = running_tasks[task_id]
             if task is not None and not task.done():
@@ -194,10 +174,8 @@ class Eval(Cog):
             return True
         return False
 
-    # Code Processing Methods (previously in CodeProcessor class)
     @staticmethod
     def clean_code_block(code: str) -> str:
-        """Extract code from Discord code blocks."""
         code = code.strip()
         if code.startswith("```") and code.endswith("```"):
             code = code[3:-3].strip()
@@ -209,15 +187,11 @@ class Eval(Cog):
 
     @staticmethod
     def is_simple_message(code: str) -> bool:
-        """Check if code is a simple message."""
         return not any(char in code for char in "()=+-*/[]{}")
 
-    # Code Execution Methods (previously in CodeExecutor class)
     def create_execution_env(self, ctx):
-        """Create execution environment."""
 
         async def fetch(url, method="GET", **kwargs):
-            """Simple HTTP utility function for eval environment."""
             async with aiohttp.ClientSession() as session:
                 async with session.request(method, url, **kwargs) as response:
                     content_type = response.headers.get("content-type", "")
@@ -241,7 +215,6 @@ class Eval(Cog):
         }
 
     async def execute_code(self, code: str, env: dict, timeout: float = 30.0):
-        """Execute code with timeout."""
         stdout = sys.stdout
         sys.stdout = output_buffer = StringIO()
         try:
@@ -256,7 +229,6 @@ class Eval(Cog):
             sys.stdout = stdout
 
     async def execute_background_task(self, code: str, env: dict, ctx: commands.Context, task_id: int):
-        """Execute code as background task."""
         try:
             output, result = await self.execute_code(code, env, timeout=None)
             await self.send_task_result(ctx, task_id, output, result)
@@ -277,7 +249,6 @@ class Eval(Cog):
             running_tasks.pop(task_id, None)
 
     async def send_task_result(self, ctx, task_id, output, result):
-        """Send task completion result."""
         response = f"{emoji.success} Task `{task_id}` completed.\n"
         if output:
             response += f"{emoji.console_green} **Output**:\n```sh\n{output}\n```\n"
@@ -287,7 +258,6 @@ class Eval(Cog):
         return await self.send_result(ctx, response, output, result, task_id)
 
     async def send_result(self, ctx, response: str, output: str = "", result=None, task_id: int = None):
-        """Send result with file attachment if too large."""
         if len(response) > 2000:
             full_content = str(output or result) if output or result else ""
             filename = f"task_{task_id}_output.txt" if task_id else "eval_output.txt"
@@ -297,9 +267,7 @@ class Eval(Cog):
             view = DesignerView(ui.Container(ui.TextDisplay(response), color=config.color.green))
             return await ctx.send(view=view, delete_after=0.5)
 
-    # Command Handlers
     async def handle_control_commands(self, ctx: commands.Context, code: str):
-        """Handle stop and list commands."""
         code_lower = code.lower()
 
         if code_lower in ["stop", "cancel", "kill"]:
@@ -328,7 +296,7 @@ class Eval(Cog):
             return
         code = self.clean_code_block(code)
         if self.is_simple_message(code):
-            await ctx.message.delete()  # Delete original message
+            await ctx.message.delete()
             if getattr(ctx.message, "reference", None) and getattr(ctx.message.reference, "message_id", None):
                 return await ctx.send(
                     code,
@@ -338,9 +306,9 @@ class Eval(Cog):
                 )
             return await ctx.send(code, allowed_mentions=discord.AllowedMentions().all())
         env = self.create_execution_env(ctx)
-        task_id = self.add_task(None, ctx)  # Reserve ID first
+        task_id = self.add_task(None, ctx)
         task = asyncio.create_task(self.execute_background_task(code, env, ctx, task_id))
-        running_tasks[task_id] = (task, ctx)  # Update with actual task
+        running_tasks[task_id] = (task, ctx)
         self.cleanup_completed_tasks()
 
         view = DesignerView(

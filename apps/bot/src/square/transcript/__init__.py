@@ -1,5 +1,3 @@
-"""Discord-style HTML transcripts of a channel's messages, used for ticket logs and deleted-message logs."""
-
 from __future__ import annotations
 
 import asyncio
@@ -35,7 +33,6 @@ log = logging.getLogger(__name__)
 TEMPLATES = Path(__file__).parent / "templates"
 # Discord's attachment links expire after about a day, so images are copied into the file up to this many bytes
 IMAGE_BUDGET = 8 * 1024 * 1024
-# Discord starts a new author block after this long, even for the same author
 GROUP_WINDOW = datetime.timedelta(minutes=7)
 
 _env = Environment(loader=FileSystemLoader(TEMPLATES), autoescape=select_autoescape(["html"]))
@@ -46,8 +43,8 @@ class Attachment:
     name: str
     url: str
     size: str
-    kind: str = "file"  # image, video, audio or file
-    src: str = ""  # What the page loads, a data URI when the image was copied into the file
+    kind: str = "file"
+    src: str = ""
     width: int | None = None
     height: int | None = None
 
@@ -66,7 +63,6 @@ class Embed:
     footer: str | None
     footer_icon: str | None
     time: datetime.datetime | None
-    # A bare image or GIF link shows as the media alone, like Discord does
     media: tuple[str, str] | None = None  # (kind, url)
 
 
@@ -89,8 +85,6 @@ class Person:
 
 @dataclass
 class Component:
-    """A message component flattened for `components.html`, which draws it by `kind`."""
-
     kind: str  # container, text, section, thumbnail, gallery, file, separator, row, button or select
     children: list[Component] = field(default_factory=list)
     accessory: Component | None = None
@@ -101,7 +95,7 @@ class Component:
     style: str = ""
     url: str | None = None
     media: list[str] = field(default_factory=list)
-    items: list[Attachment] = field(default_factory=list)  # A gallery's pictures and videos
+    items: list[Attachment] = field(default_factory=list)
     size: str = ""
     disabled: bool = False
     divider: bool = False
@@ -114,8 +108,8 @@ class Message:
     time: datetime.datetime
     content: Markup
     edited: bool = False
-    system: str = ""  # The gutter icon for a system message: join, pin, boost or other
-    unknown: bool = False  # Deleted before the bot cached it, so only its ID and time are known
+    system: str = ""
+    unknown: bool = False
     reply: Reply | None = None
     reply_deleted: bool = False
     attachments: list[Attachment] = field(default_factory=list)
@@ -127,10 +121,10 @@ class Message:
 
 @dataclass
 class Group:
-    author: Person | None  # None for messages that weren't cached
+    author: Person | None
     bot: bool
     messages: list[Message]
-    day: datetime.date | None = None  # Set when the group starts a new day, for the divider above it
+    day: datetime.date | None = None
 
 
 def _size(num_bytes: int) -> str:
@@ -156,7 +150,6 @@ def _kind(content_type: str | None) -> str:
 
 
 def _component_text(components: Sequence) -> str:
-    """Text inside a components-v2 message (text displays, nested in containers and sections)."""
     parts = []
     for component in components:
         if (content := getattr(component, "content", None)) and isinstance(content, str):
@@ -186,11 +179,6 @@ def _emoji(emoji: discord.PartialEmoji | None) -> Markup:
 def _components(
     components: Sequence[DiscordComponent], lookups: Lookups, images: dict[int, str], drawn: set[int]
 ) -> list[Component]:
-    """
-    Converts message components for the template.
-
-    Files the components show are added to `drawn`, so they aren't listed again as plain attachments.
-    """
 
     def media(item: UnfurledMediaItem) -> str:
         if item.attachment_id:
@@ -260,7 +248,6 @@ def _lookups(guild: discord.Guild) -> Lookups:
 
 
 async def _copy_images(messages: Sequence[discord.Message], budget: int) -> dict[int, str]:
-    """Downloads image attachments as data URIs, oldest first, until the budget is spent."""
     picked: list[discord.Attachment] = []
     for message in messages:
         for attachment in message.attachments:
@@ -277,7 +264,7 @@ async def _copy_images(messages: Sequence[discord.Message], budget: int) -> dict
             try:
                 data = await attachment.read()
             except discord.HTTPException:
-                return attachment.id, None  # Already gone, it stays a link
+                return attachment.id, None
         return attachment.id, f"data:{attachment.content_type};base64,{base64.b64encode(data).decode()}"
 
     return {key: uri for key, uri in await asyncio.gather(*(fetch(a) for a in picked)) if uri}
@@ -378,7 +365,6 @@ def _reactions(message: discord.Message) -> list[tuple[Markup, int]]:
 
 
 def _group(entries: list[tuple[discord.User | discord.Member | None, Message]]) -> list[Group]:
-    """Runs of messages shown under one author header, split the way Discord splits them."""
     groups: list[Group] = []
     for author, message in entries:
         previous = groups[-1] if groups else None
@@ -412,17 +398,6 @@ async def render_transcript(
     summary: Sequence[tuple[str, str]] = (),
     unknown_ids: Iterable[int] = (),
 ) -> str:
-    """
-    Renders messages as a self-contained HTML page that looks like the Discord channel.
-
-    Args:
-        messages: The messages, in any order.
-        guild (:class:`discord.Guild`): Their guild, used for names, roles and the upload size limit.
-        channel_name (str): Shown in the header.
-        title (str): The page heading, e.g. "Ticket #0042".
-        summary: Label and value pairs shown under the heading, e.g. who opened and closed a ticket.
-        unknown_ids: IDs of messages that weren't cached, shown with only their time.
-    """
     ordered = sorted(messages, key=lambda m: m.id)
     budget = min(IMAGE_BUDGET, guild.filesize_limit - 2 * 1024 * 1024)
     images = await _copy_images(ordered, budget)
@@ -471,6 +446,5 @@ def _page(
 
 
 async def transcript_file(filename: str, *args, **kwargs) -> discord.File:
-    """`render_transcript` as a file ready to send, e.g. `ticket-0042.html`."""
     page = await render_transcript(*args, **kwargs)
     return discord.File(io.BytesIO(page.encode()), filename=filename)

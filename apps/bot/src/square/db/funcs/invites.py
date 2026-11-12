@@ -20,18 +20,10 @@ class InviteCounts:
         return self.regular + self.bonus
 
 
-# Still in the server and not a fake account: the invites that count
 _REGULAR = Q(left_at__isnull=True, fake=False)
 
 
 async def set_fake_days(guild_id: int, days: int) -> None:
-    """
-    Sets how young an account can be when it joins before it counts as fake.
-
-    Args:
-        guild_id (int): The guild ID to perform action on.
-        days (int): The minimum account age in days.
-    """
     guild = await fetch_guild_settings(guild_id)
     guild.invite_fake_days = days
     await guild.save(update_fields=["invite_fake_days"])
@@ -39,18 +31,6 @@ async def set_fake_days(guild_id: int, days: int) -> None:
 
 
 async def record_join(guild_id: int, member: discord.Member, inviter_id: int | None, code: str | None) -> bool:
-    """
-    Records who invited a member. A rejoin updates the same row, so leaving and rejoining can't inflate counts.
-
-    Args:
-        guild_id (int): The guild ID to perform action on.
-        member (:class:`discord.Member`): The member who joined.
-        inviter_id (int | None): Who created the invite, if known.
-        code (str | None): The invite code, if known.
-
-    Returns:
-        bool: Whether the account counts as fake (younger than the guild's threshold).
-    """
     joined_at = member.joined_at or discord.utils.utcnow()
     fake = (joined_at - member.created_at).days < cache.get(guild_id).invite_fake_days
     guild = await fetch_guild_settings(guild_id)
@@ -63,26 +43,12 @@ async def record_join(guild_id: int, member: discord.Member, inviter_id: int | N
 
 
 async def record_leave(guild_id: int, member_id: int) -> None:
-    """
-    Marks a member as gone, so they move from the inviter's regular count to left.
-
-    Args:
-        guild_id (int): The guild ID to perform action on.
-        member_id (int): The member who left.
-    """
     await InviteJoinTable.filter(guild__guild_id=guild_id, member_id=member_id, left_at__isnull=True).update(
         left_at=discord.utils.utcnow()
     )
 
 
 async def fetch_counts(guild_id: int, user_id: int) -> InviteCounts:
-    """
-    Counts a user's invites in one query, plus their bonus.
-
-    Args:
-        guild_id (int): The guild ID to perform action on.
-        user_id (int): The inviter.
-    """
     rows = (
         await InviteJoinTable.filter(guild__guild_id=guild_id, inviter_id=user_id)
         .annotate(
@@ -101,12 +67,6 @@ async def fetch_counts(guild_id: int, user_id: int) -> InviteCounts:
 
 
 async def fetch_leaderboard(guild_id: int) -> list[tuple[int, InviteCounts]]:
-    """
-    Every inviter's counts, highest total first.
-
-    Args:
-        guild_id (int): The guild ID to perform action on.
-    """
     rows = (
         await InviteJoinTable.filter(guild__guild_id=guild_id, inviter_id__isnull=False)
         .annotate(
@@ -128,7 +88,6 @@ async def fetch_leaderboard(guild_id: int) -> list[tuple[int, InviteCounts]]:
     )
 
 
-# Same order as `fetch_leaderboard`: highest total first, ties by user ID
 _RANK_SQL = """
 WITH totals AS (
     SELECT user_id, SUM(n)::bigint AS total
@@ -149,17 +108,6 @@ SELECT COUNT(*) AS ahead FROM totals WHERE total <> 0 AND (total > $3::bigint OR
 
 
 async def fetch_rank(guild_id: int, user_id: int, total: int) -> int | None:
-    """
-    A user's place on the leaderboard, counted in the database instead of loading every inviter.
-
-    Args:
-        guild_id (int): The guild ID to perform action on.
-        user_id (int): The inviter.
-        total (int): Their total from `fetch_counts`.
-
-    Returns:
-        int | None: The rank from 1, or None when they aren't on the leaderboard.
-    """
     if not total:
         return None
     rows = await connections.get("default").execute_query_dict(_RANK_SQL, [guild_id, user_id, total])
@@ -167,28 +115,10 @@ async def fetch_rank(guild_id: int, user_id: int, total: int) -> int | None:
 
 
 async def fetch_join(guild_id: int, member_id: int) -> InviteJoinTable | None:
-    """
-    How a member last joined: inviter, code and time.
-
-    Args:
-        guild_id (int): The guild ID to perform action on.
-        member_id (int): The member to look up.
-    """
     return await InviteJoinTable.filter(guild__guild_id=guild_id, member_id=member_id).first()
 
 
 async def add_bonus(guild_id: int, user_id: int, amount: int) -> int:
-    """
-    Adds (or with a negative amount, removes) bonus invites.
-
-    Args:
-        guild_id (int): The guild ID to perform action on.
-        user_id (int): Who gets the bonus.
-        amount (int): How many invites to add.
-
-    Returns:
-        int: The user's new bonus.
-    """
     guild = await fetch_guild_settings(guild_id)
     row, _ = await InviteBonusTable.get_or_create(guild=guild, user_id=user_id)
     row.amount += amount
@@ -197,13 +127,6 @@ async def add_bonus(guild_id: int, user_id: int, amount: int) -> int:
 
 
 async def reset_invites(guild_id: int, user_id: int | None = None) -> None:
-    """
-    Clears a user's invites and bonus as an inviter, or everyone's when no user is given.
-
-    Args:
-        guild_id (int): The guild ID to perform action on.
-        user_id (int | None): The inviter to reset, or None for the whole guild.
-    """
     guild = await GuildTable.filter(guild_id=guild_id).first()
     if not guild:
         return

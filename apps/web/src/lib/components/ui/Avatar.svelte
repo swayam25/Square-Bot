@@ -14,7 +14,6 @@
         return (crc ^ 0xffffffff) >>> 0;
     }
 
-    // Same as the bot: NFKC folds styled letters like 𝓶 into plain ones
     function initial(name: string) {
         return (
             name

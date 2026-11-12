@@ -23,15 +23,12 @@ class GuildSettings:
     log_channels: dict[str, int] = field(default_factory=dict)
 
 
-# Every guild's settings, loaded once at startup and kept in sync by the `db.funcs` setters, so events never wait on
-# the database. Guilds without a row read the shared default.
 _settings: dict[int, GuildSettings] = {}
 _DEFAULT = GuildSettings()
 _GUILD_COLUMNS = tuple(f.name for f in fields(GuildSettings) if f.name not in ("dj_roles", "log_channels"))
 
 
 async def load() -> None:
-    """Loads every guild's settings, log channels and DJ roles with one query each."""
     _settings.clear()
     for row in await GuildTable.all().values("guild_id", *_GUILD_COLUMNS):
         guild_id = row.pop("guild_id")
@@ -55,39 +52,32 @@ def get(guild_id: int) -> GuildSettings:
 
 
 def entry(guild_id: int) -> GuildSettings:
-    """A guild's mutable settings entry, created if missing. Only for the `db.funcs` setters."""
     if (settings := _settings.get(guild_id)) is None:
         settings = _settings[guild_id] = GuildSettings()
     return settings
 
 
 def drop(guild_id: int) -> None:
-    """Forgets a guild whose row was deleted."""
     _settings.pop(guild_id, None)
 
 
 def enabled(guild_id: int, module: Module) -> bool:
-    """Whether a guild has the module turned on."""
     return module in get(guild_id).modules
 
 
 def guild_ids_with_module(module: Module) -> set[int]:
-    """IDs of every guild with the module turned on. Guilds without a row are left out, even for default modules."""
     return {guild_id for guild_id, settings in _settings.items() if module in settings.modules}
 
 
 def log_channel(guild_id: int, log_type: str) -> int | None:
-    """The channel a log type posts to, or None when it has none or logs are turned off."""
     return get(guild_id).log_channels.get(log_type) if enabled(guild_id, Module.LOGS) else None
 
 
 def guild_ids_with_ticket_panel() -> set[int]:
-    """IDs of every guild with an "Open a ticket" panel posted."""
     return {guild_id for guild_id, settings in _settings.items() if settings.ticket_panel_channel_id}
 
 
 def guild_ids_with_log(log_type: str) -> set[int]:
-    """IDs of every guild with logs on and a channel set for the log type."""
     return {
         guild_id
         for guild_id, settings in _settings.items()

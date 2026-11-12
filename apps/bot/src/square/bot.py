@@ -22,7 +22,6 @@ client = Client(
     description=metadata("square")["Summary"],
     command_prefix="",
     help_command=None,
-    # Every command works on server data, so none are offered in DMs where `ctx.guild` would be missing
     default_command_contexts={discord.InteractionContextType.guild},
 )
 invites.setup(client)
@@ -52,7 +51,6 @@ NAME = r"""
 
 
 def log_banner() -> None:
-    """Logs the startup banner: the logo with the name centered beside it, version after the name."""
     art = LOGO.strip("\n").splitlines()
     name = NAME.strip("\n").splitlines()
     width = max(map(len, art))
@@ -76,7 +74,6 @@ def load_cogs() -> None:
 
 
 async def shutdown() -> None:
-    """Shuts the bot down gracefully."""
     # The API stops first, so no request is mid-way when the database closes
     await api.stop()
     await DB().close()
@@ -103,7 +100,7 @@ def run() -> None:
         if sys.platform == "win32":
             asyncio.run(main())
         else:
-            import uvloop  # Faster event loop; it doesn't support Windows
+            import uvloop
 
             uvloop.run(main())
     except KeyboardInterrupt:

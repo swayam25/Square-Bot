@@ -20,7 +20,6 @@ class MassModeration(
     def __init__(self, client: Client):
         self.client = client
 
-    # Mass slash cmd group
     mass = SlashCommandGroup(
         name="mass",
         description="Mass moderation commands.",
@@ -43,7 +42,6 @@ class MassModeration(
         check: Callable[[discord.Member], str | None] | None = None,
         convert: Callable[[str], Awaitable[discord.abc.User]] | None = None,
     ) -> tuple[list, list[tuple]] | None:
-        """Resolves the given users, returning the valid ones and errors, or `None` if over the limit."""
         if len(users.split()) > 10:
             await ctx.respond(view=error_view(f"You can only mass {verb} upto 10 users."), ephemeral=True)
             return None
@@ -77,7 +75,6 @@ class MassModeration(
         def icon(name: str) -> str:
             return getattr(emoji, f"{name}{suffix}")
 
-        # Logs (with a moderator) read like the logging cog: title and fields only.
         lines = [] if moderator else [f"Successfully {summary} {len(users)} users."]
         lines += [f"{icon(name)} **{label}**: {value}" for name, label, value in fields]
         lines.append(f"{icon('user')} **Users**: {', '.join(users)}")
@@ -103,9 +100,7 @@ class MassModeration(
         fields: list[tuple[str, str, str]],
         log_color: int | None,
     ):
-        """Runs the action on every target, then reports results, logs them and lists errors."""
         done: list[str] = []
-        # Sent together, the HTTP client still queues them per Discord's rate limits
         results = await asyncio.gather(*(action(target) for target in targets), return_exceptions=True)
         for target, result in zip(targets, results, strict=True):
             if isinstance(result, discord.HTTPException):
@@ -128,7 +123,6 @@ class MassModeration(
             )
             await ctx.respond(view=view, ephemeral=True)
 
-    # Mass kick
     @mass.command(name="kick")
     @option("users", description='Mention the users whom you want to kick. Use " " to separate users.', required=True)
     @option("reason", description="Enter the reason for kicking the user", required=False)
@@ -147,7 +141,6 @@ class MassModeration(
                 log_color=config.color.orange,
             )
 
-    # Mass ban
     @mass.command(name="ban")
     @option("users", description='Mention the users whom you want to ban. Use " " to separate users.', required=True)
     @option(
@@ -184,7 +177,6 @@ class MassModeration(
                 log_color=config.color.red,
             )
 
-    # Mass unban
     @mass.command(name="unban")
     @option(
         "users", description='Enter the user IDs whom you want to unban. Use " " to separate user IDs.', required=True
@@ -212,7 +204,6 @@ class MassModeration(
                 log_color=config.color.green,
             )
 
-    # Mass timeout users
     @mass.command(name="timeout")
     @option(
         "users", description='Mention the users whom you want to timeout. Use " " to separate users.', required=True
@@ -250,7 +241,6 @@ class MassModeration(
                 log_color=config.color.orange,
             )
 
-    # Mass untimeout users
     @mass.command(name="untimeout")
     @option(
         "users", description='Mention the users whom you want to untimeout. Use " " to separate users.', required=True
@@ -272,7 +262,6 @@ class MassModeration(
             )
 
     async def _mass_role(self, ctx: discord.ApplicationContext, users: str, roles: str, add: bool):
-        """Adds or removes the given roles for the given users."""
         await ctx.defer()
         verb, past, prep = ("add", "added", "to") if add else ("remove", "removed", "from")
         if len(users.split()) > 10 or len(roles.split()) > 10:
@@ -306,7 +295,6 @@ class MassModeration(
             log_color=None,
         )
 
-    # Mass role add
     @mass.command(name="role-add")
     @option(
         "users",
@@ -322,7 +310,6 @@ class MassModeration(
         """Adds mentioned roles to mentioned users."""
         await self._mass_role(ctx, users, roles, add=True)
 
-    # Mass role remove
     @mass.command(name="role-remove")
     @option(
         "users",

@@ -22,7 +22,6 @@
     const presetsQuery = $derived(music.eqPresets(guild));
     const presets = $derived(presetsQuery.current);
 
-    // Presets on one Lavalink filter replace each other, so they're grouped
     const SLOT_TITLES: Record<string, string> = { equalizer: "Tone", timescale: "Speed and pitch" };
     type Group = { title: string; hint: string; presets: EqPreset[] };
     const groups = $derived.by(() => {

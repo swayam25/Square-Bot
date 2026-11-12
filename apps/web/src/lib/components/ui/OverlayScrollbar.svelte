@@ -1,11 +1,9 @@
 <script lang="ts">
-    // Draws over `viewport` from their shared positioned parent. The page itself uses PageScrollbar instead.
     let {
         viewport,
         inset = 4,
     }: {
         viewport: HTMLElement | null | undefined;
-        // Keeps the thumb clear of rounded corners
         inset?: number;
     } = $props();
 
@@ -38,7 +36,6 @@
 
     $effect(() => {
         const el = viewport;
-        // Touch screens already draw a thin overlay bar of their own
         if (!el || !matchMedia("(pointer: fine)").matches) return;
         enabled = true;
         el.dataset.overlayScrollbar = "";

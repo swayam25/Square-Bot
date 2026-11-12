@@ -15,29 +15,17 @@ def _offset(align: Align, free: float) -> float:
 
 
 class Node(ABC):
-    """
-    One piece of an image. A parent decides each child's width, the child reports the height it needs.
-
-    Nodes with a natural width (text, avatars, fixed boxes) report it from `natural_width`, so rows can size them
-    before sharing what's left between the flexible ones.
-    """
+    @abstractmethod
+    def measure(self, width: float) -> float: ...
 
     @abstractmethod
-    def measure(self, width: float) -> float:
-        """The height this node needs at `width` px."""
-
-    @abstractmethod
-    def draw(self, canvas: Canvas, x: float, y: float, width: float, height: float) -> None:
-        """Draws into the box. `height` is at least what `measure` returned, more when a parent stretches it."""
+    def draw(self, canvas: Canvas, x: float, y: float, width: float, height: float) -> None: ...
 
     def natural_width(self) -> float | None:
-        """The width this node wants, or None to take whatever space it's given."""
         return None
 
 
 class Text(Node):
-    """A single line of text, cut with an ellipsis when it doesn't fit."""
-
     def __init__(self, text: str, style: TextStyle, color: RGB, *, align: Align = "start"):
         self.text, self.style, self.color, self.align = text, style, color, align
 
@@ -59,8 +47,6 @@ class Text(Node):
 
 
 class Picture(Node):
-    """An image cropped to a fixed size."""
-
     def __init__(self, image: Image.Image, width: float, height: float | None = None, *, radius: float = 0):
         self.image, self.width, self.height, self.radius = image, width, height or width, radius
 
@@ -75,12 +61,6 @@ class Picture(Node):
 
 
 class Stack(Node):
-    """
-    A node with others drawn over it, each at an offset from its top-left corner, like a badge on an avatar.
-
-    Takes the base's size, so the layers can hang outside it without moving anything around it.
-    """
-
     def __init__(self, base: Node, *layers: tuple[Node, float, float]):
         self.base, self.layers = base, layers
 
@@ -101,8 +81,6 @@ class Stack(Node):
 
 
 class Spacer(Node):
-    """Empty space. With no width it pushes its row siblings apart."""
-
     def __init__(self, height: float = 0, width: float | None = None):
         self.height, self.width = height, width
 
@@ -117,8 +95,6 @@ class Spacer(Node):
 
 
 class Box(Node):
-    """Padding around one child, with an optional rounded background."""
-
     def __init__(
         self,
         child: Node,
@@ -166,8 +142,6 @@ class Box(Node):
 
 
 class Column(Node):
-    """Children stacked top to bottom. `align` places children narrower than the column."""
-
     def __init__(self, *children: Node | None, gap: float = 0, align: Align | Literal["stretch"] = "stretch"):
         self.children = [child for child in children if child is not None]
         self.gap, self.align = gap, align
@@ -190,7 +164,7 @@ class Column(Node):
         fills = sum(isinstance(child, Fill) for child in self.children)
         spare = max(height - self.measure(width), 0) / fills if fills else 0
         for child in self.children:
-            if isinstance(child, Fill):  # No gap of its own, so a column with nothing to fill looks unchanged
+            if isinstance(child, Fill):
                 y += spare
                 continue
             child_w = self._width_of(child, width)
@@ -201,13 +175,6 @@ class Column(Node):
 
 
 class Row(Node):
-    """
-    Children left to right. Ones with a natural width get it, the rest split the remaining space evenly.
-
-    `align` places children shorter than the row, "stretch" makes them all as tall as the tallest, and "baseline"
-    lines up the text children's baselines like CSS `items-baseline`.
-    """
-
     def __init__(
         self, *children: Node | None, gap: float = 0, align: Align | Literal["stretch", "baseline"] = "center"
     ):
@@ -218,7 +185,6 @@ class Row(Node):
         naturals = [child.natural_width() for child in self.children]
         fixed = sum(w for w in naturals if w is not None) + self.gap * max(len(naturals) - 1, 0)
         if fixed > width and any(w is not None for w in naturals):
-            # Too much to fit: the widest child gives up the overflow, so its text gets an ellipsis
             widest = max((i for i, w in enumerate(naturals) if w is not None), key=lambda i: naturals[i])
             naturals[widest] = max(naturals[widest] - (fixed - width), 0)
             fixed = width
@@ -227,7 +193,6 @@ class Row(Node):
         return [share if w is None else w for w in naturals]
 
     def _drops(self) -> list[float]:
-        """For "baseline": how far each child moves down so every baseline meets the lowest one."""
         lines = [child.baseline() if isinstance(child, Text) else 0 for child in self.children]
         return [max(lines, default=0) - line for line in lines]
 
@@ -256,13 +221,6 @@ class Row(Node):
 
 
 class SplitBar(Node):
-    """
-    A thick pill split into parts sized by value, like a stats breakdown: `h-10 p-1` with `gap-1` between parts.
-
-    Parts keep a minimum width so a tiny share still shows. The outer ends are fully round and the inner corners
-    `rounded-lg`, so neighbouring parts read as one bar. `label` is written inside the first part when it fits.
-    """
-
     def __init__(
         self,
         segments: list[tuple[float, RGB]],
@@ -283,7 +241,6 @@ class SplitBar(Node):
         return self.height
 
     def _widths(self, width: float) -> list[float]:
-        """Shares of `width` by value, like CSS flex-grow with a min-width: clamped parts drop out and the rest re-split."""
         values = [value for value, _ in self.segments]
         widths = [0.0] * len(values)
         clamped: set[int] = set()
@@ -317,14 +274,6 @@ class SplitBar(Node):
 
 
 class Progress(Node):
-    """
-    A track's progress: the played part, a gap, the rest of the track, and a dot marking the end.
-
-    `wavy` draws the played part as a wave, the way a playing track looks, and a flat line when paused. At `value` 1
-    (a live stream) the wave runs the full width with no track. The geometry is the website's `WavyProgress` at rest:
-    a stroke of `thickness`, a sine wave `wavelength` long and `amplitude` high sampled every 2 px, first going up.
-    """
-
     def __init__(
         self,
         value: float,
@@ -347,7 +296,6 @@ class Progress(Node):
         return self.height
 
     def _wave(self, origin: float, start: float, end: float, mid: float) -> list[tuple[float, float]]:
-        """The sine from `start` to `end`, its phase counted from the bar's left edge `origin` like the SVG's x."""
         points: list[tuple[float, float]] = []
         at = start
         while at < end + 2:
@@ -358,10 +306,8 @@ class Progress(Node):
 
     def draw(self, canvas: Canvas, x: float, y: float, width: float, height: float) -> None:
         mid, t = y + height / 2, self.thickness
-        # Both ends sit 3 px in, so the round caps and the end dot stay inside the box
         start = x + 3
         played = start + self.value * (width - 6)
-        # Like the website, a bar at 0 still shows the played part's round cap as a dot
         if self.wavy and played > start:
             canvas.stroke(self._wave(x, start, played, mid), t, self.active)
         else:
@@ -378,8 +324,6 @@ class Progress(Node):
 
 
 class Fill(Node):
-    """Empty space that takes whatever height its column has left over, so content after it sits at the bottom."""
-
     def measure(self, width: float) -> float:
         return 0
 
@@ -388,8 +332,6 @@ class Fill(Node):
 
 
 class Expand(Node):
-    """Drops a child's natural width so a row gives it a share of the free space. Equal-width columns use this."""
-
     def __init__(self, child: Node):
         self.child = child
 

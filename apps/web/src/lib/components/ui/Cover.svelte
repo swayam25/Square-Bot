@@ -4,7 +4,6 @@
 
     let { src, class: className, lazy = false }: { src: string | null | undefined; class?: ClassValue; lazy?: boolean } = $props();
 
-    // Resets whenever another picture comes in
     let broken = $derived.by(() => (void src, false));
 </script>
 

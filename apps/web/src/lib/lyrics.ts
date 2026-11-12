@@ -1,7 +1,5 @@
 import type { Lyrics, LyricWord } from "#lib/server/lyrics.ts";
 
-// The shape the player draws: backing vocals nest under their line, and long instrumental gaps
-// become interlude lines drawn as a music note
 export type SungLine = {
     start: number;
     end: number;
@@ -33,7 +31,6 @@ function splitWords(text: string) {
     return words;
 }
 
-// A line-timed line lights up in one quick sweep as it starts, at a steady pace per letter
 function sweepWords(text: string, start: number, span: number): LyricWord[] {
     const end = start + Math.min(span, Math.max(SWEEP_MIN_MS, Math.min(SWEEP_MAX_MS, text.length * SWEEP_MS_PER_CHAR)));
     const parts = splitWords(text);
@@ -57,7 +54,6 @@ export function sungLines(lyrics: Lyrics, durationMs: number): SungLine[] {
     main.forEach((line, i) => {
         let end = line.end;
         if (lyrics.sync === "line") {
-            // LRC only says when a line starts: it's sung at about its own pace, not stretched over a long gap
             const next = main[i + 1]?.start ?? (durationMs > line.start ? durationMs : line.start + 6000);
             const gap = next - line.start;
             end =
@@ -114,7 +110,6 @@ export type WordGlyphs = { text: string; tail: string; start: number; end: numbe
 const SPLITTABLE =
     /^[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Greek}\p{Script=Armenian}\p{Script=Georgian}\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Common}\p{Script=Inherited}]+$/u;
 const graphemes = typeof Intl !== "undefined" && "Segmenter" in Intl ? new Intl.Segmenter(undefined, { granularity: "grapheme" }) : null;
-// Letters fill a little into each other's time, so the light flows instead of stepping
 const OVERLAP = 1.8;
 const glyphCache = new WeakMap<SungLine, WordGlyphs[]>();
 

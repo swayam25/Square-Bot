@@ -22,7 +22,6 @@ export const load: PageServerLoad = async ({ locals, cookies, parent }) => {
     const [[discord], { guilds }] = await Promise.all([Promise.allSettled([manageableGuilds(session)]), parent()]);
 
     if (discord.status === "rejected") {
-        // The user removed Square from their Discord authorized apps
         if (discord.reason instanceof DiscordError && discord.reason.status === 401) {
             await deleteSession(cookies);
             redirect(303, "/login");

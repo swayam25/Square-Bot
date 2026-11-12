@@ -33,11 +33,10 @@ def _coverage(name: str) -> frozenset[int]:
 
 @cache
 def font(name: str, px: int, weight: int = 400) -> ImageFont.FreeTypeFont:
-    """Loads a bundled font, clamping `weight` to the font's weight axis when it has one."""
     loaded = ImageFont.truetype(str(_DIR / name), px)
     try:
         axes = loaded.get_variation_axes()
-    except OSError:  # Static font
+    except OSError:
         return loaded
     loaded.set_variation_by_axes(
         [
@@ -61,7 +60,6 @@ def _wants_emoji(char: str, following: str) -> bool:
 
 
 def runs(text: str, family: Family = "sans") -> list[tuple[str, str]]:
-    """Splits text into `(font name, substring)` runs using the first font in the chain that covers each character."""
     chain = CHAINS[family]
     result: list[tuple[str, str]] = []
     for index, char in enumerate(text):

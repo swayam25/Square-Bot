@@ -16,7 +16,6 @@ from typing import Annotated
 
 
 def secret_guard(secret: str) -> Guard:
-    """Lets a request through only with `Authorization: Bearer <secret>`, so only the dashboard server can call the API."""
     expected = f"Bearer {secret}".encode()
 
     def guard(connection: ASGIConnection, _: BaseRouteHandler) -> None:
@@ -51,7 +50,6 @@ GuildId = Annotated[str, Parameter(pattern=r"^\d{17,20}$", description="A Discor
 
 
 def provide_member_guild(client: Client, guild_id: GuildId, actor: int) -> discord.Guild:
-    """The guild, if the actor is a member of it. Enough for music, which has its own rules per control."""
     guild = client.get_guild(int(guild_id))
     # One answer for "bot isn't there" and "you aren't there", so neither is revealed
     if guild is None or guild.get_member(actor) is None:
@@ -60,7 +58,6 @@ def provide_member_guild(client: Client, guild_id: GuildId, actor: int) -> disco
 
 
 def provide_guild(client: Client, guild_id: GuildId, actor: int) -> discord.Guild:
-    """The guild, if the actor can manage it. Same rule as Discord: Manage Server, which admins and the owner have."""
     guild = provide_member_guild(client, guild_id, actor)
     member = guild.get_member(actor)
     if member is None or not member.guild_permissions.manage_guild:
@@ -69,7 +66,6 @@ def provide_guild(client: Client, guild_id: GuildId, actor: int) -> discord.Guil
 
 
 def provide_member(guild: discord.Guild, actor: int) -> discord.Member:
-    """The actor as a member of the guild. The guild dependency already checked they're in it."""
     if (member := guild.get_member(actor)) is None:
         raise NotFoundException("Guild not found")
     return member

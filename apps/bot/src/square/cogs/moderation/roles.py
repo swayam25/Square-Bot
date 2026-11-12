@@ -10,11 +10,8 @@ from square.utils.emoji import emoji
 
 
 class Roles:
-    """The `/role` command group: single members and bulk add or remove."""
-
     client: Client
 
-    # Role slash cmd group
     role = SlashCommandGroup(
         name="role",
         description="Role related commands.",
@@ -31,7 +28,6 @@ class Roles:
         target: str,
         check: Callable[[discord.Member], bool],
     ):
-        """Adds or removes the role for every member matching the check."""
         error = None
         if role.is_default() or role.managed:
             error = "Given role can't be assigned manually."
@@ -106,7 +102,6 @@ class Roles:
             else:
                 await msg.edit(view=view)
 
-    # Role add user
     @role_add.command(name="user")
     @option("user", description="Mention the user whom you want to add the role")
     @option("role", description="Mention the role which you will add to the user")
@@ -124,28 +119,24 @@ class Roles:
         view = success_view(f"Successfully added {role.mention} to {user.mention}.")
         await ctx.respond(view=view)
 
-    # Role add all
     @role_add.command(name="all")
     @option("role", description="Mention the role which you will add to all members")
     async def add_role_all(self, ctx: discord.ApplicationContext, role: discord.Role):
         """Adds the mentioned role to all members."""
         await self._bulk_role(ctx, role, add=True, target="members", check=lambda m: True)
 
-    # Role add bots
     @role_add.command(name="bots")
     @option("role", description="Mention the role which you will add to all bots")
     async def add_role_bots(self, ctx: discord.ApplicationContext, role: discord.Role):
         """Adds the mentioned role to all bots."""
         await self._bulk_role(ctx, role, add=True, target="bots", check=lambda m: m.bot)
 
-    # Role add humans
     @role_add.command(name="humans")
     @option("role", description="Mention the role which you will add to all humans")
     async def add_role_humans(self, ctx: discord.ApplicationContext, role: discord.Role):
         """Adds the mentioned role to all humans."""
         await self._bulk_role(ctx, role, add=True, target="humans", check=lambda m: not m.bot)
 
-    # Role remove user
     @role_remove.command(name="user")
     @option("user", description="Mention the user whom you want to remove the role")
     @option("role", description="Mention the role which you will remove from the user")
@@ -163,21 +154,18 @@ class Roles:
         view = success_view(f"Successfully removed {role.mention} from {user.mention}.")
         await ctx.respond(view=view)
 
-    # Role remove all
     @role_remove.command(name="all")
     @option("role", description="Mention the role which you will remove from all members")
     async def remove_role_all(self, ctx: discord.ApplicationContext, role: discord.Role):
         """Removes the mentioned role from all members."""
         await self._bulk_role(ctx, role, add=False, target="members", check=lambda m: True)
 
-    # Role remove bots
     @role_remove.command(name="bots")
     @option("role", description="Mention the role which you will remove from all bots")
     async def remove_role_bots(self, ctx: discord.ApplicationContext, role: discord.Role):
         """Removes the mentioned role from all bots."""
         await self._bulk_role(ctx, role, add=False, target="bots", check=lambda m: m.bot)
 
-    # Role remove humans
     @role_remove.command(name="humans")
     @option("role", description="Mention the role which you will remove from all humans")
     async def remove_role_humans(self, ctx: discord.ApplicationContext, role: discord.Role):

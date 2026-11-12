@@ -24,7 +24,6 @@ class _Colors(msgspec.Struct, forbid_unknown_fields=True):
 
 
 class ApiConfig(msgspec.Struct, rename="kebab", forbid_unknown_fields=True, frozen=True):
-    # Shared with the dashboard server only. 32+ characters, e.g. `openssl rand -hex 32`
     secret: Annotated[str, msgspec.Meta(min_length=32)]
     host: str = "127.0.0.1"
     port: Annotated[int, msgspec.Meta(ge=1, le=65535)] = 8080
@@ -40,16 +39,13 @@ class _Config(msgspec.Struct, rename="kebab", forbid_unknown_fields=True):
     bot_token: str
     database_url: str
     colors: _Colors
-    # A single `[lavalink]` table or an `[[lavalink]]` array of tables
     lavalink: list[LavalinkConfig] | LavalinkConfig
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     log_file: bool = False
-    # No `[api]` table means no API, so the bot also runs without the dashboard
     api: ApiConfig | None = None
 
 
 def _load() -> _Config:
-    """Loads `config.toml`, failing at startup with the offending key instead of deep inside a command."""
     try:
         with open(CONFIG_FILE_PATH, "rb") as file:
             return msgspec.toml.decode(file.read(), type=_Config)
@@ -62,12 +58,6 @@ def _load() -> _Config:
 
 
 def _resolve_db_url(url: str) -> str:
-    """
-    Override the database host with the `DB_HOST` env var if set.
-
-    Lets `config.toml` stay on the production host (`db`) while local
-    development connects to the published port via `DB_HOST=localhost`.
-    """
     host_override = os.getenv("DB_HOST")
     if not host_override:
         return url
@@ -90,7 +80,6 @@ class ColorConfig:
 
 _config = _load()
 
-# Bot configuration
 owner_id: int = _config.owner_id
 owner_guild_ids: list[int] = _config.owner_guild_ids
 system_channel_id: int = _config.system_channel_id
@@ -102,10 +91,8 @@ log_level: str = _config.log_level
 log_file: bool = _config.log_file
 api: ApiConfig | None = _config.api
 
-# Colors
 color = ColorConfig(
     **{key: int(value.lstrip("#"), 16) for key, value in msgspec.structs.asdict(_config.colors).items()}
 )
 
-# Lavalink node configuration
 lavalink: list[LavalinkConfig] = _config.lavalink if isinstance(_config.lavalink, list) else [_config.lavalink]

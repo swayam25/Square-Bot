@@ -25,7 +25,6 @@ class Moderation(
     def __init__(self, client: Client):
         self.client = client
 
-    # Kick
     @slash_command(name="kick")
     @discord.default_permissions(kick_members=True)
     @option("user", description="Mention the user whom you want to kick")
@@ -54,7 +53,6 @@ class Moderation(
             )
             await ctx.respond(view=view)
 
-    # Ban
     @slash_command(name="ban")
     @discord.default_permissions(ban_members=True)
     @option("user", description="Mention the user whom you want to ban.")
@@ -102,7 +100,6 @@ class Moderation(
             )
             await ctx.respond(view=view)
 
-    # Unban user
     @slash_command(name="unban")
     @discord.default_permissions(ban_members=True)
     @option("user_id", description="Enter the user ID whom you want to unban")
@@ -123,7 +120,6 @@ class Moderation(
             view = error_view(f"User with ID `{user_id}` not found.")
             await ctx.respond(view=view, ephemeral=True)
 
-    # Timeout user
     @slash_command(name="timeout")
     @discord.default_permissions(moderate_members=True)
     @option("user", description="Mention the user whom you want to timeout")
@@ -160,7 +156,6 @@ class Moderation(
             )
             await ctx.respond(view=view)
 
-    # Untimeout user
     @slash_command(name="untimeout")
     @discord.default_permissions(moderate_members=True)
     @option("user", description="Mention the user whom you want to untimeout")
@@ -210,7 +205,6 @@ class Moderation(
         )
         return channel
 
-    # Lock
     @slash_command(name="lock")
     @discord.default_permissions(manage_channels=True)
     @option("reason", description="Enter the reason for locking the channel", required=False)
@@ -229,7 +223,6 @@ class Moderation(
         )
         await ctx.respond(view=view)
 
-    # Unlock
     @slash_command(name="unlock")
     @discord.default_permissions(manage_channels=True)
     async def unlock(self, ctx: discord.ApplicationContext):

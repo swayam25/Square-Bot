@@ -40,8 +40,6 @@ def _names(names: Iterable[str]) -> str:
 
 @dataclass(slots=True)
 class Snapshot:
-    """`emojis/` next to the app's emojis. What's out of sync is worked out from these, without more requests."""
-
     files: dict[str, bytes]
     hashes: dict[str, str]
     skipped: dict[str, str]
@@ -63,7 +61,6 @@ class Snapshot:
 
     @property
     def removed(self) -> list[discord.AppEmoji]:
-        # A skipped file keeps its emoji
         return [
             app_emoji for name, app_emoji in self.remote.items() if name not in self.files and name not in self.skipped
         ]
@@ -75,7 +72,6 @@ class Snapshot:
 
 
 def _read_assets() -> tuple[dict[str, bytes], dict[str, str], dict[str, str], dict[str, dict]]:
-    """The emoji files with their hashes, the ones Discord would refuse and why, and the upload record."""
     files: dict[str, bytes] = {}
     skipped: dict[str, str] = {}
     for path in sorted(EMOJI_DIR.iterdir()):
@@ -104,12 +100,6 @@ async def scan(client: Client) -> Snapshot:
 
 
 async def apply(client: Client, snap: Snapshot, step: Callable[[], None]) -> dict[str, str]:
-    """
-    Makes the app's emojis match the files, updating `snap` as it goes, then applies them to the bot.
-
-    Returns:
-        dict[str, str]: The emojis that failed, with Discord's reason.
-    """
     failed: dict[str, str] = {}
     # py-cord sends one request per route at a time, so more than a delete and a create in flight isn't faster
     slots = asyncio.Semaphore(2)
@@ -147,8 +137,6 @@ async def apply(client: Client, snap: Snapshot, step: Callable[[], None]) -> dic
 
 
 class EmojiPanel(DesignerView):
-    """What a sync would change, the files that need attention, and the buttons to sync or check again."""
-
     def __init__(self, ctx: discord.ApplicationContext, client: Client, snap: Snapshot):
         super().__init__(ctx=ctx, check_author_interaction=True, timeout=600)
         self.bot = client  # `client` is taken by py-cord's view
@@ -157,7 +145,6 @@ class EmojiPanel(DesignerView):
         self.render()
 
     def render(self, syncing: str | None = None) -> None:
-        """Draws the panel. `syncing` is the progress shown on the Sync button while a sync runs."""
         self.clear_items()
         snap, known = self.snap, set(get_emoji_names())
         changes = (
@@ -214,7 +201,6 @@ class EmojiPanel(DesignerView):
     async def _sync(self, interaction: discord.Interaction) -> None:
         if not await show_loading(self, interaction, "Syncing..."):
             return
-        # Rescanned so files edited since the panel opened are included
         self.snap = snap = await scan(self.bot)
         counts = {"new": len(snap.new), "edited": len(snap.edited), "removed": len(snap.removed)}
         total, done = sum(counts.values()), 0
@@ -228,7 +214,6 @@ class EmojiPanel(DesignerView):
         while syncing and not syncing.done():
             if done != shown:
                 shown = done
-                # Redrawn each time so the text and buttons pick up emojis replaced since the last edit
                 self.render(syncing=f"Syncing {done}/{total}")
                 # Between deleting an emoji and uploading its new file, a button showing it fails the edit. Progress is
                 # only cosmetic, so that tick is skipped and the next one shows the new emoji.

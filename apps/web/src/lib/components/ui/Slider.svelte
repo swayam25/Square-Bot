@@ -40,7 +40,6 @@
     }
 
     .slider {
-        /* The handle's centre, matching where the browser puts a 4px thumb */
         --x: calc(var(--p) * (100% - 4px) + 2px);
         --fill: var(--color-mist-100);
         --gap: 0px;
@@ -102,7 +101,6 @@
         height: 4px;
         background: rgb(255 255 255 / 0.1);
     }
-    /* Not there at rest: it grows in on hover, while dragging or on keyboard focus, like the seek bar's handle */
     .handle {
         left: calc(var(--x) - 2px);
         width: 4px;

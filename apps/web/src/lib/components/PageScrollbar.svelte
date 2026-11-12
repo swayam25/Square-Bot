@@ -51,7 +51,6 @@
         };
     });
 
-    // The whole edge strip reacts, not just the thin thumb, so it works with the pointer pushed against the screen edge
     function press(event: PointerEvent) {
         if (event.button !== 0) return;
         event.preventDefault();

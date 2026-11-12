@@ -1,10 +1,3 @@
-"""
-The music player: what's playing, and every control the Discord card and commands have.
-
-Any member of the server may look. Each control then applies the Discord rules through `square.music.controls`:
-being in the bot's voice channel, DJ mode and roles, requester rights and skip votes.
-"""
-
 import discord
 import msgspec
 import sonolink
@@ -66,15 +59,15 @@ if set(SEARCH_SOURCES) != set(get_args(SearchSource)):
 
 
 class Done(Schema):
-    message: str  # The same confirmation a slash command shows, as plain text
-    note: str | None = None  # Its small print, like where a queued track landed
+    message: str
+    note: str | None = None
 
 
 class EqPreset(Schema):
     name: str
     label: str
     description: str
-    slot: str  # Presets sharing a slot replace each other when turned on
+    slot: str
 
 
 class Paused(Schema):
@@ -114,7 +107,7 @@ class QueueMove(QueuedTrack):
 
 
 class PlayQuery(Schema):
-    query: Annotated[str, msgspec.Meta(min_length=1, max_length=500)]  # A track name, or a track or playlist link
+    query: Annotated[str, msgspec.Meta(min_length=1, max_length=500)]
 
 
 class Requester(Schema):
@@ -153,7 +146,6 @@ async def search_music(
     source: Annotated[SearchSource, Parameter(description="Where to search. Links ignore it")] = "youtube_music",
 ) -> SearchResults:
     link = is_link(q)
-    # No retries across nodes: this runs as the member types, so a slow node should cost one attempt, not all of them
     result = await search_tracks(client, clean_query(q) if link else q, source=SEARCH_SOURCES[source], retry=False)
     if result is None or result.is_error():
         raise ServiceUnavailableException("Search isn't available right now")

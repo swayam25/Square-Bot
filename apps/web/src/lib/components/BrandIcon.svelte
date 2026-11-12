@@ -18,7 +18,6 @@
         soundcloud: { icon: SimpleIconsSoundcloud, color: "#ff5500" },
     };
 
-    // Track sources as Lavalink names them
     const SOURCES: Record<string, Brand> = { youtube: "youtube", spotify: "spotify", applemusic: "apple_music", soundcloud: "soundcloud" };
     export const brandOf = (source: string): Brand | undefined => SOURCES[source];
 </script>

@@ -12,23 +12,11 @@ from square.utils.helpers import fmt_count
 
 
 def history_tracks(player: SquarePlayer) -> list[Playable]:
-    """Returns the played tracks newest-first, or an empty list when history is disabled."""
     history = player.history
     return list(reversed(history[:])) if history else []
 
 
 class HistoryContainer(ui.Container):
-    """
-    Renders a page of previously played tracks as a Discord container component.
-
-    Args:
-        player (:class:`SquarePlayer`): The active player.
-        source (:class:`ApplicationContext` | :class:`Interaction`): The invoking command or button press, used to resolve the guild.
-        page (int): The page number to display (1-indexed).
-        items_per_page (int): Number of tracks shown per page.
-        history_view (:class:`HistoryListView` | None): The parent view, used to wire each track's replay button.
-    """
-
     def __init__(
         self,
         player: SquarePlayer,
@@ -69,15 +57,6 @@ class HistoryContainer(ui.Container):
 
 
 class HistoryListView(DesignerView):
-    """
-    Paginated list of previously played tracks, newest first, each with a button to queue it again.
-
-    Args:
-        client (:class:`Client`): The bot client used to fetch the player.
-        source (:class:`ApplicationContext` | :class:`Interaction`): The invoking command or button press, passed down to :class:`HistoryContainer`.
-        page (int): The initial page to display (1-indexed, default 1).
-    """
-
     def __init__(self, client: Client, source: discord.ApplicationContext | discord.Interaction, page: int = 1):
         super().__init__()
         self.client = client
@@ -115,7 +94,6 @@ class HistoryListView(DesignerView):
                 row.add_item(btn)
 
     async def replay_callback(self, interaction: discord.Interaction, track: Playable):
-        """Queues a played track again, crediting whoever pressed replay as its requester."""
         await interaction.response.defer()
         # Local: `music/controls.py` imports this module
         from square.music import controls

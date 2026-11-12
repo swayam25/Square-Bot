@@ -9,7 +9,6 @@ from square.utils import config
 from square.utils.emoji import Icon, emoji
 
 INACTIVITY_TIMEOUT = 60
-# Voice WS close codes Discord sends when it ends the bot's call, a channel move included.
 _MOVE_CLOSE_CODES = (4014, 4022)
 
 
@@ -26,14 +25,12 @@ class SquareAutoPlay(AutoPlayHandler):
         if source == "spotify":
             self._settings.provider = sonolink.SearchProvider.SPOTIFY
         elif self._twin:
-            # Pre-filled, since sonolink formats this with the Apple Music ID
             self._settings.provider = sonolink.SearchProvider.YOUTUBE.format(identifier=self._twin)
         else:
             self._settings.provider = sonolink.SearchProvider.YOUTUBE
         return await super()._fill_auto_queue()
 
     async def _apply_discovery(self, tracks: list[Playable]) -> Playable | None:
-        # A radio starts with its seed video, which is the song that just played
         return await super()._apply_discovery([track for track in tracks if track.identifier != self._twin])
 
     async def _youtube_twin(self, track: Playable) -> str | None:
@@ -49,8 +46,6 @@ class SquareAutoPlay(AutoPlayHandler):
 
 
 class SquarePlayer(sonolink.Player):
-    """Custom Sonolink player with additional features for the bot."""
-
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("history_settings", HistorySettings(enabled=True, max_items=50))
         super().__init__(*args, **kwargs)
@@ -60,7 +55,6 @@ class SquarePlayer(sonolink.Player):
 
     @property
     def connected(self) -> bool:
-        """Whether the player is bound to a voice channel."""
         return getattr(self, "channel", None) is not None
 
     async def resume(self) -> None:
@@ -71,21 +65,17 @@ class SquarePlayer(sonolink.Player):
 
     @property
     def shuffled(self) -> bool:
-        """Whether the queue plays in shuffled order."""
         return self.queue.shuffle_mode is sonolink.ShuffleMode.PERSISTENT
 
     def toggle_shuffle(self) -> bool:
-        """Flips shuffle and returns whether it is now on."""
         self.queue.shuffle_mode = sonolink.ShuffleMode.DEFAULT if self.shuffled else sonolink.ShuffleMode.PERSISTENT
         return self.shuffled
 
     @property
     def autoplay_on(self) -> bool:
-        """Whether autoplay picks the next track once the queue runs dry."""
         return self.autoplay is sonolink.AutoPlayMode.ENABLED
 
     def toggle_autoplay(self) -> bool:
-        """Flips autoplay and returns whether it is now on."""
         self.autoplay = sonolink.AutoPlayMode.DISABLED if self.autoplay_on else sonolink.AutoPlayMode.ENABLED
         return self.autoplay_on
 
@@ -111,7 +101,6 @@ class SquarePlayer(sonolink.Player):
         return True
 
     async def apply_presets(self) -> None:
-        """Applies the combination of all active equalizer presets, or clean audio when none remain."""
         combined = Filters()
         for preset in self.presets.values():
             combined = combined.combine(preset)
@@ -135,7 +124,6 @@ class SquarePlayer(sonolink.Player):
         await super()._dispatch_event(data)
 
     def cancel_empty_timer(self) -> None:
-        """Calls off a pending empty-channel stop, unless it is the one running right now."""
         task = self._empty_task
         self._empty_task = None
         if task and task is not asyncio.current_task():
@@ -190,27 +178,23 @@ def session_lock(guild_id: int) -> asyncio.Lock:
 
 
 def drop_session_lock(guild_id: int) -> None:
-    """Forgets a guild's playback lock, unless something is holding it right now."""
     lock = _session_locks.get(guild_id)
     if lock is not None and not lock.locked():
         del _session_locks[guild_id]
 
 
 def can_play_in(channel: discord.abc.Connectable) -> bool:
-    """Whether the bot holds the permissions it needs to play in a voice channel."""
     permissions = channel.permissions_for(channel.guild.me)
     return permissions.connect and permissions.speak
 
 
 def get_player(client: Client, guild_id: int) -> SquarePlayer | None:
-    """Returns the guild's active player, or None when the bot isn't connected there."""
     guild = client.get_guild(guild_id)
     voice = guild.voice_client if guild else None
     return voice if isinstance(voice, SquarePlayer) else None
 
 
 def requester_id(player: SquarePlayer, track: Playable) -> int | None:
-    """Returns the requesting user's ID for a track; autoplay-discovered tracks belong to the bot."""
     rid = getattr(track.extras, "requester", None)
     if rid is None and track.autoplay:
         return player.client.user.id
@@ -218,14 +202,12 @@ def requester_id(player: SquarePlayer, track: Playable) -> int | None:
 
 
 def tag_requester(client: Client, track: Playable, user_id: int) -> Playable:
-    """Returns a fresh copy of the track tagged with its requester."""
     fresh = Playable(client=client.sonolink, data=track.data, playlist=track.playlist)
     fresh.extras.requester = user_id
     return fresh
 
 
 async def fetch_node_info(node: sonolink.Node) -> tuple[sonolink.models.ServerInfo | None, str]:
-    """Fetches a node's info and measures its REST round-trip latency; returns (None, "N/A") if unreachable."""
     start = time.monotonic()
     try:
         info = await node.fetch_info()
@@ -235,7 +217,6 @@ async def fetch_node_info(node: sonolink.Node) -> tuple[sonolink.models.ServerIn
 
 
 def register_nodes(client: Client) -> None:
-    """Registers every configured lavalink node with the sonolink client. Safe to call repeatedly."""
     for node in config.lavalink:
         if client.sonolink.get_node(node["host"]) is not None:
             continue
@@ -260,21 +241,18 @@ LOOP_LABELS = {
 
 
 def loop_emoji(mode: sonolink.QueueMode) -> Icon:
-    """Returns the emoji for a loop mode."""
     if mode is sonolink.QueueMode.LOOP:
         return emoji.loop_one
     return emoji.loop if mode is sonolink.QueueMode.LOOP_ALL else emoji.loop_white
 
 
 def loop_action(mode: sonolink.QueueMode) -> str:
-    """Describes switching to a loop mode, e.g. "enabled track loop"."""
     if mode is sonolink.QueueMode.NORMAL:
         return "disabled loop"
     return f"enabled {LOOP_LABELS[mode].lower()} loop"
 
 
 def fmt_time(ms: int | float) -> str:
-    """Formats a duration in milliseconds as `H:MM:SS` or `M:SS`."""
     total_seconds = ms // 1000
     minutes, seconds = divmod(total_seconds, 60)
     hours, minutes = divmod(minutes, 60)

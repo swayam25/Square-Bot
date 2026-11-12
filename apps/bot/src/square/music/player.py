@@ -31,30 +31,20 @@ _BAR_REFRESH_INTERVAL = 10.0
 _SEEK_STEP_MS = 10_000
 _ENQUEUE_RENDER_DELAY = 1.0
 RELOCATE_DELAY = 2.0
-# What a fresh sonolink player starts at.
 DEFAULT_VOLUME = 100
 _VOTE_TIMEOUT = 60.0
 _VOTE_RESULT_LINGER = 5.0
-# Each track costs three of the message's 40 components.
 _UP_NEXT_LIMIT = 4
-# Optional; the idle card falls back to text without it.
 IDLE_GIF = Path("idle.gif")
 
 
 def idle_attachment() -> dict:
-    """
-    Returns the send kwargs that attach the idle artwork, or nothing when the asset is missing.
-
-    A components v2 message can only show a local file through a component pointing at
-    ``attachment://``, so the file has to ride along with the message that references it.
-    """
     if not IDLE_GIF.is_file():
         return {}
     return {"file": discord.File(IDLE_GIF, filename=IDLE_GIF.name)}
 
 
 def has_idle_gif(message: discord.Message | discord.PartialMessage) -> bool | None:
-    """Whether a card carries the idle GIF, or None for a partial message, which can't say."""
     attachments = getattr(message, "attachments", None)
     if attachments is None:
         return None
@@ -79,15 +69,6 @@ def idle_edit_attachments(message: discord.Message) -> dict:
 
 
 def _get_render_lock(guild_id: int) -> asyncio.Lock:
-    """
-    Returns the render lock for a guild, creating it on first access.
-
-    Args:
-        guild_id (int): The guild ID to retrieve the lock for.
-
-    Returns:
-        :class:`asyncio.Lock`: The lock associated with the guild.
-    """
     if guild_id not in _render_locks:
         _render_locks[guild_id] = asyncio.Lock()
     return _render_locks[guild_id]
@@ -111,7 +92,6 @@ async def render_player(client: Client, guild_id: int, *, force_new: bool = Fals
         wait (bool): Queue behind an in-flight render as a render of its own, instead of folding into its redraw.
             For callers that need the card drawn by the time this returns.
     """
-    # Every playback change comes through here, so live dashboards hear about it from the same place the card does
     client.dispatch("music_update", guild_id)
     lock = _get_render_lock(guild_id)
     if lock.locked() and not wait:
@@ -130,7 +110,6 @@ async def render_player(client: Client, guild_id: int, *, force_new: bool = Fals
 
 
 async def _render_card(client: Client, guild_id: int, force_new: bool) -> None:
-    """One pass of :func:`render_player`, with the guild's render lock held."""
     # Everything below is read after the wait, not before it. A `wait=True` caller can sit on
     # this lock while playback stops, and an attachment set that disagrees with the shape the
     # view actually built is a 400, not a `NotFound` the send path below would absorb.
@@ -142,7 +121,6 @@ async def _render_card(client: Client, guild_id: int, force_new: bool) -> None:
     bound = request.setup_mode(guild_id)
     if not live and not bound:
         return
-    # A bound channel's card is fixed in place, so it is only ever edited.
     force_new = force_new and not bound
     play_msg, _ = store.play_msg(guild_id)
     # `/set music` mid-session leaves the free-form card behind in another channel. It cannot be
@@ -161,7 +139,6 @@ async def _render_card(client: Client, guild_id: int, force_new: bool) -> None:
             return
         except discord.NotFound:
             play_msg = None
-    # Send new and delete old concurrently - both API calls happen in parallel
     coros: list = [channel.send(view=view, **(idle_attachment() if not live else {}))]
     if play_msg:
         coros.append(play_msg.delete())
@@ -187,17 +164,6 @@ def schedule_render(
     delay: float = _ENQUEUE_RENDER_DELAY,
     force_new: bool = False,
 ) -> None:
-    """
-    Renders the card after a short pause, coalescing a burst of changes into one edit.
-
-    A render already waiting absorbs the rest, so five requests in a row cost one edit.
-
-    Args:
-        client (:class:`Client`): The Discord bot client.
-        guild_id (int): The guild to render the player for.
-        delay (float): Seconds to wait before rendering.
-        force_new (bool): Send a new card rather than editing the existing one.
-    """
     pending = store.render_task(guild_id)
     if pending and not pending.done():
         return
@@ -228,7 +194,7 @@ async def repaint_deleted_card(client: Client, guild_id: int, deleted_ids: set[i
     """
     play_msg, _ = store.play_msg(guild_id)
     if play_msg is None or play_msg.id not in deleted_ids:
-        return  # Checked before taking a lock, since this runs for every delete in every guild.
+        return
     async with _get_render_lock(guild_id):
         play_msg, _ = store.play_msg(guild_id)
         if play_msg is None or play_msg.id not in deleted_ids:
@@ -239,15 +205,6 @@ async def repaint_deleted_card(client: Client, guild_id: int, deleted_ids: set[i
 
 
 def start_progress(client: Client, guild_id: int) -> None:
-    """
-    Starts (or restarts) the task that keeps the card's progress bar moving.
-
-    Cancels any previous one so only one runs per guild.
-
-    Args:
-        client (:class:`Client`): The Discord bot client.
-        guild_id (int): The guild whose card to keep fresh.
-    """
     task = store.progress_task(guild_id)
     if task:
         task.cancel()
@@ -255,12 +212,6 @@ def start_progress(client: Client, guild_id: int) -> None:
 
 
 async def _progress_loop(client: Client, guild_id: int) -> None:
-    """
-    Repaints a playing card every :data:`_BAR_REFRESH_INTERVAL` seconds so its progress bar moves.
-
-    The only timed edit the card gets, kept slow to stay clear of Discord rate limits. It holds still while paused,
-    never runs for a stream, and ends when the track changes.
-    """
     player = get_player(client, guild_id)
     if not player or not player.current or player.current.is_stream:
         return
@@ -275,14 +226,9 @@ async def _progress_loop(client: Client, guild_id: int) -> None:
 
 
 def _cancel_tasks(guild_id: int) -> None:
-    """
-    Stops the guild's scheduled work: the open skip vote, the progress ticker, and any pending relocation.
-
-    A task is never cancelled from within itself, so the caller's own cleanup can finish.
-    """
     vote = store.skip_vote(guild_id)
     if vote:
-        vote.stop()  # Cancels its expiry task; the card itself is only removed on the async paths.
+        vote.stop()
     for task_fn in (store.progress_task, store.render_task):
         task = task_fn(guild_id)
         if task and task is not asyncio.current_task():
@@ -302,29 +248,18 @@ def cleanup_guild(client: Client, guild_id: int) -> None:
     """
     lock = _render_locks.get(guild_id)
     if lock is not None and not lock.locked():
-        del _render_locks[guild_id]  # Dropping a held one lets the next render run beside it.
+        del _render_locks[guild_id]
     _rerender.pop(guild_id, None)
     drop_session_lock(guild_id)
     _cancel_tasks(guild_id)
     gif = store.card_gif(guild_id)
     store.flush_store(guild_id)
-    if request.prime(client, guild_id):  # No-op unless the guild has a request channel bound.
-        # The card outlived the flush, GIF and all. Forgetting that costs the next idle render a fetch.
+    if request.prime(client, guild_id):
         store.card_gif(guild_id, gif, "set")
     client.dispatch("music_update", guild_id)
 
 
 async def clear_player(client: Client, guild_id: int) -> None:
-    """
-    Retires the persistent player message and clears all per-guild state.
-
-    A bound channel's card is repainted to its resting state rather than deleted; it is that
-    channel's only permanent message. Everywhere else the card is removed outright.
-
-    Args:
-        client (:class:`Client`): The Discord bot client.
-        guild_id (int): The guild whose player message should be retired.
-    """
     # Before the flush, which drops the channel and message the repaint needs.
     _cancel_tasks(guild_id)
     if request.setup_mode(guild_id):
@@ -337,7 +272,6 @@ async def clear_player(client: Client, guild_id: int) -> None:
 
 
 async def set_track_status(player: SquarePlayer) -> None:
-    """Shows the current track as the status of the voice channel the player is in."""
     if player.channel is None or player.current is None:
         return
     try:
@@ -347,16 +281,6 @@ async def set_track_status(player: SquarePlayer) -> None:
 
 
 async def clear_status(player: SquarePlayer) -> None:
-    """
-    Clears the track status off the voice channel the player is in, or was last in.
-
-    From outside the channel Discord only allows this with Manage Channels, so without it the call
-    is skipped rather than spent on a 403. A 24/7 player that lost its connection is skipped too,
-    since the rejoin clears it on arrival.
-
-    Args:
-        player (:class:`SquarePlayer`): The player whose channel status should go.
-    """
     guild = player.guild
     voice = guild.me.voice
     channel = voice.channel if voice else player.channel
@@ -373,7 +297,6 @@ async def clear_status(player: SquarePlayer) -> None:
 
 
 def stop_verb(guild_id: int) -> str:
-    """How stopping reads in a guild: a 24/7 player only stops, any other is destroyed."""
     return "stopped" if stay.channel_id(guild_id) is not None else "destroyed"
 
 
@@ -402,20 +325,11 @@ async def stop_player(player: SquarePlayer, guild: discord.Guild, *, force: bool
     try:
         await player.disconnect(force=True)
     except Exception:
-        pass  # Node may be unreachable; still clean up locally
+        pass
     await clear_player(player.client, guild.id)
 
 
 async def idle_player(player: SquarePlayer, guild: discord.Guild) -> None:
-    """
-    Ends the session but stays connected, the 24/7 counterpart of a disconnect.
-
-    Everything a session piles up goes, so the next session starts like a fresh player.
-
-    Args:
-        player (:class:`SquarePlayer`): The player sitting in the 24/7 channel.
-        guild (:class:`Guild`): The guild the player belongs to.
-    """
     if getattr(player, "_square_idling", False):
         return
     player._square_idling = True
@@ -490,7 +404,6 @@ async def release_guild(client: Client, guild_id: int) -> None:
 
 
 async def skip_or_stop(player: SquarePlayer, guild: discord.Guild) -> None:
-    """Skips to the next track, tearing the player down when nothing is left to play."""
     try:
         await player.skip()
     except sonolink.QueueEmpty, sonolink.AutoPlaySeedMissing:
@@ -498,7 +411,6 @@ async def skip_or_stop(player: SquarePlayer, guild: discord.Guild) -> None:
 
 
 async def cancel_vote(guild_id: int) -> None:
-    """Closes the guild's open skip vote and removes its message, for when the track it targeted is gone."""
     vote = store.skip_vote(guild_id)
     if not vote:
         return
@@ -514,17 +426,6 @@ async def slash_log(
     color: int | None = None,
     render: bool = True,
 ) -> None:
-    """
-    Acknowledges a state-changing slash command ephemerally and logs it publicly.
-
-    Sends an ephemeral confirmation to the invoker, optionally re-renders the player card, and posts a public log line with the user mention prepended.
-
-    Args:
-        ctx (:class:`ApplicationContext`): The slash command context.
-        content (str): The confirmation/log message (leading emoji is stripped for the log line).
-        color (int | None): Optional accent color applied to both the reply and the log.
-        render (bool): Whether to re-render the player card after the action.
-    """
     log_emoji, text = split_log_text(content)
     log = music_log(ctx.guild.id, f"{log_emoji} {ctx.author.mention} {text}".strip(), color=color)
     await asyncio.gather(
@@ -533,15 +434,6 @@ async def slash_log(
 
 
 class MusicContainer(ui.Container):
-    """
-    Renders the currently playing track as a Discord container component.
-
-    Displays the track title (linked), artist, requester mention, and a position/duration progress bar (fully filled with a LIVE badge for streams).
-
-    Args:
-        player (:class:`SquarePlayer`): The active player with a current track set.
-    """
-
     def __init__(self, player: SquarePlayer):
         super().__init__()
         rid = requester_id(player, player.current)
@@ -556,11 +448,6 @@ class MusicContainer(ui.Container):
 
     @staticmethod
     def progress_bar(player: SquarePlayer, bar_length: int = 10) -> str:
-        """
-        Builds the position/duration progress bar line. Streams get a fully filled bar with a LIVE badge.
-
-        The filled part waves while playing and lies flat while paused, like the progress bar on the now-playing card.
-        """
         active = str(emoji.still_bar if player.paused else emoji.filled_bar)
         if player.current.is_stream:
             return f"{emoji.live} **LIVE** {active * bar_length}"
@@ -574,16 +461,6 @@ class MusicContainer(ui.Container):
 
 
 class UpNextContainer(ui.Container):
-    """
-    Renders the next few queued tracks, each with a button that jumps straight to it.
-
-    Stays on the card when the queue is empty, so it doesn't grow and shrink as the queue drains.
-
-    Args:
-        player (:class:`SquarePlayer`): The active player.
-        view (:class:`MusicView`): The card this container belongs to, which owns the callbacks.
-    """
-
     def __init__(self, player: SquarePlayer, view: MusicView):
         super().__init__()
         # Indexed, not `queue.tracks`: that property copies the whole queue, and this runs on every
@@ -620,15 +497,6 @@ class UpNextContainer(ui.Container):
 
 
 class IdleContainer(ui.Container):
-    """
-    Renders the resting card shown when nothing is playing.
-
-    Only bound request channels see this; a free-form card is deleted on teardown instead.
-
-    Args:
-        guild_id (int): The guild the card belongs to, used to word the hint.
-    """
-
     def __init__(self, guild_id: int):
         super().__init__()
         self.add_item(ui.TextDisplay("## Nothing is being played"))
@@ -642,18 +510,6 @@ class IdleContainer(ui.Container):
 
 
 class MusicView(DesignerView):
-    """
-    Persistent player card: the track, the next few queued tracks, and the transport controls.
-
-    With nothing playing it falls back to an :class:`IdleContainer` and disables every control,
-    which is the resting state of a bound request channel's card.
-    The view has no timeout and re-checks interaction eligibility on every button press.
-
-    Args:
-        client (:class:`Client`): The bot client used to fetch the player and send follow-up logs.
-        guild_id (int): The guild this player card belongs to.
-    """
-
     def __init__(self, client: Client, guild_id: int):
         super().__init__(timeout=None)
         self.client = client
@@ -666,7 +522,6 @@ class MusicView(DesignerView):
 
     @property
     def live(self) -> bool:
-        """Whether there is a player with a track on it, as opposed to a resting card."""
         return bool(self.player and self.player.connected and self.player.current)
 
     def build(self):
@@ -690,7 +545,6 @@ class MusicView(DesignerView):
                 row.add_item(btn)
 
     def _rows(self) -> list[list[tuple[Icon, str, bool]]]:
-        """Builds the transport button table, falling back to resting states when nothing is playing."""
         player = self.player if self.live else None
         is_stream = bool(player and player.current.is_stream)
         queue_mode = player.queue_mode if player else sonolink.QueueMode.NORMAL
@@ -714,7 +568,6 @@ class MusicView(DesignerView):
         ]
 
     async def _control(self, interaction: discord.Interaction, action: Awaitable[str], *, confirm: bool = False):
-        """Runs a control for a button press, answering only with what went wrong unless asked to confirm."""
         try:
             confirmation = await action
         except MusicError as exc:
@@ -733,7 +586,6 @@ class MusicView(DesignerView):
 
     async def skip_callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        # Confirmed, since for most members a skip is a vote and they need to know where it stands
         await self._control(
             interaction, controls.skip(interaction.guild, interaction.user, channel=interaction.channel), confirm=True
         )
@@ -754,7 +606,6 @@ class MusicView(DesignerView):
         await interaction.response.send_message(view=QueueListView(self.client, interaction), ephemeral=True)
 
     async def play_now_callback(self, interaction: discord.Interaction, identifier: str) -> None:
-        """Jumps straight to one of the previewed tracks."""
         await interaction.response.defer()
         queue = self.player.queue
         # By identifier, not by the position the button was drawn at: `/queue` can reorder or drop
@@ -780,17 +631,6 @@ class MusicView(DesignerView):
 
 
 class VoteSkipView(DesignerView):
-    """
-    Public skip vote, opened when a member without DJ rights asks to skip someone else's track.
-
-    The button doubles as the tally, and a DJ pressing it settles the vote outright.
-
-    Args:
-        client (:class:`Client`): The Discord bot client.
-        player (:class:`SquarePlayer`): The active player for the guild.
-        starter (:class:`Member`): The member who opened the vote, counted as its first vote.
-    """
-
     def __init__(self, client: Client, player: SquarePlayer, starter: discord.Member):
         # The deadline is ours rather than the view's own timeout, which pycord refreshes on every press - including
         # ones it rejects. A window anyone can extend by mashing the button is not one the card can count down to.
@@ -811,7 +651,6 @@ class VoteSkipView(DesignerView):
         self.build()
 
     async def _expire(self) -> None:
-        """Closes the vote once :attr:`expires_at` passes, however many times the button was pressed meanwhile."""
         await discord.utils.sleep_until(self.expires_at)
         await self.on_timeout()
 
@@ -823,7 +662,6 @@ class VoteSkipView(DesignerView):
 
     @property
     def needed(self) -> int:
-        """Votes the tally currently has to reach, recomputed so members joining or leaving move the bar."""
         return dj.votes_needed(len(dj.listeners(self.player)))
 
     def build(self):
@@ -848,12 +686,6 @@ class VoteSkipView(DesignerView):
         )
 
     async def add_vote(self, member: discord.Member) -> str:
-        """
-        Counts a member's vote, carries the skip once enough listeners agree, and says how it went.
-
-        Args:
-            member (:class:`Member`): The voting member.
-        """
         if member.id in self.voters:
             raise MusicError("You already voted to skip.")
         self.voters.add(member.id)
@@ -865,7 +697,6 @@ class VoteSkipView(DesignerView):
         return f"{emoji.success} Vote counted `{len(self.voters)}/{self.needed}`."
 
     async def render(self) -> None:
-        """Pushes the current tally onto the card, skipping the edit when the numbers on it haven't moved."""
         state = (len(self.voters), self.needed)
         if state == self.rendered or not self.msg:
             return
@@ -877,12 +708,6 @@ class VoteSkipView(DesignerView):
             pass
 
     async def refresh(self) -> None:
-        """
-        Re-evaluates the vote after the voice channel's membership changed.
-
-        Members who left stop counting, both as voters and toward the threshold, so a vote carries the moment
-        whoever is still listening already agrees. An emptied channel drops the vote outright.
-        """
         if self.is_finished():
             return
         listening = dj.listeners(self.player)
@@ -899,7 +724,6 @@ class VoteSkipView(DesignerView):
         await self.render()
 
     async def vote_callback(self, interaction: discord.Interaction):
-        # Same deadline applies here: the DJ lookup and the tally edit are both round trips.
         await interaction.response.defer()
         if dj.is_dj(interaction.user, self.player):
             await self.resolve()
@@ -913,7 +737,6 @@ class VoteSkipView(DesignerView):
             await reply(interaction, f"{emoji.error} {exc}", color=config.color.red)
 
     async def resolve(self) -> None:
-        """Closes the vote, settles its card in place, and skips the track."""
         if self.is_finished():
             # Two presses can land either side of the DJ lookup; only the first gets to advance the queue.
             return
@@ -925,7 +748,6 @@ class VoteSkipView(DesignerView):
             await skip_or_stop(self.player, guild)
 
     async def settle(self, outcome: str, *, color: int | None = None) -> None:
-        """Turns the vote card into its outcome, then clears it away a few seconds later."""
         if not self.msg:
             return
         self.clear_items()
@@ -938,13 +760,11 @@ class VoteSkipView(DesignerView):
         self.msg = None
 
     def release(self) -> None:
-        """Gives up the guild's vote slot, but only while this view still holds it."""
         if store.skip_vote(self.guild_id) is self:
             store.skip_vote(self.guild_id, mode="clear")
             self.client.dispatch("music_update", self.guild_id)
 
     async def discard(self) -> None:
-        """Removes the vote message outright, for when the track it targeted is already gone."""
         if self.msg:
             await delete_quietly(self.msg)
             self.msg = None

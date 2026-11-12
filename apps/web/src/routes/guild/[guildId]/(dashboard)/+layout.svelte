@@ -133,7 +133,6 @@
         switcherOpen = mobileSwitcherOpen = accountOpen = mobileAccountOpen = false;
         if (from?.url.pathname === to?.url.pathname) return;
         details.close();
-        // Every page shares one scroller, so a new page would otherwise open at the last page's offset
         scroller?.scrollTo({ top: 0, behavior: "instant" });
     });
 

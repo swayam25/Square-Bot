@@ -18,9 +18,6 @@ function scrollParent(node: HTMLElement) {
     return document.scrollingElement as HTMLElement;
 }
 
-// Drag-to-reorder on pointer events, so touch works too. Items are the list's children with `data-sortable-index`,
-// dragged by an element with `data-drag-handle` inside one (give it `touch-none`). Whatever box scrolls the list
-// scrolls along near its edges. Arrow up/down on a focused handle moves one step.
 export function sortable({ onmove, disabled }: Options): Attachment<HTMLElement> {
     return (list) => {
         let drag: {
@@ -130,8 +127,6 @@ export function sortable({ onmove, disabled }: Options): Attachment<HTMLElement>
                 return;
             }
 
-            // Every row glides from where it's drawn right now into its slot in the new order: the dropped one from
-            // under the pointer, the rest only if they were still making room when the pointer let go
             const before = items.map((el) => el.getBoundingClientRect().top);
             for (const el of items) {
                 el.style.transition = "none";

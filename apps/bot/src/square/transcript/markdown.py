@@ -9,8 +9,6 @@ from markupsafe import Markup
 
 @dataclass
 class Lookups:
-    """Names for mentions, so `<@123>` renders as `@name` like it does in Discord."""
-
     users: dict[int, str] = field(default_factory=dict)
     roles: dict[int, tuple[str, str]] = field(default_factory=dict)  # id: (name, hex color)
     channels: dict[int, str] = field(default_factory=dict)
@@ -90,13 +88,6 @@ def _inline(text: str, lookups: Lookups) -> str:
 
 
 def render(content: str, lookups: Lookups) -> Markup:
-    """
-    Converts message content to safe HTML.
-
-    Args:
-        content (str): The raw message content.
-        lookups (:class:`Lookups`): Names for user, role and channel mentions.
-    """
     if not content:
         return Markup("")
     # Code is pulled out first so nothing inside it is treated as markdown, then put back at the end
@@ -127,6 +118,5 @@ def render(content: str, lookups: Lookups) -> Markup:
 
 
 def plain(content: str, limit: int = 90) -> str:
-    """A short markdown-free preview, used for the line above a reply."""
     text = re.sub(r"[*_~|`>#]", "", content).replace("\n", " ").strip()
     return text if len(text) <= limit else text[: limit - 1] + "…"

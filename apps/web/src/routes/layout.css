@@ -237,7 +237,6 @@
         @apply bg-mist-950 font-sans text-mist-100 antialiased;
     }
 
-    /* Mouse users get `PageScrollbar.svelte` and `ui/OverlayScrollbar.svelte` instead. Touch screens keep their native overlay scrollbar */
     @media (pointer: fine) {
         html,
         [data-overlay-scrollbar] {
@@ -271,8 +270,6 @@
     }
 }
 
-/* A sideways strip fades out on whichever side has more to scroll to, driven by its own scroll position.
-   Browsers without scroll-driven animations just show the strip unfaded. */
 @property --fade-l {
     syntax: "<number>";
     inherits: false;

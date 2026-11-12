@@ -30,7 +30,6 @@ export const ripple: Attachment<HTMLElement> = (node) => {
             },
         );
 
-        // Fading while the grow still runs works because the later animation of a property wins
         function release() {
             removeEventListener("pointerup", release);
             removeEventListener("pointercancel", release);

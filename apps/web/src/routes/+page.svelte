@@ -118,7 +118,6 @@
                     </Button>
                 {/if}
             </div>
-            <!-- The line keeps its height while the count streams in, so the hero doesn't jump when it lands -->
             <p class="h-5 text-sm text-mist-400">
                 {#await data.servers then servers}
                     {#if servers}

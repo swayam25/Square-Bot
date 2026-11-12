@@ -1,7 +1,6 @@
 import { redis } from "#lib/server/redis.ts";
 import { error } from "@sveltejs/kit";
 
-// Times are milliseconds. A word's text keeps its trailing space, so joining the words rebuilds the line
 export type LyricWord = { text: string; start: number; end: number };
 export type LyricLine = { start: number; end: number; text: string; words: LyricWord[] | null; background: boolean };
 export type Lyrics = { source: "BetterLyrics" | "LRCLIB"; sync: "word" | "line" | "none"; lines: LyricLine[]; instrumental?: true };
@@ -11,7 +10,6 @@ export type LyricsQuery = { title: string; artist: string; durationMs: number };
 const TIMEOUT_MS = 5_000;
 const HIT_TTL = 7 * 24 * 3600;
 const MISS_TTL = 24 * 3600;
-// Only lookups that reach the lyric services count. Listening needs one per song, so this only stops scripted abuse
 const LOOKUPS_PER_MINUTE = 20;
 // Generic on purpose: nothing about the project or its users goes to third-party services
 const USER_AGENT = "Mozilla/5.0 (compatible; lyrics-client/1.0)";
@@ -24,7 +22,6 @@ const decode = (text: string) =>
             : (ENTITIES[code] ?? match),
     );
 
-// TTML times come as seconds ("27.395") or clock values ("1:02.300", "1:02:03.4")
 function clock(value: string | undefined) {
     if (!value) return 0;
     return Math.round(value.split(":").reduce((total, part) => total * 60 + Number.parseFloat(part), 0) * 1000);
@@ -46,7 +43,6 @@ export function parseTtml(ttml: string): Lyrics | null {
     for (const [, attrs, inner] of ttml.matchAll(/<p\b([^>]*)>([\s\S]*?)<\/p>/g)) {
         const start = clock(attr(attrs, "begin"));
         const end = clock(attr(attrs, "end"));
-        // Backing vocals sit in their own span of word spans; they become a separate, dimmer line
         let main = inner;
         for (const [whole, bgAttrs, bgInner] of inner.matchAll(
             /<span\b([^>]*ttm:role="x-bg"[^>]*)>((?:\s*<span\b[^>]*>[^<]*<\/span>)*\s*)<\/span>/g,
@@ -132,7 +128,6 @@ export function parseLyricsfile(yaml: string): LyricLine[] {
         }));
 }
 
-// YouTube titles and channel names carry noise that lyric databases don't index
 export function cleanQuery({ title, artist, durationMs }: LyricsQuery): LyricsQuery {
     let cleanArtist = artist
         .replace(/\s*-\s*Topic$/i, "")
@@ -142,7 +137,6 @@ export function cleanQuery({ title, artist, durationMs }: LyricsQuery): LyricsQu
         .replace(/\s*[([][^)\]]*\b(official|video|audio|lyrics?|visuali[sz]er|mv|m\/v|hd|4k|remaster(ed)?)\b[^)\]]*[)\]]/gi, "")
         .replace(/\s*\b(ft|feat)\.?\s.*$/i, "")
         .trim();
-    // "Artist - Song" uploads from a channel that isn't the artist's own
     const split = /^(.+?)\s+[-–—]\s+(.+)$/.exec(cleanTitle);
     if (split && !cleanTitle.toLowerCase().startsWith(cleanArtist.toLowerCase() + " ")) {
         cleanArtist = split[1].trim();
@@ -204,9 +198,8 @@ export async function findLyrics(query: LyricsQuery, userId: string): Promise<Ly
 
     const rank = { word: 2, line: 1, none: 0 } as const;
     let lyrics: Lyrics | null = null;
-    // Word timing wins whichever service has it, so a line-only answer still asks the next service
     for (const source of [fromBetterLyrics, fromLrclib]) {
-        const found = await source(clean).catch(() => null); // A timeout or a bad reply falls through to the next
+        const found = await source(clean).catch(() => null);
         if (found && (!lyrics || rank[found.sync] > rank[lyrics.sync])) lyrics = found;
         if (lyrics?.sync === "word") break;
     }

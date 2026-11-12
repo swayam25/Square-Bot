@@ -11,7 +11,6 @@ class AutoMod(Cog):
     def __init__(self, client: Client):
         self.client = client
 
-    # Media only channel
     @commands.Cog.listener()
     async def on_message(self, msg: discord.Message):
         if msg.author.bot or msg.guild is None:
@@ -36,7 +35,6 @@ class AutoMod(Cog):
                 except discord.Forbidden, discord.NotFound:
                     pass
 
-    # Autorole
     @commands.Cog.listener()
     async def on_member_join(self, user: discord.Member):
         if user.bot:
@@ -48,9 +46,9 @@ class AutoMod(Cog):
             try:
                 await user.add_roles(role)
             except discord.Forbidden, discord.NotFound:
-                pass  # The role sits above Square's, or the member already left
+                pass
         else:
-            await set_autorole(user.guild.id, None)  # The role was deleted
+            await set_autorole(user.guild.id, None)
 
 
 def setup(client: Client):

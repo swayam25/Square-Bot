@@ -15,10 +15,7 @@ TORTOISE_ORM = {
 
 
 class DB:
-    """Database class to handle Tortoise ORM initialization and connection management."""
-
     async def init(self):
-        """Initialize the database connection and apply pending migrations."""
         command = Command(tortoise_config=TORTOISE_ORM, app="models", location="./migrations")
         await command.init()
         applied = await command.upgrade(run_in_transaction=True)
@@ -29,5 +26,4 @@ class DB:
             log.info("Database ready, migrations up to date")
 
     async def close(self):
-        """Close the database connection."""
         await Tortoise.close_connections()

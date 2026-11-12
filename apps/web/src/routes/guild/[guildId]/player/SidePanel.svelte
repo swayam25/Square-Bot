@@ -51,7 +51,6 @@
         { value: "search", label: "Search", icon: MaterialSymbolsSearchRounded },
         { value: "queue", label: "Queue", icon: MaterialSymbolsQueueMusicRounded, count: queue?.total },
         { value: "history", label: "History", icon: MaterialSymbolsHistoryRounded },
-        // Left enabled while open: a song without lyrics says so inside the tab rather than moving you off it
         { value: "lyrics", label: "Lyrics", icon: MaterialSymbolsLyricsRounded, disabled: tab === "lyrics" ? false : lyricsOff },
     ]);
 </script>

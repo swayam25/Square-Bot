@@ -10,19 +10,11 @@ EMOJI_DIR = Path("emojis")
 
 
 class Icon(discord.PartialEmoji):
-    """
-    One emoji, usable in f-strings and as a button or select option's `emoji`.
-
-    Updated in place, so anything holding one (a cog's help emoji, a settings page, a button) shows the new emoji after
-    a sync from `/emoji` without a restart.
-    """
-
     def __init__(self, default: str):
         super().__init__(name=default)
         self.default = default
 
     def set(self, value: str | None) -> None:
-        """Points this at a saved emoji such as `<:music:123>`, or back to its default when there's none."""
         parsed = discord.PartialEmoji.from_str(value if value and value.strip() else self.default)
         self.name, self.id, self.animated = parsed.name, parsed.id, parsed.animated
 
@@ -175,12 +167,10 @@ _icons: dict[str, Icon] = {name: icon for name, icon in vars(Emoji).items() if i
 
 
 def get_emoji_names() -> list[str]:
-    """Get a list of all emoji names defined in the Emoji class."""
     return list(_icons)
 
 
 def create_custom_emoji_config(emojis: dict[str, str]) -> dict:
-    """Saves the app's emojis, using defaults for the missing ones. `reload_emoji` applies them."""
     CUSTOM_EMOJI_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
     default_emoji_keys = [name for name in _icons if not emojis.get(name, "").strip()]
     extra_keys = [name for name in emojis if name not in _icons]
@@ -211,7 +201,6 @@ def update_emoji(name: str, value: str | None) -> None:
 
 
 def reload_emoji() -> None:
-    """Applies the saved emojis, falling back to the default for missing ones. Everything holding an `Icon` updates."""
     try:
         with open(CUSTOM_EMOJI_FILE_PATH, encoding="utf8") as emoji_file:
             saved: dict[str, str] = dict(json.load(emoji_file))
@@ -222,7 +211,6 @@ def reload_emoji() -> None:
         )
         saved = {}
     else:
-        # Clean up the JSON file by removing invalid keys
         known = {name: value for name, value in saved.items() if name in _icons}
         if len(known) != len(saved):
             with open(CUSTOM_EMOJI_FILE_PATH, "w", encoding="utf8") as emoji_file:

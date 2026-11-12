@@ -29,18 +29,6 @@ PERMISSION_CODES = {50001, 50013}  # Missing Access and Missing Permissions. Oth
 
 @dataclass
 class Failure:
-    """
-    Where an error happened, for the log line and the reply.
-
-    Attributes:
-        source (str): What failed, e.g. `/ticket close` or `SettingsPanel button "Create"`.
-        user (:class:`discord.abc.User` | None): Who triggered it.
-        guild (:class:`discord.Guild` | None): The guild it happened in.
-        channel (object | None): The channel it happened in.
-        reply (Callable | None): Answers the user with a view and an optional file. None when nobody is waiting.
-        options (str): The command's input.
-    """
-
     source: str
     user: discord.abc.User | None
     guild: discord.Guild | None
@@ -50,7 +38,6 @@ class Failure:
 
 
 def _user_fault(error: BaseException) -> str | None:
-    """The message for an error the user can act on. These aren't bugs, so they don't need a traceback."""
     match error:
         case check.NotAuthorized():
             return "This command is only for the bot's developers."
@@ -75,7 +62,6 @@ def _user_fault(error: BaseException) -> str | None:
 
 
 def _refused(error: discord.Forbidden, refusal: Refusal) -> str:
-    """The message for a 403, naming the permissions the bot is missing when they could be worked out."""
     if error.code not in PERMISSION_CODES and error.text:
         return f"Discord won't let me do that: {error.text}."
     opening = refusal.action or "I don't have permission to do that."
@@ -91,7 +77,6 @@ def _refused(error: discord.Forbidden, refusal: Refusal) -> str:
 
 
 def _bug(error: BaseException, reference: str) -> str:
-    """The message for an error that's on the bot or Discord, with the reference that finds it in the logs."""
     match error:
         case discord.NotFound():
             text = "Something I needed no longer exists. It may have just been deleted."
@@ -105,7 +90,6 @@ def _bug(error: BaseException, reference: str) -> str:
 
 
 def _code_location(error: BaseException) -> str:
-    """The innermost line of Square's own code in a traceback, or the raising line if there is none."""
     frames = list(traceback.walk_tb(error.__traceback__))
     for frame, line in reversed(frames):
         if frame.f_globals.get("__name__", "").startswith("square"):
@@ -160,7 +144,6 @@ class ErrorHandler(Cog):
             reply = _interaction_reply(ctx.interaction)
             await self._handle(error, Failure(f"/{name}", ctx.author, ctx.guild, ctx.channel, reply, options))
             return
-        # Text commands are developer tools: strangers and typos get no reply
         if isinstance(error, commands.CommandNotFound | check.NotAuthorized):
             return
 
@@ -243,7 +226,6 @@ class ErrorHandler(Cog):
         try:
             await failure.reply(view, file)
         except discord.HTTPException as exc:
-            # The interaction likely expired, which is often why the action failed in the first place
             log.debug("Couldn't tell the user about the failure in %s: %s", failure.source, exc)
 
 

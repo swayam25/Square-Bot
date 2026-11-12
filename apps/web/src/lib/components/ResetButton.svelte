@@ -19,7 +19,6 @@
         title: string;
         description: string;
         label?: string;
-        // Shown in the island once it worked
         done: string;
         icon?: Component;
         disabled?: boolean;

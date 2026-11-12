@@ -59,9 +59,6 @@ def _notes(guild: discord.Guild, *notes: str | None) -> Notes:
     return Notes(notes=[resolve.plain(guild, note) for note in notes if note])
 
 
-# General
-
-
 def _general(guild: discord.Guild) -> GeneralSettings:
     settings = cache.get(guild.id)
     return GeneralSettings(
@@ -111,9 +108,6 @@ async def reset_general_settings(guild: discord.Guild, member: discord.Member) -
     return _general(guild)
 
 
-# Logs
-
-
 def _logs(guild: discord.Guild) -> LogSettings:
     channels = cache.get(guild.id).log_channels
     return LogSettings(
@@ -121,7 +115,6 @@ def _logs(guild: discord.Guild) -> LogSettings:
             **{
                 key: str(channel_id)
                 for key, channel_id in channels.items()
-                # Skips channels deleted since, and keys from log types the bot no longer has
                 if key in LogChannels.__struct_fields__ and guild.get_channel(channel_id)
             }
         )
@@ -134,7 +127,6 @@ async def _set_log_channels(
     for channel in {channel for channel in changes.values() if channel}:
         perms = channel.permissions_for(guild.me)
         if not (perms.send_messages and perms.manage_webhooks):
-            # Logs are posted through a webhook named after the bot
             raise SettingError(f"I need `Send Messages` and `Manage Webhooks` in {channel.mention}.")
 
     by_channel: defaultdict[discord.TextChannel, list[str]] = defaultdict(list)
@@ -179,9 +171,6 @@ async def reset_log_settings(client: Client, guild: discord.Guild, member: disco
     return _logs(guild)
 
 
-# Invites
-
-
 def _invites(guild: discord.Guild) -> InviteSettings:
     settings = cache.get(guild.id)
     return InviteSettings(fake_days=settings.invite_fake_days)
@@ -218,9 +207,6 @@ async def reset_invite_counts(guild: discord.Guild, member: discord.Member) -> I
     return _invites(guild)
 
 
-# Music
-
-
 def _channel(guild: discord.Guild, channel_id: int | None) -> discord.abc.GuildChannel | None:
     return guild.get_channel(channel_id) if channel_id else None
 
@@ -237,12 +223,6 @@ def _music(guild: discord.Guild) -> MusicSettings:
 
 
 async def _remove_request_channel(client: Client, guild: discord.Guild, actor: discord.abc.User) -> str | None:
-    """
-    Unbinds the request channel and deletes it, card and all.
-
-    The bot created the channel, so it's throwing away its own: everything in there is either the card or a
-    request the bot already cleared. Returns a note when the channel had to be left behind.
-    """
     channel_id = request.channel_id(guild.id)
     if channel_id is None:
         return None
@@ -259,12 +239,6 @@ async def _remove_request_channel(client: Client, guild: discord.Guild, actor: d
 
 
 async def _clear_stay_channel(client: Client, guild: discord.Guild) -> None:
-    """
-    Drops the 24/7 channel, so the bot leaves once it is no longer needed there.
-
-    A session still playing is left to finish and is then torn down like any other.
-    An idle bot was only there because of 24/7, so it leaves right away.
-    """
     if stay.channel_id(guild.id) is None:
         return
     await stay.unbind(guild.id)
@@ -303,7 +277,6 @@ async def update_music_settings(
 
     if dj_roles is not UNSET:
         await dj_db.set_dj_roles(guild.id, [role.id for role in dj_roles])
-        # Picking the first role is the whole point, so don't make enabling DJ mode a second step
         if dj_roles and not cache.get(guild.id).dj_mode:
             await dj_db.set_dj_mode(guild.id, True)
     # After the roles, so an explicit choice wins over the switch above
@@ -318,7 +291,7 @@ async def update_music_settings(
         try:
             await stay.join(client, guild.id)
         except Exception:
-            stay.schedule_rejoin(client, guild.id)  # Keeps trying in the background
+            stay.schedule_rejoin(client, guild.id)
     _audit(member, "updated music settings")
     return _music(guild)
 
@@ -379,9 +352,6 @@ async def remove_request_channel(client: Client, guild: discord.Guild, member: d
     return _notes(guild, note)
 
 
-# Tickets
-
-
 def _ticket_category(guild: discord.Guild) -> discord.abc.GuildChannel | None:
     return _channel(guild, cache.get(guild.id).ticket_category_id)
 
@@ -402,12 +372,6 @@ def _tickets(guild: discord.Guild) -> TicketSettings:
 
 
 async def _remove_ticket_panel(guild: discord.Guild, actor: discord.abc.User) -> str | None:
-    """
-    Unbinds the panel and deletes its channel. Returns a note when the channel had to be left behind.
-
-    Panels posted before the bot made its own channel sit in channels people chat in, so a channel is only deleted
-    when the panel is all it holds. Otherwise just the panel goes.
-    """
     channel, message_id = _ticket_panel_channel(guild), cache.get(guild.id).ticket_panel_message_id
     # Unbind first, so the deletes below don't look like someone removing the panel
     await unbind_panel(guild.id)
@@ -445,7 +409,6 @@ async def update_ticket_settings(guild: discord.Guild, member: discord.Member, d
     if any(
         value is not UNSET for value in (data.category_id, data.support_role_ids, data.max_open, data.confirm_close)
     ):
-        # The setup is saved as a whole, so fields left out keep their current values
         current = _ticket_category(guild)
         category = (
             resolve.category(guild, data.category_id)
@@ -519,9 +482,6 @@ async def remove_ticket_panel(guild: discord.Guild, member: discord.Member) -> N
     return _notes(guild, note)
 
 
-# Modules
-
-
 def _modules(guild: discord.Guild) -> ModuleSettings:
     return ModuleSettings(**{module.value: cache.enabled(guild.id, module) for module in Module})
 
@@ -536,13 +496,9 @@ async def update_module_settings(guild: discord.Guild, member: discord.Member, d
     for module in Module:
         if (on := getattr(data, module.value)) is not UNSET:
             await guild_db.set_module(guild.id, module, on)
-    # Both the tracker and the member log need invite uses, so either switch can start or stop caching them
     await refresh_invites(guild)
     _audit(member, "updated modules")
     return _modules(guild)
-
-
-# Everything
 
 
 @delete("/", summary="Reset every setting", status_code=200)
@@ -553,7 +509,7 @@ async def reset_all_settings(client: Client, guild: discord.Guild, member: disco
     notes = [await _reset_music(client, guild, member), await _reset_tickets(guild, member)]
     await _reset_invites(guild)
     await remove_guild(guild.id)
-    await refresh_invites(guild)  # Modules are back to their defaults, which may stop invite tracking
+    await refresh_invites(guild)
     request.forget(guild.id)
     stay.forget(guild.id)
     client.dispatch("log_channels_update", guild.id)

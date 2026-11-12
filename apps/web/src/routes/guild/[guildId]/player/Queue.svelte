@@ -32,7 +32,6 @@
 
     const lock = $derived(locked(access));
 
-    // A drop shows the new order right away; the bot's next push replaces it either way
     let tracks = $derived<Track[]>(queue.tracks);
 
     // The drop already shows where rows land, so its reorder must not animate again (see `sortable`)
@@ -49,7 +48,6 @@
         if (!(await control(music.moveTrack({ guild, index: from, identifier: moved.identifier, to })))) tracks = queue.tracks;
     }
 
-    // Rows keep their key when they move, so adds, removals and drops animate instead of rebuilding the list.
     // The same song can be queued twice, hence which copy it is
     function keysOf(list: Track[]) {
         const seen: Record<string, number> = {};
@@ -58,9 +56,6 @@
     const keys = $derived(keysOf(tracks));
     const autoKeys = $derived(keysOf(queue.autoplay));
 
-    // Rows only open and close their height, so a reorder from elsewhere (reverse, shuffle, sort, a move in Discord)
-    // fades the list into its new order rather than jumping. Only songs in both versions are compared, since a
-    // reverse also changes which songs make the first page. A drop here has already landed
     let lastKeys: string[] = [];
     let generation = 0;
     const order = $derived.by(() => {
@@ -83,9 +78,7 @@
         }
         return Object.values(found);
     });
-    // Someone whose songs all left the queue stops being the filter
     const person = $derived(people.some((p) => p.id === who) ? who : null);
-    // Applied once typing pauses, so the rows don't slide in and out on every keystroke. Clearing applies at once
     const FILTER_MS = 300;
     let needle = $state("");
     $effect(() => {
@@ -108,7 +101,6 @@
             ),
     );
 
-    // Slides in from the right and out to the left while the row's height opens or closes, so the rest glide along.
     // No move animation on top: it pins leaving rows in place while the others slide over them
     function row(node: HTMLElement, { from }: { from: number }) {
         const height = node.offsetHeight;
@@ -119,7 +111,6 @@
         };
     }
 
-    // Keyed by action and track, so only the button that was pressed spins
     const busy = new SvelteSet<string>();
     async function run(key: string, action: () => ReturnType<typeof control>) {
         if (busy.has(key)) return;
@@ -142,7 +133,6 @@
     async function removeTheirs() {
         if (!target) return;
         const person = target;
-        // Only the first page of the queue is loaded, so past it the exact count isn't known here
         const count = queue.total > tracks.length ? null : theirs.length;
         removing = true;
         const ok = await control(music.removeRequesterTracks({ guild, userId: person.id }));
@@ -155,7 +145,6 @@
         });
     }
 
-    // Clearing and reversing touch everyone's songs, so both ask first
     let whole = $state<"clear" | "reverse" | null>(null);
     let wholeOpen = $state(false);
     let wholeBusy = $state(false);

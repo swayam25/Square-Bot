@@ -23,21 +23,17 @@
         zen = false,
     }: { guild: string; track: Track; position: number; playing: boolean; zen?: boolean } = $props();
 
-    // Lyrics time, after the listener's sync nudge
     const offset = $derived(lyricsSync.offset);
     const position = $derived(playhead - offset);
 
-    // The rounded music note's path, inline so the liquid can fill it
     const NOTE =
         "M7.175 19.825Q6 18.65 6 17t1.175-2.825T10 13q.575 0 1.063.138t.937.412V4q0-.425.288-.712T13 3h4q.425 0 .713.288T18 4v2q0 .425-.288.713T17 7h-3v10q0 1.65-1.175 2.825T10 21t-2.825-1.175";
 
     const ANCHOR = 0.33;
     const RESUME_MS = 4000;
-    // Lyrics run a touch ahead of the audio so they never read as late, and the view glides to a line before it's sung
     const LEAD_MS = 115;
     const SCROLL_LEAD_MS = 500;
     const ENDING_MS = 500;
-    // The band the view keeps lines inside, as shares of its height (the edges fade out)
     const BAND_TOP = 0.12;
     const BAND_BOTTOM = 0.82;
     const GLOW_MS = 1200;
@@ -58,7 +54,6 @@
         return list.filter((i, n) => n === list.length - 1 || position < lines[i].end - ENDING_MS).join();
     });
     const focus = $derived(focusKey ? focusKey.split(",").map(Number) : [0]);
-    // The line the singer is on: the latest still running, the rest are tails
     const anchor = $derived.by(() => {
         const started = focus.filter((i) => lines[i] && lines[i].start <= position);
         return started.findLast((i) => position < lines[i].end) ?? started.at(-1) ?? focus[0];
@@ -76,13 +71,10 @@
 
     const clamp = (v: number) => Math.min(1, Math.max(0, v));
     const progress = (start: number, end: number) => clamp((t - start) / Math.max(1, end - start));
-    // Bright as a letter lights, fading to the line's resting glow. Zero until it starts, so dim letters stay dim.
     const glow = (lit: number, start: number, wordMs: number) =>
         lit * (GLOW_REST + (1 - GLOW_REST) * clamp(1 - (t - start) / Math.max(GLOW_MS, wordMs * 1.2)));
-    // Rises as it lights, crests when fully lit, then settles part of the way back
     const lift = (lit: number, end: number) => (lit < 1 ? lit * lit * (3 - 2 * lit) : 0.4 + 0.6 * clamp(1 - (t - end) / SETTLE_MS));
 
-    // The liquid in the interlude note: its surface rises with `level` and its waves flatten as it fills
     function wavePath(level: number, phase: number) {
         const y = 23 - level * 24;
         const a = 1.4 * (1 - level) + 0.15;
@@ -118,7 +110,6 @@
         return Math.max(0, y);
     }
 
-    // A critically damped glide, so the view eases into each line without overshooting
     function follow(indices: number[], lead: number, instant: boolean) {
         const view = scroller;
         if (!view) return;
@@ -198,7 +189,6 @@
     };
 
     const canSeek = $derived(!track.isStream);
-    // A tapped line seeks to where it sits in the song once the nudge is taken into account
     const seek = (start: number) => control(music.seekTrack({ guild, positionMs: Math.max(0, Math.round(start + offset)) }));
 </script>
 
@@ -269,7 +259,6 @@
                                     {/if}
                                     <path class="base" d={NOTE} />
                                     {#if on}
-                                        <!-- The glow sits on the group, so it follows the liquid -->
                                         <g class="lit"><path d={NOTE} clip-path="url(#{noteId}-{i})" /></g>
                                     {/if}
                                 </svg>
@@ -304,7 +293,6 @@
         {#if !zen}
             <div class="flex items-center justify-between gap-4 px-4 pt-2 pb-4 text-xs text-mist-400 md:px-6">
                 <p>Lyrics from {lyrics.source}</p>
-                <!-- Only for this visit: a reload puts it back to 0 -->
                 <div role="group" aria-label="Lyrics sync" class="flex items-center gap-1">
                     <span class="mr-1 font-medium">Sync</span>
                     <Tooltip content="Show lyrics {SYNC_STEP_MS / 1000}s earlier">
@@ -445,8 +433,6 @@
         color: color-mix(in srgb, var(--color-mist-50) 64%, transparent);
     }
 
-    /* Letters light up as they're sung: each fades in, pops a hair, rises to crest and settles, glowing brightly at
-       first and fading to a soft glow. Transparent until a letter starts, so unlit letters stay dim. */
     .word {
         display: inline-block;
         white-space: nowrap;
@@ -471,7 +457,6 @@
         opacity: 0.8;
     }
 
-    /* Joining and RTL scripts fill word by word with a soft leading edge, so their shaping and order stay intact */
     .sweep {
         --edge: 0.5em;
         --sweep-dir: 90deg;
@@ -490,8 +475,6 @@
         --sweep-dir: 270deg;
     }
 
-    /* Instrumental gaps: a note that fills with glowing liquid, its rippling surface flattening as it rises,
-       breathing gently, then shrinking away as the singing returns */
     .note {
         --glow: var(--color-white);
         width: 3.5rem;

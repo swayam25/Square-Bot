@@ -35,7 +35,6 @@ _renames: dict[int, asyncio.Task] = {}
 
 
 def is_support(member: discord.Member) -> bool:
-    """Support roles and anyone with Manage Channels can see and manage every ticket."""
     if member.guild_permissions.manage_channels:
         return True
     ids = set(cache.get(member.guild.id).ticket_support_role_ids)
@@ -43,7 +42,6 @@ def is_support(member: discord.Member) -> bool:
 
 
 def _rename(channel: discord.TextChannel, closed: bool, reason: str) -> None:
-    """Puts the lock on a closed ticket's channel name, or takes it off, in the background."""
     if pending := _renames.pop(channel.id, None):
         pending.cancel()
 
@@ -64,7 +62,6 @@ def _rename(channel: discord.TextChannel, closed: bool, reason: str) -> None:
 
 
 async def _category(guild: discord.Guild) -> discord.CategoryChannel | None:
-    """The configured ticket category, created (and remembered) on first use."""
     category_id = cache.get(guild.id).ticket_category_id
     if category_id and isinstance(category := guild.get_channel(category_id), discord.CategoryChannel):
         return category
@@ -85,12 +82,6 @@ async def _category(guild: discord.Guild) -> discord.CategoryChannel | None:
 async def open_ticket(
     client: Client, guild: discord.Guild, opener: discord.Member, reason: str
 ) -> discord.abc.GuildChannel | str:
-    """
-    Opens a numbered ticket channel only the opener and staff can see.
-
-    Returns:
-        The new channel, or an error message.
-    """
     settings = cache.get(guild.id)
     if len(open_ids := await db.count_open_tickets(guild.id, opener.id)) >= settings.ticket_max_open:
         return "You already have an open ticket: " + ", ".join(f"<#{channel_id}>" for channel_id in open_ids)
@@ -124,7 +115,6 @@ async def open_ticket(
 
 
 async def refresh(client: Client, guild: discord.Guild, ticket: TicketTable) -> None:
-    """Redraws the ticket's control card and its log card after a change."""
     channel = guild.get_channel(ticket.channel_id)
     if isinstance(channel, discord.TextChannel) and ticket.control_message_id:
         try:
@@ -136,7 +126,6 @@ async def refresh(client: Client, guild: discord.Guild, ticket: TicketTable) -> 
 
 
 async def claim(client: Client, guild: discord.Guild, ticket: TicketTable, member: discord.Member) -> str:
-    """Claims the ticket for a staff member, taking it over if someone else holds it."""
     await db.save_ticket(ticket, claimed_by=member.id)
     await refresh(client, guild, ticket)
     return f"Claimed ticket {cards.label(ticket)}."
@@ -172,7 +161,6 @@ async def remove_members(
 async def _transcript(
     guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable | None
 ) -> tuple[bytes, int, list[int]]:
-    """The channel as an HTML transcript, with its message count and the members who wrote in it."""
     messages = [message async for message in channel.history(limit=TRANSCRIPT_LIMIT)]
     summary: list[tuple[str, str]] = []
     if ticket is not None:
@@ -202,7 +190,6 @@ async def _transcript(
 
 
 async def transcript(guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable | None) -> discord.File:
-    """A transcript to hand to someone who asked for it."""
     page, _, _ = await _transcript(guild, channel, ticket)
     return discord.File(io.BytesIO(page), filename=f"{cards.unlocked_name(channel.name)}.html")
 
@@ -210,7 +197,6 @@ async def transcript(guild: discord.Guild, channel: discord.TextChannel, ticket:
 async def close(
     client: Client, guild: discord.Guild, ticket: TicketTable, channel: discord.TextChannel, by: discord.Member
 ) -> None:
-    """Locks the opener and added members out, saves the transcript into the log card and swaps the controls."""
     await db.save_ticket(ticket, status="closed", closed_by=by.id)
     for user_id in [ticket.opener_id, *await db.fetch_ticket_members(ticket)]:
         if member := guild.get_member(user_id):
@@ -226,7 +212,7 @@ async def close(
         card,
         file=discord.File(io.BytesIO(page), filename),
     )
-    if not edited:  # The open card is gone, e.g. the log channel was changed meanwhile
+    if not edited:
         log_id = await server_log.post(
             client, guild, server_log.LogType.TICKETS, card, file=discord.File(io.BytesIO(page), filename)
         )
@@ -250,14 +236,12 @@ async def delete(
     """Deletes the channel. The ticket row and its log card stay, so the record survives."""
     await db.save_ticket(ticket, status="deleted")
     if ticket.log_message_id:
-        # No new file: the closed card keeps the transcript it already has
         await server_log.edit(client, guild, server_log.LogType.TICKETS, ticket.log_message_id, cards.log_card(ticket))
     await asyncio.sleep(5)
     await channel.delete(reason=f"Ticket deleted by {by}")
 
 
 async def close_legacy(client: Client, guild: discord.Guild, channel: discord.TextChannel, by: discord.Member) -> None:
-    """Closes a ticket from before v2 (`ticket-<user id>`, no database row): transcript to the log, then delete."""
     page, count, _ = await _transcript(guild, channel, None)
     opener = channel.name.removeprefix("ticket-")
     filename = f"{channel.name}.html"

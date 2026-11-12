@@ -4,17 +4,8 @@ from PIL import Image, ImageDraw
 from square.imaging import Template
 from square.imaging.templates import invite_card, leaderboard, now_playing
 
-# Fake data for `python -m square.imaging`: one `sample_<template>` per template, registered in `PREVIEWS`. Cover the
-# edge cases (long or styled names, big numbers, missing avatars) so layout bugs show up here first.
-
 
 def sample_leaderboard() -> leaderboard.Leaderboard:
-    """
-    Edge cases for the leaderboard.
-
-    Font fallback (✦ ♛ 𝓶), color emoji (🚀 ⭐ ❤️ 🇮🇳 👍🏽), truncation, compact numbers from thousands to millions,
-    and a negative bonus.
-    """
     names = [
         "kaizen",
         "rinbo ✦",
@@ -36,7 +27,6 @@ def sample_leaderboard() -> leaderboard.Leaderboard:
 
 
 def _sample_icon() -> bytes:
-    """A stand-in server icon: a cyan-900 square with a white ring, enough to check size and corner rounding."""
     image = Image.new("RGBA", (128, 128), (0x10, 0x4E, 0x64, 255))
     ImageDraw.Draw(image).ellipse((32, 32, 96, 96), outline=(255, 255, 255, 255), width=14)
     buffer = BytesIO()
@@ -45,7 +35,6 @@ def _sample_icon() -> bytes:
 
 
 def sample_invite_card() -> invite_card.InviteCard:
-    """A long styled name with an emoji, compact numbers, and every kind of invite present so each segment shows."""
     return invite_card.InviteCard(
         name="𝓶𝓸𝓬𝓱𝓲 the long-named inviter 🚀",
         username="mochi.dev",
@@ -62,7 +51,6 @@ def sample_invite_card() -> invite_card.InviteCard:
 
 
 def _sample_artwork() -> bytes:
-    """A 4:3 thumbnail with black letterbox bars around a 16:9 picture, like YouTube serves, to check the trim."""
     image = Image.new("RGB", (480, 360), (0, 0, 0))
     draw = ImageDraw.Draw(image)
     for row in range(270):
@@ -74,7 +62,6 @@ def _sample_artwork() -> bytes:
 
 
 def sample_now_playing() -> now_playing.NowPlaying:
-    """A long title with an emoji, a requester without an avatar, more filters than fit, and a queue."""
     return now_playing.NowPlaying(
         title="Midnight City (Extended Mix) 🌃 feat. Someone With A Very Long Name",
         author="M83",

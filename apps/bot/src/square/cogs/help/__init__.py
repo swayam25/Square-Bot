@@ -10,21 +10,13 @@ from square.utils.emoji import Icon, emoji
 from typing import TypedDict
 
 
-# Typed dictionary for cogs
 class CogDict(TypedDict):
     name: str
     emoji: Icon
     description: str
 
 
-# Cogs
 async def get_cogs(ctx: discord.ApplicationContext) -> list[CogDict]:
-    """
-    Get the help categories: every loaded cog that sets an `emoji`, in `order`.
-
-    Args:
-        ctx (:class:`discord.ApplicationContext`): The context of the command.
-    """
     cogs = sorted(
         (cog for cog in ctx.bot.cogs.values() if isinstance(cog, Cog) and cog.help_emoji),
         key=lambda cog: cog.help_order,
@@ -44,11 +36,9 @@ class HelpView(DesignerView):
         self.client = client
         self.ctx = ctx
         self.cogs = cogs
-        self._build_home_view()  # Creates the initial home view
+        self._build_home_view()
 
-    # Home view builder
     def _build_home_view(self) -> None:
-        """Clears the view and constructs the UI for the home page."""
         self.clear_items()
         category_list = "\n".join(f"{cog['emoji']} `:` **{cog['name']}**" for cog in self.cogs)
         container = ui.Container(
@@ -61,9 +51,7 @@ class HelpView(DesignerView):
         self.add_item(container)
         self.add_item(ui.ActionRow(self._build_select_menu()))
 
-    # Builder util for select menu component
     def _build_select_menu(self, current: str | None = None) -> ui.Select:
-        """Build the select menu for the help view. Off the home page it marks `current` and adds a Home option."""
         options = [
             discord.SelectOption(
                 label=cog["name"],
@@ -91,9 +79,7 @@ class HelpView(DesignerView):
         select_menu.callback = lambda i: self.help_callback(i)
         return select_menu
 
-    # Cog view builder
     def _build_cog_view(self, cog_name: str) -> None:
-        """Clears the view and constructs the UI for a specific cog's command list."""
         self.clear_items()
         cog = self.client.get_cog(cog_name)
         if not cog:
@@ -101,21 +87,17 @@ class HelpView(DesignerView):
             return
         cmds = ""
 
-        # Util to build full command path including parent groups
         def build_full_command_path(cmd: SlashCommand | SlashCommandGroup) -> str:
             parts = [cmd.name]
             parent = getattr(cmd, "parent", None)
-            # Walk up parent chain to root group
             while parent:
                 parts.append(parent.name)
                 parent = getattr(parent, "parent", None)
             return " ".join(reversed(parts))
 
-        # Attempt to resolve a usable prefix (may be empty if unset)
         resolved_prefix = getattr(self.client, "command_prefix", "")
         if callable(resolved_prefix):
             try:
-                # ApplicationContext isn't a Message, so fall back to empty on error
                 resolved_prefix = resolved_prefix(self.client, getattr(self.ctx, "message", None)) or ""
             except Exception:
                 resolved_prefix = ""
@@ -124,7 +106,7 @@ class HelpView(DesignerView):
             if isinstance(command, SlashCommandGroup):
                 for subcommand in command.walk_commands():
                     if isinstance(subcommand, SlashCommandGroup):
-                        continue  # Skip intermediate groups
+                        continue
                     full_path = build_full_command_path(subcommand)
                     cmds += (
                         f"</{full_path}:{command.id}>" if command.id else f"`/{full_path}`"
@@ -136,13 +118,13 @@ class HelpView(DesignerView):
                 ) + f"\n{emoji.bottom_right} {command.description}\n\n"
             elif isinstance(command, commands.Command):
                 if getattr(command, "hidden", False):
-                    continue  # Skip hidden commands
+                    continue
                 display = f"`{resolved_prefix}{command.name}`"
                 cmds += (
                     display
                     + f"\n{emoji.bottom_right} {command.help or command.description or 'No description provided.'}\n\n"
                 )
-            else:  # Fallback: unknown command type
+            else:
                 cmds += f"`{getattr(command, 'name', 'unknown')}`\n{emoji.bottom_right} {getattr(command, 'description', 'No description provided.')}\n\n"
         if not cmds:
             cmds = "No command found."
@@ -154,9 +136,7 @@ class HelpView(DesignerView):
         self.add_item(container)
         self.add_item(ui.ActionRow(self._build_select_menu(cog_name)))
 
-    # Help callback
     async def help_callback(self, interaction: discord.Interaction) -> None:
-        """The callback for the select menu that rebuilds the view."""
         await interaction.response.defer()
         selected_value = interaction.data["values"][0]
         if selected_value == "Home":
@@ -170,7 +150,6 @@ class Help(Cog):
     def __init__(self, client):
         self.client = client
 
-    # Help
     @slash_command(name="help")
     async def help(self, ctx: discord.ApplicationContext):
         """Need bot's help? Use this!"""

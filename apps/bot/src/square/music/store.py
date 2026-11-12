@@ -39,20 +39,11 @@ def record_failure(guild_id: int, title: str, reason: str | None) -> None:
     _failures[guild_id] = Failure(title=title, reason=reason or None, at=round(time.time() * 1000))
 
 
-# Play channel
 def play_ch(
     guild_id: int,
     channel: Types.PlayerChannel | None = None,
     mode: Literal["get", "set"] = "get",
 ) -> Types.PlayerChannel | None:
-    """
-    Gets or sets the play channel for a guild.
-
-    Args:
-        guild_id (int): The ID of the guild.
-        channel (:class:`Types.PlayerChannel` | None): The channel to set, or None to get the current value.
-        mode (str): The operation mode, either "get" or "set".
-    """
     match mode:
         case "get":
             guild = store.get(guild_id, {})
@@ -65,22 +56,12 @@ def play_ch(
             store[guild_id]["play_ch"] = channel
 
 
-# Play msg
 def play_msg(
     guild_id: int,
     msg: Types.PlayerMessage | None = None,
     view: DesignerView | None = None,
     mode: Literal["get", "set", "clear"] = "get",
 ) -> tuple[Types.PlayerMessage, DesignerView] | None:
-    """
-    Gets or sets the play message for a guild.
-
-    Args:
-        guild_id (int): The ID of the guild.
-        msg (:class:`Types.PlayerMessage` | None): The message to set, or None to get the current value.
-        view (:class:`DesignerView` | None): The view to set, or None to get the current value.
-        mode (str): The operation mode, either "get", "set", or "clear".
-    """
     match mode:
         case "get":
             guild = store.get(guild_id, {})
@@ -114,14 +95,6 @@ def render_task(
 def skip_vote(
     guild_id: int, vote: DesignerView | None = None, mode: Literal["get", "set", "clear"] = "get"
 ) -> DesignerView | None:
-    """
-    Gets, sets, or clears the guild's open skip vote.
-
-    Args:
-        guild_id (int): The ID of the guild.
-        vote (:class:`DesignerView` | None): The vote view to set.
-        mode (str): The operation mode, either "get", "set", or "clear".
-    """
     match mode:
         case "get":
             return store.get(guild_id, {}).get("skip_vote", None)
@@ -134,7 +107,6 @@ def skip_vote(
                 store[guild_id].pop("skip_vote", None)
 
 
-# Progress bar ticker task
 def progress_task(
     guild_id: int, task: asyncio.Task | None = None, mode: Literal["get", "set", "clear"] = "get"
 ) -> asyncio.Task | None:
@@ -175,23 +147,11 @@ def card_gif(
             store[guild_id]["card_gif"] = attached
 
 
-# Accumulated visual height (estimated chat lines) posted since the player message was last sent
 def chat_weight(
     guild_id: int,
     value: int | None = None,
     mode: Literal["get", "add", "clear"] = "get",
 ) -> int:
-    """
-    Gets, adds to, or clears the accumulated chat weight for a guild.
-
-    Args:
-        guild_id (int): The ID of the guild.
-        value (int | None): The number of estimated lines to add (for "add" mode).
-        mode (str): The operation mode, either "get", "add", or "clear".
-
-    Returns:
-        int: The accumulated weight after the operation (0 for "clear").
-    """
     match mode:
         case "get":
             return store.get(guild_id, {}).get("chat_weight", 0)

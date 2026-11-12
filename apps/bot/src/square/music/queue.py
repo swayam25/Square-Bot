@@ -22,12 +22,6 @@ async def _update_queue_view(interaction: discord.Interaction, queue_view: Queue
 
 
 def nudge_card(player: SquarePlayer, guild_id: int) -> None:
-    """
-    Repaints the player card after a button reorders or drops a track.
-
-    Only a bound card lists what is up next, and only these buttons change the queue without going
-    through `slash_log`, which renders on its own.
-    """
     from square.music.player import schedule_render  # Local: `music/player.py` imports this module.
 
     if request.setup_mode(guild_id):
@@ -35,8 +29,6 @@ def nudge_card(player: SquarePlayer, guild_id: int) -> None:
 
 
 class QueueBtnCallback:
-    """Static callbacks for per-track action buttons (expand, move up/down, remove, play now)."""
-
     @staticmethod
     async def queue_btn_callback(
         i: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
@@ -49,7 +41,6 @@ class QueueBtnCallback:
 
     @staticmethod
     async def _run(interaction: discord.Interaction, action: Awaitable[str]) -> bool:
-        """Runs a control, telling the member why when it's refused."""
         try:
             await action
         except MusicError as exc:
@@ -144,20 +135,6 @@ class QueueBtnCallback:
 
 
 class QueueContainer(ui.Container):
-    """
-    Renders a paginated list of queued tracks as a Discord container component.
-
-    Shows the currently playing track at position 0, followed by the queued tracks for the current page.
-    Each track has an expand button to reveal move/remove/play-now actions.
-
-    Args:
-        player (:class:`SquarePlayer`): The active player.
-        source (:class:`ApplicationContext` | :class:`Interaction`): The invoking command or button press, used to resolve the guild.
-        page (int): The page number to display (1-indexed).
-        items_per_page (int): Number of tracks shown per page.
-        queue_view (:class:`QueueListView` | None): The parent view, used to track which track's action buttons are expanded.
-    """
-
     def __init__(
         self,
         player: SquarePlayer,
@@ -267,15 +244,6 @@ class QueueContainer(ui.Container):
 
 
 class QueueListView(DesignerView):
-    """
-    Interactive queue view with pagination, bulk actions, and per-track controls.
-
-    Args:
-        client (:class:`Client`): The bot client used to fetch the player.
-        source (:class:`ApplicationContext` | :class:`Interaction`): The invoking command or button press, passed down to :class:`QueueContainer`.
-        page (int): The initial page to display (1-indexed, default 1).
-    """
-
     def __init__(self, client: Client, source: discord.ApplicationContext | discord.Interaction, page: int = 1):
         super().__init__()
         self.client = client

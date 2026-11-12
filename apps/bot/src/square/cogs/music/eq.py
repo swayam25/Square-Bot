@@ -11,12 +11,9 @@ from square.music.filters import EQ_PRESETS, EqPreset
 
 
 class Equalizer:
-    """The `/eq` command group. Preset subcommands are added from `EQ_PRESETS` below."""
-
     client: Client
-    _control: Callable[[discord.ApplicationContext, Awaitable[str]], Awaitable[None]]  # From the Music cog
+    _control: Callable[[discord.ApplicationContext, Awaitable[str]], Awaitable[None]]
 
-    # Equalizer slash cmd group
     eq = SlashCommandGroup(name="eq", description="Equalizer commands.")
 
     @eq.command(name="reset")
@@ -25,7 +22,6 @@ class Equalizer:
         await self._control(ctx, controls.reset_eq(ctx.guild, ctx.author))
 
     async def filter_autocomplete(self, ctx: discord.AutocompleteContext):
-        """Offers the active presets by name."""
         player = get_player(self.client, ctx.interaction.guild_id)
         if not player:
             return []

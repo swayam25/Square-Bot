@@ -1,5 +1,3 @@
-// The listener's lyrics adjustment in ms: positive shows the lyrics later. Module state, so it survives song changes,
-// and never stored: a reload puts it back to 0
 export const lyricsSync = $state({ offset: 0 });
 
 export const SYNC_STEP_MS = 100;

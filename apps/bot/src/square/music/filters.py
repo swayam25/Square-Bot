@@ -4,17 +4,6 @@ from sonolink.models import Equalizer, Filters, Karaoke, LowPass, Rotation, Time
 
 @dataclass(frozen=True, slots=True)
 class EqPreset:
-    """
-    A ready-made `/eq` effect.
-
-    Attributes:
-        label (str): The name shown to users.
-        description (str): Shown under `/eq` and on the dashboard.
-        slot (str): The Lavalink filter it drives. Two presets on one slot can't stack: sonolink
-            blends their values, and equalizer bands would be sent twice.
-        filters (:class:`Filters`): The effect itself, combined with the player's other presets.
-    """
-
     label: str
     description: str
     slot: str

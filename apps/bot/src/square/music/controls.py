@@ -1,11 +1,3 @@
-"""
-Every player control, with the rules for who may use it.
-
-The Discord card, the slash commands, `/eq` and the dashboard all go through here, so a control behaves the same
-wherever it's pressed. Each one acts, repaints the card, posts the public log line and returns a short confirmation
-for whoever asked. Refusals raise `MusicError` with a message for them.
-"""
-
 import asyncio
 import discord
 import logging
@@ -28,7 +20,7 @@ if TYPE_CHECKING:
     from square.music.play import Enqueued
 
 VOLUME_RANGE = (0, 100)  # 0 is the dashboard's mute; /volume still asks for 1 - 100
-CARD_GRACE = 2.0  # Seconds a control waits on the card repaint before answering anyway
+CARD_GRACE = 2.0
 
 log = logging.getLogger(__name__)
 _painting: set[asyncio.Future] = set()  # Strong refs, or a repaint that outlives its control gets garbage collected
@@ -37,7 +29,6 @@ _painting: set[asyncio.Future] = set()  # Strong refs, or a repaint that outlive
 def require_player(
     guild: discord.Guild, member: discord.Member, *, need_track: bool = True, need_queue: bool = False
 ) -> SquarePlayer:
-    """The guild's player, if the member is listening to it: in voice, with the bot, and something to control."""
     if not member.voice or not member.voice.channel:
         raise MusicError("Join a voice channel first.")
     player = guild.voice_client if isinstance(guild.voice_client, SquarePlayer) else None
@@ -52,14 +43,12 @@ def require_player(
 
 
 async def require_dj(member: discord.Member, player: SquarePlayer, *, track: Playable | None = None) -> None:
-    """Refuses unless the member is a DJ, or requested `track` when the action is about one."""
     if dj.is_dj(member, player) or (track is not None and requester_id(player, track) == member.id):
         return
     raise MusicError("Only a DJ can do that.")
 
 
 def _queued(player: SquarePlayer, index: int, identifier: str | None) -> Playable:
-    """The queued track at `index`, checked against the identifier the member saw there when one is given."""
     queue = player.queue
     if not 0 <= index < len(queue):
         raise MusicError(f"Track number must be between `1` and `{len(queue)}`.")
@@ -101,7 +90,6 @@ def _painted(painting: asyncio.Future) -> None:
 
 
 async def set_paused(guild: discord.Guild, member: discord.Member, paused: bool | None = None) -> str:
-    """Pauses or resumes. `None` flips it, like the card's button."""
     player = require_player(guild, member)
     await require_dj(member, player)
     if paused is None:
@@ -121,7 +109,6 @@ async def stop(guild: discord.Guild, member: discord.Member) -> str:
     player = require_player(guild, member, need_track=False)
     await require_dj(member, player)
     action = f"{playback.stop_verb(guild.id)} the player"
-    # Logged alongside the teardown, which flushes the channel the log goes to
     await asyncio.gather(
         music_log(guild.id, f"{emoji.stop} {member.mention} {action}."), playback.stop_player(player, guild)
     )
@@ -129,7 +116,6 @@ async def stop(guild: discord.Guild, member: discord.Member) -> str:
 
 
 async def seek(guild: discord.Guild, member: discord.Member, position_ms: int) -> str:
-    """Jumps to a position in the current track, skipping it when the position is past its end."""
     player = require_player(guild, member)
     await require_dj(member, player)
     track = player.current
@@ -157,17 +143,10 @@ async def previous(guild: discord.Guild, member: discord.Member) -> str:
         track = await player.previous()
     except sonolink.HistoryEmpty:
         raise MusicError("Nothing has been played yet.") from None
-    # The track start that follows repaints the card
     return await _done(player, member, emoji.back, f"went back to [**{track.title}**]({track.uri})", render=False)
 
 
 async def skip(guild: discord.Guild, member: discord.Member, *, channel: discord.abc.Messageable | None = None) -> str:
-    """
-    Skips the track for a DJ or the member who requested it, and opens a listener vote for everyone else.
-
-    A second member asking to skip joins the open vote instead of starting a competing one. The vote card goes to the
-    player's channel, then `channel`, then the member's voice channel chat.
-    """
     player = require_player(guild, member)
     track = player.current
     if dj.is_dj(member, player) or requester_id(player, track) == member.id:
@@ -192,7 +171,6 @@ async def skip(guild: discord.Guild, member: discord.Member, *, channel: discord
     try:
         vote.msg = await target.send(view=vote, reference=reference)
     except discord.HTTPException:
-        # No card, no vote: drop it rather than leave a slot and an expiry task nothing can ever resolve.
         vote.stop()
         store.skip_vote(guild.id, mode="clear")
         raise MusicError("I can't post the skip vote in that channel.") from None
@@ -201,7 +179,6 @@ async def skip(guild: discord.Guild, member: discord.Member, *, channel: discord
 
 
 async def jump(guild: discord.Guild, member: discord.Member, index: int, identifier: str | None = None) -> str:
-    """Plays a queued track right away. DJ only, since it cuts off whatever is playing."""
     player = require_player(guild, member, need_queue=True)
     track = _queued(player, index, identifier)
     await require_dj(member, player)
@@ -210,7 +187,6 @@ async def jump(guild: discord.Guild, member: discord.Member, index: int, identif
 
 
 async def remove(guild: discord.Guild, member: discord.Member, index: int, identifier: str | None = None) -> str:
-    """Takes a track off the queue. Whoever queued it may remove their own."""
     player = require_player(guild, member, need_queue=True)
     track = _queued(player, index, identifier)
     await require_dj(member, player, track=track)
@@ -246,7 +222,6 @@ async def reverse_queue(guild: discord.Guild, member: discord.Member) -> str:
 
 
 async def sort_queue(guild: discord.Guild, member: discord.Member) -> str:
-    """Puts the shortest tracks first."""
     player = require_player(guild, member, need_queue=True)
     await require_dj(member, player)
     player.queue.sort(key=lambda track: track.length)
@@ -264,7 +239,6 @@ async def dedupe_queue(guild: discord.Guild, member: discord.Member) -> str:
 
 
 async def remove_requested_by(guild: discord.Guild, member: discord.Member, user_id: int) -> str:
-    """Drops every queued track one member asked for."""
     player = require_player(guild, member, need_queue=True)
     await require_dj(member, player)
     removed = player.queue.remove([user_id], key=lambda track: requester_id(player, track))
@@ -294,7 +268,6 @@ async def set_loop(guild: discord.Guild, member: discord.Member, mode: sonolink.
 
 
 def next_loop(player: SquarePlayer) -> sonolink.QueueMode:
-    """The mode the card's loop button moves to: off, then track, then queue when there is one, then off."""
     if player.queue_mode is sonolink.QueueMode.NORMAL:
         return sonolink.QueueMode.LOOP
     if player.queue_mode is sonolink.QueueMode.LOOP and len(player.queue):
@@ -303,7 +276,6 @@ def next_loop(player: SquarePlayer) -> sonolink.QueueMode:
 
 
 async def set_shuffle(guild: discord.Guild, member: discord.Member, enabled: bool | None = None) -> str:
-    """Shuffles the queue's play order. `None` flips it."""
     player = require_player(guild, member, need_queue=True)
     await require_dj(member, player)
     if enabled is None or enabled != player.shuffled:
@@ -312,7 +284,6 @@ async def set_shuffle(guild: discord.Guild, member: discord.Member, enabled: boo
 
 
 async def set_autoplay(guild: discord.Guild, member: discord.Member, enabled: bool | None = None) -> str:
-    """Lets the bot pick related tracks once the queue runs dry. `None` flips it."""
     player = require_player(guild, member)
     await require_dj(member, player)
     if enabled is None or enabled != player.autoplay_on:
@@ -321,7 +292,6 @@ async def set_autoplay(guild: discord.Guild, member: discord.Member, enabled: bo
 
 
 async def set_eq(guild: discord.Guild, member: discord.Member, name: str, enabled: bool) -> str:
-    """Turns an equalizer preset on, swapping out whichever active one drives the same filter, or off."""
     player = require_player(guild, member)
     await require_dj(member, player)
     if (preset := EQ_PRESETS.get(name)) is None:
@@ -352,12 +322,6 @@ async def reset_eq(guild: discord.Guild, member: discord.Member) -> str:
 async def play(
     client: Client, guild: discord.Guild, member: discord.Member, query: str, *, channel: discord.abc.Messageable | None
 ) -> Enqueued:
-    """
-    Searches for a query and queues what it finds, joining the member's voice channel first if nothing is playing.
-
-    A session that starts here puts its card in the bound request channel, else `channel` (where `/play` was used),
-    else the member's voice channel chat.
-    """
     # Local: `music/play.py` imports `music/player.py`, which imports this module
     from square.music.play import ensure_connected, resolve_and_enqueue, resolve_query
 
@@ -381,20 +345,17 @@ async def play(
     if not result.ok:
         await _abandon_play(player, guild, connected_now, claimed)
         raise MusicError(_without_emoji(result.content))
-    # Only a bound card lists what is up next, so only it changes when a track is queued
     if not result.started and request.setup_mode(guild.id):
         playback.schedule_render(client, guild.id)
     return result
 
 
 def _without_emoji(line: str) -> str:
-    """Turns one of the play flow's emoji-prefixed lines back into a plain sentence."""
     text = split_log_text(line)[1]
     return text[:1].upper() + text[1:]
 
 
 async def _abandon_play(player: SquarePlayer, guild: discord.Guild, connected_now: bool, claimed: bool) -> None:
-    """Undoes what a failed play set up, so the next one starts from a clean slate."""
     if connected_now:
         await playback.stop_player(player, guild)
     elif claimed and not player.current:
@@ -402,7 +363,6 @@ async def _abandon_play(player: SquarePlayer, guild: discord.Guild, connected_no
 
 
 async def replay(guild: discord.Guild, member: discord.Member, index: int, identifier: str | None = None) -> str:
-    """Queues a played track again, newest first, crediting whoever asked as its requester."""
     player = require_player(guild, member)
     played = history_tracks(player)
     if not 0 <= index < len(played):

@@ -7,7 +7,6 @@
         channel.postMessage("changed");
         channel.close();
         window.close();
-        // Still open: the browser didn't treat this as a script-opened popup, so carry on in this tab
         setTimeout(() => location.replace("/"), 200);
     });
 </script>

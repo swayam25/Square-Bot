@@ -19,13 +19,10 @@ from typing import Literal
 
 
 def _has_stats(node: sonolink.Node) -> bool:
-    """Whether a node has reported real stats."""
     return bool(node.is_connected and node.stats is not None)
 
 
 class StatsView(DesignerView):
-    """A terminal-style report of bot, host & lavalink node stats, split across two pages."""
-
     process = psutil.Process()
 
     BAR_WIDTH = 10
@@ -45,18 +42,15 @@ class StatsView(DesignerView):
         self.build_lock = asyncio.Lock()
 
     def _track(self, key: str, value: float) -> list[float]:
-        """Appends a sample and returns the series so far."""
         self.history[key].append(value)
         return list(self.history[key])
 
     def _bar(self, percent: float) -> str:
-        """Renders a percentage as a fixed-width ASCII meter, e.g. `[####------]  42.1%`."""
         percent = min(max(percent, 0.0), 100.0)
         filled = int(round(self.BAR_WIDTH * percent / 100))
         return f"[{'#' * filled}{'-' * (self.BAR_WIDTH - filled)}] {percent:5.1f}%"
 
     def _axis(self, low: float, high: float) -> list[str]:
-        """Formats the y-axis labels, top row first."""
         values = [high - (high - low) * r / self.CHART_HEIGHT for r in range(self.CHART_HEIGHT + 1)]
         labels = [f"{v:.0f}" for v in values]
         for decimals in range(1, 4):
@@ -66,7 +60,6 @@ class StatsView(DesignerView):
         return labels
 
     def _chart(self, title: str, series: list[float]) -> list[str]:
-        """Plots a series as a line chart; renders only while auto-refresh is running."""
         caption = f"     last {len(series)} samples"
         if not self.auto or len(series) < 2:
             return []

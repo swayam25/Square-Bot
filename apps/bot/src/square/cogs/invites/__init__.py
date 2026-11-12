@@ -31,8 +31,6 @@ LEADERBOARD_PAGE = 10
 
 
 class ResetAllView(DesignerView):
-    """Asks before wiping every invite count in the server."""
-
     def __init__(self, ctx: discord.ApplicationContext):
         super().__init__(ctx=ctx, check_author_interaction=True, timeout=60)
         confirm = ui.Button(label="Reset every count", emoji=emoji.bin_white, style=discord.ButtonStyle.red)
@@ -55,21 +53,19 @@ class ResetAllView(DesignerView):
 async def _resolve_users(
     client: Client, guild: discord.Guild, user_ids: list[int]
 ) -> list[discord.User | discord.Member | None]:
-    """Members or users by ID, from cache when possible. Inviters who left the server are fetched."""
 
     async def resolve(user_id: int) -> discord.User | discord.Member | None:
         if user := guild.get_member(user_id) or client.get_user(user_id):
             return user
         try:
             return await client.fetch_user(user_id)
-        except discord.HTTPException:  # Deleted account
+        except discord.HTTPException:
             return None
 
     return list(await asyncio.gather(*(resolve(user_id) for user_id in user_ids)))
 
 
 def _shown_image_url(message: discord.Message) -> str | None:
-    """The URL a message's media gallery is showing right now, falling back to its first attachment."""
     for component in message.components:
         for inner in component.walk_components() if isinstance(component, discord.Container) else [component]:
             if isinstance(inner, discord.MediaGallery) and inner.items:
@@ -78,8 +74,6 @@ def _shown_image_url(message: discord.Message) -> str | None:
 
 
 class LeaderboardView(DesignerView):
-    """The invite leaderboard image, with start/previous/next/end buttons once there's more than one page."""
-
     def __init__(
         self,
         client: Client,
@@ -107,7 +101,7 @@ class LeaderboardView(DesignerView):
                 filler = [leaderboard.Inviter(rank, "", None, 0, 0, 0, 0, 0) for rank in range(1, LEADERBOARD_PAGE + 1)]
                 full = [
                     leaderboard.Leaderboard(self.guild.name, None, 0, 0, page, self.pages, filler) for page in (1, 2)
-                ]  # Page 1 has the podium, later pages only rows
+                ]
                 self._height = await imaging.tallest(leaderboard.build, full)
         return self._height
 
@@ -145,7 +139,6 @@ class LeaderboardView(DesignerView):
         )
 
     async def render(self) -> discord.File:
-        """Draws the current page and rebuilds the view around it. Send the file along with the view."""
         data = await self._data()
         file = await imaging.render(
             leaderboard.build, data, filename="leaderboard.png", height=await self._page_height()
@@ -219,7 +212,7 @@ class Invites(
         if not (guild := ctx.guild):
             return
         target = member or ctx.author
-        await ctx.defer()  # Fetching the avatar and rendering can outlast the 3 second reply window
+        await ctx.defer()
 
         async def standing() -> tuple[InviteCounts, int | None]:
             counts = await fetch_counts(guild.id, target.id)
@@ -261,7 +254,7 @@ class Invites(
         if not board:
             await ctx.respond(view=error_view("Nobody has invited anyone yet."), ephemeral=True)
             return
-        await ctx.defer()  # Fetching avatars and rendering can outlast the 3 second reply window
+        await ctx.defer()
         view = LeaderboardView(self.client, ctx, guild, board, page)
         file = await view.render()
         await ctx.respond(view=view, file=file)
@@ -317,7 +310,7 @@ class Invites(
     async def on_member_join(self, member: discord.Member):
         if member.bot or not cache.enabled(member.guild.id, Module.INVITES):
             return
-        used = await invites.used_invite(member)  # Shared with the member log, one lookup per join
+        used = await invites.used_invite(member)
         inviter_id, code = (used.inviter_id, used.code) if used else (None, None)
         fake = await record_join(member.guild.id, member, inviter_id, code)
         if inviter_id is None:

@@ -5,7 +5,6 @@ from collections import OrderedDict
 
 _CACHE_SIZE = 256
 _MAX_DOWNLOAD = 8 * 1024 * 1024
-# Keyed by asset key and size. The key changes with the picture, so entries never go stale. URLs use size 0.
 _cache: OrderedDict[tuple[str, int], bytes] = OrderedDict()
 _session: aiohttp.ClientSession | None = None
 
@@ -24,16 +23,6 @@ def _cached(key: tuple[str, int]) -> bytes | None:
 
 
 async def fetch(asset: discord.Asset | None, size: int = 128) -> bytes | None:
-    """
-    Downloads an avatar or icon as a static PNG, cached across renders.
-
-    Args:
-        asset (:class:`discord.Asset` | None): The asset, e.g. `member.display_avatar` or `guild.icon`.
-        size (int): The size to request, a power of 2 between 16 and 4096.
-
-    Returns:
-        bytes | None: The PNG, or None when there's no asset or Discord couldn't serve it.
-    """
     if asset is None:
         return None
     key = (asset.key, size)
@@ -47,12 +36,6 @@ async def fetch(asset: discord.Asset | None, size: int = 128) -> bytes | None:
 
 
 async def fetch_url(url: str | None) -> bytes | None:
-    """
-    Downloads an image from outside Discord, like a track's artwork, cached across renders.
-
-    Returns:
-        bytes | None: The file, or None when there's no URL, it fails, or it's bigger than 8 MB.
-    """
     global _session
     if not url:
         return None
@@ -75,7 +58,6 @@ async def fetch_url(url: str | None) -> bytes | None:
 
 
 async def close() -> None:
-    """Closes the session `fetch_url` uses. Called on bot shutdown."""
     global _session
     if _session is not None and not _session.closed:
         await _session.close()
@@ -87,10 +69,4 @@ async def fetch_many(assets: list[discord.Asset | None], size: int = 128) -> lis
 
 
 def default_avatar(client: discord.Client, user_id: int) -> discord.Asset:
-    """
-    Discord's default avatar for an account the bot can't look up any more, e.g. a deleted one.
-
-    Picked from the ID the way Discord does for accounts on the new username system, the same as pycord's
-    `User.default_avatar`. Users the bot can see already get this through `display_avatar`.
-    """
     return discord.Asset._from_default_avatar(client._connection, (user_id >> 22) % 6)

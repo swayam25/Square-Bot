@@ -68,11 +68,8 @@ class GuildListView(DesignerView):
 
 
 class Guilds:
-    """Guild join and leave reports, and the `/guild` command group."""
-
     client: Client
 
-    # On guild joined
     @commands.Cog.listener("on_guild_join")
     async def when_guild_joined(self, guild: discord.Guild):
         total, humans, bots = member_counts(guild)
@@ -92,7 +89,6 @@ class Guilds:
         )
         await join_log_ch.send(view=view)
 
-    # On guild leave
     @commands.Cog.listener("on_guild_remove")
     async def when_removed_from_guild(self, guild: discord.Guild):
         total, humans, bots = member_counts(guild)
@@ -114,10 +110,8 @@ class Guilds:
         )
         await leave_log_ch.send(view=view)
 
-    # Guild slash cmd group
     guild = SlashCommandGroup(guild_ids=config.owner_guild_ids, name="guild", description="Guild related commands.")
 
-    # List guild
     @guild.command(name="list")
     @check.is_owner()
     async def list_guilds(self, ctx: discord.ApplicationContext):
@@ -131,7 +125,6 @@ class Guilds:
             guild_list_view = DesignerView(container)
         await ctx.respond(view=guild_list_view)
 
-    # Leave guild
     @guild.command(name="leave")
     @check.is_owner()
     @option(
@@ -151,7 +144,6 @@ class Guilds:
             view = success_view(f"Left the guild **{guild.name}** with ID `{guild.id}`")
             await ctx.respond(view=view)
 
-    # Guild invite
     @guild.command(name="invite")
     @check.is_owner()
     @option(

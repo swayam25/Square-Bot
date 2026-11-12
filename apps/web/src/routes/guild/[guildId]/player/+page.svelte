@@ -37,10 +37,8 @@
         me: data.user?.id ?? null,
     });
     const queue = $derived(queueQuery.current);
-    // Without `connected`, a dropped dashboard connection would keep showing the last value
     const online = $derived(statusQuery.connected && (statusQuery.current ?? false));
 
-    // Ticks every frame only while something plays, for the progress wave and the sung words. It never reads `now`.
     let now = $state(Date.now());
     $effect(() => {
         if (!player?.track || player.paused || !online) return;
@@ -58,7 +56,6 @@
         return player.track.isStream ? at : Math.min(at, player.track.lengthMs);
     });
 
-    // Dragging the seek bar moves the lyrics along with it, all in the browser; the bot only seeks on release.
     // The released spot is held until the bot's next push, so nothing flicks back to the old one meanwhile
     let seeking = $state<number | null>(null);
     let held = $state<{ ms: number; since: number } | null>(null);
@@ -71,11 +68,9 @@
         const target = { ms, since };
         held = target;
         const ok = await control(music.seekTrack({ guild, positionMs: ms }));
-        // A seek to where it already was brings no push, so the hold can't outlive the answer by much
         setTimeout(() => held === target && (held = null), ok ? 1500 : 0);
     }
 
-    // The failure already there when the page opens is old, so only a newer one is announced
     let heard: { guild: string; at: number | null } | null = null;
     $effect(() => {
         if (!player) return;
@@ -90,7 +85,6 @@
     });
 
     const track = $derived(player?.track ?? null);
-    // Asked up front so the Lyrics tab and the full-screen view know whether to offer lyrics; the Lyrics view reuses it
     const lyricsQuery = $derived(
         track && !track.isStream ? trackLyrics({ title: track.title, artist: track.author, durationMs: track.lengthMs }) : null,
     );
@@ -119,7 +113,6 @@
     }
 
     const hasTrack = $derived(!!track);
-    // Closes when the music stops, so the next song doesn't reopen it outside full screen
     let zen = $derived.by(() => (void hasTrack, false));
     function openZen() {
         enterFullscreen();

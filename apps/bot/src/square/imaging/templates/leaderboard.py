@@ -28,17 +28,14 @@ class Leaderboard(msgspec.Struct, frozen=True):
     inviters: list[Inviter]
 
 
-# Step heights (`h-36`, `h-30`, `h-24`) so the top 3 stand on a stage
 _STEPS = {1: 144, 2: 120, 3: 96}
 
 
 def _podium_ink(ui: Kit, rank: int) -> RGB:
-    """Gold, silver and bronze: the warning color, `mist-300` and `orange-300`."""
     return {1: ui.theme.warning, 2: MIST_300, 3: ORANGE_300}[rank]
 
 
 def _place(ui: Kit, inviter: Inviter) -> Node:
-    """One podium spot: the avatar, name and total above a tinted step showing the place."""
     ink = _podium_ink(ui, inviter.rank)
     step = Box(
         Column(
@@ -67,12 +64,6 @@ def _place(ui: Kit, inviter: Inviter) -> Node:
 
 
 def _splits(inviters: list[Inviter]) -> list[str]:
-    """
-    Each row's breakdown, e.g. "388 regular · 12 left · 3 fake · +50 bonus", lined up as columns across the page.
-
-    Every count is padded to its column's widest, which lines up because the mono font gives each character the same
-    width. The bonus column only shows when someone on the page has one, and is blank for the rest.
-    """
     columns = [
         ("regular", [fmt_count(inviter.regular) for inviter in inviters]),
         ("left", [fmt_count(inviter.left) for inviter in inviters]),
@@ -98,7 +89,6 @@ def _splits(inviters: list[Inviter]) -> list[str]:
 
 
 def _row(ui: Kit, inviter: Inviter, split: str, rank_width: float) -> Node:
-    """`h-12` with a `white/10` line on top: rank, avatar, name, breakdown and total."""
     return Column(
         Box(Spacer(1), fill=ui.theme.line, height=1),
         Box(
@@ -117,10 +107,8 @@ def _row(ui: Kit, inviter: Inviter, split: str, rank_width: float) -> Node:
 
 
 def build(ui: Kit, data: Leaderboard) -> Node:
-    """The invite leaderboard: a podium for the top 3 on the first page, then one row per inviter."""
     podium = data.inviters[:3] if data.page == 1 and len(data.inviters) >= 3 else []
     rest = data.inviters[len(podium) :]
-    # `w-6` holds two digits; later pages widen the column to their longest rank
     rank_width = max([24.0, *(text_width(str(inviter.rank), Type.MONO_SM) for inviter in rest)])
     subtitle = Row(
         ui.muted(data.guild_name),

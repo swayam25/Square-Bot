@@ -1,10 +1,3 @@
-"""
-Live updates for the dashboard, over one WebSocket from the dashboard server.
-
-The server subscribes for a user, a guild and a topic, gets a snapshot right away, then a new one whenever it changes.
-Snapshots are whole pieces of state, never diffs: the browser only keeps the latest value, so a dropped one is harmless.
-"""
-
 import asyncio
 import discord
 import logging
@@ -32,7 +25,6 @@ log = logging.getLogger(__name__)
 
 Topic = Literal["player", "queue", "history"]
 Snapshot = PlayerState | QueueState | list[Track]
-# What every viewer of a guild gets. The player topic adds the viewer's own part on top, see `_Connection.push`
 _SNAPSHOTS: dict[Topic, Callable[[Client, discord.Guild], Snapshot]] = {
     "player": player_shared,
     "queue": queue_out,
@@ -54,7 +46,6 @@ class Unsubscribe(msgspec.Struct, tag="unsub", tag_field="op"):
 class Update(msgspec.Struct, omit_defaults=True):
     id: int
     data: Snapshot | None = None
-    # The subscription is over: the guild is gone for this user, or they lost access to the topic
     error: Literal["not_found", "forbidden"] | None = None
 
 
@@ -78,11 +69,9 @@ class _Connection:
         self._send_lock = asyncio.Lock()  # Pushes come from bot events as well as this socket's own loop
 
     async def push(self, sub_id: int, shared: _Shared | None = None) -> None:
-        """Sends the subscription's snapshot, unless nothing changed since the last one."""
         if (sub := self.subscriptions.get(sub_id)) is None:
             return
         # Access is checked on every push, so leaving the server ends the stream instead of leaking updates.
-        # Every topic so far is music, which any member may watch
         try:
             guild = provide_member_guild(self.client, str(sub.guild_id), sub.actor)
         except NotFoundException:
@@ -123,8 +112,6 @@ def _dedupe_key(data: Snapshot) -> bytes:
 
 
 class _Shared:
-    """A guild's snapshots for one update, built and encoded once however many tabs are watching."""
-
     def __init__(self) -> None:
         self._built: dict[Topic, tuple[Snapshot, bytes]] = {}
 
@@ -139,7 +126,6 @@ _connections: set[_Connection] = set()
 
 
 async def on_music_update(guild_id: int) -> None:
-    """Pushes to every subscription for the guild. Registered as the bot's `music_update` listener."""
     shared = _Shared()
     for connection in list(_connections):
         for sub_id, sub in list(connection.subscriptions.items()):
@@ -147,7 +133,7 @@ async def on_music_update(guild_id: int) -> None:
                 continue
             try:
                 await connection.push(sub_id, shared)
-            except Exception:  # A dropped socket is cleaned up by its own loop
+            except Exception:
                 break
 
 
@@ -161,7 +147,7 @@ async def live(socket: WebSocket, client: Client) -> None:
             try:
                 message = _decoder.decode(await socket.receive_data(mode="text"))
             except msgspec.DecodeError:
-                await socket.close(code=1008, reason="Bad message")  # Only our own server talks here, so this is a bug
+                await socket.close(code=1008, reason="Bad message")
                 return
             match message:
                 case Subscribe(id=sub_id, guild=guild_id, actor=actor, topic=topic):

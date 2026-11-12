@@ -22,7 +22,6 @@ _task: asyncio.Task[None] | None = None
 
 
 def start(client: Client) -> None:
-    """Serves the API on the bot's own event loop, so routes read live bot state. Skipped without `[api]` in config."""
     global _server, _task
     if config.api is None:
         log.info("API disabled, add [api] to config.toml to enable it")
@@ -38,7 +37,7 @@ def start(client: Client) -> None:
             server_header=False,
             proxy_headers=False,
             timeout_graceful_shutdown=5,
-            ws_max_size=64 * 1024,  # Subscribe messages are tiny
+            ws_max_size=64 * 1024,
         )
     )
     _task = asyncio.create_task(_serve(_server), name="api")

@@ -6,7 +6,6 @@ import type { PageServerLoad } from "./$types";
 const TTL = 30_000;
 let cached: { at: number; servers: Promise<number | null> } | undefined;
 
-// The landing page is public, so its visitors share one bot call per TTL
 function serverCount() {
     if (!cached || Date.now() - cached.at > TTL) {
         cached = {

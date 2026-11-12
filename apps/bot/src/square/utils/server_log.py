@@ -8,13 +8,6 @@ from square.utils import webhook
 
 
 class LogType(enum.Enum):
-    """
-    Log categories.
-
-    Each member holds a `key` (stored in the database) and a `label`
-    (shown as the webhook sender name suffix).
-    """
-
     MODERATION = ("moderation", "Moderation Log")
     MEMBERS = ("members", "Member Log")
     MESSAGES = ("messages", "Message Log")
@@ -35,12 +28,10 @@ class LogType(enum.Enum):
 
     @classmethod
     def from_label(cls, label: str) -> LogType:
-        """Resolves a log type from its label (e.g. "Moderation Log")."""
         return next(log_type for log_type in cls if log_type.label == label)
 
 
 async def cleanup_guild(guild_id: int, channel_ids: set[int]) -> None:
-    """Removes all cached webhooks belonging to the given guild's channels."""
     webhook.cleanup(channel_ids)
 
 
@@ -53,17 +44,6 @@ async def log(
     file: discord.File | None = None,
     delete_after: float | None = None,
 ) -> None:
-    """
-    Sends a log message through the channel's single shared webhook, renamed per message to `{bot} - {log type}`.
-
-    Args:
-        client (:class:`Client`): The bot client.
-        channel (:class:`discord.abc.Messageable`): The channel to log in (threads log via their parent).
-        log_type (:class:`LogType`): The log category, shown as the sender name.
-        view (:class:`DesignerView` | None): The components view to send.
-        file (:class:`discord.File` | None): Optional file attachment, sent on its own to stay valid alongside components.
-        delete_after (float | None): Seconds before the log auto-deletes.
-    """
     thread = discord.utils.MISSING
     target = channel
     if isinstance(channel, discord.Thread):
@@ -88,7 +68,6 @@ async def log(
     try:
         await send(hook)
     except discord.NotFound:
-        # Webhook was deleted externally, recreate & retry once
         webhook.invalidate(target.id)
         hook = await webhook.get_webhook(client, target)
         if hook is None:
@@ -100,7 +79,6 @@ async def log(
 
 
 async def _channel(client: Client, guild: discord.Guild, log_type: LogType) -> discord.abc.Messageable | None:
-    """The log type's channel, or None when logs are off. Drops the setting if the channel is gone."""
     channel_id = cache.log_channel(guild.id, log_type.key)
     if channel_id is None:
         return None
@@ -113,13 +91,12 @@ async def _channel(client: Client, guild: discord.Guild, log_type: LogType) -> d
             await remove_log_channel(guild.id, log_type.key)
             client.dispatch("log_channels_update", guild.id)
             return None
-    return channel if isinstance(channel, discord.abc.Messageable) else None  # A category or forum can't take messages
+    return channel if isinstance(channel, discord.abc.Messageable) else None
 
 
 async def _hook(
     client: Client, channel: discord.abc.Messageable
 ) -> tuple[discord.Webhook, discord.abc.Snowflake] | None:
-    """The webhook to post through, and the thread to post in (MISSING for a plain channel)."""
     thread, target = discord.utils.MISSING, channel
     if isinstance(channel, discord.Thread):
         thread, target = channel, channel.parent
@@ -137,16 +114,6 @@ async def send(
     *,
     file: discord.File | None = None,
 ) -> None:
-    """
-    Sends a log to the guild's channel for the log type, if one is set. The channel comes from the settings cache.
-
-    Args:
-        client (:class:`Client`): The bot client.
-        guild (:class:`discord.Guild`): The guild the log belongs to.
-        log_type (:class:`LogType`): The log category.
-        view (:class:`DesignerView` | None): The components view to send.
-        file (:class:`discord.File` | None): Optional file attachment.
-    """
     if channel := await _channel(client, guild, log_type):
         await log(client, channel, log_type, view, file=file)
 

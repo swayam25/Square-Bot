@@ -37,7 +37,6 @@ function connect() {
         headers: { Authorization: `Bearer ${BOT_API_SECRET}` },
     });
     shared.squareLiveSocket = ws;
-    // uvicorn pings every 20s, so a silent socket is a dead one even if TCP hasn't noticed yet
     let alive: NodeJS.Timeout | undefined;
     const heartbeat = () => {
         clearTimeout(alive);
@@ -113,7 +112,6 @@ export async function* watchStatus(): AsyncGenerator<boolean> {
     const listener = () => changed?.();
     statusListeners.add(listener);
     const ws = ensureSocket();
-    // Let a connection that's still opening settle first, so the page doesn't flash "offline" on load
     if (ws.readyState === WebSocket.CONNECTING) {
         await Promise.race([
             new Promise((resolve) => ws.once("open", resolve).once("close", resolve)),

@@ -6,8 +6,6 @@ type Family = Literal["display", "sans", "mono"]
 
 @dataclass(frozen=True, slots=True)
 class TextStyle:
-    """A Tailwind text style. `tracking` is letter spacing in em, like `tracking-tight` (-0.025)."""
-
     size: float
     line_height: float
     weight: int = 400
@@ -16,13 +14,9 @@ class TextStyle:
 
 
 class Type:
-    """The text styles the cards use, in px. Named after their Tailwind classes, e.g. `SM` is `text-sm`."""
-
-    # Saira, for titles and podium places
     DISPLAY_2XL = TextStyle(24, 32, 600, "display", -0.025)
     DISPLAY_XL = TextStyle(20, 28, 600, "display")
     DISPLAY_PLACE = TextStyle(36, 40, 700, "display")
-    # Geist, for everything people read
     BASE = TextStyle(16, 24)
     BASE_MEDIUM = TextStyle(16, 24, 500)
     BASE_SEMIBOLD = TextStyle(16, 24, 600)
@@ -33,7 +27,6 @@ class Type:
     XS_SEMIBOLD = TextStyle(12, 16, 600)
     XL_SEMIBOLD = TextStyle(20, 28, 600)
     XL2_SEMIBOLD = TextStyle(24, 32, 600)
-    # JetBrains Mono, for numbers, durations, handles and eyebrow labels
     MONO_5XL = TextStyle(48, 48, 500, "mono", -0.025)
     MONO_2XL = TextStyle(24, 32, 500, "mono")
     MONO_BASE = TextStyle(16, 24, 500, "mono")
@@ -47,11 +40,9 @@ class Type:
 
 
 class Radius:
-    """Tailwind corner radii in px. `FULL` rounds the shorter side into a pill or circle."""
-
-    MD = 6  # rounded-md
-    LG = 8  # rounded-lg
-    XL = 12  # rounded-xl
-    XL2 = 16  # rounded-2xl
-    XL4 = 32  # rounded-4xl
-    FULL = -1  # rounded-full
+    MD = 6
+    LG = 8
+    XL = 12
+    XL2 = 16
+    XL4 = 32
+    FULL = -1

@@ -86,7 +86,6 @@
         if (text.trim()) void search();
     }
 
-    // The link plays exactly the track that was clicked; its title could match something else on another search
     async function add(key: string, query: string) {
         if (adding.has(key)) return;
         adding.add(key);

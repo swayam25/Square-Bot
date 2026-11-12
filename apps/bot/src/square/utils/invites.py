@@ -8,8 +8,6 @@ from typing import NamedTuple
 
 
 class InviteUse(NamedTuple):
-    """A snapshot of an invite's usage, kept instead of whole `discord.Invite` objects to save memory."""
-
     code: str
     uses: int
     max_uses: int
@@ -20,7 +18,6 @@ class InviteUse(NamedTuple):
         return cls(invite.code, invite.uses or 0, invite.max_uses or 0, invite.inviter.id if invite.inviter else None)
 
 
-# Invites are only cached for guilds that show who invited a member, see `_tracked_guild_ids`.
 _tracked: set[int] = set()
 _cache: dict[int, dict[str, InviteUse]] = {}
 _locks: dict[int, asyncio.Lock] = {}
@@ -38,12 +35,10 @@ async def _tracked_guild_ids() -> set[int]:
 
 
 async def _wants_tracking(guild_id: int) -> bool:
-    """Whether a single guild needs invite tracking, see `_tracked_guild_ids`."""
     return cache.enabled(guild_id, Module.INVITES) or cache.log_channel(guild_id, LogType.MEMBERS.key) is not None
 
 
 async def _fetch(guild: discord.Guild) -> dict[str, InviteUse] | None:
-    """Fetches & caches the guild's invite uses, or drops them if the bot can't read invites."""
     # Checked up front since failed requests count towards Discord's invalid request (IP ban) limit
     if not guild.me.guild_permissions.manage_guild:
         _cache.pop(guild.id, None)
@@ -58,11 +53,10 @@ async def _fetch(guild: discord.Guild) -> dict[str, InviteUse] | None:
 
 
 async def _resolve(guild: discord.Guild) -> InviteUse | None:
-    """Compares cached invite uses with fresh ones and returns the invite that was used, if unambiguous."""
-    async with _locks.setdefault(guild.id, asyncio.Lock()):  # Joins resolve one by one, each against the last
+    async with _locks.setdefault(guild.id, asyncio.Lock()):
         before = _cache.get(guild.id)
         after = await _fetch(guild)
-        if before is None or after is None:  # Not cached yet (e.g. Manage Server granted later), start from now
+        if before is None or after is None:
             return None
         used = [inv for code, inv in after.items() if inv.uses > (before[code].uses if code in before else 0)]
         if not used:  # Discord deletes an invite once it hits its max uses, so check the ones that vanished
@@ -75,13 +69,12 @@ async def _resolve(guild: discord.Guild) -> InviteUse | None:
 
 
 async def _load(client: Client) -> None:
-    """Caches invites of every tracked guild once on startup, a few requests at a time."""
     global _loaded
     if _loaded:  # on_ready fires again after reconnects
         return
     _loaded = True
     _tracked.update(await _tracked_guild_ids())
-    semaphore = asyncio.Semaphore(5)  # Spread requests out instead of bursting into the rate limit
+    semaphore = asyncio.Semaphore(5)
 
     async def fetch(guild: discord.Guild) -> None:
         async with semaphore:
@@ -91,15 +84,7 @@ async def _load(client: Client) -> None:
 
 
 async def used_invite(member: discord.Member) -> InviteUse | None:
-    """
-    Returns the invite a member joined with, or None if it's unknown, ambiguous or the guild isn't tracked.
-
-    Every caller for the same join shares a single lookup, so it's safe to call from multiple listeners.
-
-    Args:
-        member (:class:`discord.Member`): The member who just joined.
-    """
-    if member.bot or member.guild.id not in _tracked:  # Bots join through OAuth, not invites
+    if member.bot or member.guild.id not in _tracked:
         return None
     key = (member.guild.id, member.id)
     if key not in _joins:
@@ -109,12 +94,6 @@ async def used_invite(member: discord.Member) -> InviteUse | None:
 
 
 async def refresh(guild: discord.Guild) -> None:
-    """
-    Starts or stops tracking a guild's invites based on whether anything needs them.
-
-    Args:
-        guild (:class:`discord.Guild`): The guild to refresh.
-    """
     if await _wants_tracking(guild.id):
         _tracked.add(guild.id)
         await _fetch(guild)
@@ -123,14 +102,12 @@ async def refresh(guild: discord.Guild) -> None:
 
 
 def forget(guild_id: int) -> None:
-    """Stops tracking a guild & drops its cached invites."""
     _tracked.discard(guild_id)
     _cache.pop(guild_id, None)
     _locks.pop(guild_id, None)
 
 
 def setup(client: Client) -> None:
-    """Registers the listeners that keep the invite cache in sync. Call once before the bot starts."""
 
     async def on_ready():
         await _load(client)

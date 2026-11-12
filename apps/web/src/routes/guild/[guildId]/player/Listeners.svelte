@@ -57,7 +57,6 @@
 </Dialog>
 
 <style>
-    /* A bite where the next avatar overlaps, instead of a ring, so the stack reads apart on any background */
     :global(.stack-bite) {
         mask-image: radial-gradient(circle 1.125rem at calc(100% + 0.5rem) 50%, transparent 98%, #000);
     }

@@ -6,7 +6,6 @@ import MaterialSymbolsPersonAddRounded from "~icons/material-symbols/person-add-
 
 export type ModuleKey = keyof ModuleSettings;
 
-// `path` is the module's dashboard page under /guild/[guildId]
 export const MODULES: { key: ModuleKey; label: string; description: string; path: string; icon: Component }[] = [
     {
         key: "invites",

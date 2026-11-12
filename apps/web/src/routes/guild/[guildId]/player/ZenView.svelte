@@ -34,11 +34,9 @@
     $effect(() => {
         if (!open) return;
         wake();
-        // Leaving full screen from the browser (Esc, F11, the system bar) leaves the view too
         const onFullscreen = () => {
             if (!document.fullscreenElement) open = false;
         };
-        // Keeps the screen awake for reading along; the browser drops the lock whenever the tab hides
         let lock: WakeLockSentinel | null = null;
         let closed = false;
         const keepAwake = async () => {

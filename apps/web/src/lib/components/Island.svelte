@@ -10,7 +10,6 @@
     import MaterialSymbolsWarningRounded from "~icons/material-symbols/warning-rounded";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
 
-    // Docked sits inside the dashboard frame and grows out of its bottom edge, so it reads as the shell bulging in
     let { docked = false }: { docked?: boolean } = $props();
 
     const tones: Record<Tone, { icon: Component; class: string }> = {
@@ -21,7 +20,6 @@
         loading: { icon: SvgSpinners90RingWithBg, class: "bg-surface-2 text-mist-400" },
     };
 
-    // The last toast stays rendered while the island folds back into the border
     let held = $state<Toast | null>(null);
     $effect(() => {
         if (toasts.current) held = toasts.current;
@@ -59,7 +57,6 @@
         ]}
     >
         {#if docked}
-            <!-- Concave corners where the island meets the border, so it reads as the frame bulging in -->
             {#if wide}
                 <span aria-hidden="true" class="fillet absolute right-0 bottom-full"></span>
             {:else}
@@ -89,8 +86,8 @@
                                 </span>
                             {/if}
                             <span class="flex min-w-0 flex-col">
-                                <span class="line-clamp-4 text-sm font-semibold break-words">{item.message}</span>
-                                {#if item.description}<span class="line-clamp-4 text-xs break-words text-mist-400">{item.description}</span>{/if}
+                                <span class="line-clamp-4 text-sm font-semibold wrap-break-word">{item.message}</span>
+                                {#if item.description}<span class="line-clamp-4 text-xs wrap-break-word text-mist-400">{item.description}</span>{/if}
                             </span>
                         </button>
                     {/key}

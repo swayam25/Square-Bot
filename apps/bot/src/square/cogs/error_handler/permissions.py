@@ -25,16 +25,6 @@ _FIRST_PERSON = {
 
 @dataclass
 class Refusal:
-    """
-    What a refused call was trying to do.
-
-    Attributes:
-        action (str | None): The library's description of the refusal, reworded as the bot speaking.
-        needed (list[str]): Permissions the call's docs name. Empty when they name none.
-        missing (list[str]): The `needed` ones the bot doesn't have.
-        place (str | None): A mention of the channel the permissions were checked in.
-    """
-
     action: str | None = None
     needed: list[str] = field(default_factory=list)
     missing: list[str] = field(default_factory=list)
@@ -42,7 +32,6 @@ class Refusal:
 
 
 def _library_frames(tb: TracebackType | None) -> Iterator[FrameType]:
-    """The py-cord frames at the end of a traceback, innermost first, stopping at the code that called into it."""
     for frame in reversed([frame for frame, _ in traceback.walk_tb(tb)]):
         if not frame.f_globals.get("__name__", "").startswith("discord"):
             return
@@ -60,7 +49,6 @@ def _running_function(frame: FrameType) -> object | None:
 
 
 def _permissions_in(doc: str, owner: object | None = None) -> list[str]:
-    """The permissions a docstring names, following a "Same as :meth:`x`" to the method it defers to."""
     named = (first or second for first, second in _PERMISSION.findall(doc))
     found = list(dict.fromkeys(name for name in named if name in discord.Permissions.VALID_FLAGS))
     if not found and (same_as := _SAME_AS.search(doc)):
@@ -70,7 +58,6 @@ def _permissions_in(doc: str, owner: object | None = None) -> list[str]:
 
 
 def _action_in(doc: str) -> str | None:
-    """The docstring's Forbidden entry as the bot speaking, when it's worded so that reads naturally."""
     if not (section := _FORBIDDEN_SECTION.search(doc)):
         return None
     text = " ".join(section.group(1).split())
@@ -81,17 +68,6 @@ def _action_in(doc: str) -> str | None:
 
 
 def explain(error: discord.Forbidden, guild: discord.Guild | None, channel: object | None = None) -> Refusal:
-    """
-    Explains a 403 from the call that raised it.
-
-    Args:
-        error (:class:`discord.Forbidden`): The refusal, with its traceback.
-        guild (:class:`discord.Guild` | None): The guild it happened in.
-        channel (object | None): Where it happened, used when the call wasn't made on a channel.
-
-    Returns:
-        :class:`Refusal`: As much as could be worked out. Everything is empty for a call with no docs.
-    """
     refusal = Refusal()
     subject = None
     for frame in _library_frames(error.__traceback__):
@@ -104,7 +80,6 @@ def explain(error: discord.Forbidden, guild: discord.Guild | None, channel: obje
             break
     if not refusal.needed or guild is None or guild.me is None:
         return refusal
-    # A message's permissions are its channel's. A guild, member or role has no channel, so server-wide ones apply.
     target = subject if hasattr(subject, "permissions_for") else getattr(subject, "channel", None)
     if hasattr(target, "permissions_for"):
         permissions = target.permissions_for(guild.me)

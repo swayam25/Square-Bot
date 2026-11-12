@@ -24,7 +24,6 @@
         children: Snippet;
         footer?: Snippet;
         dismissable?: boolean;
-        /** Hides the heading (still read out) and hands the children the sheet's body as is, unpadded and unscrolled */
         plain?: boolean;
         class?: ClassValue;
     } = $props();
@@ -40,7 +39,6 @@
     <Portal>
         <Drawer.Backdrop class="fixed inset-0 z-50 bg-mist-950/60 data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
         <Drawer.Positioner class="fixed inset-x-0 bottom-0 z-50">
-            <!-- The `after:` strip fills the gap under the sheet when it's pulled past its height -->
             <Drawer.Content
                 bind:ref={content}
                 class={[

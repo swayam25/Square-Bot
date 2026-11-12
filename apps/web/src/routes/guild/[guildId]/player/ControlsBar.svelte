@@ -45,7 +45,6 @@
     const skip = $derived(skipping(player, access));
     const skipLabel = $derived(skip.now ? "Next" : player.vote ? "Vote to skip" : "Start a vote to skip");
     let volume = $derived(player.volume);
-    // Where unmute goes back to: the last level before muting, or half when the page opened muted
     let restore = $state(50);
     $effect(() => {
         if (player.volume > 0) restore = player.volume;
@@ -60,8 +59,6 @@
                 : MaterialSymbolsVolumeUpRounded,
     );
 
-    // The pressed button spins until the bot answers, which is once it has really done it, and the
-    // other controls wait meanwhile so presses can't pile up
     type Action = "previous" | "pause" | "next" | "shuffle" | "loop" | "autoplay" | "stop";
     let busy = $state<Action | null>(null);
     async function act(action: Action, run: () => ReturnType<typeof control>) {

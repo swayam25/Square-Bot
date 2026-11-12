@@ -18,7 +18,6 @@ Snowflake = Annotated[str, msgspec.Meta(pattern=r"^\d{17,20}$", description="A D
 ChannelKind = Literal["text", "news", "voice", "stage_voice", "category", "forum", "media"]
 _CHANNEL_KINDS: frozenset[str] = frozenset(get_args(ChannelKind))
 Loop = Literal["off", "track", "queue"]
-# Search sources the Lavalink node answers for. SoundCloud and Deezer are left out: the node errors or finds nothing
 SearchSource = Literal["youtube_music", "youtube", "spotify", "apple_music"]
 _LOOP: dict[QueueMode, Loop] = {QueueMode.NORMAL: "off", QueueMode.LOOP: "track", QueueMode.LOOP_ALL: "queue"}
 
@@ -44,7 +43,7 @@ class Guild(Schema):
     name: str
     icon_url: str | None
     member_count: int
-    can_manage: bool  # Settings need Manage Server. Music only needs membership, with its own rules per control
+    can_manage: bool
 
 
 class Channel(Schema):
@@ -61,7 +60,7 @@ class Role(Schema):
     color: str | None
     position: int
     managed: bool
-    assignable: bool  # Below the bot's top role and not managed, so the bot can give it out
+    assignable: bool
 
 
 class JoinDay(Schema):
@@ -70,25 +69,25 @@ class JoinDay(Schema):
 
 
 class MemberJoins(Schema):
-    days: list[JoinDay]  # Oldest first. Only members still in the server, since Discord keeps no record of leavers
+    days: list[JoinDay]
     members: int
 
 
 class ServerStats(Schema):
     humans: int
     bots: int
-    in_voice: int  # Humans in a voice channel right now
+    in_voice: int
     boosts: int
     boost_level: int
     text_channels: int
     voice_channels: int
-    roles: int  # @everyone left out
+    roles: int
     created_at: int  # Unix ms
 
 
 class Person(Schema):
     id: Snowflake
-    name: str  # Server nickname when they still have one, else their display name
+    name: str
     avatar_url: str
 
 
@@ -101,7 +100,7 @@ class Track(Schema):
     length_ms: int
     is_stream: bool
     source: str
-    isrc: str | None  # Set for Spotify and Apple Music tracks, which makes lyrics lookups exact
+    isrc: str | None
     requester: Person | None
 
 
@@ -114,14 +113,14 @@ class TrackFailure(Schema):
 class SkipVote(Schema):
     started_by: Person | None
     voter_ids: list[Snowflake]
-    needed: int  # Moves as members join or leave the voice channel
+    needed: int
     ends_at: int  # Unix ms
 
 
 class Viewer(Schema):
-    dj: bool  # May use every control. Others can add songs, replay, skip or remove their own, and vote to skip
-    in_channel: bool  # In the bot's voice channel, which every control asks for
-    deafened: bool  # Deafened members can't vote on a skip
+    dj: bool
+    in_channel: bool
+    deafened: bool
 
 
 class PlayerState(Schema):
@@ -134,17 +133,17 @@ class PlayerState(Schema):
     loop: Loop
     shuffle: bool
     autoplay: bool
-    eq: list[str]  # Active presets, by the names `GET /music/eq-presets` lists
-    listeners: list[Person]  # Everyone but bots in the bot's voice channel
-    failure: TrackFailure | None  # Outlives the player, since a failure often ends it
+    eq: list[str]
+    listeners: list[Person]
+    failure: TrackFailure | None
     vote: SkipVote | None
-    viewer: Viewer  # The member this state was built for
+    viewer: Viewer
 
 
 class QueueState(Schema):
-    tracks: list[Track]  # Only the first `QUEUE_LIMIT`, so a huge queue doesn't flood every update
+    tracks: list[Track]
     total: int
-    autoplay: list[Track]  # Autoplay's picks, played once the queue runs out. Empty while autoplay is off
+    autoplay: list[Track]
 
 
 class PlaylistInfo(Schema):
@@ -153,7 +152,7 @@ class PlaylistInfo(Schema):
 
 
 class SearchResults(Schema):
-    playlist: PlaylistInfo | None  # Set when the query was a playlist link, which queues as a whole
+    playlist: PlaylistInfo | None
     tracks: list[Track]
 
 
@@ -392,7 +391,6 @@ _NOBODY = Viewer(dj=False, in_channel=False, deafened=False)
 
 
 def player_shared(client: Client, guild: discord.Guild) -> PlayerState:
-    """The player as every viewer sees it. `player_for` fills in `viewer`, so live pushes build this once per guild."""
     if (player := live_player(client, guild.id)) is None:
         return PlayerState(
             voice_channel_id=None,
@@ -454,11 +452,6 @@ def history_out(player: SquarePlayer | None) -> list[Track]:
 
 
 def search_out(data: object, limit: int) -> SearchResults:
-    """
-    A search result as the dashboard shows it. Requesters are left out, since nobody has queued these yet.
-
-    `limit` caps plain matches; a playlist lists its tracks so they can be picked one by one.
-    """
     if isinstance(data, Playlist):
         return SearchResults(
             playlist=PlaylistInfo(name=data.name, track_count=len(data)),

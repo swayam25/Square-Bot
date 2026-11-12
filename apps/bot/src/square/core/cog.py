@@ -46,7 +46,6 @@ class Cog(commands.Cog):
 
     @property
     def help_emoji(self) -> Icon | None:
-        """The emoji shown for this cog's help category, or None to keep it out of help."""
         return self.__cog_emoji__
 
     @property

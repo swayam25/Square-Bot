@@ -16,7 +16,6 @@ from square.modules import Module, ModuleOff
 from square.music.utils import delete_quietly
 from square.utils.emoji import emoji
 
-# Buttons on ticket channels made before v2, which have no database row
 LEGACY_IDS = {"ticket_close", "ticket_transcript"}
 
 
@@ -31,7 +30,7 @@ class Tickets(
     def __init__(self, client: Client):
         self.client = client
         self._adopting: asyncio.Task | None = None
-        self._busy: set[int] = set()  # Ticket channels with a slow press still running
+        self._busy: set[int] = set()
 
     ticket = SlashCommandGroup(name="ticket", description="Ticket commands.")
 
@@ -91,8 +90,6 @@ class Tickets(
         finally:
             self._busy.discard(channel_id)
 
-    # Panel
-
     @commands.Cog.listener()
     async def on_ready(self):
         if self._adopting and not self._adopting.done():
@@ -107,7 +104,6 @@ class Tickets(
         if message.author.id != message.guild.me.id:
             if panel.is_panel_channel(message.guild.id, message.channel.id):
                 panel.stick(message.channel)
-        # Discord's "pinned a message" line under a new ticket's card. Pins staff make keep theirs.
         elif message.type is discord.MessageType.pins_add and await fetch_ticket(message.channel.id):
             await delete_quietly(message)
 
@@ -125,8 +121,6 @@ class Tickets(
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
         if panel.is_panel_channel(channel.guild.id, channel.id):
             await panel.unbind(channel.guild.id)
-
-    # Buttons
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: discord.Interaction):
@@ -289,8 +283,6 @@ class Tickets(
             await self._with_loading(
                 interaction, card, "Closing...", lambda: actions.close_legacy(self.client, guild, channel, member)
             )
-
-    # Commands
 
     @ticket.command(name="create")
     @option("reason", description="What do you need help with?", required=False)

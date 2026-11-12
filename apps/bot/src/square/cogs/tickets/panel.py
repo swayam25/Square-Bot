@@ -1,10 +1,3 @@
-"""
-The "Open a ticket" panel's lifecycle, kept like the music card.
-
-It's adopted on every startup so it always shows the current layout, reposted when someone deletes it, and moved back
-to the bottom of its channel when anyone posts under it.
-"""
-
 import asyncio
 import discord
 from collections.abc import Collection
@@ -14,7 +7,6 @@ from square.db import cache
 from square.db.funcs.tickets import set_ticket_panel
 from square.music.utils import delete_quietly
 
-# Seconds of quiet before the panel moves back under new messages, so a burst costs one repost instead of one each
 STICK_DELAY = 3
 
 _sticking: dict[int, asyncio.Task] = {}
@@ -46,7 +38,6 @@ async def unbind(guild_id: int) -> None:
 
 
 async def adopt(client: Client, guild_id: int) -> None:
-    """Brings a guild's panel up to date: edited in place when it's still the newest message, reposted otherwise."""
     settings = cache.get(guild_id)
     channel_id, message_id = settings.ticket_panel_channel_id, settings.ticket_panel_message_id
     if channel_id is None:
@@ -54,7 +45,7 @@ async def adopt(client: Client, guild_id: int) -> None:
     try:
         channel = client.get_channel(channel_id) or await client.fetch_channel(channel_id)
     except discord.NotFound, discord.Forbidden:
-        await unbind(guild_id)  # Deleted, or hidden from the bot, while it was offline
+        await unbind(guild_id)
         return
     except discord.HTTPException:
         return
@@ -71,11 +62,10 @@ async def adopt(client: Client, guild_id: int) -> None:
     try:
         await post(channel)
     except discord.HTTPException:
-        pass  # Lost send access. The settings page still shows the channel, so it can be fixed from there.
+        pass
 
 
 async def adopt_all(client: Client) -> None:
-    """Adopts every guild's panel, one at a time so a broken guild can't take the rest down."""
     for guild_id in cache.guild_ids_with_ticket_panel():
         try:
             await adopt(client, guild_id)
@@ -84,7 +74,6 @@ async def adopt_all(client: Client) -> None:
 
 
 def stick(channel: discord.TextChannel) -> None:
-    """Moves the panel back under new messages once the channel goes quiet."""
     if task := _sticking.pop(channel.guild.id, None):
         task.cancel()
     _sticking[channel.guild.id] = asyncio.create_task(_stick_later(channel))

@@ -12,7 +12,6 @@ from square.utils.helpers import fmt_count
 
 
 def clip(text: str, limit: int = 1024) -> str:
-    """Clips text to the given length so log containers stay within limits."""
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
 
@@ -25,7 +24,6 @@ def log_view(
     extra: list[ui.Item] | None = None,
     buttons: list[ui.Button] | None = None,
 ) -> DesignerView:
-    """Builds a simple log view: a container with a title & body, optionally with a thumbnail, extra items & an action row of buttons."""
     header: list[ui.Item] = [ui.TextDisplay(f"## {title}"), ui.TextDisplay(body)]
     items: list[ui.Item] = [ui.Section(*header, accessory=ui.Thumbnail(thumbnail))] if thumbnail else header
     if extra:
@@ -49,8 +47,6 @@ class Logging(Cog):
         file: discord.File | None = None,
     ) -> None:
         await server_log.send(self.client, guild, log_type, view, file=file)
-
-    # ── Members ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -92,7 +88,6 @@ class Logging(Cog):
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
-        # Nickname
         if before.nick != after.nick:
             view = log_view(
                 "Nickname Changed",
@@ -103,7 +98,6 @@ class Logging(Cog):
             )
             await self.send_log(after.guild, server_log.LogType.MEMBERS, view)
 
-        # Roles
         if before.roles != after.roles:
             added = [role.mention for role in after.roles if role not in before.roles]
             removed = [role.mention for role in before.roles if role not in after.roles]
@@ -116,7 +110,6 @@ class Logging(Cog):
             )
             await self.send_log(after.guild, server_log.LogType.MEMBERS, view)
 
-        # Timeout
         if before.communication_disabled_until != after.communication_disabled_until:
             if after.communication_disabled_until is not None:
                 view = log_view(
@@ -134,8 +127,6 @@ class Logging(Cog):
                     thumbnail=after.display_avatar.url,
                 )
             await self.send_log(after.guild, server_log.LogType.MODERATION, view)
-
-    # ── Moderation ────────────────────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.User | discord.Member):
@@ -160,8 +151,6 @@ class Logging(Cog):
             thumbnail=user.display_avatar.url,
         )
         await self.send_log(guild, server_log.LogType.MODERATION, view)
-
-    # ── Messages ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
@@ -194,7 +183,7 @@ class Logging(Cog):
         if guild is None:
             return
         msg = payload.cached_message
-        if msg is None:  # Uncached: only IDs are known, content is unrecoverable
+        if msg is None:
             view = log_view(
                 "Message Deleted",
                 f"{emoji.channel_red} **Channel**: <#{payload.channel_id}>\n"
@@ -241,8 +230,7 @@ class Logging(Cog):
         if guild is None:
             return
         if cache.log_channel(guild.id, server_log.LogType.MESSAGES.key) is None:
-            return  # Nothing to log to, so skip rendering the transcript
-        # Only cached messages still carry their content, the rest are listed by ID
+            return
         msgs = list(payload.cached_messages)
         uncached_ids = set(payload.message_ids) - {msg.id for msg in msgs}
         channel = guild.get_channel_or_thread(payload.channel_id)
@@ -266,8 +254,6 @@ class Logging(Cog):
         )
         await server_log.post(self.client, guild, server_log.LogType.MESSAGES, view, file=file)
 
-    # ── Channel & Threads ─────────────────────────────────────────────────────────────────────────────────────────────
-
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
         view = log_view(
@@ -280,7 +266,7 @@ class Logging(Cog):
 
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
-        webhook.invalidate(channel.id)  # Drop the cached webhook of the deleted channel
+        webhook.invalidate(channel.id)
         view = log_view(
             "Channel Deleted",
             f"{emoji.channel_red} **Channel**: `{channel.name}`\n"
@@ -292,7 +278,7 @@ class Logging(Cog):
 
     @commands.Cog.listener()
     async def on_guild_channel_update(self, before: discord.abc.GuildChannel, after: discord.abc.GuildChannel):
-        if before.name == after.name:  # Only renames are logged to avoid permission sync noise
+        if before.name == after.name:
             return
         view = log_view(
             "Channel Renamed",
@@ -323,8 +309,6 @@ class Logging(Cog):
         )
         await self.send_log(thread.guild, server_log.LogType.CHANNELS, view)
 
-    # ── Roles ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-
     @commands.Cog.listener()
     async def on_guild_role_create(self, role: discord.Role):
         view = log_view(
@@ -351,12 +335,10 @@ class Logging(Cog):
             lines.append(f"{emoji.img} **Color**: `{before.color}` → `{after.color}`")
         if before.permissions != after.permissions:
             lines.append(f"{emoji.perms} **Permissions**: Updated")
-        if not lines:  # Skips position moves & other noise
+        if not lines:
             return
         view = log_view("Role Updated", f"{emoji.role} **Role**: {after.mention}\n" + "\n".join(lines))
         await self.send_log(after.guild, server_log.LogType.ROLES, view)
-
-    # ── Guild ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_guild_update(self, before: discord.Guild, after: discord.Guild):
@@ -404,13 +386,11 @@ class Logging(Cog):
         view = log_view("Stickers Updated", clip("\n".join(lines)))
         await self.send_log(guild, server_log.LogType.SERVER, view)
 
-    # ── Voice ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-
     @commands.Cog.listener()
     async def on_voice_state_update(
         self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState
     ):
-        if before.channel == after.channel:  # Mute / deafen & other state changes are skipped
+        if before.channel == after.channel:
             return
         if before.channel is None:
             view = log_view(
@@ -431,8 +411,6 @@ class Logging(Cog):
                 f"{emoji.voice} **To**: {after.channel.mention}",
             )
         await self.send_log(member.guild, server_log.LogType.VOICE, view)
-
-    # ── Invites ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_invite_create(self, invite: discord.Invite):
@@ -465,8 +443,6 @@ class Logging(Cog):
             color=config.color.red,
         )
         await self.send_log(guild, server_log.LogType.INVITES, view)
-
-    # ── Automod ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
     @commands.Cog.listener()
     async def on_auto_moderation_action_execution(self, payload: discord.AutoModActionExecutionEvent):

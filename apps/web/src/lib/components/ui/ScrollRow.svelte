@@ -59,8 +59,8 @@
     this={as}
     {...rest}
     class={[
-        "edge-fade-x flex [scrollbar-width:none] gap-2 overflow-x-auto overscroll-x-contain [&::-webkit-scrollbar]:hidden [&>*]:shrink-0",
-        dragging && "cursor-grabbing select-none [&_*]:cursor-grabbing",
+        "edge-fade-x flex scrollbar-none gap-2 overflow-x-auto overscroll-x-contain [&::-webkit-scrollbar]:hidden [&>*]:shrink-0",
+        dragging && "cursor-grabbing select-none **:cursor-grabbing",
         className,
     ]}
     {@attach drag}

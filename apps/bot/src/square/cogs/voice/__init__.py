@@ -19,7 +19,6 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
         default_member_permissions=discord.Permissions(move_members=True),
     )
 
-    # Move all members from one vc to another
     @vc.command(name="move")
     @option("to", description="The voice channel to move members to.")
     @option(
@@ -91,7 +90,6 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
     async def _set_voice_flag(
         self, ctx: discord.ApplicationContext, user: discord.Member, flag: Literal["mute", "deafen"], value: bool
     ) -> None:
-        """Server mutes or deafens someone (or undoes it), refusing when they're already in that state."""
         if not await self._check_target(ctx, user) or user.voice is None:
             return
         word = "muted" if flag == "mute" else "deafened"
@@ -101,7 +99,6 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
         await (user.edit(mute=value) if flag == "mute" else user.edit(deafen=value))
         await ctx.respond(view=success_view(f"Successfully {'' if value else 'un'}{word} **{user}** in voice."))
 
-    # Kick a member from vc
     @vc.command(name="kick")
     @option("user", description="Mention the user whom you want to kick from voice.")
     async def kick(self, ctx: discord.ApplicationContext, user: discord.Member):
@@ -112,35 +109,30 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
         await user.move_to(None)
         await ctx.respond(view=success_view(f"Successfully kicked **{user}** from {channel.mention}."))
 
-    # Server mute a member in vc
     @vc.command(name="mute")
     @option("user", description="Mention the user whom you want to mute in voice.")
     async def mute(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Server mutes a member in their voice channel."""
         await self._set_voice_flag(ctx, user, "mute", True)
 
-    # Server unmute a member in vc
     @vc.command(name="unmute")
     @option("user", description="Mention the user whom you want to unmute in voice.")
     async def unmute(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Server unmutes a member in their voice channel."""
         await self._set_voice_flag(ctx, user, "mute", False)
 
-    # Server deafen a member in vc
     @vc.command(name="deaf")
     @option("user", description="Mention the user whom you want to deafen in voice.")
     async def deaf(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Server deafens a member in their voice channel."""
         await self._set_voice_flag(ctx, user, "deafen", True)
 
-    # Server undeafen a member in vc
     @vc.command(name="undeaf")
     @option("user", description="Mention the user whom you want to undeafen in voice.")
     async def undeaf(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Server undeafens a member in their voice channel."""
         await self._set_voice_flag(ctx, user, "deafen", False)
 
-    # Pull a member into your vc
     @vc.command(name="pull")
     @option("user", description="Mention the user whom you want to pull into your voice channel.")
     async def pull(self, ctx: discord.ApplicationContext, user: discord.Member):
@@ -163,7 +155,6 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
             view = success_view(f"Successfully pulled **{user}** into {channel.mention}.")
             await ctx.respond(view=view)
 
-    # Set/clear a vc's status
     @vc.command(name="status")
     @option("status", description="The status to set. Leave empty to clear it.", required=False)
     @option(

@@ -1,5 +1,3 @@
-"""Turns IDs from a request into live Discord objects, refusing anything the Discord pickers wouldn't offer."""
-
 import discord
 import re
 from typing import Any
@@ -20,12 +18,10 @@ _TRAILING_TAG = re.compile(r"\s\[([^\[\]]+)\]\.$")
 
 
 def plain(guild: discord.Guild, text: str) -> str:
-    """Makes a bot message plain text for the dashboard: names for mentions, no emoji, no markdown, one line."""
     return " ".join(part for part in split(guild, text) if part)
 
 
 def split(guild: discord.Guild, text: str) -> tuple[str, str | None]:
-    """Like :func:`plain`, but keeps the `-#` subtext apart as a note for the toast's second line."""
 
     def name(match: re.Match[str]) -> str:
         kind, item_id = match[1], int(match[2])
@@ -82,7 +78,6 @@ def role(guild: discord.Guild, role_id: str | None) -> discord.Role | None:
 
 
 def roles(guild: discord.Guild, role_ids: list[str]) -> list[discord.Role]:
-    """Roles in the order given, without repeats. Refuses @everyone, which Discord's role picker never offers."""
     picked = [found for role_id in dict.fromkeys(role_ids) if (found := role(guild, role_id))]
     if any(found.is_default() for found in picked):
         raise SettingError("@everyone can't be picked here.")

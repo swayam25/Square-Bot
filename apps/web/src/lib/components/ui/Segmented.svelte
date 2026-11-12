@@ -11,12 +11,10 @@
         class: className,
         pill = "bg-surface-3",
     }: {
-        // A disabled option says why in a tooltip
         options: { value: T; label: string; count?: number; icon?: Component; disabled?: string | false }[];
         value: T;
         label: string;
         class?: ClassValue;
-        // The sliding indicator's fill, for tracks on a different background
         pill?: ClassValue;
     } = $props();
 
@@ -37,7 +35,6 @@
         measure();
     });
 
-    // Panels resize, so the pill follows the tab widths
     $effect(() => {
         if (!track) return;
         const observer = new ResizeObserver(measure);

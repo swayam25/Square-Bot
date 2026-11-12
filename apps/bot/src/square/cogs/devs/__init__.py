@@ -31,7 +31,6 @@ _IMAGING = (
 
 
 def _reload_imaging() -> None:
-    """Reloads the image engine and its templates in place, so code holding them sees the new versions."""
     templates = sorted(name for name in sys.modules if name.startswith("square.imaging.templates."))
     for name in (*_IMAGING, *templates, "square.imaging.templates"):
         if module := sys.modules.get(name):
@@ -51,7 +50,6 @@ class Devs(
     def __init__(self, client: Client):
         self.client = client
 
-    # On start
     @commands.Cog.listener("on_ready")
     async def when_bot_gets_ready(self):
         start_log_ch = self.client.get_channel(config.system_channel_id) or await self.client.fetch_channel(
@@ -60,10 +58,8 @@ class Devs(
         view = success_view(f"Logged in as **{self.client.user}** with ID `{self.client.user.id}`")
         await start_log_ch.send(view=view)
 
-    # Dev slash cmd group
     dev = SlashCommandGroup(guild_ids=config.owner_guild_ids, name="dev", description="Developer related commands.")
 
-    # Add dev
     @dev.command(name="add")
     @check.is_owner()
     @option("user", description="Mention the user whom you want to add to dev")
@@ -73,7 +69,6 @@ class Devs(
         view = success_view(f"Added {user.mention} to dev.")
         await ctx.respond(view=view)
 
-    # Remove dev
     @dev.command(name="remove")
     @check.is_owner()
     @option("user", description="Mention the user whom you want to remove from dev")
@@ -83,7 +78,6 @@ class Devs(
         view = success_view(f"Removed {user.mention} from dev")
         await ctx.respond(view=view)
 
-    # List devs
     @dev.command(name="list")
     @check.is_owner()
     async def list_devs(self, ctx: discord.ApplicationContext):
@@ -106,7 +100,6 @@ class Devs(
             view = error_view("No devs found.")
         await ctx.respond(view=view)
 
-    # Restart
     @slash_command(guild_ids=config.owner_guild_ids, name="restart")
     @check.is_dev()
     async def restart(self, ctx: discord.ApplicationContext):
@@ -123,7 +116,6 @@ class Devs(
         os.system("clear")
         os.execv(sys.executable, [sys.executable, "-m", "square"])
 
-    # Reload cogs
     @slash_command(guild_ids=config.owner_guild_ids, name="reload-cogs")
     @check.is_dev()
     async def reload_cogs(self, ctx: discord.ApplicationContext):
@@ -138,7 +130,6 @@ class Devs(
         for name in extensions():
             self.client.reload_extension(name)
 
-    # Shutdown
     @slash_command(guild_ids=config.owner_guild_ids, name="shutdown")
     @check.is_owner()
     async def shutdown(self, ctx: discord.ApplicationContext):
@@ -157,7 +148,6 @@ class Devs(
         await self.client.wait_until_ready()
         await self.client.close()
 
-    # Set status
     @slash_command(guild_ids=config.owner_guild_ids, name="status")
     @check.is_dev()
     @option("status", description="Set the bot status", choices=["Online", "Idle", "DND", "Invisible"])
@@ -178,7 +168,6 @@ class Devs(
         )
         await ctx.respond(view=view)
 
-    # Stats
     @slash_command(guild_ids=config.owner_guild_ids, name="stats")
     @check.is_dev()
     async def stats(self, ctx: discord.ApplicationContext):

@@ -5,7 +5,6 @@ let connected = false;
 
 export const redis = createClient({
     url: REDIS_URL,
-    // While Redis is away commands are refused at once instead of piling up until it returns
     disableOfflineQueue: true,
     // A Redis that is up but silent never answers a sent command, so the socket is dropped after 5s of nothing.
     // The ping keeps a healthy idle connection from tripping that

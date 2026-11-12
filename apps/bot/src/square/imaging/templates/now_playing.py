@@ -9,7 +9,6 @@ from square.utils.helpers import fmt_count
 _ARTWORK = 160
 _COVER = 32
 _FILTERS_SHOWN = 2
-# Lavalink source names with a brand logo in `emojis/`. Others get a music note
 _LOGOS = {"youtube", "spotify", "soundcloud"}
 _LABELS = {
     "youtube": "YouTube",
@@ -22,7 +21,6 @@ _LABELS = {
 
 
 def source_label(source: str) -> str:
-    """How a Lavalink source name reads, e.g. "youtube" -> "YouTube"."""
     return _LABELS.get(source, source.title() or "Music")
 
 
@@ -49,12 +47,10 @@ class NowPlaying(msgspec.Struct, frozen=True):
 
 
 def _trim_letterbox(image: Image.Image) -> Image.Image:
-    """Cuts the black bars YouTube bakes into 4:3 thumbnails of 16:9 videos, so they don't end up in the square crop."""
     dark = image.convert("L").point(lambda value: 255 if value > 16 else 0)
     if not (box := dark.getbbox()):
         return image
     left, top, right, bottom = box
-    # Only full-width bars at the top and bottom count, so dark artwork with a bright center keeps its edges
     if left > 2 or right < image.width - 2 or top > image.height // 4 or image.height - bottom > image.height // 4:
         return image
     return image.crop((0, top, image.width, bottom))
@@ -68,7 +64,6 @@ def _artwork(ui: Kit, data: bytes | None, size: float, radius: float) -> Node:
 
 
 def _up_next(ui: Kit, data: NowPlaying) -> Box:
-    """The next track on a `surface-2` tile, `h-12 rounded-2xl`, under a mono eyebrow."""
     eyebrow = f"Up next · {fmt_count(data.queued)} queued" if data.queued else "Up next"
     title = ui.text(data.up_next, Type.SM_MEDIUM) if data.up_next else ui.muted("Nothing queued", Type.SM_MEDIUM)
     cover = _artwork(ui, data.up_next_artwork, _COVER, Radius.LG) if data.up_next else None
@@ -82,7 +77,6 @@ def _up_next(ui: Kit, data: NowPlaying) -> Box:
 
 
 def build(ui: Kit, data: NowPlaying) -> Node:
-    """The current track: artwork, title and requester, a wavy progress bar, the player's settings and what's next."""
     if data.stream:
         state = ui.chip("Live", "danger", icon="live")
     elif data.paused:
@@ -123,7 +117,6 @@ def build(ui: Kit, data: NowPlaying) -> Node:
         Spacer(),
         ui.muted("Live" if data.stream else data.duration, Type.MONO_XS),
     )
-    # A paused track lies flat
     progress = Column(ui.progress(1 if data.stream else data.progress, wavy=not data.paused), times, gap=8)
 
     looping = data.loop != "Disabled"

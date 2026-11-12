@@ -15,7 +15,7 @@ class DevTable(Model):
 class GuildTable(Model):
     id = fields.IntField(primary_key=True)
     guild_id = fields.BigIntField(unique=True)
-    modules: list[str] = fields.JSONField(default=lambda: list(DEFAULT_MODULES))  # Turned on, by `Module` value
+    modules: list[str] = fields.JSONField(default=lambda: list(DEFAULT_MODULES))
     media_only_channel_id = fields.BigIntField(null=True)
     autorole = fields.BigIntField(null=True)
     dj_mode = fields.BooleanField(default=False)
@@ -29,7 +29,6 @@ class GuildTable(Model):
     ticket_panel_message_id = fields.BigIntField(null=True)
     ticket_max_open = fields.IntField(default=1)
     ticket_confirm_close = fields.BooleanField(default=True)
-    # The next ticket's number, bumped inside a row lock so two tickets never share one
     ticket_next_number = fields.IntField(default=1)
 
     log_channels: fields.ReverseRelation[LogChannelTable]
@@ -43,8 +42,6 @@ class GuildTable(Model):
 
 
 class LogChannelTable(Model):
-    """One row per (guild, log type) pair, mapping a log category to its channel."""
-
     id = fields.IntField(primary_key=True)
     guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
         "models.GuildTable", related_name="log_channels", on_delete=fields.CASCADE
@@ -58,8 +55,6 @@ class LogChannelTable(Model):
 
 
 class DJRoleTable(Model):
-    """One row per (guild, role) pair, listing the roles that count as DJs."""
-
     id = fields.IntField(primary_key=True)
     guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
         "models.GuildTable", related_name="dj_roles", on_delete=fields.CASCADE
@@ -72,8 +67,6 @@ class DJRoleTable(Model):
 
 
 class InviteJoinTable(Model):
-    """One row per (guild, member): who invited them, through which code, and whether they're still here."""
-
     id = fields.IntField(primary_key=True)
     guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
         "models.GuildTable", related_name="invite_joins", on_delete=fields.CASCADE
@@ -92,8 +85,6 @@ class InviteJoinTable(Model):
 
 
 class InviteBonusTable(Model):
-    """One row per (guild, user), bonus invites granted by moderators."""
-
     id = fields.IntField(primary_key=True)
     guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
         "models.GuildTable", related_name="invite_bonuses", on_delete=fields.CASCADE
@@ -107,8 +98,6 @@ class InviteBonusTable(Model):
 
 
 class TicketTable(Model):
-    """One row per ticket, numbered per guild, so nothing depends on channel names."""
-
     id = fields.IntField(primary_key=True)
     guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
         "models.GuildTable", related_name="tickets", on_delete=fields.CASCADE
@@ -133,8 +122,6 @@ class TicketTable(Model):
 
 
 class TicketMemberTable(Model):
-    """Members added to a ticket besides its opener."""
-
     id = fields.IntField(primary_key=True)
     ticket: fields.ForeignKeyRelation[TicketTable] = fields.ForeignKeyField(
         "models.TicketTable", related_name="members", on_delete=fields.CASCADE

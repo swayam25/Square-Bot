@@ -41,7 +41,6 @@
     const brand = $derived(track ? brandOf(track.source) : undefined);
     const source = $derived(brand ? { brand, label: LABELS[brand] } : undefined);
 
-    // Only YouTube tracks have a video: their identifier is the video's ID
     const videoId = $derived(track?.source === "youtube" && /^[\w-]{11}$/.test(track.identifier) ? track.identifier : null);
     let frame = $state<HTMLIFrameElement | null>(null);
     // Captured once per video: later moves go through the player API instead of reloading the frame
@@ -64,7 +63,6 @@
         return `https://www.youtube-nocookie.com/embed/${videoId}?${params}`;
     });
 
-    // Video stays picked across songs, but a song without one shows its art
     const view = $derived(mode === "video" && embed ? "video" : "music");
 
     const DRIFT_S = 0.5;
@@ -78,7 +76,6 @@
         frame?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "*");
     }
 
-    // Seeks only when the video has drifted, so it never stutters on every bot push
     function sync(force = false) {
         if (!frame) return;
         const now = performance.now();
@@ -107,7 +104,6 @@
             if (data.event !== "infoDelivery" || !data.info) return;
             if (typeof data.info.currentTime === "number") video = { ...video, time: data.info.currentTime, at: performance.now() };
             if (typeof data.info.playerState === "number") video = { ...video, state: data.info.playerState };
-            // Kept hidden until it really plays, so YouTube's loading screen and end cards never show
             shown = video.state === 1 || video.state === 2;
         };
         addEventListener("message", onMessage);
@@ -118,7 +114,6 @@
         };
     });
 
-    // Pauses, resumes and seeks show up as a fresh `positionAt`, so the video follows them right away
     $effect(() => {
         void player.positionAt;
         void player.paused;
@@ -180,10 +175,8 @@
     </div>
 
     <div class="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-4 py-4 md:gap-6 md:py-6">
-        <!-- Sized by the room it gets, so the art shrinks to fit a short phone instead of pushing the controls off -->
-        <div class="[container-type:size] grid min-h-0 w-full flex-1 place-items-center md:max-lg:min-h-80">
+        <div class="@container-size grid min-h-0 w-full flex-1 place-items-center md:max-lg:min-h-80">
             {#if view === "video"}
-                <!-- Taller than its box, so YouTube's title bar and bottom bar sit in the cropped-off letterbox -->
                 <div class="relative aspect-video w-[min(100cqw,calc(100cqh*16/9))] overflow-hidden rounded-3xl bg-black shadow-2xl shadow-black/50">
                     {#if track?.artworkUrl}<img
                             src={track.artworkUrl}
