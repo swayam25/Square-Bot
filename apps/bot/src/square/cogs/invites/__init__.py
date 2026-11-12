@@ -15,6 +15,7 @@ from square.db.funcs.invites import (
     fetch_counts,
     fetch_join,
     fetch_leaderboard,
+    fetch_rank,
     record_join,
     record_leave,
     reset_invites,
@@ -219,12 +220,14 @@ class Invites(
             return
         target = member or ctx.author
         await ctx.defer()  # Fetching the avatar and rendering can outlast the 3 second reply window
-        counts, board, (avatar, icon) = await asyncio.gather(
-            fetch_counts(guild.id, target.id),
-            fetch_leaderboard(guild.id),
-            assets.fetch_many([target.display_avatar, guild.icon]),
+
+        async def standing() -> tuple[InviteCounts, int | None]:
+            counts = await fetch_counts(guild.id, target.id)
+            return counts, await fetch_rank(guild.id, target.id, counts.total)
+
+        (counts, rank), (avatar, icon) = await asyncio.gather(
+            standing(), assets.fetch_many([target.display_avatar, guild.icon])
         )
-        rank = next((rank for rank, (user_id, _) in enumerate(board, start=1) if user_id == target.id), None)
         data = invite_card.InviteCard(
             name=target.display_name,
             username=target.name,

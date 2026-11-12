@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from square.db import cache
 from square.db.funcs.guild import fetch_guild_settings
 from square.db.schema import GuildTable, InviteBonusTable, InviteJoinTable
+from tortoise import connections
 from tortoise.expressions import Q
 from tortoise.functions import Count
 
@@ -122,7 +123,47 @@ async def fetch_leaderboard(guild_id: int) -> list[tuple[int, InviteCounts]]:
         for inviter_id, regular, left, fake in rows
     }
     counts |= {user_id: InviteCounts(bonus=amount) for user_id, amount in bonuses.items()}
-    return sorted(((user_id, c) for user_id, c in counts.items() if c.total), key=lambda item: -item[1].total)
+    return sorted(
+        ((user_id, c) for user_id, c in counts.items() if c.total), key=lambda item: (-item[1].total, item[0])
+    )
+
+
+# Same order as `fetch_leaderboard`: highest total first, ties by user ID
+_RANK_SQL = """
+WITH totals AS (
+    SELECT user_id, SUM(n)::bigint AS total
+    FROM (
+        SELECT j.inviter_id AS user_id, COUNT(*) FILTER (WHERE j.left_at IS NULL AND NOT j.fake) AS n
+        FROM invite_join j JOIN guild g ON g.id = j.guild_id
+        WHERE g.guild_id = $1::bigint AND j.inviter_id IS NOT NULL
+        GROUP BY j.inviter_id
+        UNION ALL
+        SELECT b.user_id, b.amount
+        FROM invite_bonus b JOIN guild g ON g.id = b.guild_id
+        WHERE g.guild_id = $1::bigint
+    ) parts
+    GROUP BY user_id
+)
+SELECT COUNT(*) AS ahead FROM totals WHERE total <> 0 AND (total > $3::bigint OR (total = $3::bigint AND user_id < $2::bigint))
+"""
+
+
+async def fetch_rank(guild_id: int, user_id: int, total: int) -> int | None:
+    """
+    A user's place on the leaderboard, counted in the database instead of loading every inviter.
+
+    Args:
+        guild_id (int): The guild ID to perform action on.
+        user_id (int): The inviter.
+        total (int): Their total from `fetch_counts`.
+
+    Returns:
+        int | None: The rank from 1, or None when they aren't on the leaderboard.
+    """
+    if not total:
+        return None
+    rows = await connections.get("default").execute_query_dict(_RANK_SQL, [guild_id, user_id, total])
+    return rows[0]["ahead"] + 1
 
 
 async def fetch_join(guild_id: int, member_id: int) -> InviteJoinTable | None:

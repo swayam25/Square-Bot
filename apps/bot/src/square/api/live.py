@@ -21,7 +21,8 @@ from square.api.schemas import (
     Track,
     history_out,
     live_player,
-    player_out,
+    player_for,
+    player_shared,
     queue_out,
 )
 from square.core import Client
@@ -31,10 +32,11 @@ log = logging.getLogger(__name__)
 
 Topic = Literal["player", "queue", "history"]
 Snapshot = PlayerState | QueueState | list[Track]
-_SNAPSHOTS: dict[Topic, Callable[[Client, discord.Guild, discord.Member], Snapshot]] = {
-    "player": player_out,
-    "queue": lambda client, guild, _: queue_out(client, guild),
-    "history": lambda client, guild, _: history_out(live_player(client, guild.id)),
+# What every viewer of a guild gets. The player topic adds the viewer's own part on top, see `_Connection.push`
+_SNAPSHOTS: dict[Topic, Callable[[Client, discord.Guild], Snapshot]] = {
+    "player": player_shared,
+    "queue": queue_out,
+    "history": lambda client, guild: history_out(live_player(client, guild.id)),
 }
 
 
@@ -75,7 +77,7 @@ class _Connection:
         self.subscriptions: dict[int, _Subscription] = {}
         self._send_lock = asyncio.Lock()  # Pushes come from bot events as well as this socket's own loop
 
-    async def push(self, sub_id: int) -> None:
+    async def push(self, sub_id: int, shared: _Shared | None = None) -> None:
         """Sends the subscription's snapshot, unless nothing changed since the last one."""
         if (sub := self.subscriptions.get(sub_id)) is None:
             return
@@ -89,8 +91,10 @@ class _Connection:
         except PermissionDeniedException:
             await self._end(sub_id, "forbidden")
             return
-        data = _SNAPSHOTS[sub.topic](self.client, guild, guild.get_member(sub.actor))
-        key = _dedupe_key(data)
+        data, key = (shared or _Shared()).get(self.client, guild, sub.topic)
+        if isinstance(data, PlayerState):
+            data = player_for(self.client, guild, guild.get_member(sub.actor), data)
+            key += _encoder.encode(data.viewer)
         if key == sub.last:
             return
         sub.last = key
@@ -118,17 +122,31 @@ def _dedupe_key(data: Snapshot) -> bytes:
     return _encoder.encode(data)
 
 
+class _Shared:
+    """A guild's snapshots for one update, built and encoded once however many tabs are watching."""
+
+    def __init__(self) -> None:
+        self._built: dict[Topic, tuple[Snapshot, bytes]] = {}
+
+    def get(self, client: Client, guild: discord.Guild, topic: Topic) -> tuple[Snapshot, bytes]:
+        if topic not in self._built:
+            data = _SNAPSHOTS[topic](client, guild)
+            self._built[topic] = (data, _dedupe_key(data))
+        return self._built[topic]
+
+
 _connections: set[_Connection] = set()
 
 
 async def on_music_update(guild_id: int) -> None:
     """Pushes to every subscription for the guild. Registered as the bot's `music_update` listener."""
+    shared = _Shared()
     for connection in list(_connections):
         for sub_id, sub in list(connection.subscriptions.items()):
             if sub.guild_id != guild_id:
                 continue
             try:
-                await connection.push(sub_id)
+                await connection.push(sub_id, shared)
             except Exception:  # A dropped socket is cleaned up by its own loop
                 break
 

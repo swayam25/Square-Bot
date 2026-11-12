@@ -388,7 +388,11 @@ def _viewer(player: SquarePlayer | None, member: discord.Member) -> Viewer:
     )
 
 
-def player_out(client: Client, guild: discord.Guild, member: discord.Member) -> PlayerState:
+_NOBODY = Viewer(dj=False, in_channel=False, deafened=False)
+
+
+def player_shared(client: Client, guild: discord.Guild) -> PlayerState:
+    """The player as every viewer sees it. `player_for` fills in `viewer`, so live pushes build this once per guild."""
     if (player := live_player(client, guild.id)) is None:
         return PlayerState(
             voice_channel_id=None,
@@ -404,7 +408,7 @@ def player_out(client: Client, guild: discord.Guild, member: discord.Member) -> 
             listeners=[],
             failure=_failure(guild.id),
             vote=None,
-            viewer=_viewer(None, member),
+            viewer=_NOBODY,
         )
     return PlayerState(
         voice_channel_id=id_of(player.channel),
@@ -420,8 +424,16 @@ def player_out(client: Client, guild: discord.Guild, member: discord.Member) -> 
         listeners=_listeners(player),
         failure=_failure(guild.id),
         vote=_vote(player),
-        viewer=_viewer(player, member),
+        viewer=_NOBODY,
     )
+
+
+def player_for(client: Client, guild: discord.Guild, member: discord.Member, shared: PlayerState) -> PlayerState:
+    return msgspec.structs.replace(shared, viewer=_viewer(live_player(client, guild.id), member))
+
+
+def player_out(client: Client, guild: discord.Guild, member: discord.Member) -> PlayerState:
+    return player_for(client, guild, member, player_shared(client, guild))
 
 
 def queue_out(client: Client, guild: discord.Guild) -> QueueState:
