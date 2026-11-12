@@ -8,16 +8,20 @@
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { MODULES, type ModuleKey } from "#lib/modules.ts";
     import * as settings from "#lib/settings.remote.ts";
-    import { memberJoins } from "#lib/stats.remote.ts";
+    import { memberJoins, serverStats } from "#lib/stats.remote.ts";
     import MaterialSymbolsArrowForwardRounded from "~icons/material-symbols/arrow-forward-rounded";
+    import MaterialSymbolsOpenInNewRounded from "~icons/material-symbols/open-in-new-rounded";
+    import MaterialSymbolsPlayCircleRounded from "~icons/material-symbols/play-circle-rounded";
     import type { PageProps } from "./$types";
 
     let { data }: PageProps = $props();
 
     const joinsQuery = $derived(data.guild.canManage ? memberJoins(data.guild.id) : null);
+    const statsQuery = $derived(data.guild.canManage ? serverStats(data.guild.id) : null);
     const modulesQuery = $derived(data.guild.canManage ? settings.moduleSettings(data.guild.id) : null);
 
     const joins = $derived(joinsQuery?.current ?? null);
+    const stats = $derived(statsQuery?.current ?? null);
     const modules = $derived(modulesQuery?.current ?? null);
 
     let drafts = $derived(modules ? { ...modules } : null);
@@ -28,10 +32,71 @@
 
     const joinedTotal = $derived(joins?.days.reduce((sum, day) => sum + day.count, 0) ?? 0);
     const count = (value: number, word: string) => `${value.toLocaleString("en-US")} ${word}${value === 1 ? "" : "s"}`;
+    const num = (value: number) => value.toLocaleString("en-US");
+    const since = (ms: number) => new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(ms);
+    const tiles = $derived(
+        stats
+            ? [
+                  {
+                      label: "Members",
+                      value: num(stats.humans + stats.bots),
+                      detail: `${count(stats.humans, "human")} · ${count(stats.bots, "bot")}`,
+                      dot: "bg-accent",
+                  },
+                  {
+                      label: "In voice",
+                      value: num(stats.inVoice),
+                      detail: stats.inVoice === 1 ? "person talking or listening" : "people talking or listening",
+                      dot: "bg-emerald-400",
+                  },
+                  {
+                      label: "Boosts",
+                      value: num(stats.boosts),
+                      detail: stats.boostLevel ? `Level ${stats.boostLevel}` : "No boost level yet",
+                      dot: "bg-pink-300",
+                  },
+                  {
+                      label: "Channels",
+                      value: num(stats.textChannels + stats.voiceChannels),
+                      detail: `${num(stats.textChannels)} text · ${num(stats.voiceChannels)} voice`,
+                      dot: "bg-sky-300",
+                  },
+                  { label: "Roles", value: num(stats.roles), detail: "Not counting @everyone", dot: "bg-violet-300" },
+                  { label: "Created", value: since(stats.createdAt), detail: "When the server was made", dot: "bg-amber-400" },
+              ]
+            : [],
+    );
 </script>
 
+{#snippet quickLinks()}
+    <Button href="/guild/{data.guild.id}/player"><MaterialSymbolsPlayCircleRounded />Open the player</Button>
+    <Button href="https://discord.com/channels/{data.guild.id}" target="_blank" rel="noopener noreferrer" variant="ghost">
+        Open in Discord<MaterialSymbolsOpenInNewRounded />
+    </Button>
+{/snippet}
+
 <div class="flex flex-col gap-8">
-    <PageHeading title="Overview" description="What's happening in {data.guild.name} right now." />
+    <PageHeading title="Overview" description="What's happening in {data.guild.name} right now." actions={quickLinks} />
+
+    {#if statsQuery}
+        <section aria-label="Server stats" class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+            {#if stats}
+                {#each tiles as tile (tile.label)}
+                    <div class="flex min-w-0 flex-col gap-2 rounded-3xl bg-surface-1 p-4">
+                        <span class="flex items-center gap-2 text-sm text-mist-400"
+                            ><span class={["size-2 shrink-0 rounded-full", tile.dot]}></span>{tile.label}</span
+                        >
+                        <span class="truncate font-mono text-2xl font-semibold">{tile.value}</span>
+                        <span class="truncate text-xs text-mist-400">{tile.detail}</span>
+                    </div>
+                {/each}
+            {:else if statsQuery.error}
+                <p class="col-span-full text-sm text-red-400">Square couldn't load the server stats. Refresh to try again.</p>
+            {:else}
+                {#each { length: 6 }, i (i)}<div aria-hidden="true" class="h-28 animate-pulse rounded-3xl bg-surface-1"></div>{/each}
+            {/if}
+        </section>
+    {/if}
 
     {#if modules && drafts}
         <section aria-labelledby="modules" class="flex flex-col gap-4">

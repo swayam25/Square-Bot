@@ -5,11 +5,13 @@
     import type { Component } from "svelte";
     import { cubicOut } from "svelte/easing";
     import { fly } from "svelte/transition";
+    import MaterialSymbolsHistoryRounded from "~icons/material-symbols/history-rounded";
     import MaterialSymbolsLyricsRounded from "~icons/material-symbols/lyrics-rounded";
     import MaterialSymbolsQueueMusicRounded from "~icons/material-symbols/queue-music-rounded";
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
+    import History from "./History.svelte";
     import Lyrics from "./Lyrics.svelte";
-    import type { Tab } from "./player.ts";
+    import type { Access, Tab } from "./player.ts";
     import Queue from "./Queue.svelte";
     import SearchPanel from "./SearchPanel.svelte";
 
@@ -20,6 +22,7 @@
         position,
         online,
         lyricsOff,
+        access,
         tab = $bindable(),
         sheet = false,
     }: {
@@ -29,13 +32,15 @@
         position: number;
         online: boolean;
         lyricsOff: string | false;
+        access: Access;
         tab: Tab;
         sheet?: boolean;
     } = $props();
 
     let queueList = $state<HTMLElement | null>(null);
+    let historyList = $state<HTMLElement | null>(null);
     const track = $derived(player.track);
-    const ORDER: Tab[] = ["search", "queue", "lyrics"];
+    const ORDER: Tab[] = ["search", "queue", "history", "lyrics"];
     let direction = $state(1);
     function choose(next: Tab) {
         direction = ORDER.indexOf(next) >= ORDER.indexOf(tab) ? 1 : -1;
@@ -45,13 +50,14 @@
     const tabs = $derived<{ value: Tab; label: string; icon: Component; count?: number; disabled?: string | false }[]>([
         { value: "search", label: "Search", icon: MaterialSymbolsSearchRounded },
         { value: "queue", label: "Queue", icon: MaterialSymbolsQueueMusicRounded, count: queue?.total },
+        { value: "history", label: "History", icon: MaterialSymbolsHistoryRounded },
         // Left enabled while open: a song without lyrics says so inside the tab rather than moving you off it
         { value: "lyrics", label: "Lyrics", icon: MaterialSymbolsLyricsRounded, disabled: tab === "lyrics" ? false : lyricsOff },
     ]);
 </script>
 
 <section
-    aria-label="Search, queue and lyrics"
+    aria-label="Search, queue, history and lyrics"
     class={[
         "flex flex-col gap-4 overflow-hidden",
         sheet ? "min-h-0 flex-1 pt-2" : "h-144 rounded-3xl bg-surface-1 pt-4 md:pt-6 lg:h-auto lg:min-h-0",
@@ -72,9 +78,16 @@
             {:else if tab === "queue"}
                 <div class="relative min-h-0 flex-1">
                     <div bind:this={queueList} class="size-full overflow-y-auto overscroll-contain px-2 pb-6 md:px-4">
-                        {#if queue}<Queue {guild} {queue} autoplay={player.autoplay} />{/if}
+                        {#if queue}<Queue {guild} {queue} {access} autoplay={player.autoplay} />{/if}
                     </div>
                     <OverlayScrollbar viewport={queueList} inset={16} />
+                </div>
+            {:else if tab === "history"}
+                <div class="relative min-h-0 flex-1">
+                    <div bind:this={historyList} class="size-full overflow-y-auto overscroll-contain px-2 pb-6 md:px-4">
+                        <History {guild} {access} />
+                    </div>
+                    <OverlayScrollbar viewport={historyList} inset={16} />
                 </div>
             {:else if track && !track.isStream}
                 {#key track.identifier}

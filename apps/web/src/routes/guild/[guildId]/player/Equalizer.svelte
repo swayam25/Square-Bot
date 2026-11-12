@@ -12,7 +12,12 @@
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
     import { control } from "./player.ts";
 
-    let { guild, player, triggerClass }: { guild: string; player: PlayerState; triggerClass?: ClassValue } = $props();
+    let {
+        guild,
+        player,
+        lock = null,
+        triggerClass,
+    }: { guild: string; player: PlayerState; lock?: string | null; triggerClass?: ClassValue } = $props();
 
     const presetsQuery = $derived(music.eqPresets(guild));
     const presets = $derived(presetsQuery.current);
@@ -45,11 +50,11 @@
 </script>
 
 {#snippet reset(className?: ClassValue)}
-    <Tooltip content={player.eq.length ? null : "Nothing is turned on"} class={className}>
+    <Tooltip content={lock ?? (player.eq.length ? null : "Nothing is turned on")} class={className}>
         <Button
             variant="ghost"
             loading={busy === RESET}
-            disabled={!player.eq.length || (busy !== null && busy !== RESET)}
+            disabled={!!lock || !player.eq.length || (busy !== null && busy !== RESET)}
             class="w-full"
             onclick={() => run(RESET, music.resetEq({ guild }))}
         >
@@ -81,12 +86,12 @@
                         <div class="flex flex-wrap gap-2">
                             {#each group.presets as preset (preset.name)}
                                 {@const on = player.eq.includes(preset.name)}
-                                <Tooltip content={preset.description}>
+                                <Tooltip content={lock ?? preset.description}>
                                     <button
                                         type="button"
                                         aria-pressed={on}
                                         aria-busy={busy === preset.name}
-                                        disabled={busy !== null && busy !== preset.name}
+                                        disabled={!!lock || (busy !== null && busy !== preset.name)}
                                         class={[
                                             "ripple relative inline-flex h-10 items-center rounded-full px-4 text-sm font-medium transition-colors disabled:opacity-50",
                                             on ? "bg-accent/20 text-cyan-300 hover:bg-accent/30" : "bg-white/10 text-mist-100 hover:bg-white/15",

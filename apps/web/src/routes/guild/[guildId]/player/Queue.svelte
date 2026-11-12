@@ -24,10 +24,12 @@
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
     import MaterialSymbolsSwapVertRounded from "~icons/material-symbols/swap-vert-rounded";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
-    import { control, time } from "./player.ts";
+    import { control, locked, time, type Access } from "./player.ts";
     import TrackRow from "./TrackRow.svelte";
 
-    let { guild, queue, autoplay }: { guild: string; queue: QueueState; autoplay: boolean } = $props();
+    let { guild, queue, autoplay, access }: { guild: string; queue: QueueState; autoplay: boolean; access: Access } = $props();
+
+    const lock = $derived(locked(access));
 
     // A drop shows the new order right away; the bot's next push replaces it either way
     let tracks = $derived<Track[]>(queue.tracks);
@@ -186,13 +188,19 @@
         </h2>
         {#if queue.total}
             <div class="flex gap-1">
-                <Tooltip content={queue.total < 2 ? "Needs two songs or more" : "Reverse the queue"}>
-                    <Button variant="ghost" icon aria-label="Reverse the queue" disabled={queue.total < 2} onclick={() => askWhole("reverse")}>
+                <Tooltip content={lock ?? (queue.total < 2 ? "Needs two songs or more" : "Reverse the queue")}>
+                    <Button
+                        variant="ghost"
+                        icon
+                        aria-label="Reverse the queue"
+                        disabled={!!lock || queue.total < 2}
+                        onclick={() => askWhole("reverse")}
+                    >
                         <MaterialSymbolsSwapVertRounded />
                     </Button>
                 </Tooltip>
-                <Tooltip content="Clear the queue">
-                    <Button variant="ghost" icon aria-label="Clear the queue" onclick={() => askWhole("clear")}>
+                <Tooltip content={lock ?? "Clear the queue"}>
+                    <Button variant="ghost" icon aria-label="Clear the queue" disabled={!!lock} onclick={() => askWhole("clear")}>
                         <MaterialSymbolsClearAllRounded />
                     </Button>
                 </Tooltip>
@@ -239,25 +247,27 @@
     {/if}
     {#if tracks.length}
         {#key order}
-            <ol class="flex flex-col gap-1" in:fade={{ duration: 200 }} {@attach sortable({ onmove: reorder, disabled: () => filtering })}>
+            <ol class="flex flex-col gap-1" in:fade={{ duration: 200 }} {@attach sortable({ onmove: reorder, disabled: () => filtering || !!lock })}>
                 {#each shown as { track, index, key } (key)}
                     {@const at = { guild, index, identifier: track.identifier }}
+                    {@const removeLock = locked(access, { own: track.requester?.id === access.me })}
                     <li
                         in:row={{ from: 24 }}
                         out:row={{ from: -24 }}
                         data-sortable-index={index}
                         class="group relative flex items-center gap-2 rounded-2xl py-2 pr-2 transition-colors hover:bg-surface-2 data-dragging:z-10 data-dragging:bg-surface-3 data-dragging:shadow-xl data-dragging:shadow-black/50"
                     >
-                        <Tooltip content={filtering ? "Clear the search and filter to reorder" : null}>
+                        <Tooltip content={lock ?? (filtering ? "Clear the search and filter to reorder" : null)}>
                             <button
                                 type="button"
                                 data-drag-handle
                                 data-no-drag
                                 aria-label="Reorder {track.title}. Use the arrow keys to move it."
-                                aria-disabled={filtering}
+                                aria-disabled={filtering || !!lock}
+                                disabled={!!lock}
                                 class={[
                                     "flex h-12 w-8 shrink-0 touch-none items-center justify-center rounded-xl text-mist-400 transition-[color,opacity]",
-                                    filtering ? "cursor-default opacity-40" : "cursor-grab hover:text-mist-50 active:cursor-grabbing",
+                                    filtering || lock ? "cursor-default opacity-40" : "cursor-grab hover:text-mist-50 active:cursor-grabbing",
                                 ]}
                             >
                                 <MaterialSymbolsDragIndicator class="size-5" />
@@ -281,12 +291,12 @@
                                             pending ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
                                         ]}
                                     >
-                                        <Tooltip content="Play now">
+                                        <Tooltip content={lock ?? "Play now"}>
                                             <button
                                                 type="button"
                                                 aria-label="Play {track.title} now"
                                                 aria-busy={busy.has(`jump:${track.identifier}`)}
-                                                disabled={pending}
+                                                disabled={pending || !!lock}
                                                 class={neutral}
                                                 onclick={() => run(`jump:${track.identifier}`, () => control(music.jumpToTrack(at)))}
                                             >
@@ -297,24 +307,24 @@
                                         </Tooltip>
                                         {#if track.requester}
                                             {@const requester = track.requester}
-                                            <Tooltip content="Remove every song {requester.name} added">
+                                            <Tooltip content={lock ?? `Remove every song ${requester.name} added`}>
                                                 <button
                                                     type="button"
                                                     aria-label="Remove every song {requester.name} added"
                                                     class={neutral}
-                                                    disabled={pending}
+                                                    disabled={pending || !!lock}
                                                     onclick={() => askRemove(requester)}
                                                 >
                                                     <MaterialSymbolsPersonRemoveRounded class="size-4" />
                                                 </button>
                                             </Tooltip>
                                         {/if}
-                                        <Tooltip content="Remove">
+                                        <Tooltip content={removeLock ?? "Remove"}>
                                             <button
                                                 type="button"
                                                 aria-label="Remove {track.title}"
                                                 aria-busy={busy.has(`remove:${track.identifier}`)}
-                                                disabled={pending}
+                                                disabled={pending || !!removeLock}
                                                 class={[action, "hover:bg-red-400/10 hover:text-red-400"]}
                                                 onclick={() => run(`remove:${track.identifier}`, () => control(music.removeTrack(at)))}
                                             >

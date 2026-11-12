@@ -7,6 +7,7 @@
         max = 100,
         step = 1,
         label,
+        disabled = false,
         onchange,
         class: className,
     }: {
@@ -15,6 +16,7 @@
         max?: number;
         step?: number;
         label: string;
+        disabled?: boolean;
         onchange?: (value: number) => void;
         class?: ClassValue;
     } = $props();
@@ -24,7 +26,7 @@
 
 <!-- The real range input stays on top, invisible, so pointer, touch, keys and screen readers all work natively -->
 <div class={["slider relative h-6", className]} style:--p={progress}>
-    <input type="range" {min} {max} {step} aria-label={label} bind:value onchange={() => onchange?.(value)} />
+    <input type="range" {min} {max} {step} aria-label={label} {disabled} bind:value onchange={() => onchange?.(value)} />
     <span class="fill" aria-hidden="true"></span>
     <span class="rest" aria-hidden="true"></span>
     <span class="handle" aria-hidden="true"></span>
@@ -44,11 +46,14 @@
         --gap: 0px;
         transition: --gap 400ms var(--ease-spring);
     }
-    .slider:has(input:hover, input:active, input:focus-visible) {
+    .slider:has(input:enabled:hover, input:enabled:active, input:focus-visible) {
         --gap: 6px;
     }
     .slider:has(input:focus-visible) {
         --fill: var(--color-accent);
+    }
+    .slider:has(input:disabled) {
+        opacity: 0.4;
     }
 
     input {
@@ -60,6 +65,9 @@
         cursor: pointer;
         opacity: 0;
         appearance: none;
+    }
+    input:disabled {
+        cursor: default;
     }
     input::-webkit-slider-thumb {
         appearance: none;
@@ -107,7 +115,7 @@
             opacity 200ms ease-out,
             background-color 200ms ease-out;
     }
-    .slider:has(input:hover, input:active, input:focus-visible) .handle {
+    .slider:has(input:enabled:hover, input:enabled:active, input:focus-visible) .handle {
         opacity: 1;
         scale: 1 1;
     }

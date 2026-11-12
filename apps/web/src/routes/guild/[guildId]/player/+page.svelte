@@ -8,14 +8,16 @@
     import { ripple } from "#lib/motion.ts";
     import * as music from "#lib/music.remote.ts";
     import { toast } from "#lib/toast.svelte.ts";
+    import MaterialSymbolsHistoryRounded from "~icons/material-symbols/history-rounded";
     import MaterialSymbolsLyricsRounded from "~icons/material-symbols/lyrics-rounded";
     import MaterialSymbolsQueueMusicRounded from "~icons/material-symbols/queue-music-rounded";
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
     import type { PageProps } from "./$types";
     import ArtPanel from "./ArtPanel.svelte";
     import ControlsBar from "./ControlsBar.svelte";
-    import { control, type Tab } from "./player.ts";
+    import { control, type Access, type Tab } from "./player.ts";
     import SidePanel from "./SidePanel.svelte";
+    import SkipVote from "./SkipVote.svelte";
     import ZenView, { enterFullscreen } from "./ZenView.svelte";
 
     let { data }: PageProps = $props();
@@ -26,6 +28,11 @@
     const statusQuery = music.liveStatus();
 
     const player = $derived(playerQuery.current);
+    const access = $derived<Access>({
+        dj: player?.viewer.dj ?? false,
+        inChannel: player?.viewer.inChannel ?? false,
+        me: data.user?.id ?? null,
+    });
     const queue = $derived(queueQuery.current);
     // Without `connected`, a dropped dashboard connection would keep showing the last value
     const online = $derived(statusQuery.connected && (statusQuery.current ?? false));
@@ -102,7 +109,7 @@
     const tab = $derived(picked?.guild === guild ? picked.tab : "search");
     const setTab = (next: Tab) => (picked = { guild, tab: next });
     let sheet = $state(false);
-    const TAB_TITLES: Record<Tab, string> = { search: "Search", queue: "Queue", lyrics: "Lyrics" };
+    const TAB_TITLES: Record<Tab, string> = { search: "Search", queue: "Queue", history: "History", lyrics: "Lyrics" };
     function openSheet(next: Tab) {
         setTab(next);
         sheet = true;
@@ -153,21 +160,24 @@
             {#if player}
                 {#if mobile.current}
                     <ArtPanel {player} position={playhead} {server} {online} onzen={openZen} />
-                    <ControlsBar {guild} {player} {position} bind:seeking onseek={seek} />
-                    <nav aria-label="Search, queue and lyrics" class="grid shrink-0 grid-cols-3 gap-2">
+                    {#if player.vote}<SkipVote {guild} {player} vote={player.vote} {access} />{/if}
+                    <ControlsBar {guild} {player} {position} {access} bind:seeking onseek={seek} />
+                    <nav aria-label="Search, queue, history and lyrics" class="grid shrink-0 grid-cols-4 gap-2">
                         {@render sheetButton("search", "Search", MaterialSymbolsSearchRounded)}
                         {@render sheetButton("queue", "Queue", MaterialSymbolsQueueMusicRounded, false, queue?.total)}
+                        {@render sheetButton("history", "History", MaterialSymbolsHistoryRounded)}
                         {@render sheetButton("lyrics", "Lyrics", MaterialSymbolsLyricsRounded, lyricsOff)}
                     </nav>
                     <Drawer bind:open={sheet} title={TAB_TITLES[tab]} plain class="h-[calc(100dvh-4rem)]">
-                        <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} bind:tab={() => tab, setTab} sheet />
+                        <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} {access} bind:tab={() => tab, setTab} sheet />
                     </Drawer>
                 {:else}
                     <div class="grid gap-2 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
                         <ArtPanel {player} position={playhead} {server} {online} onzen={openZen} />
-                        <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} bind:tab={() => tab, setTab} />
+                        <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} {access} bind:tab={() => tab, setTab} />
                     </div>
-                    <ControlsBar {guild} {player} {position} bind:seeking onseek={seek} />
+                    {#if player.vote}<SkipVote {guild} {player} vote={player.vote} {access} />{/if}
+                    <ControlsBar {guild} {player} {position} {access} bind:seeking onseek={seek} />
                 {/if}
             {:else if playerQuery.error}
                 <p role="alert" class="rounded-3xl bg-red-400/10 p-6 text-sm font-medium text-red-400">

@@ -125,6 +125,7 @@
     let mobileSwitcherOpen = $state(false);
     let accountOpen = $state(false);
     let mobileAccountOpen = $state(false);
+    const closeSwitcher = () => (switcherOpen = mobileSwitcherOpen = false);
     let scroller = $state<HTMLElement | null>(null);
     let detailsScroller = $state<HTMLElement | null>(null);
 
@@ -161,6 +162,7 @@
                 aria-current={guild.id === data.guild.id ? "page" : undefined}
                 class="ripple flex h-12 shrink-0 items-center gap-4 rounded-xl px-2 text-sm font-medium hover:bg-white/10 aria-[current=page]:text-accent"
                 {@attach ripple}
+                onclick={closeSwitcher}
             >
                 <GuildIcon src={guild.iconUrl} name={guild.name} class="size-8 rounded-lg text-mist-100" />
                 <span class="min-w-0 flex-1 truncate">{guild.name}</span>
@@ -169,7 +171,12 @@
         {/each}
     </nav>
     <hr class="my-2 border-white/10" />
-    <a href="/guild" class="ripple flex h-12 items-center gap-4 rounded-xl px-4 text-sm font-medium hover:bg-white/10" {@attach ripple}>
+    <a
+        href="/guild"
+        class="ripple flex h-12 items-center gap-4 rounded-xl px-4 text-sm font-medium hover:bg-white/10"
+        {@attach ripple}
+        onclick={closeSwitcher}
+    >
         <MaterialSymbolsPlayShapesRounded class="size-5 text-mist-400" />All servers
     </a>
 {/snippet}
