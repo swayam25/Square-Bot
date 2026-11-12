@@ -27,6 +27,9 @@ import type {
     GetLogSettingsData,
     GetLogSettingsErrors,
     GetLogSettingsResponses,
+    GetModuleSettingsData,
+    GetModuleSettingsErrors,
+    GetModuleSettingsResponses,
     GetMusicSettingsData,
     GetMusicSettingsErrors,
     GetMusicSettingsResponses,
@@ -152,6 +155,9 @@ import type {
     UpdateLogSettingsData,
     UpdateLogSettingsErrors,
     UpdateLogSettingsResponses,
+    UpdateModuleSettingsData,
+    UpdateModuleSettingsErrors,
+    UpdateModuleSettingsResponses,
     UpdateMusicSettingsData,
     UpdateMusicSettingsErrors,
     UpdateMusicSettingsResponses,
@@ -319,7 +325,7 @@ export const updateLogSettings = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Reset invite settings
+ * Reset the fake account age
  */
 export const resetInviteSettings = <ThrowOnError extends boolean = false>(
     options: Options<ResetInviteSettingsData, ThrowOnError>,
@@ -331,7 +337,7 @@ export const resetInviteSettings = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Invite tracker and fake account age
+ * Fake account age
  */
 export const getInviteSettings = <ThrowOnError extends boolean = false>(
     options: Options<GetInviteSettingsData, ThrowOnError>,
@@ -343,7 +349,7 @@ export const getInviteSettings = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Change the invite tracker or fake account age
+ * Change the fake account age
  */
 export const updateInviteSettings = <ThrowOnError extends boolean = false>(
     options: Options<UpdateInviteSettingsData, ThrowOnError>,
@@ -447,7 +453,7 @@ export const resetTicketSettings = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Ticket commands, setup and panel
+ * Ticket setup and panel
  */
 export const getTicketSettings = <ThrowOnError extends boolean = false>(
     options: Options<GetTicketSettingsData, ThrowOnError>,
@@ -496,6 +502,34 @@ export const createTicketPanel = <ThrowOnError extends boolean = false>(
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/settings/tickets/panel",
         ...options,
+    });
+
+/**
+ * Which modules are turned on
+ */
+export const getModuleSettings = <ThrowOnError extends boolean = false>(
+    options: Options<GetModuleSettingsData, ThrowOnError>,
+): RequestResult<GetModuleSettingsResponses, GetModuleSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).get<GetModuleSettingsResponses, GetModuleSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/modules",
+        ...options,
+    });
+
+/**
+ * Turn modules on or off
+ */
+export const updateModuleSettings = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateModuleSettingsData, ThrowOnError>,
+): RequestResult<UpdateModuleSettingsResponses, UpdateModuleSettingsErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateModuleSettingsResponses, UpdateModuleSettingsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/modules",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
     });
 
 /**

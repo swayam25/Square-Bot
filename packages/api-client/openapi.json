@@ -992,7 +992,7 @@
         "tags": [
           "Settings"
         ],
-        "summary": "Invite tracker and fake account age",
+        "summary": "Fake account age",
         "operationId": "get_invite_settings",
         "parameters": [
           {
@@ -1082,7 +1082,7 @@
         "tags": [
           "Settings"
         ],
-        "summary": "Reset invite settings",
+        "summary": "Reset the fake account age",
         "operationId": "reset_invite_settings",
         "parameters": [
           {
@@ -1172,7 +1172,7 @@
         "tags": [
           "Settings"
         ],
-        "summary": "Change the invite tracker or fake account age",
+        "summary": "Change the fake account age",
         "operationId": "update_invite_settings",
         "parameters": [
           {
@@ -1860,7 +1860,7 @@
         "tags": [
           "Settings"
         ],
-        "summary": "Ticket commands, setup and panel",
+        "summary": "Ticket setup and panel",
         "operationId": "get_ticket_settings",
         "parameters": [
           {
@@ -2339,6 +2339,198 @@
         ]
       }
     },
+    "/guilds/{guild_id}/settings/modules": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Which modules are turned on",
+        "operationId": "get_module_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Turn modules on or off",
+        "operationId": "update_module_settings",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModulePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModuleSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
     "/guilds/{guild_id}/settings": {
       "delete": {
         "tags": [
@@ -2753,6 +2945,26 @@
             },
             "description": "A track name, or a track or playlist link",
             "required": true,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "youtube_music",
+                "youtube",
+                "spotify",
+                "apple_music"
+              ],
+              "description": "Where to search. Links ignore it",
+              "default": "youtube_music"
+            },
+            "description": "Where to search. Links ignore it",
+            "required": false,
             "deprecated": false,
             "allowEmptyValue": false,
             "allowReserved": false
@@ -5449,6 +5661,16 @@
         "properties": {
           "message": {
             "type": "string"
+          },
+          "note": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -5620,13 +5842,6 @@
       },
       "InvitePatch": {
         "properties": {
-          "tracker": {
-            "oneOf": [
-              {
-                "type": "boolean"
-              }
-            ]
-          },
           "fakeDays": {
             "oneOf": [
               {
@@ -5642,17 +5857,13 @@
       },
       "InviteSettings": {
         "properties": {
-          "tracker": {
-            "type": "boolean"
-          },
           "fakeDays": {
             "type": "integer"
           }
         },
         "type": "object",
         "required": [
-          "fakeDays",
-          "tracker"
+          "fakeDays"
         ],
         "title": "InviteSettings"
       },
@@ -5986,6 +6197,54 @@
         ],
         "title": "MemberJoins"
       },
+      "ModulePatch": {
+        "properties": {
+          "logs": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "tickets": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "invites": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "ModulePatch"
+      },
+      "ModuleSettings": {
+        "properties": {
+          "logs": {
+            "type": "boolean"
+          },
+          "tickets": {
+            "type": "boolean"
+          },
+          "invites": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invites",
+          "logs",
+          "tickets"
+        ],
+        "title": "ModuleSettings"
+      },
       "MusicPatch": {
         "properties": {
           "stayChannelId": {
@@ -6095,6 +6354,28 @@
         ],
         "title": "Paused"
       },
+      "Person": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "name": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "avatarUrl",
+          "id",
+          "name"
+        ],
+        "title": "Person"
+      },
       "PlayQuery": {
         "properties": {
           "query": {
@@ -6164,12 +6445,19 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "listeners": {
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            },
+            "type": "array"
           }
         },
         "type": "object",
         "required": [
           "autoplay",
           "eq",
+          "listeners",
           "loop",
           "paused",
           "positionAt",
@@ -6241,10 +6529,17 @@
           },
           "total": {
             "type": "integer"
+          },
+          "autoplay": {
+            "items": {
+              "$ref": "#/components/schemas/Track"
+            },
+            "type": "array"
           }
         },
         "type": "object",
         "required": [
+          "autoplay",
           "total",
           "tracks"
         ],
@@ -6363,13 +6658,6 @@
       },
       "TicketPatch": {
         "properties": {
-          "enabled": {
-            "oneOf": [
-              {
-                "type": "boolean"
-              }
-            ]
-          },
           "categoryId": {
             "oneOf": [
               {
@@ -6420,9 +6708,6 @@
       },
       "TicketSettings": {
         "properties": {
-          "enabled": {
-            "type": "boolean"
-          },
           "categoryId": {
             "oneOf": [
               {
@@ -6470,7 +6755,6 @@
         "required": [
           "categoryId",
           "confirmClose",
-          "enabled",
           "maxOpen",
           "panelChannelId",
           "supportRoleIds"
@@ -6529,7 +6813,7 @@
           "source": {
             "type": "string"
           },
-          "requesterId": {
+          "isrc": {
             "oneOf": [
               {
                 "type": "string"
@@ -6537,9 +6821,17 @@
               {
                 "type": "null"
               }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
+            ]
+          },
+          "requester": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -6548,8 +6840,9 @@
           "author",
           "identifier",
           "isStream",
+          "isrc",
           "lengthMs",
-          "requesterId",
+          "requester",
           "source",
           "title",
           "uri"
@@ -6561,7 +6854,7 @@
           "volume": {
             "type": "integer",
             "maximum": 100.0,
-            "minimum": 1.0
+            "minimum": 0.0
           }
         },
         "type": "object",

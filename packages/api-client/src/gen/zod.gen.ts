@@ -18,6 +18,7 @@ export const zChannel = z.object({
  */
 export const zDone = z.object({
     message: z.string(),
+    note: z.string().nullish(),
 });
 
 /**
@@ -76,7 +77,6 @@ export const zHealth = z.object({
  * InvitePatch
  */
 export const zInvitePatch = z.object({
-    tracker: z.boolean().optional(),
     fakeDays: z.int().lte(365).optional(),
 });
 
@@ -84,7 +84,6 @@ export const zInvitePatch = z.object({
  * InviteSettings
  */
 export const zInviteSettings = z.object({
-    tracker: z.boolean(),
     fakeDays: z.int(),
 });
 
@@ -158,6 +157,24 @@ export const zMemberJoins = z.object({
 });
 
 /**
+ * ModulePatch
+ */
+export const zModulePatch = z.object({
+    logs: z.boolean().optional(),
+    tickets: z.boolean().optional(),
+    invites: z.boolean().optional(),
+});
+
+/**
+ * ModuleSettings
+ */
+export const zModuleSettings = z.object({
+    logs: z.boolean(),
+    tickets: z.boolean(),
+    invites: z.boolean(),
+});
+
+/**
  * MusicPatch
  */
 export const zMusicPatch = z.object({
@@ -188,6 +205,15 @@ export const zNotes = z.object({
  */
 export const zPaused = z.object({
     paused: z.boolean(),
+});
+
+/**
+ * Person
+ */
+export const zPerson = z.object({
+    id: z.string().regex(/^\d{17,20}$/),
+    name: z.string(),
+    avatarUrl: z.string(),
 });
 
 /**
@@ -259,7 +285,6 @@ export const zSeek = z.object({
  * TicketPatch
  */
 export const zTicketPatch = z.object({
-    enabled: z.boolean().optional(),
     categoryId: z.string().nullish(),
     supportRoleIds: z.array(z.string()).max(10).optional(),
     maxOpen: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(5)]).optional(),
@@ -270,7 +295,6 @@ export const zTicketPatch = z.object({
  * TicketSettings
  */
 export const zTicketSettings = z.object({
-    enabled: z.boolean(),
     categoryId: z.string().nullable(),
     supportRoleIds: z.array(z.string()),
     maxOpen: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(5)]),
@@ -297,7 +321,8 @@ export const zTrack = z.object({
     lengthMs: z.int(),
     isStream: z.boolean(),
     source: z.string(),
-    requesterId: z.string().nullable(),
+    isrc: z.string().nullable(),
+    requester: zPerson.nullable(),
 });
 
 /**
@@ -314,6 +339,7 @@ export const zPlayerState = z.object({
     shuffle: z.boolean(),
     autoplay: z.boolean(),
     eq: z.array(z.string()),
+    listeners: z.array(zPerson),
 });
 
 /**
@@ -322,6 +348,7 @@ export const zPlayerState = z.object({
 export const zQueueState = z.object({
     tracks: z.array(zTrack),
     total: z.int(),
+    autoplay: z.array(zTrack),
 });
 
 /**
@@ -336,7 +363,7 @@ export const zSearchResults = z.object({
  * Volume
  */
 export const zVolume = z.object({
-    volume: z.int().gte(1).lte(100),
+    volume: z.int().gte(0).lte(100),
 });
 
 /**
@@ -662,6 +689,34 @@ export const zCreateTicketPanelPath = z.object({
  */
 export const zCreateTicketPanelResponse = zTicketSettings;
 
+export const zGetModuleSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGetModuleSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGetModuleSettingsResponse = zModuleSettings;
+
+export const zUpdateModuleSettingsBody = zModulePatch;
+
+export const zUpdateModuleSettingsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateModuleSettingsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateModuleSettingsResponse = zModuleSettings;
+
 export const zResetAllSettingsHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),
 });
@@ -724,6 +779,7 @@ export const zSearchMusicPath = z.object({
 
 export const zSearchMusicQuery = z.object({
     q: z.string().min(1).max(500),
+    source: z.enum(["youtube_music", "youtube", "spotify", "apple_music"]).optional().default("youtube_music"),
 });
 
 /**

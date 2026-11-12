@@ -26,6 +26,7 @@ export type Channel = {
  */
 export type Done = {
     message: string;
+    note?: string | null;
 };
 
 /**
@@ -99,7 +100,6 @@ export type Health = {
  * InvitePatch
  */
 export type InvitePatch = {
-    tracker?: boolean;
     fakeDays?: number;
 };
 
@@ -107,7 +107,6 @@ export type InvitePatch = {
  * InviteSettings
  */
 export type InviteSettings = {
-    tracker: boolean;
     fakeDays: number;
 };
 
@@ -241,6 +240,24 @@ export type MemberJoins = {
 };
 
 /**
+ * ModulePatch
+ */
+export type ModulePatch = {
+    logs?: boolean;
+    tickets?: boolean;
+    invites?: boolean;
+};
+
+/**
+ * ModuleSettings
+ */
+export type ModuleSettings = {
+    logs: boolean;
+    tickets: boolean;
+    invites: boolean;
+};
+
+/**
  * MusicPatch
  */
 export type MusicPatch = {
@@ -283,6 +300,18 @@ export type Paused = {
 };
 
 /**
+ * Person
+ */
+export type Person = {
+    /**
+     * A Discord ID
+     */
+    id: string;
+    name: string;
+    avatarUrl: string;
+};
+
+/**
  * PlayQuery
  */
 export type PlayQuery = {
@@ -306,6 +335,7 @@ export type PlayerState = {
     shuffle: boolean;
     autoplay: boolean;
     eq: Array<string>;
+    listeners: Array<Person>;
 };
 
 /**
@@ -338,6 +368,7 @@ export type QueueMove = {
 export type QueueState = {
     tracks: Array<Track>;
     total: number;
+    autoplay: Array<Track>;
 };
 
 /**
@@ -392,7 +423,6 @@ export type Seek = {
  * TicketPatch
  */
 export type TicketPatch = {
-    enabled?: boolean;
     /**
      * A Discord ID
      */
@@ -406,7 +436,6 @@ export type TicketPatch = {
  * TicketSettings
  */
 export type TicketSettings = {
-    enabled: boolean;
     /**
      * A Discord ID
      */
@@ -439,10 +468,8 @@ export type Track = {
     lengthMs: number;
     isStream: boolean;
     source: string;
-    /**
-     * A Discord ID
-     */
-    requesterId: string | null;
+    isrc: string | null;
+    requester: Person | null;
 };
 
 /**
@@ -1571,6 +1598,96 @@ export type CreateTicketPanelResponses = {
 
 export type CreateTicketPanelResponse = CreateTicketPanelResponses[keyof CreateTicketPanelResponses];
 
+export type GetModuleSettingsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/modules";
+};
+
+export type GetModuleSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GetModuleSettingsError = GetModuleSettingsErrors[keyof GetModuleSettingsErrors];
+
+export type GetModuleSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: ModuleSettings;
+};
+
+export type GetModuleSettingsResponse = GetModuleSettingsResponses[keyof GetModuleSettingsResponses];
+
+export type UpdateModuleSettingsData = {
+    body: ModulePatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/modules";
+};
+
+export type UpdateModuleSettingsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type UpdateModuleSettingsError = UpdateModuleSettingsErrors[keyof UpdateModuleSettingsErrors];
+
+export type UpdateModuleSettingsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: ModuleSettings;
+};
+
+export type UpdateModuleSettingsResponse = UpdateModuleSettingsResponses[keyof UpdateModuleSettingsResponses];
+
 export type ResetAllSettingsData = {
     body?: never;
     headers: {
@@ -1770,6 +1887,10 @@ export type SearchMusicData = {
          * A track name, or a track or playlist link
          */
         q: string;
+        /**
+         * Where to search. Links ignore it
+         */
+        source?: "youtube_music" | "youtube" | "spotify" | "apple_music";
     };
     url: "/guilds/{guild_id}/music/search";
 };
