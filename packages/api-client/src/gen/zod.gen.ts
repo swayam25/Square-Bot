@@ -27,6 +27,8 @@ export const zDone = z.object({
 export const zEqPreset = z.object({
     name: z.string(),
     label: z.string(),
+    description: z.string(),
+    slot: z.string(),
 });
 
 /**
@@ -326,23 +328,6 @@ export const zTrack = z.object({
 });
 
 /**
- * PlayerState
- */
-export const zPlayerState = z.object({
-    voiceChannelId: z.string().nullable(),
-    track: zTrack.nullable(),
-    paused: z.boolean(),
-    positionMs: z.int(),
-    positionAt: z.int(),
-    volume: z.int(),
-    loop: z.enum(["off", "track", "queue"]),
-    shuffle: z.boolean(),
-    autoplay: z.boolean(),
-    eq: z.array(z.string()),
-    listeners: z.array(zPerson),
-});
-
-/**
  * QueueState
  */
 export const zQueueState = z.object({
@@ -357,6 +342,33 @@ export const zQueueState = z.object({
 export const zSearchResults = z.object({
     playlist: zPlaylistInfo.nullable(),
     tracks: z.array(zTrack),
+});
+
+/**
+ * TrackFailure
+ */
+export const zTrackFailure = z.object({
+    title: z.string(),
+    reason: z.string().nullable(),
+    at: z.int(),
+});
+
+/**
+ * PlayerState
+ */
+export const zPlayerState = z.object({
+    voiceChannelId: z.string().nullable(),
+    track: zTrack.nullable(),
+    paused: z.boolean(),
+    positionMs: z.int(),
+    positionAt: z.int(),
+    volume: z.int(),
+    loop: z.enum(["off", "track", "queue"]),
+    shuffle: z.boolean(),
+    autoplay: z.boolean(),
+    eq: z.array(z.string()),
+    listeners: z.array(zPerson),
+    failure: zTrackFailure.nullable(),
 });
 
 /**

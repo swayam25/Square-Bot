@@ -336,6 +336,7 @@ export type {
     TicketSettings,
     Toggle,
     Track,
+    TrackFailure,
     UpdateGeneralSettingsData,
     UpdateGeneralSettingsError,
     UpdateGeneralSettingsErrors,

@@ -5686,12 +5686,20 @@
           },
           "label": {
             "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "slot": {
+            "type": "string"
           }
         },
         "type": "object",
         "required": [
+          "description",
           "label",
-          "name"
+          "name",
+          "slot"
         ],
         "title": "EqPreset"
       },
@@ -6451,12 +6459,23 @@
               "$ref": "#/components/schemas/Person"
             },
             "type": "array"
+          },
+          "failure": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/TrackFailure"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
         "required": [
           "autoplay",
           "eq",
+          "failure",
           "listeners",
           "loop",
           "paused",
@@ -6848,6 +6867,33 @@
           "uri"
         ],
         "title": "Track"
+      },
+      "TrackFailure": {
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "reason": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "at": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "reason",
+          "title"
+        ],
+        "title": "TrackFailure"
       },
       "Volume": {
         "properties": {

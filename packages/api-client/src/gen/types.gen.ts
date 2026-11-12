@@ -35,6 +35,8 @@ export type Done = {
 export type EqPreset = {
     name: string;
     label: string;
+    description: string;
+    slot: string;
 };
 
 /**
@@ -336,6 +338,7 @@ export type PlayerState = {
     autoplay: boolean;
     eq: Array<string>;
     listeners: Array<Person>;
+    failure: TrackFailure | null;
 };
 
 /**
@@ -470,6 +473,15 @@ export type Track = {
     source: string;
     isrc: string | null;
     requester: Person | null;
+};
+
+/**
+ * TrackFailure
+ */
+export type TrackFailure = {
+    title: string;
+    reason: string | null;
+    at: number;
 };
 
 /**
