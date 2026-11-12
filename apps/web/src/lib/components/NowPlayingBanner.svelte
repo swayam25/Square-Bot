@@ -3,6 +3,7 @@
     import Cover from "#lib/components/ui/Cover.svelte";
     import Shape from "#lib/components/ui/Shape.svelte";
     import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
+    import { time } from "#lib/format.ts";
     import { ripple } from "#lib/motion.ts";
     import * as music from "#lib/music.remote.ts";
     import MaterialSymbolsArrowForwardRounded from "~icons/material-symbols/arrow-forward-rounded";
@@ -29,13 +30,6 @@
         const at = player.positionMs + (player.paused ? 0 : Math.max(0, now - player.positionAt));
         return track.isStream ? at : Math.min(at, track.lengthMs);
     });
-
-    const time = (ms: number) => {
-        const seconds = Math.max(0, Math.floor(ms / 1000));
-        const hours = Math.floor(seconds / 3600);
-        const rest = `${Math.floor((seconds % 3600) / 60)}:${String(seconds % 60).padStart(2, "0")}`;
-        return hours ? `${hours}:${rest.padStart(5, "0")}` : rest;
-    };
 </script>
 
 <a

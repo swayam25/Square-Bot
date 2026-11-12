@@ -1,10 +1,11 @@
 <script lang="ts">
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { time } from "#lib/format.ts";
     import * as music from "#lib/music.remote.ts";
     import { SvelteSet } from "svelte/reactivity";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
-    import { control, locked, time, type Access } from "./player.ts";
+    import { control, locked, type Access } from "./player.ts";
     import TrackRow from "./TrackRow.svelte";
 
     let { guild, access }: { guild: string; access: Access } = $props();

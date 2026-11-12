@@ -6,6 +6,7 @@
     import Button from "#lib/components/ui/Button.svelte";
     import Toggle from "#lib/components/ui/Toggle.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { formatCount, plural } from "#lib/format.ts";
     import { MODULES, type ModuleKey } from "#lib/modules.ts";
     import * as settings from "#lib/settings.remote.ts";
     import { memberJoins, serverStats } from "#lib/stats.remote.ts";
@@ -31,37 +32,35 @@
     const toggle = (key: ModuleKey, on: boolean) => drafts && (drafts = { ...drafts, [key]: on });
 
     const joinedTotal = $derived(joins?.days.reduce((sum, day) => sum + day.count, 0) ?? 0);
-    const count = (value: number, word: string) => `${value.toLocaleString("en-US")} ${word}${value === 1 ? "" : "s"}`;
-    const num = (value: number) => value.toLocaleString("en-US");
     const since = (ms: number) => new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric" }).format(ms);
     const tiles = $derived(
         stats
             ? [
                   {
                       label: "Members",
-                      value: num(stats.humans + stats.bots),
-                      detail: `${count(stats.humans, "human")} · ${count(stats.bots, "bot")}`,
+                      value: formatCount(stats.humans + stats.bots),
+                      detail: `${plural(stats.humans, "human")} · ${plural(stats.bots, "bot")}`,
                       dot: "bg-accent",
                   },
                   {
                       label: "In voice",
-                      value: num(stats.inVoice),
+                      value: formatCount(stats.inVoice),
                       detail: stats.inVoice === 1 ? "person talking or listening" : "people talking or listening",
                       dot: "bg-emerald-400",
                   },
                   {
                       label: "Boosts",
-                      value: num(stats.boosts),
+                      value: formatCount(stats.boosts),
                       detail: stats.boostLevel ? `Level ${stats.boostLevel}` : "No boost level yet",
                       dot: "bg-pink-300",
                   },
                   {
                       label: "Channels",
-                      value: num(stats.textChannels + stats.voiceChannels),
-                      detail: `${num(stats.textChannels)} text · ${num(stats.voiceChannels)} voice`,
+                      value: formatCount(stats.textChannels + stats.voiceChannels),
+                      detail: `${formatCount(stats.textChannels)} text · ${formatCount(stats.voiceChannels)} voice`,
                       dot: "bg-sky-300",
                   },
-                  { label: "Roles", value: num(stats.roles), detail: "Not counting @everyone", dot: "bg-violet-300" },
+                  { label: "Roles", value: formatCount(stats.roles), detail: "Not counting @everyone", dot: "bg-violet-300" },
                   { label: "Created", value: since(stats.createdAt), detail: "When the server was made", dot: "bg-amber-400" },
               ]
             : [],
@@ -150,8 +149,8 @@
                 <h2 id="joins" class="font-display text-xl font-semibold">Member joins</h2>
                 {#if joins}
                     <p class="text-sm text-mist-400">
-                        {joinedTotal ? `${count(joinedTotal, "member")} joined in the last 30 days` : "Nobody joined in the last 30 days"}
-                        · {count(joins.members, "member")} now
+                        {joinedTotal ? `${plural(joinedTotal, "member")} joined in the last 30 days` : "Nobody joined in the last 30 days"}
+                        · {plural(joins.members, "member")} now
                     </p>
                 {:else if joinsQuery.error}
                     <p class="text-sm text-red-400">Square couldn't load member joins. Refresh to try again.</p>

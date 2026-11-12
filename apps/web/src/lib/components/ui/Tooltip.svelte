@@ -25,6 +25,8 @@
 </script>
 
 <Tooltip.Root
+    lazyMount
+    unmountOnExit
     disabled={!content}
     openDelay={300}
     closeDelay={0}
@@ -40,7 +42,7 @@
     <Portal>
         <Tooltip.Positioner class="z-50">
             <Tooltip.Content
-                class="max-w-64 origin-(--transform-origin) rounded-xl bg-surface-3 px-4 py-2 text-xs font-medium text-mist-100 shadow-xl shadow-black/50 data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
+                class="max-w-64 origin-(--transform-origin) rounded-xl bg-surface-3 px-4 py-2 text-xs font-medium wrap-anywhere text-mist-100 shadow-xl shadow-black/50 data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
             >
                 {label}
             </Tooltip.Content>

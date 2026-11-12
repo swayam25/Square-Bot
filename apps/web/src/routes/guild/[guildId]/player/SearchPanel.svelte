@@ -16,6 +16,7 @@
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import ScrollRow from "#lib/components/ui/ScrollRow.svelte";
     import { errorMessage } from "#lib/errors.ts";
+    import { formatCount, time } from "#lib/format.ts";
     import { ripple } from "#lib/motion.ts";
     import * as music from "#lib/music.remote.ts";
     import type { SearchResults } from "@square/api-client";
@@ -23,7 +24,7 @@
     import MaterialSymbolsPlaylistAddRounded from "~icons/material-symbols/playlist-add-rounded";
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
-    import { control, time } from "./player.ts";
+    import { control } from "./player.ts";
     import TrackRow from "./TrackRow.svelte";
 
     let { guild }: { guild: string } = $props();
@@ -74,6 +75,7 @@
         problem = "";
         searching = false;
     });
+    $effect(() => () => clearTimeout(timer));
     function schedule() {
         clearTimeout(timer);
         timer = setTimeout(search, DEBOUNCE_MS);
@@ -156,7 +158,7 @@
                         <div class="flex min-w-0 flex-1 flex-col">
                             <span class="truncate text-sm font-semibold">{results.playlist.name}</span>
                             <span class="text-xs text-mist-400">
-                                Playlist · {results.playlist.trackCount} tracks{results.tracks.length < results.playlist.trackCount
+                                Playlist · {formatCount(results.playlist.trackCount)} tracks{results.tracks.length < results.playlist.trackCount
                                     ? `, first ${results.tracks.length} below`
                                     : ""}
                             </span>
@@ -173,7 +175,7 @@
                     </div>
                 {/if}
                 <ul class={["flex flex-col gap-1 transition-opacity", searching && "opacity-50"]}>
-                    {#each results.tracks as track (track.identifier)}
+                    {#each results.tracks as track, i (`${i}-${track.identifier}`)}
                         {@const busy = adding.has(track.identifier)}
                         <li>
                             <button

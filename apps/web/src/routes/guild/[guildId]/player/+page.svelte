@@ -1,8 +1,10 @@
 <script lang="ts">
     import Island from "#lib/components/Island.svelte";
+    import Button from "#lib/components/ui/Button.svelte";
     import Drawer from "#lib/components/ui/Drawer.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { formatCount } from "#lib/format.ts";
     import { trackLyrics } from "#lib/lyrics.remote.ts";
     import { mobile } from "#lib/media.ts";
     import { ripple } from "#lib/motion.ts";
@@ -11,6 +13,7 @@
     import MaterialSymbolsHistoryRounded from "~icons/material-symbols/history-rounded";
     import MaterialSymbolsLyricsRounded from "~icons/material-symbols/lyrics-rounded";
     import MaterialSymbolsQueueMusicRounded from "~icons/material-symbols/queue-music-rounded";
+    import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
     import type { PageProps } from "./$types";
     import ArtPanel from "./ArtPanel.svelte";
@@ -146,7 +149,7 @@
             onclick={() => openSheet(value)}
         >
             <Icon class="size-5 shrink-0" />{label}
-            {#if count}<span class="font-mono text-xs text-mist-400">{count}</span>{/if}
+            {#if count}<span class="font-mono text-xs text-mist-400">{formatCount(count)}</span>{/if}
         </button>
     </Tooltip>
 {/snippet}
@@ -180,9 +183,10 @@
                     <ControlsBar {guild} {player} {position} {access} bind:seeking onseek={seek} />
                 {/if}
             {:else if playerQuery.error}
-                <p role="alert" class="rounded-3xl bg-red-400/10 p-6 text-sm font-medium text-red-400">
-                    {playerQuery.error.message ?? "Square couldn't load the player."}
-                </p>
+                <div role="alert" class="flex flex-col items-start gap-4 rounded-3xl bg-red-400/10 p-6">
+                    <p class="text-sm font-medium text-red-400">{playerQuery.error.message ?? "Square couldn't load the player."}</p>
+                    <Button onclick={() => location.reload()}><MaterialSymbolsRefreshRounded />Try again</Button>
+                </div>
             {:else}
                 <div aria-hidden="true" class="grid flex-1 gap-2 md:flex-none lg:min-h-0 lg:flex-1 lg:grid-cols-2">
                     <div class="h-full animate-pulse rounded-3xl bg-surface-1 md:h-112 lg:h-auto"></div>

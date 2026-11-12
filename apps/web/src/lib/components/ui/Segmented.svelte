@@ -1,5 +1,6 @@
 <script lang="ts" generics="T extends string">
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { formatCount } from "#lib/format.ts";
     import type { Component } from "svelte";
     import type { ClassValue } from "svelte/elements";
 
@@ -73,7 +74,7 @@
             >
                 {#if option.icon}<option.icon class="size-4 shrink-0" />{/if}
                 {option.label}
-                {#if option.count}<span class="font-mono text-xs text-mist-400">{option.count}</span>{/if}
+                {#if option.count}<span class="font-mono text-xs text-mist-400">{formatCount(option.count)}</span>{/if}
             </button>
         </Tooltip>
     {/each}

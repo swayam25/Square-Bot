@@ -46,7 +46,7 @@ export function parseTtml(ttml: string): Lyrics | null {
         // Backing vocals sit in their own span of word spans; they become a separate, dimmer line
         let main = inner;
         for (const [whole, bgAttrs, bgInner] of inner.matchAll(
-            /<span\b([^>]*ttm:role="x-bg"[^>]*)>((?:\s*<span\b[^>]*>[^<]*<\/span>\s*)*)<\/span>/g,
+            /<span\b([^>]*ttm:role="x-bg"[^>]*)>((?:\s*<span\b[^>]*>[^<]*<\/span>)*\s*)<\/span>/g,
         )) {
             main = main.replace(whole, "");
             const words = ttmlWords(bgInner);

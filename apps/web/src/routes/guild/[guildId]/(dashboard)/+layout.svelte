@@ -8,6 +8,7 @@
     import Popup from "#lib/components/ui/Popup.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { Details, setDetails } from "#lib/details.svelte.ts";
+    import { plural } from "#lib/format.ts";
     import { mobile } from "#lib/media.ts";
     import { MODULES, type ModuleKey } from "#lib/modules.ts";
     import { ripple } from "#lib/motion.ts";
@@ -119,7 +120,6 @@
     const section = $derived(page.url.pathname.slice(base.length));
     const isCurrent = (href: string) => (href === base ? page.url.pathname === base : page.url.pathname.startsWith(href));
     const switchHref = (guild: (typeof data.guilds)[number]) => `/guild/${guild.id}${guild.canManage ? section : ""}`;
-    const members = (count: number) => `${count.toLocaleString("en-US")} ${count === 1 ? "member" : "members"}`;
 
     let switcherOpen = $state(false);
     let mobileSwitcherOpen = $state(false);
@@ -277,7 +277,7 @@
                     {#if expanded}
                         <span class="flex min-w-0 flex-1 flex-col">
                             <span class="truncate text-sm font-semibold">{data.guild.name}</span>
-                            <span class="font-mono text-xs text-mist-400">{members(data.guild.memberCount)}</span>
+                            <span class="font-mono text-xs text-mist-400">{plural(data.guild.memberCount, "member")}</span>
                         </span>
                         <MaterialSymbolsUnfoldMoreRounded class="size-5 shrink-0 text-mist-400" />
                     {/if}

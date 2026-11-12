@@ -5,6 +5,7 @@
     import GuildIcon from "#lib/components/ui/GuildIcon.svelte";
     import Input from "#lib/components/ui/Input.svelte";
     import Shape from "#lib/components/ui/Shape.svelte";
+    import { plural } from "#lib/format.ts";
     import { ripple } from "#lib/motion.ts";
     import { refreshAll } from "$app/navigation";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
@@ -89,8 +90,7 @@
                                 <div class="flex min-w-0 flex-1 flex-col">
                                     <h2 class="truncate font-display text-lg font-semibold">{guild.name}</h2>
                                     <p class="font-mono text-xs text-mist-400">
-                                        {guild.memberCount.toLocaleString("en-US")}
-                                        {guild.memberCount === 1 ? "member" : "members"}
+                                        {plural(guild.memberCount, "member")}
                                     </p>
                                 </div>
                                 <MaterialSymbolsArrowForwardRounded

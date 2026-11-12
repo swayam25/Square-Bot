@@ -14,6 +14,7 @@
     import Button from "#lib/components/ui/Button.svelte";
     import Shape from "#lib/components/ui/Shape.svelte";
     import { demo, time, TRACKS } from "#lib/demo.svelte.ts";
+    import { formatCount } from "#lib/format.ts";
     import MaterialSymbolsCheckCircleRounded from "~icons/material-symbols/check-circle-rounded";
     import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
@@ -122,7 +123,7 @@
                 {#await data.servers then servers}
                     {#if servers}
                         <span class="animate-fade-in">
-                            In <span class="font-mono font-medium text-mist-100">{servers.toLocaleString("en")}</span>
+                            In <span class="font-mono font-medium text-mist-100">{formatCount(servers)}</span>
                             {servers === 1 ? "server" : "servers"}
                         </span>
                     {/if}

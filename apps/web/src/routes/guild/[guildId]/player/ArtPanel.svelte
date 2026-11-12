@@ -213,7 +213,7 @@
 
         <div class="flex w-full max-w-md flex-col items-center gap-2 text-center">
             {#if track}
-                <h2 class="line-clamp-2 font-display text-2xl font-semibold md:text-3xl">{track.title}</h2>
+                <h2 class="line-clamp-2 font-display text-2xl font-semibold wrap-anywhere md:text-3xl">{track.title}</h2>
                 <p class="truncate text-mist-400">{track.author}</p>
             {:else}
                 <h2 class="font-display text-2xl font-semibold">Nothing is playing</h2>

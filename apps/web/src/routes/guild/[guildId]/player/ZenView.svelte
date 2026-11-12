@@ -129,7 +129,7 @@
 
 {#snippet info(align: string)}
     <div class={["flex min-w-0 flex-col gap-1 lg:gap-2", align]}>
-        <p class="line-clamp-2 font-display text-lg font-semibold lg:text-4xl">{track.title}</p>
+        <p class="line-clamp-2 font-display text-lg font-semibold wrap-anywhere lg:text-4xl">{track.title}</p>
         <p class="truncate text-sm text-mist-400 lg:text-xl">{track.author}</p>
     </div>
 {/snippet}

@@ -6,6 +6,7 @@
     import Input from "#lib/components/ui/Input.svelte";
     import ScrollRow from "#lib/components/ui/ScrollRow.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { formatCount, plural, time } from "#lib/format.ts";
     import { ripple } from "#lib/motion.ts";
     import * as music from "#lib/music.remote.ts";
     import { sortable } from "#lib/sortable.ts";
@@ -24,7 +25,7 @@
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
     import MaterialSymbolsSwapVertRounded from "~icons/material-symbols/swap-vert-rounded";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
-    import { control, locked, time, type Access } from "./player.ts";
+    import { control, locked, type Access } from "./player.ts";
     import TrackRow from "./TrackRow.svelte";
 
     let { guild, queue, autoplay, access }: { guild: string; queue: QueueState; autoplay: boolean; access: Access } = $props();
@@ -132,7 +133,6 @@
     let removing = $state(false);
     const theirs = $derived(target ? tracks.filter((track) => track.requester?.id === target!.id) : []);
     const theirLength = $derived(theirs.reduce((sum, track) => sum + (track.isStream ? 0 : track.lengthMs), 0));
-    const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
     function askRemove(person: Person) {
         target = person;
@@ -184,7 +184,7 @@
 <section aria-labelledby="up-next" class="flex flex-col gap-2">
     <div class="flex items-center justify-between gap-4 px-2">
         <h2 id="up-next" class="font-display text-lg font-semibold">
-            Up next <span class="font-mono text-sm font-normal text-mist-400">{queue.total}</span>
+            Up next <span class="font-mono text-sm font-normal text-mist-400">{formatCount(queue.total)}</span>
         </h2>
         {#if queue.total}
             <div class="flex gap-1">
@@ -346,7 +346,7 @@
         {/if}
         {#if queue.total > tracks.length}
             <p class="px-2 text-xs text-mist-400">
-                {filtering ? `Only the first ${tracks.length} songs are searched.` : `And ${queue.total - tracks.length} more.`}
+                {filtering ? `Only the first ${tracks.length} songs are searched.` : `And ${formatCount(queue.total - tracks.length)} more.`}
             </p>
         {/if}
     {:else}

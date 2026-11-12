@@ -3,10 +3,21 @@ import { inviteUrl } from "#lib/server/discord.ts";
 import { health } from "@square/api-client";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = () => ({
-    inviteUrl: inviteUrl().href,
-    servers: health({ client: bot }).then(
-        ({ data }) => (data?.ready ? data.guilds : null),
-        () => null,
-    ),
-});
+const TTL = 30_000;
+let cached: { at: number; servers: Promise<number | null> } | undefined;
+
+// The landing page is public, so its visitors share one bot call per TTL
+function serverCount() {
+    if (!cached || Date.now() - cached.at > TTL) {
+        cached = {
+            at: Date.now(),
+            servers: health({ client: bot }).then(
+                ({ data }) => (data?.ready ? data.guilds : null),
+                () => null,
+            ),
+        };
+    }
+    return cached.servers;
+}
+
+export const load: PageServerLoad = () => ({ inviteUrl: inviteUrl().href, servers: serverCount() });

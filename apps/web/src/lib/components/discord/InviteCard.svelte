@@ -12,19 +12,13 @@
         bonus: number;
         fakeDays: number;
     };
-
-    const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
-
-    // Mirrors the bot's `fmt_count`
-    export function formatCount(value: number) {
-        return Math.abs(value) < 10_000 ? value.toLocaleString("en") : compact.format(value);
-    }
 </script>
 
 <script lang="ts">
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import SplitBar from "#lib/components/ui/SplitBar.svelte";
+    import { formatCount } from "#lib/format.ts";
 
     let { data }: { data: Invites } = $props();
 

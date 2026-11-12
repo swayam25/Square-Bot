@@ -2,6 +2,7 @@
     import Slider from "#lib/components/ui/Slider.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
+    import { time } from "#lib/format.ts";
     import { ripple } from "#lib/motion.ts";
     import * as music from "#lib/music.remote.ts";
     import type { PlayerState } from "@square/api-client";
@@ -20,7 +21,7 @@
     import MaterialSymbolsVolumeUpRounded from "~icons/material-symbols/volume-up-rounded";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
     import Equalizer from "./Equalizer.svelte";
-    import { control, locked, skipping, time, type Access } from "./player.ts";
+    import { control, locked, skipping, type Access } from "./player.ts";
 
     let {
         guild,
