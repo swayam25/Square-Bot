@@ -7,7 +7,7 @@
     import { mobile } from "#lib/media.ts";
     import { ripple } from "#lib/motion.ts";
     import * as music from "#lib/music.remote.ts";
-    import { untrack } from "svelte";
+    import { toast } from "#lib/toast.svelte.ts";
     import MaterialSymbolsLyricsRounded from "~icons/material-symbols/lyrics-rounded";
     import MaterialSymbolsQueueMusicRounded from "~icons/material-symbols/queue-music-rounded";
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
@@ -27,7 +27,8 @@
 
     const player = $derived(playerQuery.current);
     const queue = $derived(queueQuery.current);
-    const online = $derived(statusQuery.current ?? false);
+    // Without `connected`, a dropped dashboard connection would keep showing the last value
+    const online = $derived(statusQuery.connected && (statusQuery.current ?? false));
 
     // Ticks every frame only while something plays, for the progress wave and the sung words. It never reads `now`.
     let now = $state(Date.now());
@@ -64,6 +65,20 @@
         setTimeout(() => held === target && (held = null), ok ? 1500 : 0);
     }
 
+    // The failure already there when the page opens is old, so only a newer one is announced
+    let heard: { guild: string; at: number | null } | null = null;
+    $effect(() => {
+        if (!player) return;
+        const failure = player.failure;
+        const at = failure?.at ?? null;
+        if (failure && heard?.guild === guild && heard.at !== at) {
+            toast.error(`Couldn't play ${failure.title}`, {
+                description: failure.reason ?? "The music server couldn't load it. Try another song or source.",
+            });
+        }
+        heard = { guild, at };
+    });
+
     const track = $derived(player?.track ?? null);
     // Asked up front so the Lyrics tab and the full-screen view know whether to offer lyrics; the Lyrics view reuses it
     const lyricsQuery = $derived(
@@ -78,16 +93,18 @@
         return false;
     });
 
-    // Picked once, when the player first loads, and after that only by the user: skips never move it
-    const ready = $derived(!!player && !!queue);
-    let tab = $derived.by<Tab>(() => {
-        if (!ready) return "search";
-        return untrack(() => (!player?.track ? "search" : queue?.total ? "queue" : "lyrics"));
+    // Picked once per server, then only by the user. Plain state because a writable $derived re-ran on track changes
+    let picked = $state<{ guild: string; tab: Tab } | null>(null);
+    $effect(() => {
+        if (picked?.guild === guild || !player || !queue) return;
+        picked = { guild, tab: !player.track ? "search" : queue.total ? "queue" : "lyrics" };
     });
+    const tab = $derived(picked?.guild === guild ? picked.tab : "search");
+    const setTab = (next: Tab) => (picked = { guild, tab: next });
     let sheet = $state(false);
     const TAB_TITLES: Record<Tab, string> = { search: "Search", queue: "Queue", lyrics: "Lyrics" };
     function openSheet(next: Tab) {
-        tab = next;
+        setTab(next);
         sheet = true;
     }
 
@@ -143,12 +160,12 @@
                         {@render sheetButton("lyrics", "Lyrics", MaterialSymbolsLyricsRounded, lyricsOff)}
                     </nav>
                     <Drawer bind:open={sheet} title={TAB_TITLES[tab]} plain class="h-[calc(100dvh-4rem)]">
-                        <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} bind:tab sheet />
+                        <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} bind:tab={() => tab, setTab} sheet />
                     </Drawer>
                 {:else}
                     <div class="grid gap-2 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
                         <ArtPanel {player} position={playhead} {server} {online} onzen={openZen} />
-                        <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} bind:tab />
+                        <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} bind:tab={() => tab, setTab} />
                     </div>
                     <ControlsBar {guild} {player} {position} bind:seeking onseek={seek} />
                 {/if}

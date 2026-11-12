@@ -19,6 +19,7 @@
     import MaterialSymbolsVolumeOffRounded from "~icons/material-symbols/volume-off-rounded";
     import MaterialSymbolsVolumeUpRounded from "~icons/material-symbols/volume-up-rounded";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
+    import Equalizer from "./Equalizer.svelte";
     import { control, time } from "./player.ts";
 
     let {
@@ -94,7 +95,7 @@
         <WavyProgress value={track ? 1 : 0} live={!!track} {playing} label={track ? "Live stream" : "Nothing playing"} />
     {/if}
 
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4 max-sm:flex-col max-sm:gap-2">
         <div class="flex shrink-0 items-center gap-2">
             <button
                 type="button"
@@ -145,7 +146,7 @@
             </span>
         </div>
 
-        <div class="ml-auto flex shrink-0 items-center gap-1">
+        <div class="ml-auto flex shrink-0 items-center gap-1 max-sm:ml-0 max-sm:w-full max-sm:justify-evenly">
             <Tooltip content={player.shuffle ? "Shuffle on" : "Shuffle off"}>
                 <button
                     type="button"
@@ -189,6 +190,7 @@
                     {#if busy === "autoplay"}<SvgSpinners90RingWithBg />{:else}<MaterialSymbolsAutoplayRounded />{/if}
                 </button>
             </Tooltip>
+            <Equalizer {guild} {player} triggerClass={toggle(player.eq.length > 0)} />
             <div class="hidden items-center gap-1 pl-2 md:flex">
                 <Tooltip content={volume === 0 ? "Unmute" : "Mute"}>
                     <button

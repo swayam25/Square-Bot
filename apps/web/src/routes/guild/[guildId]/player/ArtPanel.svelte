@@ -1,10 +1,8 @@
 <script lang="ts">
     import BrandIcon, { brandOf, type Brand } from "#lib/components/BrandIcon.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
-    import Chip from "#lib/components/ui/Chip.svelte";
     import Cover from "#lib/components/ui/Cover.svelte";
     import GuildIcon from "#lib/components/ui/GuildIcon.svelte";
-    import ScrollRow from "#lib/components/ui/ScrollRow.svelte";
     import Segmented from "#lib/components/ui/Segmented.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { ripple } from "#lib/motion.ts";
@@ -239,11 +237,6 @@
             </div>
             <div class="flex justify-center"><Listeners listeners={player.listeners} /></div>
             <div class="flex min-w-0 items-center justify-end gap-2">
-                {#if player.eq.length}
-                    <ScrollRow aria-label="Sound effects" class="min-w-0">
-                        {#each player.eq as name (name)}<Chip tone="violet">{name}</Chip>{/each}
-                    </ScrollRow>
-                {/if}
                 {#if source}
                     <span
                         class="flex h-10 items-center gap-2 rounded-full bg-black/30 px-4 text-sm font-semibold backdrop-blur-xl max-sm:w-10 max-sm:justify-center max-sm:px-0"

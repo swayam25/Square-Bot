@@ -89,8 +89,8 @@
                                 </span>
                             {/if}
                             <span class="flex min-w-0 flex-col">
-                                <span class="line-clamp-2 text-sm font-semibold break-words">{item.message}</span>
-                                {#if item.description}<span class="line-clamp-2 text-xs break-words text-mist-400">{item.description}</span>{/if}
+                                <span class="line-clamp-4 text-sm font-semibold break-words">{item.message}</span>
+                                {#if item.description}<span class="line-clamp-4 text-xs break-words text-mist-400">{item.description}</span>{/if}
                             </span>
                         </button>
                     {/key}

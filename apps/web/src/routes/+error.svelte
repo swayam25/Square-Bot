@@ -13,6 +13,7 @@
         404: ["Page not found", "This page doesn't exist, or it moved."],
         [MODULE_OFF]: ["Module turned off", "A server manager turned this part of Square off."],
         503: ["Square is offline", "The bot isn't answering right now. It's usually back in a minute."],
+        504: ["Square is slow right now", "The bot took too long to answer. Try again in a moment."],
     };
 
     const status = $derived(page.status);

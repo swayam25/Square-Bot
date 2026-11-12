@@ -318,7 +318,7 @@
                             <MaterialSymbolsRemoveRounded class="size-4" />
                         </button>
                     </Tooltip>
-                    <Tooltip content={offset === 0 ? "In sync with the song" : "Reset"}>
+                    <Tooltip content={offset === 0 ? "In sync with the song" : "Reset sync"}>
                         <button
                             type="button"
                             aria-label={offset === 0 ? "Lyrics in sync with the song" : `Lyrics shifted ${syncLabel(offset)}, reset`}

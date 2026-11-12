@@ -1,9 +1,8 @@
-import { actor, bot, refused } from "#lib/server/bot.ts";
+import { actor, bot, read, refused } from "#lib/server/bot.ts";
 import { watch, watchStatus } from "#lib/server/live.ts";
 import { command, query } from "$app/server";
 import * as sdk from "@square/api-client";
 import * as schema from "@square/api-client/zod";
-import { error } from "@sveltejs/kit";
 import { z } from "zod";
 
 const guildId = z.string().regex(/^\d{17,20}$/);
@@ -21,7 +20,7 @@ export const liveStatus = query.live(() => {
 });
 
 type Base = { client: typeof bot; path: { guild_id: string }; headers: { "x-actor-id": string } };
-type Result = { data?: sdk.Done; error?: unknown; response?: Response };
+type Result = { data?: sdk.Done; error?: unknown; response?: Response; request?: Request };
 
 function control<Input extends z.ZodObject<{ guild: typeof guildId }>>(
     input: Input,
@@ -35,24 +34,14 @@ function control<Input extends z.ZodObject<{ guild: typeof guildId }>>(
     });
 }
 
-export const eqPresets = query(guildId, async (guild) => {
-    const { data } = await sdk.eqPresets({ client: bot, path: { guild_id: guild }, headers: { "x-actor-id": actor() } });
-    if (!data) error(503, "Square is offline right now");
-    return data;
-});
+export const eqPresets = query(guildId, (guild) =>
+    read(sdk.eqPresets({ client: bot, path: { guild_id: guild }, headers: { "x-actor-id": actor() } })),
+);
 
 export const searchMusic = query(
     forGuild.extend({ query: z.string().min(1).max(500), source: schema.zSearchMusicQuery.shape.source }),
-    async ({ guild, query, source }) => {
-        const { data } = await sdk.searchMusic({
-            client: bot,
-            path: { guild_id: guild },
-            headers: { "x-actor-id": actor() },
-            query: { q: query, source },
-        });
-        if (!data) error(503, "Search isn't available right now");
-        return data;
-    },
+    ({ guild, query, source }) =>
+        read(sdk.searchMusic({ client: bot, path: { guild_id: guild }, headers: { "x-actor-id": actor() }, query: { q: query, source } })),
 );
 
 export const playQuery = control(schema.zPlayQuery.extend(forGuild.shape), (body, base) => sdk.playQuery({ ...base, body }));

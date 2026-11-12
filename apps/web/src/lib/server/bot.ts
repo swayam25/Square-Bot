@@ -6,7 +6,14 @@ import { error } from "@sveltejs/kit";
 
 export const bot = createClient({ baseUrl: BOT_API_URL, auth: BOT_API_SECRET });
 
-bot.interceptors.request.use((request) => new Request(request, { signal: AbortSignal.any([request.signal, AbortSignal.timeout(5_000)]) }));
+// Reads answer from the bot's memory. Writes and searches wait on Discord or Lavalink, so they get longer
+const QUICK = 5_000;
+const PATIENT = 30_000;
+
+bot.interceptors.request.use((request) => {
+    const quick = request.method === "GET" && !new URL(request.url).pathname.endsWith("/music/search");
+    return new Request(request, { signal: AbortSignal.any([request.signal, AbortSignal.timeout(quick ? QUICK : PATIENT)]) });
+});
 
 export function actor() {
     const { session } = getRequestEvent().locals;
@@ -26,15 +33,24 @@ const FALLBACK: Record<number, string> = {
     503: "Square is offline right now.",
 };
 
-export function refused(result: { error?: unknown; response?: Response }): never {
-    if (!result.response) error(503, FALLBACK[503]);
+// A timeout isn't an outage. The bot is up, and a write may still go through
+function gaveUp(result: { error?: unknown; request?: Request }): never {
+    if (!(result.error instanceof DOMException && result.error.name === "TimeoutError")) error(503, FALLBACK[503]);
+    if (result.request?.method === "GET") error(504, "Square is taking too long to answer. Try again in a moment.");
+    error(504, "Square is taking longer than usual. This may still go through, so check before trying again.");
+}
+
+export function refused(result: { error?: unknown; response?: Response; request?: Request }): never {
+    if (!result.response) gaveUp(result);
     const { status } = result.response;
     const problem = zProblem.safeParse(result.error);
     const ours = problem.success && (status === 409 || status === 422 || status === 503);
     error(status, ours ? problem.data.detail : (FALLBACK[status] ?? "Square couldn't do that. Try again."));
 }
 
-export async function read<T>(request: Promise<{ data: T; error: undefined } | { data: undefined; error: unknown; response?: Response }>) {
+export async function read<T>(
+    request: Promise<{ data: T; error: undefined } | { data: undefined; error: unknown; response?: Response; request?: Request }>,
+) {
     const result = await request;
     if (result.data === undefined) refused(result);
     return result.data;
