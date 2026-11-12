@@ -1,0 +1,174 @@
+<script lang="ts">
+    import Island from "#lib/components/Island.svelte";
+    import Drawer from "#lib/components/ui/Drawer.svelte";
+    import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
+    import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { trackLyrics } from "#lib/lyrics.remote.ts";
+    import { mobile } from "#lib/media.ts";
+    import { ripple } from "#lib/motion.ts";
+    import * as music from "#lib/music.remote.ts";
+    import { untrack } from "svelte";
+    import MaterialSymbolsLyricsRounded from "~icons/material-symbols/lyrics-rounded";
+    import MaterialSymbolsQueueMusicRounded from "~icons/material-symbols/queue-music-rounded";
+    import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
+    import type { PageProps } from "./$types";
+    import ArtPanel from "./ArtPanel.svelte";
+    import ControlsBar from "./ControlsBar.svelte";
+    import { control, type Tab } from "./player.ts";
+    import SidePanel from "./SidePanel.svelte";
+    import ZenView, { enterFullscreen } from "./ZenView.svelte";
+
+    let { data }: PageProps = $props();
+
+    const guild = $derived(data.guild.id);
+    const playerQuery = $derived(music.livePlayer(guild));
+    const queueQuery = $derived(music.liveQueue(guild));
+    const statusQuery = music.liveStatus();
+
+    const player = $derived(playerQuery.current);
+    const queue = $derived(queueQuery.current);
+    const online = $derived(statusQuery.current ?? false);
+
+    // Ticks every frame only while something plays, for the progress wave and the sung words. It never reads `now`.
+    let now = $state(Date.now());
+    $effect(() => {
+        if (!player?.track || player.paused || !online) return;
+        let frame = requestAnimationFrame(function tick() {
+            now = Date.now();
+            frame = requestAnimationFrame(tick);
+        });
+        return () => cancelAnimationFrame(frame);
+    });
+
+    const playhead = $derived.by(() => {
+        if (!player?.track) return 0;
+        const elapsed = player.paused || !online ? 0 : Math.max(0, now - player.positionAt);
+        const at = player.positionMs + elapsed;
+        return player.track.isStream ? at : Math.min(at, player.track.lengthMs);
+    });
+
+    // Dragging the seek bar moves the lyrics along with it, all in the browser; the bot only seeks on release.
+    // The released spot is held until the bot's next push, so nothing flicks back to the old one meanwhile
+    let seeking = $state<number | null>(null);
+    let held = $state<{ ms: number; since: number } | null>(null);
+    const heldMs = $derived(held && player?.positionAt === held.since ? held.ms : null);
+    const position = $derived(player?.track && seeking !== null ? seeking * player.track.lengthMs : (heldMs ?? playhead));
+
+    async function seek(ms: number) {
+        if (!player) return;
+        const since = player.positionAt;
+        const target = { ms, since };
+        held = target;
+        const ok = await control(music.seekTrack({ guild, positionMs: ms }));
+        // A seek to where it already was brings no push, so the hold can't outlive the answer by much
+        setTimeout(() => held === target && (held = null), ok ? 1500 : 0);
+    }
+
+    const track = $derived(player?.track ?? null);
+    // Asked up front so the Lyrics tab and the full-screen view know whether to offer lyrics; the Lyrics view reuses it
+    const lyricsQuery = $derived(
+        track && !track.isStream ? trackLyrics({ title: track.title, artist: track.author, durationMs: track.lengthMs }) : null,
+    );
+    const lyricsOff = $derived.by(() => {
+        if (!track) return "Lyrics show up while a song plays";
+        if (track.isStream) return "Live streams don't have lyrics";
+        const found = lyricsQuery?.current;
+        if (found === null) return "No lyrics for this song";
+        if (found?.instrumental) return "Instrumental, nothing to sing along to";
+        return false;
+    });
+
+    // Picked once, when the player first loads, and after that only by the user: skips never move it
+    const ready = $derived(!!player && !!queue);
+    let tab = $derived.by<Tab>(() => {
+        if (!ready) return "search";
+        return untrack(() => (!player?.track ? "search" : queue?.total ? "queue" : "lyrics"));
+    });
+    let sheet = $state(false);
+    const TAB_TITLES: Record<Tab, string> = { search: "Search", queue: "Queue", lyrics: "Lyrics" };
+    function openSheet(next: Tab) {
+        tab = next;
+        sheet = true;
+    }
+
+    const hasTrack = $derived(!!track);
+    // Closes when the music stops, so the next song doesn't reopen it outside full screen
+    let zen = $derived.by(() => (void hasTrack, false));
+    function openZen() {
+        enterFullscreen();
+        zen = true;
+    }
+
+    let scroller = $state<HTMLElement | null>(null);
+    const server = $derived({
+        name: data.guild.name,
+        iconUrl: data.guild.iconUrl,
+        href: data.guild.canManage ? `/guild/${guild}/music` : `/guild/${guild}`,
+    });
+</script>
+
+<svelte:head>
+    <title>Player · {data.guild.name} · Square</title>
+</svelte:head>
+
+{#snippet sheetButton(value: Tab, label: string, Icon: typeof MaterialSymbolsSearchRounded, off: string | false = false, count?: number)}
+    <Tooltip content={off || null} class="min-w-0">
+        <button
+            type="button"
+            aria-haspopup="dialog"
+            disabled={!!off}
+            class="ripple flex h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full bg-surface-1 text-sm font-medium transition-colors hover:bg-surface-2 disabled:opacity-40"
+            {@attach ripple}
+            onclick={() => openSheet(value)}
+        >
+            <Icon class="size-5 shrink-0" />{label}
+            {#if count}<span class="font-mono text-xs text-mist-400">{count}</span>{/if}
+        </button>
+    </Tooltip>
+{/snippet}
+
+<div class="flex h-dvh overflow-hidden bg-surface-1 md:p-2">
+    <div class="relative min-h-0 min-w-0 flex-1 animate-shell-in overflow-hidden bg-mist-950 md:rounded-4xl">
+        <main
+            bind:this={scroller}
+            class="flex size-full flex-col gap-2 overflow-y-auto overscroll-contain p-2 max-md:overflow-hidden max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:overflow-hidden"
+        >
+            {#if player}
+                {#if mobile.current}
+                    <ArtPanel {player} position={playhead} {server} {online} onzen={openZen} />
+                    <ControlsBar {guild} {player} {position} bind:seeking onseek={seek} />
+                    <nav aria-label="Search, queue and lyrics" class="grid shrink-0 grid-cols-3 gap-2">
+                        {@render sheetButton("search", "Search", MaterialSymbolsSearchRounded)}
+                        {@render sheetButton("queue", "Queue", MaterialSymbolsQueueMusicRounded, false, queue?.total)}
+                        {@render sheetButton("lyrics", "Lyrics", MaterialSymbolsLyricsRounded, lyricsOff)}
+                    </nav>
+                    <Drawer bind:open={sheet} title={TAB_TITLES[tab]} plain class="h-[calc(100dvh-4rem)]">
+                        <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} bind:tab sheet />
+                    </Drawer>
+                {:else}
+                    <div class="grid gap-2 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
+                        <ArtPanel {player} position={playhead} {server} {online} onzen={openZen} />
+                        <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} bind:tab />
+                    </div>
+                    <ControlsBar {guild} {player} {position} bind:seeking onseek={seek} />
+                {/if}
+            {:else if playerQuery.error}
+                <p role="alert" class="rounded-3xl bg-red-400/10 p-6 text-sm font-medium text-red-400">
+                    {playerQuery.error.message ?? "Square couldn't load the player."}
+                </p>
+            {:else}
+                <div aria-hidden="true" class="grid flex-1 gap-2 md:flex-none lg:min-h-0 lg:flex-1 lg:grid-cols-2">
+                    <div class="h-full animate-pulse rounded-3xl bg-surface-1 md:h-112 lg:h-auto"></div>
+                    <div class="hidden h-112 animate-pulse rounded-3xl bg-surface-1 md:block lg:h-auto"></div>
+                </div>
+                <div aria-hidden="true" class="h-24 shrink-0 animate-pulse rounded-3xl bg-surface-1"></div>
+            {/if}
+        </main>
+        <OverlayScrollbar viewport={scroller} inset={24} />
+        <Island docked />
+    </div>
+</div>
+
+{#if player?.track}
+    <ZenView bind:open={zen} {guild} track={player.track} {position} playing={!player.paused && online} {lyricsOff} />
+{/if}
