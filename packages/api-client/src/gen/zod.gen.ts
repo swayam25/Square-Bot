@@ -284,6 +284,31 @@ export const zSeek = z.object({
 });
 
 /**
+ * ServerStats
+ */
+export const zServerStats = z.object({
+    humans: z.int(),
+    bots: z.int(),
+    inVoice: z.int(),
+    boosts: z.int(),
+    boostLevel: z.int(),
+    textChannels: z.int(),
+    voiceChannels: z.int(),
+    roles: z.int(),
+    createdAt: z.int(),
+});
+
+/**
+ * SkipVote
+ */
+export const zSkipVote = z.object({
+    startedBy: zPerson.nullable(),
+    voterIds: z.array(z.string()),
+    needed: z.int(),
+    endsAt: z.int(),
+});
+
+/**
  * TicketPatch
  */
 export const zTicketPatch = z.object({
@@ -354,6 +379,15 @@ export const zTrackFailure = z.object({
 });
 
 /**
+ * Viewer
+ */
+export const zViewer = z.object({
+    dj: z.boolean(),
+    inChannel: z.boolean(),
+    deafened: z.boolean(),
+});
+
+/**
  * PlayerState
  */
 export const zPlayerState = z.object({
@@ -369,6 +403,8 @@ export const zPlayerState = z.object({
     eq: z.array(z.string()),
     listeners: z.array(zPerson),
     failure: zTrackFailure.nullable(),
+    vote: zSkipVote.nullable(),
+    viewer: zViewer,
 });
 
 /**
@@ -430,6 +466,19 @@ export const zMemberJoinsPath = z.object({
  * Request fulfilled, document follows
  */
 export const zMemberJoinsResponse = zMemberJoins;
+
+export const zServerStatsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zServerStatsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zServerStatsResponse = zServerStats;
 
 export const zResetGeneralSettingsHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

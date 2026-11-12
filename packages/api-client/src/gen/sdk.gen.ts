@@ -122,6 +122,9 @@ import type {
     SeekTrackData,
     SeekTrackErrors,
     SeekTrackResponses,
+    ServerStatsData,
+    ServerStatsErrors,
+    ServerStatsResponses,
     SetAutoplayData,
     SetAutoplayErrors,
     SetAutoplayResponses,
@@ -241,6 +244,18 @@ export const memberJoins = <ThrowOnError extends boolean = false>(
     (options.client ?? client).get<MemberJoinsResponses, MemberJoinsErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/stats/joins",
+        ...options,
+    });
+
+/**
+ * Member, channel and boost counts from the bot's cache
+ */
+export const serverStats = <ThrowOnError extends boolean = false>(
+    options: Options<ServerStatsData, ThrowOnError>,
+): RequestResult<ServerStatsResponses, ServerStatsErrors, ThrowOnError> =>
+    (options.client ?? client).get<ServerStatsResponses, ServerStatsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/stats/server",
         ...options,
     });
 

@@ -403,6 +403,98 @@
         ]
       }
     },
+    "/guilds/{guild_id}/stats/server": {
+      "get": {
+        "tags": [
+          "Guilds"
+        ],
+        "summary": "Member, channel and boost counts from the bot's cache",
+        "operationId": "server_stats",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServerStats"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
     "/guilds/{guild_id}/settings/general": {
       "get": {
         "tags": [
@@ -6469,6 +6561,19 @@
                 "type": "null"
               }
             ]
+          },
+          "vote": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SkipVote"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "viewer": {
+            "$ref": "#/components/schemas/Viewer"
           }
         },
         "type": "object",
@@ -6483,8 +6588,10 @@
           "positionMs",
           "shuffle",
           "track",
+          "viewer",
           "voiceChannelId",
-          "volume"
+          "volume",
+          "vote"
         ],
         "title": "PlayerState"
       },
@@ -6674,6 +6781,84 @@
           "positionMs"
         ],
         "title": "Seek"
+      },
+      "ServerStats": {
+        "properties": {
+          "humans": {
+            "type": "integer"
+          },
+          "bots": {
+            "type": "integer"
+          },
+          "inVoice": {
+            "type": "integer"
+          },
+          "boosts": {
+            "type": "integer"
+          },
+          "boostLevel": {
+            "type": "integer"
+          },
+          "textChannels": {
+            "type": "integer"
+          },
+          "voiceChannels": {
+            "type": "integer"
+          },
+          "roles": {
+            "type": "integer"
+          },
+          "createdAt": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "boostLevel",
+          "boosts",
+          "bots",
+          "createdAt",
+          "humans",
+          "inVoice",
+          "roles",
+          "textChannels",
+          "voiceChannels"
+        ],
+        "title": "ServerStats"
+      },
+      "SkipVote": {
+        "properties": {
+          "startedBy": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Person"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "voterIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "needed": {
+            "type": "integer"
+          },
+          "endsAt": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endsAt",
+          "needed",
+          "startedBy",
+          "voterIds"
+        ],
+        "title": "SkipVote"
       },
       "TicketPatch": {
         "properties": {
@@ -6894,6 +7079,26 @@
           "title"
         ],
         "title": "TrackFailure"
+      },
+      "Viewer": {
+        "properties": {
+          "dj": {
+            "type": "boolean"
+          },
+          "inChannel": {
+            "type": "boolean"
+          },
+          "deafened": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deafened",
+          "dj",
+          "inChannel"
+        ],
+        "title": "Viewer"
       },
       "Volume": {
         "properties": {

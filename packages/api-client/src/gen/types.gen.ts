@@ -339,6 +339,8 @@ export type PlayerState = {
     eq: Array<string>;
     listeners: Array<Person>;
     failure: TrackFailure | null;
+    vote: SkipVote | null;
+    viewer: Viewer;
 };
 
 /**
@@ -423,6 +425,31 @@ export type Seek = {
 };
 
 /**
+ * ServerStats
+ */
+export type ServerStats = {
+    humans: number;
+    bots: number;
+    inVoice: number;
+    boosts: number;
+    boostLevel: number;
+    textChannels: number;
+    voiceChannels: number;
+    roles: number;
+    createdAt: number;
+};
+
+/**
+ * SkipVote
+ */
+export type SkipVote = {
+    startedBy: Person | null;
+    voterIds: Array<string>;
+    needed: number;
+    endsAt: number;
+};
+
+/**
  * TicketPatch
  */
 export type TicketPatch = {
@@ -482,6 +509,15 @@ export type TrackFailure = {
     title: string;
     reason: string | null;
     at: number;
+};
+
+/**
+ * Viewer
+ */
+export type Viewer = {
+    dj: boolean;
+    inChannel: boolean;
+    deafened: boolean;
 };
 
 /**
@@ -681,6 +717,51 @@ export type MemberJoinsResponses = {
 };
 
 export type MemberJoinsResponse = MemberJoinsResponses[keyof MemberJoinsResponses];
+
+export type ServerStatsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/stats/server";
+};
+
+export type ServerStatsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ServerStatsError = ServerStatsErrors[keyof ServerStatsErrors];
+
+export type ServerStatsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: ServerStats;
+};
+
+export type ServerStatsResponse = ServerStatsResponses[keyof ServerStatsResponses];
 
 export type ResetGeneralSettingsData = {
     body?: never;
