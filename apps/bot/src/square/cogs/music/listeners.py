@@ -274,10 +274,16 @@ class Listeners:
         if before.channel != after.channel:
             # Sonolink only re-checks on track ends and the bot's own voice changes.
             player._check_inactivity()
-            self.client.dispatch("music_update", member.guild.id)
+        self.client.dispatch("music_update", member.guild.id)
         vote = store.skip_vote(member.guild.id)
         if vote:
             await vote.refresh()
+
+    @commands.Cog.listener()
+    async def on_member_update(self, before: discord.Member, after: discord.Member):
+        # A role change can make or unmake a DJ, which the dashboard shows
+        if before.roles != after.roles and get_player(self.client, after.guild.id):
+            self.client.dispatch("music_update", after.guild.id)
 
     async def _on_bot_voice_update(self, guild: discord.Guild, after: discord.VoiceState) -> None:
         """Follows the bot into whatever channel it was moved to, unless it belongs in its 24/7 channel."""

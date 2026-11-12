@@ -863,6 +863,7 @@ class VoteSkipView(DesignerView):
         if len(self.voters) >= self.needed:
             await self.resolve()
             return f"{emoji.skip} Vote passed."
+        self.client.dispatch("music_update", self.guild_id)
         await self.render()
         return f"{emoji.success} Vote counted `{len(self.voters)}/{self.needed}`."
 
@@ -897,12 +898,13 @@ class VoteSkipView(DesignerView):
         if self.voters and len(self.voters) >= self.needed:
             await self.resolve()
             return
+        self.client.dispatch("music_update", self.guild_id)
         await self.render()
 
     async def vote_callback(self, interaction: discord.Interaction):
         # Same deadline applies here: the DJ lookup and the tally edit are both round trips.
         await interaction.response.defer()
-        if await dj.is_dj(interaction.user, self.player):
+        if dj.is_dj(interaction.user, self.player):
             await self.resolve()
             return
         if interaction.user not in dj.listeners(self.player):
@@ -942,6 +944,7 @@ class VoteSkipView(DesignerView):
         """Gives up the guild's vote slot, but only while this view still holds it."""
         if store.skip_vote(self.guild_id) is self:
             store.skip_vote(self.guild_id, mode="clear")
+            self.client.dispatch("music_update", self.guild_id)
 
     async def discard(self) -> None:
         """Removes the vote message outright, for when the track it targeted is already gone."""

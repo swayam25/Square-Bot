@@ -31,10 +31,10 @@ log = logging.getLogger(__name__)
 
 Topic = Literal["player", "queue", "history"]
 Snapshot = PlayerState | QueueState | list[Track]
-_SNAPSHOTS: dict[Topic, Callable[[Client, discord.Guild], Snapshot]] = {
+_SNAPSHOTS: dict[Topic, Callable[[Client, discord.Guild, discord.Member], Snapshot]] = {
     "player": player_out,
-    "queue": queue_out,
-    "history": lambda client, guild: history_out(live_player(client, guild.id)),
+    "queue": lambda client, guild, _: queue_out(client, guild),
+    "history": lambda client, guild, _: history_out(live_player(client, guild.id)),
 }
 
 
@@ -89,7 +89,7 @@ class _Connection:
         except PermissionDeniedException:
             await self._end(sub_id, "forbidden")
             return
-        data = _SNAPSHOTS[sub.topic](self.client, guild)
+        data = _SNAPSHOTS[sub.topic](self.client, guild, guild.get_member(sub.actor))
         key = _dedupe_key(data)
         if key == sub.last:
             return

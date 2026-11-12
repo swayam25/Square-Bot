@@ -53,7 +53,7 @@ def require_player(
 
 async def require_dj(member: discord.Member, player: SquarePlayer, *, track: Playable | None = None) -> None:
     """Refuses unless the member is a DJ, or requested `track` when the action is about one."""
-    if await dj.is_dj(member, player) or (track is not None and requester_id(player, track) == member.id):
+    if dj.is_dj(member, player) or (track is not None and requester_id(player, track) == member.id):
         return
     raise MusicError("Only a DJ can do that.")
 
@@ -170,7 +170,7 @@ async def skip(guild: discord.Guild, member: discord.Member, *, channel: discord
     """
     player = require_player(guild, member)
     track = player.current
-    if await dj.is_dj(member, player) or requester_id(player, track) == member.id:
+    if dj.is_dj(member, player) or requester_id(player, track) == member.id:
         confirmation = await _done(player, member, emoji.skip, "skipped the track", render=False)
         await playback.skip_or_stop(player, guild)
         return confirmation
@@ -196,6 +196,7 @@ async def skip(guild: discord.Guild, member: discord.Member, *, channel: discord
         vote.stop()
         store.skip_vote(guild.id, mode="clear")
         raise MusicError("I can't post the skip vote in that channel.") from None
+    player.client.dispatch("music_update", guild.id)
     return f"{emoji.skip} Started a vote to skip **{track.title}**."
 
 

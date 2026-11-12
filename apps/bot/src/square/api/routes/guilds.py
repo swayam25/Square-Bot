@@ -4,7 +4,17 @@ from datetime import timedelta
 from litestar import Router, get
 from litestar.di import Provide
 from square.api.auth import provide_guild
-from square.api.schemas import Channel, Guild, JoinDay, MemberJoins, Role, channels_out, guild_out, roles_out
+from square.api.schemas import (
+    Channel,
+    Guild,
+    JoinDay,
+    MemberJoins,
+    Role,
+    ServerStats,
+    channels_out,
+    guild_out,
+    roles_out,
+)
 from square.core import Client
 
 
@@ -37,9 +47,25 @@ async def member_joins(guild: discord.Guild) -> MemberJoins:
     )
 
 
+@get("/stats/server", summary="Member, channel and boost counts from the bot's cache")
+async def server_stats(guild: discord.Guild) -> ServerStats:
+    humans = [member for member in guild.members if not member.bot]
+    return ServerStats(
+        humans=len(humans),
+        bots=len(guild.members) - len(humans),
+        in_voice=sum(member.voice is not None and member.voice.channel is not None for member in humans),
+        boosts=guild.premium_subscription_count or 0,
+        boost_level=guild.premium_tier,
+        text_channels=len(guild.text_channels),
+        voice_channels=len(guild.voice_channels) + len(guild.stage_channels),
+        roles=len(guild.roles) - 1,
+        created_at=round(guild.created_at.timestamp() * 1000),
+    )
+
+
 router = Router(
     "/guilds/{guild_id:str}",
     tags=["Guilds"],
     dependencies={"guild": Provide(provide_guild, sync_to_thread=False)},
-    route_handlers=[guild_channels, guild_roles, member_joins],
+    route_handlers=[guild_channels, guild_roles, member_joins, server_stats],
 )

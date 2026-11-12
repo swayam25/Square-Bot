@@ -3,17 +3,6 @@ from square.db import cache
 from square.db.schema import DJRoleTable, GuildTable
 
 
-async def fetch_dj(guild_id: int) -> tuple[bool, list[int]]:
-    """
-    Gets the guild's DJ mode flag and its DJ role IDs. Served from the settings cache.
-
-    Args:
-        guild_id (int): The guild ID to perform action on.
-    """
-    settings = cache.get(guild_id)
-    return settings.dj_mode, list(settings.dj_roles)
-
-
 async def set_dj_mode(guild_id: int, enabled: bool) -> None:
     """
     Enables or disables DJ-only playback controls for a guild.

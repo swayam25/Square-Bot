@@ -1,5 +1,5 @@
 import discord
-from square.db.funcs.dj import fetch_dj
+from square.db import cache
 from square.music.core import SquarePlayer
 
 MAX_ROLES = 5
@@ -27,7 +27,7 @@ def votes_needed(listener_count: int) -> int:
     return max(1, listener_count)
 
 
-async def is_dj(member: discord.Member, player: SquarePlayer | None = None) -> bool:
+def is_dj(member: discord.Member, player: SquarePlayer | None = None) -> bool:
     """
     Whether a member may use the DJ-restricted playback controls.
 
@@ -41,11 +41,11 @@ async def is_dj(member: discord.Member, player: SquarePlayer | None = None) -> b
     """
     if member.guild_permissions.manage_guild:
         return True
-    enabled, role_ids = await fetch_dj(member.guild.id)
-    if not enabled:
+    settings = cache.get(member.guild.id)
+    if not settings.dj_mode:
         return True
     # Resolve against live roles so a deleted role, whose row outlives it, can't hand anyone DJ rights.
-    role_ids = [role_id for role_id in role_ids if member.guild.get_role(role_id)]
+    role_ids = [role_id for role_id in settings.dj_roles if member.guild.get_role(role_id)]
     if any(role.id in role_ids for role in member.roles):
         return True
     return player is not None and listeners(player) == [member]

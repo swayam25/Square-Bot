@@ -6,9 +6,8 @@ from sonolink import QueueMode
 from sonolink.models import Playable, Playlist
 from square.core import Client
 from square.modules import Module
-from square.music import store
+from square.music import dj, store
 from square.music.core import SquarePlayer, get_player, requester_id
-from square.music.dj import MAX_ROLES
 from square.music.history import history_tracks
 from square.utils.server_log import LogType
 from typing import Annotated, Literal, get_args
@@ -75,6 +74,18 @@ class MemberJoins(Schema):
     members: int
 
 
+class ServerStats(Schema):
+    humans: int
+    bots: int
+    in_voice: int  # Humans in a voice channel right now
+    boosts: int
+    boost_level: int
+    text_channels: int
+    voice_channels: int
+    roles: int  # @everyone left out
+    created_at: int  # Unix ms
+
+
 class Person(Schema):
     id: Snowflake
     name: str  # Server nickname when they still have one, else their display name
@@ -100,6 +111,19 @@ class TrackFailure(Schema):
     at: int  # Unix ms. Also what tells two failures apart
 
 
+class SkipVote(Schema):
+    started_by: Person | None
+    voter_ids: list[Snowflake]
+    needed: int  # Moves as members join or leave the voice channel
+    ends_at: int  # Unix ms
+
+
+class Viewer(Schema):
+    dj: bool  # May use every control. Others can add songs, replay, skip or remove their own, and vote to skip
+    in_channel: bool  # In the bot's voice channel, which every control asks for
+    deafened: bool  # Deafened members can't vote on a skip
+
+
 class PlayerState(Schema):
     voice_channel_id: Snowflake | None
     track: Track | None
@@ -113,6 +137,8 @@ class PlayerState(Schema):
     eq: list[str]  # Active presets, by the names `GET /music/eq-presets` lists
     listeners: list[Person]  # Everyone but bots in the bot's voice channel
     failure: TrackFailure | None  # Outlives the player, since a failure often ends it
+    vote: SkipVote | None
+    viewer: Viewer  # The member this state was built for
 
 
 class QueueState(Schema):
@@ -211,7 +237,7 @@ class MusicSettings(Schema):
 class MusicPatch(Schema):
     stay_channel_id: Snowflake | None | UnsetType = UNSET
     dj_mode: bool | UnsetType = UNSET
-    dj_role_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_ROLES)] | UnsetType = UNSET
+    dj_role_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=dj.MAX_ROLES)] | UnsetType = UNSET
 
 
 class TicketSettings(Schema):
@@ -335,7 +361,34 @@ def live_player(client: Client, guild_id: int) -> SquarePlayer | None:
     return player if player and player.connected else None
 
 
-def player_out(client: Client, guild: discord.Guild) -> PlayerState:
+def _vote(player: SquarePlayer) -> SkipVote | None:
+    vote = store.skip_vote(player.guild.id)
+    if (
+        vote is None
+        or vote.is_finished()
+        or player.current is None
+        or vote.track.identifier != player.current.identifier
+    ):
+        return None
+    return SkipVote(
+        started_by=_person(player, vote.starter.id),
+        voter_ids=[str(voter) for voter in vote.voters],
+        needed=vote.needed,
+        ends_at=round(vote.expires_at.timestamp() * 1000),
+    )
+
+
+def _viewer(player: SquarePlayer | None, member: discord.Member) -> Viewer:
+    voice = member.voice
+    in_channel = player is not None and voice is not None and voice.channel == player.channel
+    return Viewer(
+        dj=dj.is_dj(member, player),
+        in_channel=in_channel,
+        deafened=in_channel and (voice.deaf or voice.self_deaf),
+    )
+
+
+def player_out(client: Client, guild: discord.Guild, member: discord.Member) -> PlayerState:
     if (player := live_player(client, guild.id)) is None:
         return PlayerState(
             voice_channel_id=None,
@@ -350,6 +403,8 @@ def player_out(client: Client, guild: discord.Guild) -> PlayerState:
             eq=[],
             listeners=[],
             failure=_failure(guild.id),
+            vote=None,
+            viewer=_viewer(None, member),
         )
     return PlayerState(
         voice_channel_id=id_of(player.channel),
@@ -364,6 +419,8 @@ def player_out(client: Client, guild: discord.Guild) -> PlayerState:
         eq=list(player.presets),
         listeners=_listeners(player),
         failure=_failure(guild.id),
+        vote=_vote(player),
+        viewer=_viewer(player, member),
     )
 
 

@@ -282,6 +282,7 @@ async def _reset_music(client: Client, guild: discord.Guild, actor: discord.abc.
     note = await _remove_request_channel(client, guild, actor)
     await _clear_stay_channel(client, guild)
     await dj_db.remove_dj(guild.id)
+    client.dispatch("music_update", guild.id)
     return note
 
 
@@ -308,6 +309,8 @@ async def update_music_settings(
     # After the roles, so an explicit choice wins over the switch above
     if data.dj_mode is not UNSET:
         await dj_db.set_dj_mode(guild.id, data.dj_mode)
+    if dj_roles is not UNSET or data.dj_mode is not UNSET:
+        client.dispatch("music_update", guild.id)
     if stay_channel is None:
         await _clear_stay_channel(client, guild)
     elif stay_channel is not UNSET:

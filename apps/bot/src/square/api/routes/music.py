@@ -131,8 +131,8 @@ async def _done(guild: discord.Guild, action: Awaitable[str]) -> Done:
 
 
 @get("/player", summary="What's playing right now. `/live` pushes the same shape as it changes")
-async def music_player(client: Client, guild: discord.Guild) -> PlayerState:
-    return player_out(client, guild)
+async def music_player(client: Client, guild: discord.Guild, member: discord.Member) -> PlayerState:
+    return player_out(client, guild, member)
 
 
 @get("/queue", summary="The upcoming tracks. `/live` pushes the same shape as it changes")
