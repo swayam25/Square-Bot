@@ -364,7 +364,11 @@
         {/if}
     </div>
 {:else if lyricsQuery.error}
-    {@render empty(MaterialSymbolsLyricsRounded, "Couldn't load lyrics", "The lyrics service didn't answer.")}
+    {@render empty(
+        MaterialSymbolsLyricsRounded,
+        "Couldn't load lyrics",
+        lyricsQuery.error.status === 429 ? lyricsQuery.error.message : "The lyrics service didn't answer.",
+    )}
 {:else if lyrics === null}
     {@render empty(MaterialSymbolsLyricsRounded, "No lyrics for this one", "BetterLyrics and LRCLIB don't have this song yet.")}
 {:else}

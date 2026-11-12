@@ -1,4 +1,5 @@
 import { redis } from "#lib/server/redis.ts";
+import { error } from "@sveltejs/kit";
 
 // Times are milliseconds. A word's text keeps its trailing space, so joining the words rebuilds the line
 export type LyricWord = { text: string; start: number; end: number };
@@ -10,6 +11,8 @@ export type LyricsQuery = { title: string; artist: string; durationMs: number };
 const TIMEOUT_MS = 5_000;
 const HIT_TTL = 7 * 24 * 3600;
 const MISS_TTL = 24 * 3600;
+// Only lookups that reach the lyric services count. Listening needs one per song, so this only stops scripted abuse
+const LOOKUPS_PER_MINUTE = 20;
 // Generic on purpose: nothing about the project or its users goes to third-party services
 const USER_AGENT = "Mozilla/5.0 (compatible; lyrics-client/1.0)";
 
@@ -186,11 +189,18 @@ async function fromLrclib({ title, artist, durationMs }: LyricsQuery): Promise<L
         : null;
 }
 
-export async function findLyrics(query: LyricsQuery): Promise<Lyrics | null> {
+async function allowed(userId: string) {
+    const key = `lyrics:rate:${userId}`;
+    const [count] = await redis.multi().incr(key).expire(key, 60, "NX").exec();
+    return Number(count) <= LOOKUPS_PER_MINUTE;
+}
+
+export async function findLyrics(query: LyricsQuery, userId: string): Promise<Lyrics | null> {
     const clean = cleanQuery(query);
     const key = `lyrics:v2:${clean.artist.toLowerCase()}:${clean.title.toLowerCase()}:${Math.round(clean.durationMs / 1000)}`;
     const cached = await redis.get(key).catch(() => null);
     if (cached) return JSON.parse(cached) as Lyrics | null;
+    if (!(await allowed(userId).catch(() => false))) error(429, "Too many lyric lookups. Try again in a minute.");
 
     const rank = { word: 2, line: 1, none: 0 } as const;
     let lyrics: Lyrics | null = null;
