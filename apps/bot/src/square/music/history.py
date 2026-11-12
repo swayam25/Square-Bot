@@ -8,6 +8,7 @@ from square.music.core import SquarePlayer, fmt_time, get_player, requester_id
 from square.music.utils import music_interaction_check, reply
 from square.utils import config
 from square.utils.emoji import emoji
+from square.utils.helpers import fmt_count
 
 
 def history_tracks(player: SquarePlayer) -> list[Playable]:
@@ -46,7 +47,7 @@ class HistoryContainer(ui.Container):
             return
         self.add_item(
             ui.TextDisplay(
-                f"### Played {len(tracks)} Tracks • `{fmt_time(sum(t.length for t in tracks if not t.is_stream))}`"
+                f"### Played {fmt_count(len(tracks))} Tracks • `{fmt_time(sum(t.length for t in tracks if not t.is_stream))}`"
             )
         )
         for index, track in enumerate(tracks[start : start + items_per_page], start=start):

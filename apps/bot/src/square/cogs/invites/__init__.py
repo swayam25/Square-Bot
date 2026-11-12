@@ -24,6 +24,7 @@ from square.imaging.templates import invite_card, leaderboard
 from square.modules import Module
 from square.utils import config, invites, server_log
 from square.utils.emoji import emoji
+from square.utils.helpers import fmt_count
 
 LEADERBOARD_PAGE = 10
 
@@ -293,7 +294,9 @@ class Invites(
         if not (guild := await self._managed_guild(ctx)):
             return
         bonus = await add_bonus(guild.id, member.id, amount)
-        await ctx.respond(view=success_view(f"Successfully set {member.mention}'s bonus invites to `{bonus}`."))
+        await ctx.respond(
+            view=success_view(f"Successfully set {member.mention}'s bonus invites to `{fmt_count(bonus)}`.")
+        )
 
     @invites.command(name="reset")
     @option("member", description="Whose invites to reset. Leave empty for the whole server.", required=False)
@@ -324,7 +327,7 @@ class Invites(
                     f"{emoji.joins_green} **Member**: {member.mention} (`{member.name}`)\n"
                     f"{emoji.user_green} **Invited By**: <@{inviter_id}>\n"
                     f"{emoji.description_green} **Code**: `{code}`\n"
-                    f"{emoji.members_green} **Their Invites**: `{total}`"
+                    f"{emoji.members_green} **Their Invites**: `{fmt_count(total)}`"
                     + ("\n-# Counted as fake, the account is too new." if fake else "")
                 ),
                 color=config.color.green,

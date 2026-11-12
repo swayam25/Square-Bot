@@ -8,6 +8,7 @@ from square.db import cache
 from square.transcript import transcript_file
 from square.utils import config, invites, server_log, webhook
 from square.utils.emoji import emoji
+from square.utils.helpers import fmt_count
 
 
 def clip(text: str, limit: int = 1024) -> str:
@@ -66,7 +67,7 @@ class Logging(Cog):
             f"{emoji.user} **Name**: {member.mention} (`{member.name}`)\n"
             f"{emoji.duration} **Account Created**: {discord.utils.format_dt(member.created_at, 'R')}\n"
             f"{emoji.invite} **Invited By**: {invited_by}\n"
-            f"{emoji.members} **Member Count**: {member.guild.member_count}",
+            f"{emoji.members} **Member Count**: {fmt_count(member.guild.member_count or 0)}",
             thumbnail=member.display_avatar.url,
         )
         await self.send_log(member.guild, server_log.LogType.MEMBERS, view)

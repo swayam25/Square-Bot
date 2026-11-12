@@ -42,6 +42,7 @@ from square.utils.emoji import emoji
 log = logging.getLogger(__name__)
 # Seconds after the bot leaves voice before a player nothing tore down is treated as kicked.
 KICK_GRACE = 2.0
+_reaping: set[asyncio.Task] = set()  # Strong refs: the loop only holds weak ones, so a sleeping task can be collected
 FAILOVER_INTERVAL = 5.0
 
 
@@ -292,7 +293,9 @@ class Listeners:
             if stay.channel_id(guild.id) is not None:
                 stay.schedule_rejoin(self.client, guild.id)
             elif player and not getattr(player, "_square_stopped", False):
-                self.client.loop.create_task(self._reap_kicked(guild, player))
+                task = self.client.loop.create_task(self._reap_kicked(guild, player))
+                _reaping.add(task)
+                task.add_done_callback(_reaping.discard)
             return
         if stay.channel_id(guild.id) not in (None, after.channel.id):
             channel = await stay.resolve(guild)

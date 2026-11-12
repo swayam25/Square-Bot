@@ -23,7 +23,9 @@ async def set_ticket_setup(
     guild.ticket_support_role_ids = support_role_ids
     guild.ticket_max_open = max_open
     guild.ticket_confirm_close = confirm_close
-    await guild.save()
+    await guild.save(
+        update_fields=["ticket_category_id", "ticket_support_role_ids", "ticket_max_open", "ticket_confirm_close"]
+    )
     settings = cache.entry(guild_id)
     settings.ticket_category_id, settings.ticket_support_role_ids = category_id, list(support_role_ids)
     settings.ticket_max_open, settings.ticket_confirm_close = max_open, confirm_close
@@ -39,7 +41,7 @@ async def set_ticket_category(guild_id: int, category_id: int | None) -> None:
     """
     guild = await fetch_guild_settings(guild_id)
     guild.ticket_category_id = category_id
-    await guild.save()
+    await guild.save(update_fields=["ticket_category_id"])
     cache.entry(guild_id).ticket_category_id = category_id
 
 
@@ -54,7 +56,7 @@ async def set_ticket_panel(guild_id: int, channel_id: int | None, message_id: in
     """
     guild = await fetch_guild_settings(guild_id)
     guild.ticket_panel_channel_id, guild.ticket_panel_message_id = channel_id, message_id
-    await guild.save()
+    await guild.save(update_fields=["ticket_panel_channel_id", "ticket_panel_message_id"])
     settings = cache.entry(guild_id)
     settings.ticket_panel_channel_id, settings.ticket_panel_message_id = channel_id, message_id
 

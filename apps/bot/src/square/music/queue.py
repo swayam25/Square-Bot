@@ -11,6 +11,9 @@ from square.music.errors import MusicError
 from square.music.utils import music_interaction_check, reply
 from square.utils import config
 from square.utils.emoji import emoji
+from square.utils.helpers import fmt_count
+
+_AUTOPLAY_SHOWN = 10
 
 
 async def _update_queue_view(interaction: discord.Interaction, queue_view: QueueListView):
@@ -56,13 +59,17 @@ class QueueBtnCallback:
 
     @staticmethod
     async def move_up_callback(
-        interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
+        interaction: discord.Interaction,
+        player: SquarePlayer,
+        track_index: int,
+        identifier: str,
+        queue_view: QueueListView,
     ):
         if track_index <= 0:
             return
         new_index = track_index - 1
         if not await QueueBtnCallback._run(
-            interaction, controls.move(interaction.guild, interaction.user, track_index, new_index)
+            interaction, controls.move(interaction.guild, interaction.user, track_index, new_index, identifier)
         ):
             return
         if track_index == queue_view.visible_action_button:
@@ -74,13 +81,17 @@ class QueueBtnCallback:
 
     @staticmethod
     async def move_down_callback(
-        interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
+        interaction: discord.Interaction,
+        player: SquarePlayer,
+        track_index: int,
+        identifier: str,
+        queue_view: QueueListView,
     ):
         if track_index >= len(player.queue) - 1:
             return
         new_index = track_index + 1
         if not await QueueBtnCallback._run(
-            interaction, controls.move(interaction.guild, interaction.user, track_index, new_index)
+            interaction, controls.move(interaction.guild, interaction.user, track_index, new_index, identifier)
         ):
             return
         if track_index == queue_view.visible_action_button:
@@ -93,12 +104,16 @@ class QueueBtnCallback:
 
     @staticmethod
     async def remove_callback(
-        interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
+        interaction: discord.Interaction,
+        player: SquarePlayer,
+        track_index: int,
+        identifier: str,
+        queue_view: QueueListView,
     ):
         if track_index >= len(player.queue):
             return
         if not await QueueBtnCallback._run(
-            interaction, controls.remove(interaction.guild, interaction.user, track_index)
+            interaction, controls.remove(interaction.guild, interaction.user, track_index, identifier)
         ):
             return
         queue_view.visible_action_button = None
@@ -110,12 +125,16 @@ class QueueBtnCallback:
 
     @staticmethod
     async def play_now_callback(
-        interaction: discord.Interaction, player: SquarePlayer, track_index: int, queue_view: QueueListView
+        interaction: discord.Interaction,
+        player: SquarePlayer,
+        track_index: int,
+        identifier: str,
+        queue_view: QueueListView,
     ):
         if track_index >= len(player.queue):
             return
         if not await QueueBtnCallback._run(
-            interaction, controls.jump(interaction.guild, interaction.user, track_index)
+            interaction, controls.jump(interaction.guild, interaction.user, track_index, identifier)
         ):
             return
         total_pages = max(1, math.ceil(len(player.queue) / queue_view.items_per_page))
@@ -177,22 +196,30 @@ class QueueContainer(ui.Container):
             )
             if queue_view and index == queue_view.visible_action_button:
                 move_up_btn = ui.Button(emoji=emoji.up_white, style=discord.ButtonStyle.grey, disabled=(index == 0))
-                move_up_btn.callback = lambda i, track_idx=index: QueueBtnCallback.move_up_callback(
-                    i, player=player, track_index=track_idx, queue_view=queue_view
+                move_up_btn.callback = lambda i, track_idx=index, ident=track.identifier: (
+                    QueueBtnCallback.move_up_callback(
+                        i, player=player, track_index=track_idx, identifier=ident, queue_view=queue_view
+                    )
                 )
                 move_down_btn = ui.Button(
                     emoji=emoji.down_white, style=discord.ButtonStyle.grey, disabled=(index == total - 1)
                 )
-                move_down_btn.callback = lambda i, track_idx=index: QueueBtnCallback.move_down_callback(
-                    i, player=player, track_index=track_idx, queue_view=queue_view
+                move_down_btn.callback = lambda i, track_idx=index, ident=track.identifier: (
+                    QueueBtnCallback.move_down_callback(
+                        i, player=player, track_index=track_idx, identifier=ident, queue_view=queue_view
+                    )
                 )
                 remove_btn = ui.Button(emoji=emoji.bin_white, style=discord.ButtonStyle.grey)
-                remove_btn.callback = lambda i, track_idx=index: QueueBtnCallback.remove_callback(
-                    i, player=player, track_index=track_idx, queue_view=queue_view
+                remove_btn.callback = lambda i, track_idx=index, ident=track.identifier: (
+                    QueueBtnCallback.remove_callback(
+                        i, player=player, track_index=track_idx, identifier=ident, queue_view=queue_view
+                    )
                 )
                 play_now_btn = ui.Button(emoji=emoji.play_white, style=discord.ButtonStyle.grey)
-                play_now_btn.callback = lambda i, track_idx=index: QueueBtnCallback.play_now_callback(
-                    i, player=player, track_index=track_idx, queue_view=queue_view
+                play_now_btn.callback = lambda i, track_idx=index, ident=track.identifier: (
+                    QueueBtnCallback.play_now_callback(
+                        i, player=player, track_index=track_idx, identifier=ident, queue_view=queue_view
+                    )
                 )
                 queue_list.append(ui.ActionRow(move_up_btn, move_down_btn, remove_btn, play_now_btn))
 
@@ -210,7 +237,7 @@ class QueueContainer(ui.Container):
         if queue_list:
             # duration_until ignores loop mode, unlike total_duration, which reports inf while looping.
             runtime = fmt_time(player.queue.duration_until(total))
-            self.add_item(ui.TextDisplay(f"### Queued {total} Tracks • `{runtime}`"))
+            self.add_item(ui.TextDisplay(f"### Queued {fmt_count(total)} Tracks • `{runtime}`"))
             self.items.extend(queue_list)
         if total > items_per_page:
             self.add_item(ui.Separator())
@@ -224,10 +251,12 @@ class QueueContainer(ui.Container):
                         "\n".join(
                             f"`{idx + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) "
                             f"[`{fmt_time(track.length)}`]"
-                            for idx, track in enumerate(autoplay_tracks)
+                            for idx, track in enumerate(islice(autoplay_tracks, _AUTOPLAY_SHOWN))
                         )
                     )
                 )
+                if (more := len(autoplay_tracks) - _AUTOPLAY_SHOWN) > 0:
+                    self.add_item(ui.TextDisplay(f"-# And {fmt_count(more)} more."))
             else:
                 self.add_item(
                     ui.TextDisplay(

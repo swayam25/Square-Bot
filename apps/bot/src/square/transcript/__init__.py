@@ -426,7 +426,23 @@ async def render_transcript(
     ordered = sorted(messages, key=lambda m: m.id)
     budget = min(IMAGE_BUDGET, guild.filesize_limit - 2 * 1024 * 1024)
     images = await _copy_images(ordered, budget)
-    lookups = _lookups(guild)
+    # The lookups walk the member cache, which gateway events change, so they're built here. The page itself is
+    # seconds of CPU for a long channel, and on the loop that would stall every other server
+    return await asyncio.to_thread(
+        _page, ordered, images, _lookups(guild), guild, channel_name, title, summary, list(unknown_ids)
+    )
+
+
+def _page(
+    ordered: list[discord.Message],
+    images: dict[int, str],
+    lookups: Lookups,
+    guild: discord.Guild,
+    channel_name: str,
+    title: str,
+    summary: Sequence[tuple[str, str]],
+    unknown_ids: list[int],
+) -> str:
     entries: list[tuple[discord.User | discord.Member | None, Message]] = [
         (m.author, _message(m, lookups, images)) for m in ordered
     ]

@@ -24,6 +24,7 @@ def channel_name(number: int) -> str:
 
 
 _LOCK = "🔒-"
+_PARTICIPANTS_SHOWN = 40  # Mentions past this could push the log card over the text limit
 
 
 def unlocked_name(name: str) -> str:
@@ -131,7 +132,9 @@ def log_card(
     if messages is not None:
         lines.append(f"{emoji.messages_red} **Messages**: `{messages}`")
     if participants:
-        lines.append(f"{emoji.members_red} **Participants**: {', '.join(f'<@{user_id}>' for user_id in participants)}")
+        shown = ", ".join(f"<@{user_id}>" for user_id in participants[:_PARTICIPANTS_SHOWN])
+        more = len(participants) - _PARTICIPANTS_SHOWN
+        lines.append(f"{emoji.members_red} **Participants**: {shown}{f' and `{more}` more' if more > 0 else ''}")
     state = "Deleted" if ticket.status == "deleted" else "Closed"
     items: list[ui.ViewItem] = [ui.TextDisplay(f"## Ticket {label(ticket)} {state}"), ui.TextDisplay("\n".join(lines))]
     if transcript:

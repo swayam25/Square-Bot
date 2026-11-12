@@ -33,7 +33,7 @@ async def set_fake_days(guild_id: int, days: int) -> None:
     """
     guild = await fetch_guild_settings(guild_id)
     guild.invite_fake_days = days
-    await guild.save()
+    await guild.save(update_fields=["invite_fake_days"])
     cache.entry(guild_id).invite_fake_days = days
 
 

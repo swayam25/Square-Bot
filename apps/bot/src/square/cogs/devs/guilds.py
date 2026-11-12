@@ -9,7 +9,7 @@ from square.core.view import DesignerView, error_view, success_view
 from square.db.funcs.guild import add_guild, remove_guild
 from square.utils import check, config
 from square.utils.emoji import emoji
-from square.utils.helpers import member_counts
+from square.utils.helpers import fmt_count, member_counts
 from square.utils.server_log import cleanup_guild
 
 
@@ -86,7 +86,7 @@ class Guilds:
                 ui.TextDisplay(
                     f"{emoji.server} **Name**: {guild.name}\n"
                     f"{emoji.id} **ID**: `{guild.id}`\n"
-                    f"{emoji.members} **Total Members**: `{total} ({humans} Humans | {bots} Bots)`"
+                    f"{emoji.members} **Total Members**: `{fmt_count(total)} ({fmt_count(humans)} Humans | {fmt_count(bots)} Bots)`"
                 ),
             )
         )
@@ -107,7 +107,7 @@ class Guilds:
                 ui.TextDisplay(
                     f"{emoji.server_red} **Name**: {guild.name}\n"
                     f"{emoji.id_red} **ID**: `{guild.id}`\n"
-                    f"{emoji.members_red} **Total Members**: `{total} ({humans} Humans | {bots} Bots)`"
+                    f"{emoji.members_red} **Total Members**: `{fmt_count(total)} ({fmt_count(humans)} Humans | {fmt_count(bots)} Bots)`"
                 ),
                 color=config.color.red,
             )

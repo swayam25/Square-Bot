@@ -1,5 +1,5 @@
 import msgspec
-from square.imaging.canvas import open_image
+from square.imaging.canvas import open_image, text_width
 from square.imaging.components import Kit
 from square.imaging.layout import Box, Column, Expand, Fill, Node, Row, Spacer
 from square.imaging.theme import MIST_300, ORANGE_300, RGB
@@ -97,13 +97,13 @@ def _splits(inviters: list[Inviter]) -> list[str]:
     return rows
 
 
-def _row(ui: Kit, inviter: Inviter, split: str) -> Node:
+def _row(ui: Kit, inviter: Inviter, split: str, rank_width: float) -> Node:
     """`h-12` with a `white/10` line on top: rank, avatar, name, breakdown and total."""
     return Column(
         Box(Spacer(1), fill=ui.theme.line, height=1),
         Box(
             Row(
-                Box(ui.muted(str(inviter.rank), Type.MONO_SM), width=24),
+                Box(ui.muted(str(inviter.rank), Type.MONO_SM), width=rank_width),
                 ui.avatar(open_image(inviter.avatar), inviter.name, 32),
                 Expand(ui.text(inviter.name, Type.BASE_MEDIUM)),
                 ui.muted(split, Type.MONO_XS),
@@ -120,10 +120,13 @@ def build(ui: Kit, data: Leaderboard) -> Node:
     """The invite leaderboard: a podium for the top 3 on the first page, then one row per inviter."""
     podium = data.inviters[:3] if data.page == 1 and len(data.inviters) >= 3 else []
     rest = data.inviters[len(podium) :]
+    # `w-6` holds two digits; later pages widen the column to their longest rank
+    rank_width = max([24.0, *(text_width(str(inviter.rank), Type.MONO_SM) for inviter in rest)])
     subtitle = Row(
-        ui.muted(f"{data.guild_name} · "),
+        ui.muted(data.guild_name),
+        ui.muted(" · "),
         ui.muted(fmt_count(data.member_count), Type.MONO_SM),
-        Expand(ui.muted(" members")),
+        ui.muted(" members"),
     )
     return Column(
         ui.header(
@@ -133,7 +136,7 @@ def build(ui: Kit, data: Leaderboard) -> Node:
             trailing=ui.muted(f"{data.page} / {data.pages}", Type.MONO_SM),
         ),
         Row(*(_place(ui, podium[i]) for i in (1, 0, 2)), gap=8, align="end") if podium else None,
-        Column(*(_row(ui, inviter, split) for inviter, split in zip(rest, _splits(rest), strict=True)))
+        Column(*(_row(ui, inviter, split, rank_width) for inviter, split in zip(rest, _splits(rest), strict=True)))
         if rest
         else None,
         Fill(),

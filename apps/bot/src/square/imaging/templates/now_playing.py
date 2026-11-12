@@ -4,6 +4,7 @@ from square.imaging.canvas import open_image
 from square.imaging.components import Kit
 from square.imaging.layout import Box, Column, Expand, Fill, Node, Picture, Row, Spacer
 from square.imaging.tokens import Radius, Type
+from square.utils.helpers import fmt_count
 
 _ARTWORK = 160
 _COVER = 32
@@ -68,11 +69,11 @@ def _artwork(ui: Kit, data: bytes | None, size: float, radius: float) -> Node:
 
 def _up_next(ui: Kit, data: NowPlaying) -> Box:
     """The next track on a `surface-2` tile, `h-12 rounded-2xl`, under a mono eyebrow."""
-    eyebrow = f"Up next · {data.queued} queued" if data.queued else "Up next"
+    eyebrow = f"Up next · {fmt_count(data.queued)} queued" if data.queued else "Up next"
     title = ui.text(data.up_next, Type.SM_MEDIUM) if data.up_next else ui.muted("Nothing queued", Type.SM_MEDIUM)
     cover = _artwork(ui, data.up_next_artwork, _COVER, Radius.LG) if data.up_next else None
     return Box(
-        Row(cover, Column(ui.eyebrow(eyebrow), title), gap=8),
+        Row(cover, Expand(Column(ui.eyebrow(eyebrow), title)), gap=8),
         padding=(0, 16, 0, 8 if cover else 16),
         fill=ui.theme.surface_2,
         radius=Radius.XL2,

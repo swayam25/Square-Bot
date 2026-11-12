@@ -175,7 +175,11 @@ class MassModeration(
                 error_title="Can't ban users",
                 fields=[
                     ("description", "Reason", reason),
-                    ("bin", "Delete Message Duration", f"`{format_timedelta(del_after, locale='en')}`"),
+                    (
+                        "bin",
+                        "Delete Message Duration",
+                        f"`{format_timedelta(del_after, locale='en') if del_after else 'None'}`",
+                    ),
                 ],
                 log_color=config.color.red,
             )

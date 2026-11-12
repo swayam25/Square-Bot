@@ -8,11 +8,17 @@ from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView, error_view
 from square.utils.emoji import emoji
-from square.utils.helpers import member_counts
+from square.utils.helpers import fmt_count, member_counts
 from typing import Literal
 
 # Starting time of bot
 start_time = time.time()
+
+
+def _mentions(mentions: list[str], limit: int = 40) -> str:
+    """Joins mentions, cut off at `limit` so a member with hundreds of roles still fits in a text display."""
+    more = len(mentions) - limit
+    return ", ".join(mentions[:limit]) + (f" and `{more}` more" if more > 0 else "")
 
 
 class UserInfo:
@@ -49,7 +55,7 @@ class UserInfo:
             other_roles = [
                 role for role in self.user.roles if role != self.user.guild.default_role and role != self.user.top_role
             ]
-            roles_str = ", ".join(role.mention for role in other_roles)
+            roles_str = _mentions([role.mention for role in other_roles])
             if roles_str:
                 info_lines.append(f"{emoji.role} **Other Roles (`{len(other_roles)}`)**: {roles_str}")
 
@@ -238,7 +244,7 @@ class InfoView(DesignerView):
         page_perms = all_perms[start:end]
 
         perm_text = "\n".join(
-            f"`{i + start + 1}.` **{perm}**\n{emoji.bottom_right} {', '.join(roles)}"
+            f"`{i + start + 1}.` **{perm}**\n{emoji.bottom_right} {_mentions(roles, 10)}"
             for i, (perm, roles) in enumerate(page_perms)
         )
 
@@ -424,42 +430,39 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         user_roles = len(ctx.guild.roles) - bot_roles
         total, humans, bots = member_counts(ctx.guild)
 
-        row = ui.ActionRow()
-        container = ui.Container(
-            ui.Section(
-                ui.TextDisplay(f"## {ctx.guild.name}'s Info"),
-                ui.TextDisplay(
-                    f"{emoji.mention} **Name**: {ctx.guild.name}\n"
-                    f"{emoji.id} **ID**: `{ctx.guild.id}`\n"
-                    f"{emoji.owner} **Owner**: {ctx.guild.owner.mention}\n"
-                    f"{emoji.verification} **Verification Level**: {ctx.guild.verification_level.name.title()}\n"
-                    f"{emoji.channel} **Total Channels**: `{len(ctx.guild.text_channels) + len(ctx.guild.voice_channels)}`"
-                    f" `({len(ctx.guild.categories)} Categories | {len(ctx.guild.text_channels)} Text | {len(ctx.guild.voice_channels)} Voice | {len(ctx.guild.stage_channels)} Stage)`\n"
-                    f"{emoji.members} **Total Members**: `{total}`"
-                    f" `({humans} Humans | {bots} Bots)`\n"
-                    f"{emoji.role} **Roles**: `{len(ctx.guild.roles)}`"
-                    f" `({user_roles} User | {bot_roles} Bot)`\n"
-                    f"{emoji.boost} **Boosts**: `{ctx.guild.premium_subscription_count}`"
-                    f" `(Level {ctx.guild.premium_tier})`\n"
-                    f"{emoji.img} **Emojis**: `{len(ctx.guild.emojis)}`"
-                    f" `({animated_emojis} Animated | {static_emojis} Static)`\n"
-                    f"{emoji.date} **Server Created**: {discord.utils.format_dt(ctx.guild.created_at, 'R')}"
-                ),
-                accessory=ui.Thumbnail(ctx.guild.icon.url + "?" if ctx.guild.icon else ""),
+        texts = [
+            ui.TextDisplay(f"## {ctx.guild.name}'s Info"),
+            ui.TextDisplay(
+                f"{emoji.mention} **Name**: {ctx.guild.name}\n"
+                f"{emoji.id} **ID**: `{ctx.guild.id}`\n"
+                f"{emoji.owner} **Owner**: <@{ctx.guild.owner_id}>\n"
+                f"{emoji.verification} **Verification Level**: {ctx.guild.verification_level.name.title()}\n"
+                f"{emoji.channel} **Total Channels**: `{len(ctx.guild.text_channels) + len(ctx.guild.voice_channels)}`"
+                f" `({len(ctx.guild.categories)} Categories | {len(ctx.guild.text_channels)} Text | {len(ctx.guild.voice_channels)} Voice | {len(ctx.guild.stage_channels)} Stage)`\n"
+                f"{emoji.members} **Total Members**: `{fmt_count(total)}`"
+                f" `({fmt_count(humans)} Humans | {fmt_count(bots)} Bots)`\n"
+                f"{emoji.role} **Roles**: `{len(ctx.guild.roles)}`"
+                f" `({user_roles} User | {bot_roles} Bot)`\n"
+                f"{emoji.boost} **Boosts**: `{fmt_count(ctx.guild.premium_subscription_count)}`"
+                f" `(Level {ctx.guild.premium_tier})`\n"
+                f"{emoji.img} **Emojis**: `{len(ctx.guild.emojis)}`"
+                f" `({animated_emojis} Animated | {static_emojis} Static)`\n"
+                f"{emoji.date} **Server Created**: {discord.utils.format_dt(ctx.guild.created_at, 'R')}"
             ),
-        )
+        ]
+        icon = ctx.guild.icon
+        container = ui.Container(*([ui.Section(*texts, accessory=ui.Thumbnail(icon.url + "?"))] if icon else texts))
 
         if ctx.guild.banner:
             container.add_item(
                 ui.MediaGallery(discord.MediaGalleryItem(url=ctx.guild.banner.url)),
             )
-        view = DesignerView(container, row)
-
-        if ctx.guild.icon:
-            row.add_item(ui.Button(style=discord.ButtonStyle.link, label="Icon URL", url=ctx.guild.icon.url))
+        links = []
+        if icon:
+            links.append(ui.Button(style=discord.ButtonStyle.link, label="Icon URL", url=icon.url))
         if ctx.guild.banner:
-            row.add_item(ui.Button(style=discord.ButtonStyle.link, label="Banner URL", url=ctx.guild.banner.url))
-        await ctx.respond(view=view)
+            links.append(ui.Button(style=discord.ButtonStyle.link, label="Banner URL", url=ctx.guild.banner.url))
+        await ctx.respond(view=DesignerView(container, *([ui.ActionRow(*links)] if links else [])))
 
     # Emoji info
     @info.command(name="emoji")

@@ -217,6 +217,11 @@ class Row(Node):
     def _widths(self, width: float) -> list[float]:
         naturals = [child.natural_width() for child in self.children]
         fixed = sum(w for w in naturals if w is not None) + self.gap * max(len(naturals) - 1, 0)
+        if fixed > width and any(w is not None for w in naturals):
+            # Too much to fit: the widest child gives up the overflow, so its text gets an ellipsis
+            widest = max((i for i, w in enumerate(naturals) if w is not None), key=lambda i: naturals[i])
+            naturals[widest] = max(naturals[widest] - (fixed - width), 0)
+            fixed = width
         flexible = naturals.count(None)
         share = max(width - fixed, 0) / flexible if flexible else 0
         return [share if w is None else w for w in naturals]

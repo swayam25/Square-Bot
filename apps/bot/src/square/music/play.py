@@ -181,9 +181,11 @@ async def resolve_query(client: Client, query: str) -> tuple[object | None, str 
     result = await search_tracks(client, clean_query(query))
     if result is None or result.is_error():
         return None, f"{emoji.error} Failed to load the track. Please try again in a moment."
-    if result.is_empty() or result.result is None:
+    data = result.result
+    # A link to an empty playlist loads fine and holds nothing
+    if result.is_empty() or data is None or (isinstance(data, (Playlist, list)) and not len(data)):
         return None, f"{emoji.error} No track found from the given query."
-    return result.result, None
+    return data, None
 
 
 def _queue_note(player: SquarePlayer) -> str | None:
@@ -203,7 +205,7 @@ def _queue_note(player: SquarePlayer) -> str | None:
     if player.queue_mode is sonolink.QueueMode.LOOP:
         return note
     current = player.current
-    if current.is_stream or any(queue[i].is_stream for i in range(len(queue))):
+    if current.is_stream or any(track.is_stream for track in queue):
         return f"{note}, plays after a live stream"
     # `player.remaining` reads 0 while paused, which would make the wait look shorter than it is.
     wait = max(current.length - player.position, 0) + queue.duration_until(len(queue))

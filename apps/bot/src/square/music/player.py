@@ -549,13 +549,9 @@ class MusicContainer(ui.Container):
             f"{emoji.user} **Requested By**: {f'<@{rid}>' if rid else 'Unknown'}\n"
             f"{emoji.mic} **Artist**: {get_source(player.current.source_name)['emoji']} {player.current.author}"
         )
-        self.items = [
-            ui.Section(
-                ui.TextDisplay(f"## [{player.current.title}]({player.current.uri})"),
-                ui.TextDisplay(info),
-                accessory=ui.Thumbnail(url=player.current.artwork),
-            )
-        ]
+        texts = [ui.TextDisplay(f"## [{player.current.title}]({player.current.uri})"), ui.TextDisplay(info)]
+        artwork = player.current.artwork
+        self.items = [ui.Section(*texts, accessory=ui.Thumbnail(url=artwork))] if artwork else texts
         self.items.append(ui.TextDisplay(self.progress_bar(player)))
 
     @staticmethod
@@ -568,7 +564,8 @@ class MusicContainer(ui.Container):
         active = str(emoji.still_bar if player.paused else emoji.filled_bar)
         if player.current.is_stream:
             return f"{emoji.live} **LIVE** {active * bar_length}"
-        filled = min(bar_length, int(bar_length * player.position // float(player.current.length)))
+        length = player.current.length
+        filled = min(bar_length, int(bar_length * player.position // length)) if length else 0
         return (
             f"`{fmt_time(player.position)}` "
             f"{active * filled}{str(emoji.empty_bar) * (bar_length - filled)} "

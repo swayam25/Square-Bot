@@ -13,7 +13,7 @@ async def set_dj_mode(guild_id: int, enabled: bool) -> None:
     """
     guild = await fetch_guild_settings(guild_id)
     guild.dj_mode = enabled
-    await guild.save()
+    await guild.save(update_fields=["dj_mode"])
     cache.entry(guild_id).dj_mode = enabled
 
 
@@ -47,6 +47,6 @@ async def remove_dj(guild_id: int) -> None:
         return
     await DJRoleTable.filter(guild=guild).delete()
     guild.dj_mode = False
-    await guild.save()
+    await guild.save(update_fields=["dj_mode"])
     settings = cache.entry(guild_id)
     settings.dj_mode, settings.dj_roles = False, []

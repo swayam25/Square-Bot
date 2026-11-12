@@ -93,7 +93,7 @@ class Moderation(
                             f"{emoji.id_green} **ID**: `{user.id}`\n"
                             f"{emoji.user_green} **User**: `{user}`\n"
                             f"{emoji.description_green} **Reason**: {reason}\n"
-                            f"{emoji.bin_green} **Delete Message Duration**: `{format_timedelta(del_after, locale='en')}`"
+                            f"{emoji.bin_green} **Delete Message Duration**: `{format_timedelta(del_after, locale='en') if del_after else 'None'}`"
                         ),
                         accessory=ui.Thumbnail(url=user.display_avatar.url),
                     ),

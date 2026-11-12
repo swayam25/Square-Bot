@@ -56,7 +56,7 @@ def open_image(data: bytes | None) -> Image.Image | None:
     try:
         with Image.open(BytesIO(data)) as image:
             return image.convert("RGBA")
-    except OSError:
+    except OSError, Image.DecompressionBombError:
         return None
 
 

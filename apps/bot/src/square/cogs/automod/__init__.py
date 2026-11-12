@@ -25,15 +25,15 @@ class AutoMod(Cog):
                 and not msg.content.startswith("http")
                 and msg.author.guild_permissions.manage_messages is False
             ):
-                await msg.delete()
                 try:
+                    await msg.delete()
                     view = error_view(
                         f"{msg.author.mention} This channel is for **media** only! Please do not send text messages here."
                     )
                     await msg.channel.send(
                         view=view, allowed_mentions=discord.AllowedMentions().users(), delete_after=10
                     )
-                except discord.Forbidden:
+                except discord.Forbidden, discord.NotFound:
                     pass
 
     # Autorole
@@ -45,7 +45,10 @@ class AutoMod(Cog):
         if autorole is None:
             return
         if role := user.guild.get_role(autorole):
-            await user.add_roles(role)
+            try:
+                await user.add_roles(role)
+            except discord.Forbidden, discord.NotFound:
+                pass  # The role sits above Square's, or the member already left
         else:
             await set_autorole(user.guild.id, None)  # The role was deleted
 
