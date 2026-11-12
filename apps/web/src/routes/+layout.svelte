@@ -1,6 +1,7 @@
 <script lang="ts">
     import favicon from "#lib/assets/square.svg";
     import { AUTH_CHANNEL } from "#lib/auth.ts";
+    import Island from "#lib/components/Island.svelte";
     import Loader from "#lib/components/Loader.svelte";
     import PageScrollbar from "#lib/components/PageScrollbar.svelte";
     import SiteHeader from "#lib/components/SiteHeader.svelte";
@@ -38,5 +39,6 @@
     <div class={[!dashboard && "animate-page-in"]}>{@render children()}</div>
 {/key}
 
+{#if !dashboard}<Island />{/if}
 <PageScrollbar />
 <Loader />

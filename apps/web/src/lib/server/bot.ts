@@ -18,10 +18,20 @@ export function forGuild(guild: string) {
     return { client: bot, path: { guild_id: guild }, headers: { "x-actor-id": actor() } };
 }
 
+// Only refusals (409, 422) and outages (503) carry wording meant for people; the rest is framework text
+const FALLBACK: Record<number, string> = {
+    400: "That didn't go through. Refresh the page and try again.",
+    403: "You don't have access to that anymore.",
+    404: "Square isn't in this server anymore.",
+    503: "Square is offline right now.",
+};
+
 export function refused(result: { error?: unknown; response?: Response }): never {
-    if (!result.response) error(503, "Square is offline right now");
+    if (!result.response) error(503, FALLBACK[503]);
+    const { status } = result.response;
     const problem = zProblem.safeParse(result.error);
-    error(result.response.status, problem.success ? problem.data.detail : "Square couldn't do that");
+    const ours = problem.success && (status === 409 || status === 422 || status === 503);
+    error(status, ours ? problem.data.detail : (FALLBACK[status] ?? "Square couldn't do that. Try again."));
 }
 
 export async function read<T>(request: Promise<{ data: T; error: undefined } | { data: undefined; error: unknown; response?: Response }>) {

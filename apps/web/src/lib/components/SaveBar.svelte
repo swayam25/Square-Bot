@@ -1,11 +1,17 @@
 <script lang="ts">
     import Button from "#lib/components/ui/Button.svelte";
     import { errorMessage } from "#lib/errors.ts";
+    import { toast } from "#lib/toast.svelte.ts";
     import { beforeNavigate } from "$app/navigation";
     import { cubicOut } from "svelte/easing";
     import { fly } from "svelte/transition";
 
-    let { dirty, onsave, ondiscard }: { dirty: boolean; onsave: () => Promise<unknown>; ondiscard: () => void } = $props();
+    let {
+        dirty,
+        invalid = "",
+        onsave,
+        ondiscard,
+    }: { dirty: boolean; invalid?: string; onsave: () => Promise<unknown>; ondiscard: () => void } = $props();
 
     let saving = $state(false);
     let problem = $state("");
@@ -29,6 +35,7 @@
         problem = "";
         try {
             await onsave();
+            toast.success("Changes saved");
         } catch (err) {
             problem = errorMessage(err, "Square couldn't save that. Try again.");
         } finally {
@@ -52,12 +59,15 @@
                     nudges > 0 && "animate-nudge",
                 ]}
             >
-                <p aria-live="polite" class={["min-w-0 flex-1 text-sm font-medium", problem ? "text-red-400" : nudges > 0 && "text-amber-400"]}>
-                    {problem || (nudges > 0 ? "Save or discard your changes first." : "You have unsaved changes.")}
+                <p
+                    aria-live="polite"
+                    class={["min-w-0 flex-1 text-sm font-medium", problem || invalid ? "text-red-400" : nudges > 0 && "text-amber-400"]}
+                >
+                    {problem || invalid || (nudges > 0 ? "Save or discard your changes first." : "You have unsaved changes.")}
                 </p>
                 <div class="flex gap-2 *:flex-1 md:*:flex-none">
                     <Button variant="ghost" disabled={saving} onclick={ondiscard}>Discard</Button>
-                    <Button variant="primary" loading={saving} onclick={save}>{saving ? "Saving…" : "Save changes"}</Button>
+                    <Button variant="primary" loading={saving} disabled={!!invalid} onclick={save}>{saving ? "Saving…" : "Save changes"}</Button>
                 </div>
             </div>
         {/key}

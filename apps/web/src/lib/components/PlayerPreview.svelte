@@ -1,5 +1,6 @@
 <script lang="ts">
     import Chip from "#lib/components/ui/Chip.svelte";
+    import ScrollRow from "#lib/components/ui/ScrollRow.svelte";
     import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
     import { demo, time } from "#lib/demo.svelte.ts";
     import { ripple } from "#lib/motion.ts";
@@ -72,7 +73,7 @@
         </button>
     </div>
 
-    <div class="flex flex-wrap gap-2">
+    <ScrollRow>
         <Chip><MaterialSymbolsVolumeUpRounded />80%</Chip>
         {#each ["Bass Boost", "Nightcore", "8D"] as name (name)}
             <button
@@ -85,5 +86,5 @@
                 <Chip tone={demo.filters.includes(name) ? "violet" : "muted"}>{name}</Chip>
             </button>
         {/each}
-    </div>
+    </ScrollRow>
 </section>

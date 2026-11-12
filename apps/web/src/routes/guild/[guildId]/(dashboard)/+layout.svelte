@@ -1,28 +1,34 @@
 <script lang="ts">
+    import Island from "#lib/components/Island.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Drawer from "#lib/components/ui/Drawer.svelte";
     import GuildIcon from "#lib/components/ui/GuildIcon.svelte";
+    import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Popup from "#lib/components/ui/Popup.svelte";
+    import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { Details, setDetails } from "#lib/details.svelte.ts";
     import { mobile } from "#lib/media.ts";
+    import { MODULES, type ModuleKey } from "#lib/modules.ts";
     import { ripple } from "#lib/motion.ts";
+    import { guildChannels, guildRoles, moduleSettings } from "#lib/settings.remote.ts";
     import { load, save } from "#lib/storage.ts";
+    import { toast } from "#lib/toast.svelte.ts";
     import { afterNavigate } from "$app/navigation";
     import { page } from "$app/state";
     import { onMount } from "svelte";
     import MaterialSymbolsCheckRounded from "~icons/material-symbols/check-rounded";
     import MaterialSymbolsCloseRounded from "~icons/material-symbols/close-rounded";
-    import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
-    import MaterialSymbolsDescriptionRounded from "~icons/material-symbols/description-rounded";
     import MaterialSymbolsHomeRounded from "~icons/material-symbols/home-rounded";
     import MaterialSymbolsLogoutRounded from "~icons/material-symbols/logout-rounded";
     import MaterialSymbolsMusicNoteRounded from "~icons/material-symbols/music-note-rounded";
-    import MaterialSymbolsPersonAddRounded from "~icons/material-symbols/person-add-rounded";
+    import MaterialSymbolsPlayCircleRounded from "~icons/material-symbols/play-circle-rounded";
     import MaterialSymbolsPlayShapesRounded from "~icons/material-symbols/play-shapes-rounded";
+    import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
     import MaterialSymbolsTuneRounded from "~icons/material-symbols/tune-rounded";
     import MaterialSymbolsUnfoldMoreRounded from "~icons/material-symbols/unfold-more-rounded";
+    import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
     import type { LayoutProps } from "./$types";
 
     let { data, children }: LayoutProps = $props();
@@ -71,29 +77,40 @@
     const resizeDetails = (event: PointerEvent) =>
         drag(event, (x) => (detailsWidth = clamp(innerWidth - x - 8, DETAILS.min, innerWidth * DETAILS.maxShare)));
 
+    const modulesQuery = $derived(data.guild.canManage ? moduleSettings(data.guild.id) : null);
+    const modules = $derived(modulesQuery?.current ?? null);
+    const moduleLink = (key: ModuleKey) => {
+        const module = MODULES.find((module) => module.key === key)!;
+        return { href: `${base}/${module.path}`, label: module.label, icon: module.icon, off: modules ? !modules[key] : false };
+    };
+
     const base = $derived(`/guild/${data.guild.id}`);
-    const groups = $derived([
-        { label: "", items: [{ href: base, label: "Overview", icon: MaterialSymbolsDashboardRounded }] },
+    type Item = { href: string; label: string; icon: typeof MaterialSymbolsTuneRounded; off?: boolean };
+    const groups: { label: string; items: Item[] }[] = $derived([
         {
-            label: "Community",
+            label: "",
             items: [
-                { href: `${base}/music`, label: "Music", icon: MaterialSymbolsMusicNoteRounded },
-                ...(data.guild.canManage
-                    ? [
-                          { href: `${base}/invites`, label: "Invites", icon: MaterialSymbolsPersonAddRounded },
-                          { href: `${base}/tickets`, label: "Tickets", icon: MaterialSymbolsConfirmationNumberRounded },
-                      ]
-                    : []),
+                { href: base, label: "Overview", icon: MaterialSymbolsDashboardRounded },
+                { href: `${base}/player`, label: "Player", icon: MaterialSymbolsPlayCircleRounded },
             ],
         },
         ...(data.guild.canManage
             ? [
                   {
-                      label: "Server",
+                      label: "Community",
                       items: [
-                          { href: `${base}/logs`, label: "Logs", icon: MaterialSymbolsDescriptionRounded },
-                          { href: `${base}/general`, label: "General", icon: MaterialSymbolsTuneRounded },
+                          { href: `${base}/music`, label: "Music", icon: MaterialSymbolsMusicNoteRounded },
+                          moduleLink("invites"),
+                          moduleLink("tickets"),
                       ],
+                  },
+              ]
+            : []),
+        ...(data.guild.canManage
+            ? [
+                  {
+                      label: "Server",
+                      items: [moduleLink("logs"), { href: `${base}/general`, label: "General", icon: MaterialSymbolsTuneRounded }],
                   },
               ]
             : []),
@@ -101,17 +118,36 @@
 
     const section = $derived(page.url.pathname.slice(base.length));
     const isCurrent = (href: string) => (href === base ? page.url.pathname === base : page.url.pathname.startsWith(href));
-    const switchHref = (guild: (typeof data.guilds)[number]) => `/guild/${guild.id}${guild.canManage || section === "/music" ? section : ""}`;
+    const switchHref = (guild: (typeof data.guilds)[number]) => `/guild/${guild.id}${guild.canManage ? section : ""}`;
     const members = (count: number) => `${count.toLocaleString("en-US")} ${count === 1 ? "member" : "members"}`;
 
     let switcherOpen = $state(false);
     let mobileSwitcherOpen = $state(false);
     let accountOpen = $state(false);
     let mobileAccountOpen = $state(false);
+    let scroller = $state<HTMLElement | null>(null);
+    let detailsScroller = $state<HTMLElement | null>(null);
+
     afterNavigate(({ from, to }) => {
         switcherOpen = mobileSwitcherOpen = accountOpen = mobileAccountOpen = false;
-        if (from?.url.pathname !== to?.url.pathname) details.close();
+        if (from?.url.pathname === to?.url.pathname) return;
+        details.close();
+        // Every page shares one scroller, so a new page would otherwise open at the last page's offset
+        scroller?.scrollTo({ top: 0, behavior: "instant" });
     });
+
+    let refreshing = $state(false);
+    async function refreshServer() {
+        refreshing = true;
+        try {
+            await Promise.all([guildChannels(data.guild.id).refresh(), guildRoles(data.guild.id).refresh()]);
+            toast.success("Channels and roles synced");
+        } catch {
+            toast.error("Square couldn't sync the server. Try again.");
+        } finally {
+            refreshing = false;
+        }
+    }
 
     const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
     const stacked = "h-14 flex-col justify-center gap-0.5 rounded-2xl text-2xs";
@@ -138,6 +174,14 @@
     </a>
 {/snippet}
 
+{#snippet refreshIcon()}
+    {#if refreshing}
+        <SvgSpinners90RingWithBg class="size-5 shrink-0 text-mist-400" />
+    {:else}
+        <MaterialSymbolsRefreshRounded class="size-5 shrink-0 text-mist-400" />
+    {/if}
+{/snippet}
+
 {#snippet accountMenu()}
     {#if data.user}
         <div class="flex items-center gap-4 p-2 pb-4">
@@ -151,6 +195,17 @@
     <a href="/" class="ripple flex h-10 items-center gap-4 rounded-xl px-4 text-sm font-medium hover:bg-white/10" {@attach ripple}>
         <MaterialSymbolsHomeRounded class="size-5 text-mist-400" />Home
     </a>
+    {#if data.guild.canManage && mobile.current}
+        <button
+            disabled={refreshing}
+            aria-busy={refreshing}
+            class="ripple flex h-10 w-full items-center gap-4 rounded-xl px-4 text-sm font-medium hover:bg-white/10"
+            {@attach ripple}
+            onclick={refreshServer}
+        >
+            {@render refreshIcon()}{refreshing ? "Syncing…" : "Sync server"}
+        </button>
+    {/if}
     <form method="POST" action="/logout">
         <button
             class="ripple flex h-10 w-full items-center gap-4 rounded-xl px-4 text-sm font-medium text-red-400 hover:bg-red-400/10"
@@ -161,24 +216,43 @@
     </form>
 {/snippet}
 
-{#snippet link(item: (typeof groups)[number]["items"][number], row: boolean)}
-    <a
-        href={item.href}
-        aria-current={isCurrent(item.href) ? "page" : undefined}
-        class={[
-            "ripple flex shrink-0 items-center font-medium text-mist-400 hover:bg-white/10 hover:text-mist-100 aria-[current=page]:bg-accent/10 aria-[current=page]:text-accent",
-            row ? "h-10 gap-2 rounded-full px-4 text-sm" : [stacked, "w-full"],
-            focusRing,
-        ]}
-        {@attach ripple}
-    >
-        <item.icon class="size-6 shrink-0" />
-        <span class="max-w-full truncate">{item.label}</span>
-    </a>
+{#snippet link(item: Item, row: boolean)}
+    {#if item.off}
+        <Tooltip content="{item.label} is turned off. Turn it on from Overview." placement={mobile.current ? "top" : "right"} class="w-full">
+            <span
+                aria-disabled="true"
+                class={[
+                    "flex w-full shrink-0 cursor-not-allowed items-center font-medium text-mist-400 opacity-40",
+                    row ? "h-10 gap-2 rounded-full px-4 text-sm" : stacked,
+                ]}
+            >
+                <item.icon class="size-6 shrink-0" />
+                <span class="max-w-full truncate">{item.label}</span>
+            </span>
+        </Tooltip>
+    {:else}
+        <a
+            href={item.href}
+            aria-current={isCurrent(item.href) ? "page" : undefined}
+            class={[
+                "ripple flex shrink-0 items-center font-medium text-mist-400 hover:bg-white/10 hover:text-mist-100 aria-[current=page]:bg-accent/10 aria-[current=page]:text-accent",
+                row ? "h-10 gap-2 rounded-full px-4 text-sm" : [stacked, "w-full"],
+                focusRing,
+            ]}
+            {@attach ripple}
+        >
+            <item.icon class="size-6 shrink-0" />
+            <span class="max-w-full truncate">{item.label}</span>
+        </a>
+    {/if}
 {/snippet}
 
-<div style:--sidebar="{width}px" style:--details={detailsOpen ? `${detailsWidth + 8}px` : "0px"}>
-    <aside class="fixed inset-y-0 left-0 z-30 hidden w-(--sidebar) flex-col gap-4 overflow-hidden bg-surface-1 py-4 md:flex">
+<div
+    style:--sidebar="{width}px"
+    style:--details={detailsOpen ? `${detailsWidth + 8}px` : "0px"}
+    class="flex h-dvh flex-col overflow-hidden bg-surface-1 md:flex-row md:py-2 md:pr-2"
+>
+    <aside class="hidden w-(--sidebar) shrink-0 flex-col gap-4 overflow-hidden py-2 md:flex">
         <div class={["flex flex-col gap-4", expanded ? "px-4" : "items-center px-2"]}>
             <Popup
                 bind:open={switcherOpen}
@@ -223,6 +297,32 @@
             {/each}
         </nav>
 
+        {#if data.guild.canManage}
+            <div class={expanded ? "px-4" : "flex justify-center px-2"}>
+                <Tooltip
+                    content="Fetch new channels and roles from Discord"
+                    placement={expanded ? "top" : "right"}
+                    class={expanded ? "w-full" : undefined}
+                >
+                    <button
+                        disabled={refreshing}
+                        aria-busy={refreshing}
+                        aria-label={expanded ? undefined : "Sync server"}
+                        class={[
+                            "ripple flex items-center gap-4 rounded-full text-sm font-medium text-mist-400 hover:bg-surface-2 hover:text-mist-100",
+                            expanded ? "h-10 w-full px-4" : "size-12 justify-center",
+                            focusRing,
+                        ]}
+                        {@attach ripple}
+                        onclick={refreshServer}
+                    >
+                        {@render refreshIcon()}
+                        {#if expanded}<span class="truncate">{refreshing ? "Syncing…" : "Sync server"}</span>{/if}
+                    </button>
+                </Tooltip>
+            </div>
+        {/if}
+
         {#if data.user}
             <div class={expanded ? "px-4" : "flex justify-center px-2"}>
                 <Popup
@@ -257,25 +357,21 @@
         aria-valuemin={SIDEBAR.min}
         aria-valuemax={SIDEBAR.max}
         aria-valuenow={width}
-        class="group fixed inset-y-2 left-(--sidebar) z-30 hidden w-2 cursor-col-resize justify-center md:flex"
+        class="group hidden w-2 shrink-0 cursor-col-resize justify-center md:flex"
         onpointerdown={resizeSidebar}
     >
         <span class="h-full w-1 rounded-full transition-colors duration-200 group-hover:bg-mist-400 group-active:bg-mist-400"></span>
     </div>
 
-    <!-- The shadow paints the shell color around a rounded hole, so the content looks framed while the window still scrolls -->
-    <div
-        aria-hidden="true"
-        class="pointer-events-none fixed inset-x-0 top-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 rounded-b-4xl shadow-[0_0_0_100vmax_var(--color-surface-1)] md:top-2 md:right-[calc(var(--details)+0.5rem)] md:bottom-2 md:left-[calc(var(--sidebar)+0.5rem)] md:rounded-4xl"
-    ></div>
-
-    <main
-        class="px-4 pt-8 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pt-10 md:pr-[calc(var(--details)+3rem)] md:pb-12 md:pl-[calc(var(--sidebar)+3rem)]"
-    >
-        {#key page.url.pathname}
-            <div class="animate-page-in">{@render children()}</div>
-        {/key}
-    </main>
+    <div class="relative min-h-0 min-w-0 flex-1 animate-shell-in overflow-hidden rounded-b-4xl bg-mist-950 md:rounded-4xl">
+        <main bind:this={scroller} class="size-full overflow-y-auto overscroll-contain px-4 py-8 md:px-10">
+            {#key page.url.pathname}
+                <div class="animate-page-in">{@render children()}</div>
+            {/key}
+        </main>
+        <OverlayScrollbar viewport={scroller} inset={24} />
+        <Island docked />
+    </div>
 
     {#if details.content}
         {#if mobile.current}
@@ -289,12 +385,12 @@
                 aria-label="Resize panel"
                 aria-valuemin={DETAILS.min}
                 aria-valuenow={detailsWidth}
-                class="group fixed inset-y-2 right-(--details) z-30 flex w-2 cursor-col-resize justify-center"
+                class="group flex w-2 shrink-0 cursor-col-resize justify-center"
                 onpointerdown={resizeDetails}
             >
                 <span class="h-full w-1 rounded-full transition-colors duration-200 group-hover:bg-mist-400 group-active:bg-mist-400"></span>
             </div>
-            <aside aria-label={details.title} class="fixed inset-y-2 right-2 z-30 flex w-[calc(var(--details)-0.5rem)] flex-col bg-surface-1">
+            <aside aria-label={details.title} class="flex w-[calc(var(--details)-0.5rem)] shrink-0 flex-col">
                 {#key details.key}
                     <div class="flex min-h-0 flex-1 animate-panel-in flex-col">
                         <div class="flex items-center gap-4 py-2 pr-2 pl-4">
@@ -303,14 +399,19 @@
                                 ><MaterialSymbolsCloseRounded /></Button
                             >
                         </div>
-                        <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">{@render details.content()}</div>
+                        <div class="relative min-h-0 flex-1">
+                            <div bind:this={detailsScroller} class="size-full overflow-y-auto overscroll-contain p-4">
+                                {@render details.content()}
+                            </div>
+                            <OverlayScrollbar viewport={detailsScroller} />
+                        </div>
                     </div>
                 {/key}
             </aside>
         {/if}
     {/if}
 
-    <nav aria-label="Dashboard" class="fixed inset-x-0 bottom-0 z-30 bg-surface-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:hidden">
+    <nav aria-label="Dashboard" class="shrink-0 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:hidden">
         <div class="flex scrollbar-none overflow-x-auto">
             <div class="flex w-max min-w-full items-center justify-evenly gap-2 px-4">
                 <Popup

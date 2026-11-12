@@ -21,7 +21,7 @@ export const liveStatus = query.live(() => {
 });
 
 type Base = { client: typeof bot; path: { guild_id: string }; headers: { "x-actor-id": string } };
-type Result = { data?: { message: string }; error?: unknown; response?: Response };
+type Result = { data?: sdk.Done; error?: unknown; response?: Response };
 
 function control<Input extends z.ZodObject<{ guild: typeof guildId }>>(
     input: Input,
@@ -30,7 +30,7 @@ function control<Input extends z.ZodObject<{ guild: typeof guildId }>>(
     return command(input, async (args) => {
         const { guild, ...body } = args as z.output<Input>;
         const result = await send(body, { client: bot, path: { guild_id: guild }, headers: { "x-actor-id": actor() } });
-        if (result.data) return result.data.message;
+        if (result.data) return { message: result.data.message, note: result.data.note ?? null };
         refused(result);
     });
 }
@@ -41,16 +41,19 @@ export const eqPresets = query(guildId, async (guild) => {
     return data;
 });
 
-export const searchMusic = query(forGuild.extend({ query: z.string().min(1).max(500) }), async ({ guild, query }) => {
-    const { data } = await sdk.searchMusic({
-        client: bot,
-        path: { guild_id: guild },
-        headers: { "x-actor-id": actor() },
-        query: { q: query },
-    });
-    if (!data) error(503, "Search isn't available right now");
-    return data;
-});
+export const searchMusic = query(
+    forGuild.extend({ query: z.string().min(1).max(500), source: schema.zSearchMusicQuery.shape.source }),
+    async ({ guild, query, source }) => {
+        const { data } = await sdk.searchMusic({
+            client: bot,
+            path: { guild_id: guild },
+            headers: { "x-actor-id": actor() },
+            query: { q: query, source },
+        });
+        if (!data) error(503, "Search isn't available right now");
+        return data;
+    },
+);
 
 export const playQuery = control(schema.zPlayQuery.extend(forGuild.shape), (body, base) => sdk.playQuery({ ...base, body }));
 export const replayTrack = control(schema.zQueuedTrack.extend(forGuild.shape), (body, base) => sdk.replayTrack({ ...base, body }));

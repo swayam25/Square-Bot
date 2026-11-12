@@ -142,6 +142,7 @@
     --animate-grow: grow 400ms var(--ease-smooth) both;
     --animate-panel-in: panel-in 200ms cubic-bezier(0.33, 1, 0.68, 1) both;
     --animate-nudge: nudge 400ms ease-out;
+    --animate-shell-in: shell-in 500ms var(--ease-smooth) backwards;
 
     @keyframes fade-in {
         from {
@@ -191,6 +192,12 @@
             opacity: 0;
         }
     }
+    @keyframes shell-in {
+        from {
+            opacity: 0;
+            scale: 0.98;
+        }
+    }
     @keyframes nudge {
         20% {
             translate: -8px 0;
@@ -230,9 +237,10 @@
         @apply bg-mist-950 font-sans text-mist-100 antialiased;
     }
 
-    /* Mouse users get `PageScrollbar.svelte` instead. Touch screens keep their native overlay scrollbar */
+    /* Mouse users get `PageScrollbar.svelte` and `ui/OverlayScrollbar.svelte` instead. Touch screens keep their native overlay scrollbar */
     @media (pointer: fine) {
-        html {
+        html,
+        [data-overlay-scrollbar] {
             scrollbar-width: none;
         }
     }
@@ -260,6 +268,54 @@
 @layer components {
     .lc-tooltip-container[data-variant="default"] {
         @apply rounded-2xl bg-surface-2 px-4 py-2 font-mono text-xs shadow-2xl shadow-black/50 backdrop-blur-none;
+    }
+}
+
+/* A sideways strip fades out on whichever side has more to scroll to, driven by its own scroll position.
+   Browsers without scroll-driven animations just show the strip unfaded. */
+@property --fade-l {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+}
+@property --fade-r {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+}
+@keyframes edge-fade-l {
+    from {
+        --fade-l: 0;
+    }
+    to {
+        --fade-l: 1;
+    }
+}
+@keyframes edge-fade-r {
+    from {
+        --fade-r: 1;
+    }
+    to {
+        --fade-r: 0;
+    }
+}
+@supports (animation-timeline: scroll()) {
+    .edge-fade-x {
+        --fade-size: 2rem;
+        mask-image: linear-gradient(
+            to right,
+            transparent,
+            #000 calc(var(--fade-size) * var(--fade-l)),
+            #000 calc(100% - var(--fade-size) * var(--fade-r)),
+            transparent
+        );
+        animation:
+            edge-fade-l linear both,
+            edge-fade-r linear both;
+        animation-timeline: scroll(self inline), scroll(self inline);
+        animation-range:
+            0 var(--fade-size),
+            calc(100% - var(--fade-size)) 100%;
     }
 }
 

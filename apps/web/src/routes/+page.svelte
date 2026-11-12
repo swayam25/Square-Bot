@@ -2,10 +2,12 @@
     import swayamAvatar from "#lib/assets/discord/swayam.webp";
     import square from "#lib/assets/square.svg";
     import { openLoginPopup } from "#lib/auth.ts";
+    import BrandIcon from "#lib/components/BrandIcon.svelte";
     import DiscordMedia from "#lib/components/discord/DiscordMedia.svelte";
     import DiscordMessage from "#lib/components/discord/DiscordMessage.svelte";
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
     import InviteCard from "#lib/components/discord/InviteCard.svelte";
+    import Mention from "#lib/components/discord/Mention.svelte";
     import NowPlayingCard from "#lib/components/discord/NowPlayingCard.svelte";
     import PlayerPreview from "#lib/components/PlayerPreview.svelte";
     import SiteFooter from "#lib/components/SiteFooter.svelte";
@@ -22,7 +24,6 @@
     import MaterialSymbolsTuneRounded from "~icons/material-symbols/tune-rounded";
     import SimpleIconsDiscord from "~icons/simple-icons/discord";
     import SimpleIconsGithub from "~icons/simple-icons/github";
-    import SimpleIconsYoutube from "~icons/simple-icons/youtube";
     import type { PageProps } from "./$types";
 
     let { data }: PageProps = $props();
@@ -74,8 +75,8 @@
             ink: "text-mist-100",
         },
         {
-            name: "Settings anywhere",
-            text: "Change everything from /settings in Discord or from the dashboard. Both stay in sync.",
+            name: "Web dashboard",
+            text: dashboardText,
             icon: MaterialSymbolsTuneRounded,
             lobes: 7,
             fill: "text-violet-500/20",
@@ -83,6 +84,10 @@
         },
     ];
 </script>
+
+{#snippet dashboardText()}
+    Every setting lives on the web dashboard, and <Mention kind="command" name="settings" /> in Discord links straight to it.
+{/snippet}
 
 <svelte:head>
     <title>Square · Advanced multipurpose Discord bot</title>
@@ -164,7 +169,9 @@
                             </span>
                             <div class="flex flex-col gap-2">
                                 <h3 class="font-display text-lg font-semibold">{feature.name}</h3>
-                                <p class="text-sm text-mist-400">{feature.text}</p>
+                                <p class="text-sm text-mist-400">
+                                    {#if typeof feature.text === "string"}{feature.text}{:else}{@render feature.text()}{/if}
+                                </p>
                             </div>
                         </li>
                     {/each}
@@ -217,7 +224,7 @@
                     <DiscordMessage command="play">
                         <div class={[discordContainer, "border-l-4 border-l-[#e74c3c]"]}>
                             <p>
-                                <SimpleIconsYoutube aria-label=":youtube:" class={[discordEmoji, "text-[#ff0000]"]} /> Added
+                                <BrandIcon brand="youtube" class={discordEmoji} /> Added
                                 <span class="text-[#4d96ee]"><strong>{demo.track.title}</strong> by <strong>{demo.track.author}</strong></span>
                                 [{time(demo.track.duration)}].
                             </p>
@@ -253,7 +260,7 @@
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <span class={[discordButton, "border border-[#97979f]/4 bg-[#97979f]/12"]}>
-                                <SimpleIconsYoutube class="size-4.5 text-[#ff0000]" />Open on YouTube
+                                <BrandIcon brand="youtube" class="size-4.5" />Open on YouTube
                                 <svg
                                     viewBox="0 0 24 24"
                                     aria-hidden="true"

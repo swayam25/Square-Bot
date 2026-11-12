@@ -33,6 +33,7 @@
 </script>
 
 <script lang="ts">
+    import BrandIcon, { brandOf } from "#lib/components/BrandIcon.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
@@ -46,18 +47,10 @@
     import MaterialSymbolsSensorsRounded from "~icons/material-symbols/sensors-rounded";
     import MaterialSymbolsShuffleRounded from "~icons/material-symbols/shuffle-rounded";
     import MaterialSymbolsVolumeUpRounded from "~icons/material-symbols/volume-up-rounded";
-    import SimpleIconsSoundcloud from "~icons/simple-icons/soundcloud";
-    import SimpleIconsSpotify from "~icons/simple-icons/spotify";
-    import SimpleIconsYoutube from "~icons/simple-icons/youtube";
 
     let { data }: { data: NowPlaying } = $props();
 
-    const logos: Record<string, { icon: typeof SimpleIconsYoutube; class: string }> = {
-        youtube: { icon: SimpleIconsYoutube, class: "text-[#ff0000]" },
-        spotify: { icon: SimpleIconsSpotify, class: "text-[#1ed760]" },
-        soundcloud: { icon: SimpleIconsSoundcloud, class: "text-[#ff5500]" },
-    };
-    const logo = $derived(logos[data.source]);
+    const logo = $derived(brandOf(data.source));
     const looping = $derived(data.loop !== "Disabled");
     const filters = $derived.by(() => {
         const shown = data.filters.slice(0, FILTERS_SHOWN).join(" · ");
@@ -89,7 +82,7 @@
                     <Chip tone="accent"><MaterialSymbolsPauseRounded />Playing</Chip>
                 {/if}
                 <Chip>
-                    {#if logo}<logo.icon class={logo.class} />{:else}<MaterialSymbolsMusicNoteRounded />{/if}
+                    {#if logo}<BrandIcon brand={logo} class="size-4" />{:else}<MaterialSymbolsMusicNoteRounded />{/if}
                     {LABELS[data.source] ?? (data.source ? data.source[0].toUpperCase() + data.source.slice(1) : "Music")}
                 </Chip>
             </div>

@@ -1,6 +1,8 @@
 <script lang="ts">
     import Button from "#lib/components/ui/Button.svelte";
+    import { MODULE_OFF } from "#lib/modules.ts";
     import { page } from "$app/state";
+    import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
     import MaterialSymbolsHomeRounded from "~icons/material-symbols/home-rounded";
     import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
 
@@ -9,6 +11,7 @@
         401: ["Log in first", "This page needs you to be logged in with Discord."],
         403: ["Not for you", "You don't have access to this. Ask a server manager if you think you should."],
         404: ["Page not found", "This page doesn't exist, or it moved."],
+        [MODULE_OFF]: ["Module turned off", "A server manager turned this part of Square off."],
         503: ["Square is offline", "The bot isn't answering right now. It's usually back in a minute."],
     };
 
@@ -29,7 +32,9 @@
         <p class="text-base text-mist-400">{detail}</p>
     </div>
     <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-        {#if retryable}
+        {#if status === MODULE_OFF && page.params.guildId}
+            <Button variant="primary" href="/guild/{page.params.guildId}"><MaterialSymbolsDashboardRounded />Open Overview</Button>
+        {:else if retryable}
             <Button variant="primary" onclick={() => location.reload()}><MaterialSymbolsRefreshRounded />Try again</Button>
             <Button href="/"><MaterialSymbolsHomeRounded />Go home</Button>
         {:else}

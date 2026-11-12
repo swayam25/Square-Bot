@@ -14,6 +14,7 @@
         triggerClass,
         children,
         footer,
+        dismissable = true,
     }: {
         open?: boolean;
         title: string;
@@ -22,13 +23,14 @@
         triggerClass?: ClassValue;
         children: Snippet;
         footer?: Snippet;
+        dismissable?: boolean;
     } = $props();
 </script>
 
 {#if mobile.current}
-    <Drawer bind:open {title} {description} {trigger} {triggerClass} {children} {footer} />
+    <Drawer bind:open {title} {description} {trigger} {triggerClass} {children} {footer} {dismissable} />
 {:else}
-    <Dialog.Root bind:open>
+    <Dialog.Root bind:open closeOnEscape={dismissable} closeOnInteractOutside={dismissable}>
         {#if trigger}
             <Dialog.Trigger class={triggerClass}>{@render trigger()}</Dialog.Trigger>
         {/if}
