@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main, rebuild]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, check and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/bot/uv.lock
+
+      - name: Install
+        run: |
+          pnpm install --frozen-lockfile
+          uv --directory apps/bot sync --frozen
+          cp apps/bot/config.example.toml apps/bot/config.toml
+
+      - name: Format
+        run: pnpm run format:check
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Type check
+        run: pnpm run check
+
+      - name: API client is up to date
+        run: |
+          pnpm run generate
+          git diff --exit-code -- packages/api-client
+
+      - name: Build
+        run: pnpm run build
+
+  docker:
+    name: Docker (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: bot
+            context: apps/bot
+            file: apps/bot/Dockerfile
+            target: ""
+          - name: web
+            context: .
+            file: apps/web/Dockerfile
+            target: web
+          - name: caddy
+            context: .
+            file: apps/web/Dockerfile
+            target: proxy
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          target: ${{ matrix.target }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

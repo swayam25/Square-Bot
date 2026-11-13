@@ -1,3 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+allowBuilds:
+  # Its install script only sets up the git hooks from lefthook.yml
+  lefthook: true

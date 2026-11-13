@@ -1,0 +1,24 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: ruff
+      root: apps/bot/
+      glob: "*.py"
+      run: uv run ruff check --fix {staged_files} && uv run ruff format {staged_files}
+      stage_fixed: true
+
+    - name: uv lock
+      root: apps/bot/
+      glob: "pyproject.toml"
+      run: uv lock
+      stage_fixed: true
+
+    - name: prettier
+      glob: "*.{js,ts,svelte,css,json,html,yml,yaml}"
+      run: pnpm exec prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+
+    - name: eslint
+      root: apps/web/
+      glob: "*.{js,ts,svelte}"
+      run: pnpm exec eslint {staged_files}

@@ -13,6 +13,7 @@
     },
     "devDependencies": {
         "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
+        "lefthook": "^2.2.2",
         "prettier": "^3.9.10",
         "prettier-plugin-svelte": "^4.1.1",
         "prettier-plugin-tailwindcss": "^0.8.1",
