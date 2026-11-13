@@ -7,10 +7,56 @@ x-logging: &logging
     max-file: "3"
 
 services:
+  caddy:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: proxy
+    image: square/caddy:latest
+    container_name: square
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_healthy
+    expose:
+      - "80"
+    networks: [default, edge]
+    read_only: true
+    tmpfs:
+      - /data
+      - /config
+    logging: *logging
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: web
+    image: square/web:latest
+    restart: unless-stopped
+    env_file: apps/web/.env.production
+    environment:
+      BOT_API_URL: http://bot:8080
+      REDIS_URL: redis://redis:6379
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
+    depends_on:
+      redis:
+        condition: service_healthy
+      bot:
+        condition: service_started
+    read_only: true
+    tmpfs:
+      - /tmp
+    logging: *logging
+
   bot:
     build:
       context: apps/bot
+    image: square/bot:latest
     restart: unless-stopped
+    environment:
+      API_HOST: 0.0.0.0
     depends_on:
       db:
         condition: service_healthy
@@ -20,7 +66,7 @@ services:
     logging: *logging
 
   db:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:f377d590e5474681d4d7838635031a2b50647923b7abfa803ce9b5ff35d5c663
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -35,5 +81,24 @@ services:
       retries: 5
     logging: *logging
 
+  redis:
+    image: redis:8-alpine@sha256:7958cfbb9d152f87dadfbc89f1b0b15938f0b81ff8982feb327476f4911935c3
+    restart: unless-stopped
+    # Sessions live here, so writes go to an append-only file and survive a restart
+    command: ["redis-server", "--appendonly", "yes", "--save", ""]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *logging
+
 volumes:
   postgres_data:
+  redis_data:
+
+networks:
+  edge:
+    external: true

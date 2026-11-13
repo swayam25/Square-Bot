@@ -89,7 +89,10 @@ bot_token: str = _config.bot_token
 db_url: str = _resolve_db_url(_config.database_url)
 log_level: str = _config.log_level
 log_file: bool = _config.log_file
-api: ApiConfig | None = _config.api
+# Docker sets this, since the API has to listen beyond the container's own loopback there
+api: ApiConfig | None = (
+    msgspec.structs.replace(_config.api, host=host) if _config.api and (host := os.getenv("API_HOST")) else _config.api
+)
 
 color = ColorConfig(
     **{key: int(value.lstrip("#"), 16) for key, value in msgspec.structs.asdict(_config.colors).items()}

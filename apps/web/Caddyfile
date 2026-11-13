@@ -1,0 +1,60 @@
+{
+	admin off
+	# TLS ends at the proxy in front of this container
+	auto_https off
+	servers {
+		trusted_proxies static private_ranges
+		client_ip_headers X-Forwarded-For
+	}
+}
+
+:80 {
+	log
+	log_skip /healthz
+
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Strict-Transport-Security "max-age=31536000"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		Cross-Origin-Opener-Policy same-origin
+	}
+
+	handle /healthz {
+		respond "ok" 200
+	}
+
+	# Hashed build files never change, so they come off disk with their precompressed twins and cache forever
+	handle /_app/immutable/* {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server {
+			precompressed br gzip
+		}
+	}
+
+	handle {
+		# Listed by type so live queries (text/event-stream) never sit in a compression buffer
+		encode zstd gzip {
+			match {
+				header Content-Type text/html*
+				header Content-Type text/plain*
+				header Content-Type text/css*
+				header Content-Type text/javascript*
+				header Content-Type application/javascript*
+				header Content-Type application/json*
+				header Content-Type image/svg+xml*
+			}
+		}
+		reverse_proxy web:3000 {
+			flush_interval -1
+		}
+	}
+
+	handle_errors {
+		# Headers set for the request carry over to its error. A missing chunk must not be cached as immutable
+		header -Cache-Control
+		respond "{err.status_code} {err.status_text}" {err.status_code}
+	}
+}

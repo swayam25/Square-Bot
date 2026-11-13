@@ -1,0 +1,17 @@
+**/node_modules
+**/build
+**/.svelte-kit
+**/.turbo
+**/*.log
+**/.DS_Store
+
+**/.env
+**/.env.*
+!**/.env.example
+
+.git
+.github
+.vscode
+apps/bot/.venv
+apps/bot/.cache
+apps/bot/config.toml

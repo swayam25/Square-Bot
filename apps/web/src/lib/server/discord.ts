@@ -21,7 +21,8 @@ const as: oauth.AuthorizationServer = {
     authorization_response_iss_parameter_supported: true,
 };
 const client: oauth.Client = { client_id: DISCORD_CLIENT_ID };
-const clientAuth = oauth.ClientSecretBasic(DISCORD_CLIENT_SECRET);
+// Built per call, since builds load this module without any secrets set
+const clientAuth: oauth.ClientAuth = (...args) => oauth.ClientSecretBasic(DISCORD_CLIENT_SECRET)(...args);
 
 export function authorizationUrl(redirectUri: string, state: string, codeChallenge: string) {
     const url = new URL(OAuth2Routes.authorizationURL);

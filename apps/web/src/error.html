@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Square is having trouble</title>
+        <!-- Shown when the app itself can't render, e.g. Redis is down. It can't load the app's CSS or fonts, so it's all inline -->
+        <style>
+            :root {
+                color-scheme: dark;
+                --page: #030712;
+                --text: #f3f4f6;
+                --muted: #9ca3af;
+                --accent: #1fceec;
+                --on-accent: oklch(30.2% 0.056 229.695);
+                --surface: #1f2937;
+            }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+            }
+            body {
+                display: grid;
+                min-height: 100dvh;
+                place-items: center;
+                padding: 64px 16px;
+                background: var(--page);
+                color: var(--text);
+                font-family: system-ui, sans-serif;
+                text-align: center;
+                -webkit-font-smoothing: antialiased;
+            }
+            main {
+                display: flex;
+                max-width: 36rem;
+                flex-direction: column;
+                align-items: center;
+                gap: 32px;
+            }
+            .status {
+                color: var(--accent);
+                font:
+                    500 48px/1 ui-monospace,
+                    monospace;
+                letter-spacing: -0.025em;
+            }
+            h1 {
+                font-size: 30px;
+                font-weight: 600;
+                letter-spacing: -0.025em;
+            }
+            p {
+                margin-top: 8px;
+                color: var(--muted);
+                font-size: 16px;
+                line-height: 1.5;
+            }
+            .actions {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+            }
+            a {
+                display: inline-flex;
+                height: 40px;
+                align-items: center;
+                border-radius: 9999px;
+                padding: 0 16px;
+                background: var(--surface);
+                color: inherit;
+                font-size: 14px;
+                font-weight: 500;
+                text-decoration: none;
+            }
+            a.primary {
+                background: var(--accent);
+                color: var(--on-accent);
+                font-weight: 600;
+            }
+            a:focus-visible {
+                outline: 2px solid var(--accent);
+                outline-offset: 2px;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <span class="status">%sveltekit.status%</span>
+            <div>
+                <h1>Square is having trouble</h1>
+                <p>Something on our side isn't answering right now. It's usually back in a minute.</p>
+            </div>
+            <div class="actions">
+                <a class="primary" href="">Try again</a>
+                <a href="/">Go home</a>
+            </div>
+        </main>
+    </body>
+</html>

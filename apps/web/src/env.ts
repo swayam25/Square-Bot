@@ -19,7 +19,7 @@ export const variables = defineEnvVars({
         }),
     },
     REDIS_URL: {
-        description: "Redis connection URL, e.g. redis://localhost:6379",
+        description: "Redis connection URL, e.g. redis://127.0.0.1:6379",
         schema: runtime((value) => {
             if (!value || !/^rediss?:\/\//.test(value)) throw new Error("must start with redis:// or rediss://");
             return value;

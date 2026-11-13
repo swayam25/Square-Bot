@@ -1,3 +1,4 @@
+import { building } from "$app/env";
 import { REDIS_URL } from "$app/env/private";
 import { createClient } from "@redis/client";
 
@@ -15,8 +16,11 @@ export const redis = createClient({
     },
 }).on("error", (err) => console.error("Redis error:", err));
 
-await redis.connect();
-connected = true;
+// Builds load this module to analyse routes, with no Redis around
+if (!building) {
+    await redis.connect();
+    connected = true;
+}
 
 // An open socket keeps Node alive, so a SIGTERM would otherwise wait for the shutdown timeout
 process.once("sveltekit:shutdown", () => redis.close());

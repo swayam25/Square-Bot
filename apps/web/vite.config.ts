@@ -14,6 +14,25 @@ export default defineConfig({
                 runes: ({ filename }) => (filename.split(/[/\\]/).includes("node_modules") ? undefined : true),
             },
             adapter: adapter(),
+            csp: {
+                mode: "auto",
+                directives: {
+                    "default-src": ["self"],
+                    "script-src": ["self"],
+                    // Svelte transitions and `style:` directives write inline styles
+                    "style-src": ["self", "unsafe-inline"],
+                    // Covers and avatars come from Discord and every music service's CDN
+                    "img-src": ["self", "data:", "blob:", "https:"],
+                    "media-src": ["self"],
+                    "font-src": ["self", "data:"],
+                    "connect-src": ["self"],
+                    "frame-src": ["https://www.youtube-nocookie.com"],
+                    "frame-ancestors": ["none"],
+                    "form-action": ["self"],
+                    "base-uri": ["self"],
+                    "object-src": ["none"],
+                },
+            },
             experimental: { remoteFunctions: true },
         }),
     ],
