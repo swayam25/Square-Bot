@@ -15,10 +15,10 @@ def blend(color: RGB, alpha: float, base: RGB) -> RGB:
 
 
 WHITE: RGB = rgb(0xFFFFFF)
-MIST_950: RGB = rgb(0x090B0C)
-MIST_400: RGB = rgb(0x9CA8AB)
-MIST_300: RGB = rgb(0xD0D6D8)
-MIST_100: RGB = rgb(0xF1F3F3)
+GRAY_950: RGB = rgb(0x030712)
+GRAY_400: RGB = rgb(0x9CA3AF)
+GRAY_300: RGB = rgb(0xD1D5DB)
+GRAY_100: RGB = rgb(0xF3F4F6)
 CYAN_950: RGB = rgb(0x053345)
 CYAN_300: RGB = rgb(0x53EAFD)
 VIOLET_500: RGB = rgb(0x8E51FF)
@@ -27,9 +27,9 @@ ORANGE_300: RGB = rgb(0xFFB86A)
 EMERALD_400: RGB = rgb(0x00D492)
 AMBER_400: RGB = rgb(0xFFB900)
 RED_400: RGB = rgb(0xFF6467)
-SURFACE_1: RGB = rgb(0x0E1214)
-SURFACE_2: RGB = rgb(0x151A1C)
-SURFACE_3: RGB = rgb(0x1D2426)
+SURFACE_1: RGB = rgb(0x111827)
+SURFACE_2: RGB = rgb(0x1F2937)
+SURFACE_3: RGB = rgb(0x374151)
 AVATAR_FILLS: tuple[RGB, ...] = tuple(
     rgb(value)
     for value in (
@@ -51,12 +51,12 @@ class Theme:
     success: RGB = EMERALD_400
     warning: RGB = AMBER_400
     danger: RGB = RED_400
-    bg: RGB = MIST_950
+    bg: RGB = GRAY_950
     surface: RGB = SURFACE_1
     surface_2: RGB = SURFACE_2
     surface_3: RGB = SURFACE_3
-    text: RGB = MIST_100
-    muted: RGB = MIST_400
+    text: RGB = GRAY_100
+    muted: RGB = GRAY_400
     on_accent: RGB = CYAN_950
     accent_ink: RGB = CYAN_300
     violet: RGB = VIOLET_500

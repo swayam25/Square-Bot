@@ -4,7 +4,7 @@ import zlib
 from functools import lru_cache
 from PIL import Image
 from square.imaging.layout import Box, Column, Expand, Node, Picture, Progress, Row, Spacer, SplitBar, Text
-from square.imaging.theme import AVATAR_FILLS, MIST_950, RGB, WHITE, Theme
+from square.imaging.theme import AVATAR_FILLS, GRAY_950, RGB, WHITE, Theme
 from square.imaging.tokens import Radius, TextStyle, Type
 from square.utils.emoji import EMOJI_DIR
 from typing import Literal
@@ -101,7 +101,7 @@ class Kit:
         fill = AVATAR_FILLS[zlib.crc32(name.encode()) % len(AVATAR_FILLS)]
         style = style or (Type.XS_SEMIBOLD if size <= 32 else Type.XL_SEMIBOLD)
         return Box(
-            Text(initial(name), style, MIST_950, align="center"),
+            Text(initial(name), style, GRAY_950, align="center"),
             fill=fill,
             radius=Radius.FULL,
             width=size,

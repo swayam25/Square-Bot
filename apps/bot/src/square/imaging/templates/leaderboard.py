@@ -2,7 +2,7 @@ import msgspec
 from square.imaging.canvas import open_image, text_width
 from square.imaging.components import Kit
 from square.imaging.layout import Box, Column, Expand, Fill, Node, Row, Spacer
-from square.imaging.theme import MIST_300, ORANGE_300, RGB
+from square.imaging.theme import GRAY_300, ORANGE_300, RGB
 from square.imaging.tokens import Radius, Type
 from square.utils.helpers import fmt_count
 
@@ -32,7 +32,7 @@ _STEPS = {1: 144, 2: 120, 3: 96}
 
 
 def _podium_ink(ui: Kit, rank: int) -> RGB:
-    return {1: ui.theme.warning, 2: MIST_300, 3: ORANGE_300}[rank]
+    return {1: ui.theme.warning, 2: GRAY_300, 3: ORANGE_300}[rank]
 
 
 def _place(ui: Kit, inviter: Inviter) -> Node:
