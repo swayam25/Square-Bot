@@ -3,6 +3,49 @@
 import * as z from "zod";
 
 /**
+ * ActivityDay
+ */
+export const zActivityDay = z.object({
+    date: z.string(),
+    ticketsOpened: z.int(),
+    ticketsClosed: z.int(),
+    invited: z.int(),
+    left: z.int(),
+});
+
+/**
+ * Activity
+ */
+export const zActivity = z.object({
+    days: z.array(zActivityDay),
+});
+
+/**
+ * AutoroleUserPatch
+ */
+export const zAutoroleUserPatch = z.object({
+    userId: z.string().regex(/^\d{17,20}$/),
+    roleIds: z.array(z.string()).min(1).max(10),
+});
+
+/**
+ * Bonus
+ */
+export const zBonus = z.object({
+    userId: z.string().regex(/^\d{17,20}$/),
+    bonus: z.int(),
+});
+
+/**
+ * BonusChange
+ */
+export const zBonusChange = z.object({
+    userIds: z.array(z.string()).min(1).max(100),
+    amount: z.int().gte(-100000).lte(100000),
+    mode: z.enum(["add", "set"]),
+});
+
+/**
  * Channel
  */
 export const zChannel = z.object({
@@ -43,16 +86,11 @@ export const zEqToggle = z.object({
  * GeneralPatch
  */
 export const zGeneralPatch = z.object({
-    autoroleId: z.string().nullish(),
+    autoroleIds: z.array(z.string()).max(10).optional(),
+    autoroleBotIds: z.array(z.string()).max(10).optional(),
+    autoroleSplit: z.boolean().optional(),
+    autoroleUsers: z.array(zAutoroleUserPatch).max(50).optional(),
     mediaOnlyChannelId: z.string().nullish(),
-});
-
-/**
- * GeneralSettings
- */
-export const zGeneralSettings = z.object({
-    autoroleId: z.string().nullable(),
-    mediaOnlyChannelId: z.string().nullable(),
 });
 
 /**
@@ -219,6 +257,75 @@ export const zPerson = z.object({
 });
 
 /**
+ * AutoroleUser
+ */
+export const zAutoroleUser = z.object({
+    user: zPerson,
+    member: z.boolean(),
+    roleIds: z.array(z.string()),
+});
+
+/**
+ * GeneralSettings
+ */
+export const zGeneralSettings = z.object({
+    autoroleIds: z.array(z.string()),
+    autoroleBotIds: z.array(z.string()),
+    autoroleSplit: z.boolean(),
+    autoroleUsers: z.array(zAutoroleUser),
+    mediaOnlyChannelId: z.string().nullable(),
+});
+
+/**
+ * InviteEntry
+ */
+export const zInviteEntry = z.object({
+    rank: z.int(),
+    user: zPerson,
+    regular: z.int(),
+    left: z.int(),
+    fake: z.int(),
+    bonus: z.int(),
+    total: z.int(),
+});
+
+/**
+ * InviteBoard
+ */
+export const zInviteBoard = z.object({
+    entries: z.array(zInviteEntry),
+    page: z.int(),
+    pages: z.int(),
+    people: z.int(),
+});
+
+/**
+ * Invitee
+ */
+export const zInvitee = z.object({
+    user: zPerson,
+    joinedAt: z.int(),
+    left: z.boolean(),
+    fake: z.boolean(),
+});
+
+/**
+ * InviteProfile
+ */
+export const zInviteProfile = z.object({
+    rank: z.int().nullable(),
+    user: zPerson,
+    member: z.boolean(),
+    regular: z.int(),
+    left: z.int(),
+    fake: z.int(),
+    bonus: z.int(),
+    total: z.int(),
+    invitedBy: zPerson.nullable(),
+    invitees: z.array(zInvitee),
+});
+
+/**
  * PlayQuery
  */
 export const zPlayQuery = z.object({
@@ -238,6 +345,13 @@ export const zPlaylistInfo = z.object({
  */
 export const zProblem = z.object({
     detail: z.string(),
+});
+
+/**
+ * Purged
+ */
+export const zPurged = z.object({
+    removed: z.int(),
 });
 
 /**
@@ -309,12 +423,61 @@ export const zSkipVote = z.object({
 });
 
 /**
+ * TicketDetail
+ */
+export const zTicketDetail = z.object({
+    number: z.int(),
+    label: z.string(),
+    status: z.enum(["open", "closed", "deleted"]),
+    channelId: z.string().nullable(),
+    channelName: z.string().nullable(),
+    opener: zPerson,
+    claimedBy: zPerson.nullable(),
+    reason: z.string(),
+    createdAt: z.int(),
+    closedAt: z.int().nullable(),
+    messages: z.int().nullable(),
+    closedBy: zPerson.nullable(),
+    people: z.array(zPerson),
+});
+
+/**
+ * TicketEntry
+ */
+export const zTicketEntry = z.object({
+    number: z.int(),
+    label: z.string(),
+    status: z.enum(["open", "closed", "deleted"]),
+    channelId: z.string().nullable(),
+    channelName: z.string().nullable(),
+    opener: zPerson,
+    claimedBy: zPerson.nullable(),
+    reason: z.string(),
+    createdAt: z.int(),
+    closedAt: z.int().nullable(),
+    messages: z.int().nullable(),
+});
+
+/**
+ * TicketPage
+ */
+export const zTicketPage = z.object({
+    entries: z.array(zTicketEntry),
+    page: z.int(),
+    pages: z.int(),
+    total: z.int(),
+    open: z.int(),
+    closed: z.int(),
+    deleted: z.int(),
+});
+
+/**
  * TicketPatch
  */
 export const zTicketPatch = z.object({
     categoryId: z.string().nullish(),
     supportRoleIds: z.array(z.string()).max(10).optional(),
-    maxOpen: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(5)]).optional(),
+    maxOpen: z.int().gte(1).lte(25).optional(),
     confirmClose: z.boolean().optional(),
 });
 
@@ -324,7 +487,7 @@ export const zTicketPatch = z.object({
 export const zTicketSettings = z.object({
     categoryId: z.string().nullable(),
     supportRoleIds: z.array(z.string()),
-    maxOpen: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(5)]),
+    maxOpen: z.int().gte(1).lte(25),
     confirmClose: z.boolean(),
     panelChannelId: z.string().nullable(),
 });
@@ -379,12 +542,191 @@ export const zTrackFailure = z.object({
 });
 
 /**
+ * TranscriptCommand
+ */
+export const zTranscriptCommand = z.object({
+    name: z.string(),
+    user: z.string(),
+});
+
+/**
+ * TranscriptEmoji
+ */
+export const zTranscriptEmoji = z.object({
+    name: z.string(),
+    id: z.string().optional().default(""),
+    animated: z.boolean().optional().default(false),
+});
+
+/**
+ * TranscriptField
+ */
+export const zTranscriptField = z.object({
+    name: z.string(),
+    value: z.string(),
+    inline: z.boolean().optional().default(false),
+});
+
+/**
+ * TranscriptEmbed
+ */
+export const zTranscriptEmbed = z.object({
+    color: z.string().optional().default(""),
+    author: z.string().optional().default(""),
+    authorIcon: z.string().optional().default(""),
+    title: z.string().optional().default(""),
+    url: z.string().optional().default(""),
+    description: z.string().optional().default(""),
+    fields: z.array(zTranscriptField).optional(),
+    image: z.string().optional().default(""),
+    thumbnail: z.string().optional().default(""),
+    footer: z.string().optional().default(""),
+    footerIcon: z.string().optional().default(""),
+    time: z.int().nullish(),
+    media: z.enum(["", "image", "video"]).optional().default(""),
+    mediaUrl: z.string().optional().default(""),
+});
+
+/**
+ * TranscriptFile
+ */
+export const zTranscriptFile = z.object({
+    name: z.string(),
+    url: z.string(),
+    id: z.string().optional().default(""),
+    size: z.int().optional().default(0),
+    kind: z.enum(["image", "video", "audio", "file"]).optional().default("file"),
+    width: z.int().nullish(),
+    height: z.int().nullish(),
+    stored: z.boolean().optional().default(false),
+});
+
+/**
+ * TranscriptComponent
+ */
+export const zTranscriptComponent = z.object({
+    kind: z.enum(["container", "text", "section", "thumbnail", "gallery", "file", "separator", "row", "button", "select"]),
+    children: z.array(z.lazy((): any => zTranscriptComponent)).optional(),
+    accessory: z.lazy((): any => zTranscriptComponent).nullish(),
+    text: z.string().optional().default(""),
+    color: z.string().optional().default(""),
+    label: z.string().optional().default(""),
+    emoji: zTranscriptEmoji.nullish(),
+    style: z.enum(["", "primary", "secondary", "success", "danger"]).optional().default(""),
+    url: z.string().optional().default(""),
+    files: z.array(zTranscriptFile).optional(),
+    disabled: z.boolean().optional().default(false),
+    divider: z.boolean().optional().default(false),
+    large: z.boolean().optional().default(false),
+    placeholder: z.boolean().optional().default(false),
+});
+
+/**
+ * TranscriptReaction
+ */
+export const zTranscriptReaction = z.object({
+    emoji: zTranscriptEmoji,
+    count: z.int(),
+});
+
+/**
+ * TranscriptReply
+ */
+export const zTranscriptReply = z.object({
+    id: z.string(),
+    author: z.string(),
+    preview: z.string().optional().default(""),
+    attachment: z.boolean().optional().default(false),
+    ping: z.boolean().optional().default(false),
+});
+
+/**
+ * TranscriptRole
+ */
+export const zTranscriptRole = z.object({
+    name: z.string(),
+    color: z.string().optional().default(""),
+});
+
+/**
+ * TranscriptSticker
+ */
+export const zTranscriptSticker = z.object({
+    name: z.string(),
+    url: z.string(),
+});
+
+/**
+ * TranscriptMessage
+ */
+export const zTranscriptMessage = z.object({
+    id: z.string(),
+    author: z.string(),
+    time: z.int(),
+    content: z.string().optional().default(""),
+    edited: z.boolean().optional().default(false),
+    command: zTranscriptCommand.nullish(),
+    system: z.enum(["", "join", "pin", "boost", "other"]).optional().default(""),
+    reply: zTranscriptReply.nullish(),
+    replyDeleted: z.boolean().optional().default(false),
+    attachments: z.array(zTranscriptFile).optional(),
+    embeds: z.array(zTranscriptEmbed).optional(),
+    components: z.array(zTranscriptComponent).optional(),
+    stickers: z.array(zTranscriptSticker).optional(),
+    reactions: z.array(zTranscriptReaction).optional(),
+});
+
+/**
+ * TranscriptUser
+ */
+export const zTranscriptUser = z.object({
+    name: z.string(),
+    avatar: z.string(),
+    color: z.string().optional().default(""),
+    bot: z.boolean().optional().default(false),
+});
+
+/**
+ * Transcript
+ */
+export const zTranscript = z.object({
+    channel: z.string(),
+    savedAt: z.int(),
+    messages: z.array(zTranscriptMessage),
+    users: z.record(z.string(), zTranscriptUser).optional(),
+    roles: z.record(z.string(), zTranscriptRole).optional(),
+    channels: z.record(z.string(), z.string()).optional(),
+});
+
+/**
+ * TicketTranscript
+ */
+export const zTicketTranscript = z.object({
+    ticket: zTicketDetail,
+    live: z.boolean(),
+    transcript: zTranscript.nullable(),
+});
+
+/**
+ * UserMatch
+ */
+export const zUserMatch = z.object({
+    id: z.string().regex(/^\d{17,20}$/),
+    name: z.string(),
+    username: z.string(),
+    avatarUrl: z.string(),
+    bot: z.boolean(),
+    member: z.boolean(),
+});
+
+/**
  * Viewer
  */
 export const zViewer = z.object({
     dj: z.boolean(),
     inChannel: z.boolean(),
     deafened: z.boolean(),
+    queueLock: z.string().nullish(),
 });
 
 /**
@@ -454,6 +796,23 @@ export const zGuildRolesPath = z.object({
  */
 export const zGuildRolesResponse = z.array(zRole);
 
+export const zSearchMembersHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSearchMembersPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSearchMembersQuery = z.object({
+    q: z.string().min(1).max(100),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zSearchMembersResponse = z.array(zUserMatch);
+
 export const zMemberJoinsHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),
 });
@@ -466,6 +825,19 @@ export const zMemberJoinsPath = z.object({
  * Request fulfilled, document follows
  */
 export const zMemberJoinsResponse = zMemberJoins;
+
+export const zActivityHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zActivityPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zActivityResponse = zActivity;
 
 export const zServerStatsHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),
@@ -790,6 +1162,186 @@ export const zResetAllSettingsPath = z.object({
  * Request fulfilled, document follows
  */
 export const zResetAllSettingsResponse = zNotes;
+
+export const zInviteLeaderboardHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zInviteLeaderboardPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+export const zInviteLeaderboardQuery = z.object({
+    page: z.int().gte(1).lte(10000).optional().default(1),
+    sort: z.enum(["total", "regular", "left", "fake", "bonus"]).optional().default("total"),
+    order: z.enum(["asc", "desc"]).optional().default("desc"),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zInviteLeaderboardResponse = zInviteBoard;
+
+export const zInviteProfileHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zInviteProfilePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    user_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zInviteProfileResponse = zInviteProfile;
+
+export const zChangeBonusBody = zBonusChange;
+
+export const zChangeBonusHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zChangeBonusPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zChangeBonusResponse = z.array(zBonus);
+
+export const zListTicketsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zListTicketsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+export const zListTicketsQuery = z.object({
+    status: z.enum(["open", "closed", "deleted", "all"]).optional().default("open"),
+    q: z.string().nullish(),
+    order: z.enum(["asc", "desc"]).optional().default("desc"),
+    page: z.int().gte(1).lte(100000).optional().default(1),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zListTicketsResponse = zTicketPage;
+
+export const zDeleteTicketHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zDeleteTicketPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    number: z.int().gte(1).lte(10000000),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zDeleteTicketResponse = zTicketDetail;
+
+export const zGetTicketHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGetTicketPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    number: z.int().gte(1).lte(10000000),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGetTicketResponse = zTicketDetail;
+
+export const zCloseTicketHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zCloseTicketPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    number: z.int().gte(1).lte(10000000),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zCloseTicketResponse = zTicketDetail;
+
+export const zReopenTicketHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zReopenTicketPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    number: z.int().gte(1).lte(10000000),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zReopenTicketResponse = zTicketDetail;
+
+export const zPurgeTicketHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zPurgeTicketPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    number: z.int().gte(1).lte(10000000),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zPurgeTicketResponse = zPurged;
+
+export const zPurgeDeletedTicketsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zPurgeDeletedTicketsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zPurgeDeletedTicketsResponse = zPurged;
+
+export const zTicketTranscriptHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zTicketTranscriptPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    number: z.int().gte(1).lte(10000000),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zTicketTranscriptResponse = zTicketTranscript;
+
+export const zTicketFileHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zTicketFilePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    number: z.int().gte(1).lte(10000000),
+    attachment_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zTicketFileResponse = z.string();
 
 export const zMusicPlayerHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

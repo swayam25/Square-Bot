@@ -3,9 +3,18 @@
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from "./client";
 import { client } from "./client.gen";
 import type {
+    ActivityData,
+    ActivityErrors,
+    ActivityResponses,
+    ChangeBonusData,
+    ChangeBonusErrors,
+    ChangeBonusResponses,
     ClearQueueData,
     ClearQueueErrors,
     ClearQueueResponses,
+    CloseTicketData,
+    CloseTicketErrors,
+    CloseTicketResponses,
     CreateRequestChannelData,
     CreateRequestChannelErrors,
     CreateRequestChannelResponses,
@@ -15,6 +24,9 @@ import type {
     DedupeQueueData,
     DedupeQueueErrors,
     DedupeQueueResponses,
+    DeleteTicketData,
+    DeleteTicketErrors,
+    DeleteTicketResponses,
     EqPresetsData,
     EqPresetsErrors,
     EqPresetsResponses,
@@ -33,6 +45,9 @@ import type {
     GetMusicSettingsData,
     GetMusicSettingsErrors,
     GetMusicSettingsResponses,
+    GetTicketData,
+    GetTicketErrors,
+    GetTicketResponses,
     GetTicketSettingsData,
     GetTicketSettingsErrors,
     GetTicketSettingsResponses,
@@ -44,9 +59,18 @@ import type {
     GuildRolesResponses,
     HealthData,
     HealthResponses,
+    InviteLeaderboardData,
+    InviteLeaderboardErrors,
+    InviteLeaderboardResponses,
+    InviteProfileData,
+    InviteProfileErrors,
+    InviteProfileResponses,
     JumpToTrackData,
     JumpToTrackErrors,
     JumpToTrackResponses,
+    ListTicketsData,
+    ListTicketsErrors,
+    ListTicketsResponses,
     MemberJoinsData,
     MemberJoinsErrors,
     MemberJoinsResponses,
@@ -74,6 +98,12 @@ import type {
     PreviousTrackData,
     PreviousTrackErrors,
     PreviousTrackResponses,
+    PurgeDeletedTicketsData,
+    PurgeDeletedTicketsErrors,
+    PurgeDeletedTicketsResponses,
+    PurgeTicketData,
+    PurgeTicketErrors,
+    PurgeTicketResponses,
     RemoveRequestChannelData,
     RemoveRequestChannelErrors,
     RemoveRequestChannelResponses,
@@ -86,6 +116,9 @@ import type {
     RemoveTrackData,
     RemoveTrackErrors,
     RemoveTrackResponses,
+    ReopenTicketData,
+    ReopenTicketErrors,
+    ReopenTicketResponses,
     ReplayTrackData,
     ReplayTrackErrors,
     ReplayTrackResponses,
@@ -116,6 +149,9 @@ import type {
     ReverseQueueData,
     ReverseQueueErrors,
     ReverseQueueResponses,
+    SearchMembersData,
+    SearchMembersErrors,
+    SearchMembersResponses,
     SearchMusicData,
     SearchMusicErrors,
     SearchMusicResponses,
@@ -149,6 +185,12 @@ import type {
     StopPlayerData,
     StopPlayerErrors,
     StopPlayerResponses,
+    TicketFileData,
+    TicketFileErrors,
+    TicketFileResponses,
+    TicketTranscriptData,
+    TicketTranscriptErrors,
+    TicketTranscriptResponses,
     UpdateGeneralSettingsData,
     UpdateGeneralSettingsErrors,
     UpdateGeneralSettingsResponses,
@@ -236,6 +278,18 @@ export const guildRoles = <ThrowOnError extends boolean = false>(
     });
 
 /**
+ * Find members by name, or anyone by exact ID
+ */
+export const searchMembers = <ThrowOnError extends boolean = false>(
+    options: Options<SearchMembersData, ThrowOnError>,
+): RequestResult<SearchMembersResponses, SearchMembersErrors, ThrowOnError> =>
+    (options.client ?? client).get<SearchMembersResponses, SearchMembersErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/members/search",
+        ...options,
+    });
+
+/**
  * Members who joined each day over the last 30 days
  */
 export const memberJoins = <ThrowOnError extends boolean = false>(
@@ -244,6 +298,18 @@ export const memberJoins = <ThrowOnError extends boolean = false>(
     (options.client ?? client).get<MemberJoinsResponses, MemberJoinsErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/stats/joins",
+        ...options,
+    });
+
+/**
+ * Tickets and tracked invites each day over the last 30 days
+ */
+export const activity = <ThrowOnError extends boolean = false>(
+    options: Options<ActivityData, ThrowOnError>,
+): RequestResult<ActivityResponses, ActivityErrors, ThrowOnError> =>
+    (options.client ?? client).get<ActivityResponses, ActivityErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/stats/activity",
         ...options,
     });
 
@@ -272,7 +338,7 @@ export const resetGeneralSettings = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Auto role and media-only channel
+ * Auto roles and media-only channel
  */
 export const getGeneralSettings = <ThrowOnError extends boolean = false>(
     options: Options<GetGeneralSettingsData, ThrowOnError>,
@@ -284,7 +350,7 @@ export const getGeneralSettings = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Change the auto role or media-only channel
+ * Change the auto roles or media-only channel
  */
 export const updateGeneralSettings = <ThrowOnError extends boolean = false>(
     options: Options<UpdateGeneralSettingsData, ThrowOnError>,
@@ -556,6 +622,154 @@ export const resetAllSettings = <ThrowOnError extends boolean = false>(
     (options.client ?? client).delete<ResetAllSettingsResponses, ResetAllSettingsErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/settings",
+        ...options,
+    });
+
+/**
+ * Everyone with invites, highest first
+ */
+export const inviteLeaderboard = <ThrowOnError extends boolean = false>(
+    options: Options<InviteLeaderboardData, ThrowOnError>,
+): RequestResult<InviteLeaderboardResponses, InviteLeaderboardErrors, ThrowOnError> =>
+    (options.client ?? client).get<InviteLeaderboardResponses, InviteLeaderboardErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/invites/leaderboard",
+        ...options,
+    });
+
+/**
+ * One person's invites, who invited them and who they invited
+ */
+export const inviteProfile = <ThrowOnError extends boolean = false>(
+    options: Options<InviteProfileData, ThrowOnError>,
+): RequestResult<InviteProfileResponses, InviteProfileErrors, ThrowOnError> =>
+    (options.client ?? client).get<InviteProfileResponses, InviteProfileErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/invites/people/{user_id}",
+        ...options,
+    });
+
+/**
+ * Add to or set the bonus invites of one or more people
+ */
+export const changeBonus = <ThrowOnError extends boolean = false>(
+    options: Options<ChangeBonusData, ThrowOnError>,
+): RequestResult<ChangeBonusResponses, ChangeBonusErrors, ThrowOnError> =>
+    (options.client ?? client).post<ChangeBonusResponses, ChangeBonusErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/invites/bonus",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Tickets, newest first, filtered by status and search
+ */
+export const listTickets = <ThrowOnError extends boolean = false>(
+    options: Options<ListTicketsData, ThrowOnError>,
+): RequestResult<ListTicketsResponses, ListTicketsErrors, ThrowOnError> =>
+    (options.client ?? client).get<ListTicketsResponses, ListTicketsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/tickets",
+        ...options,
+    });
+
+/**
+ * Delete a ticket's channel, keeping its transcript
+ */
+export const deleteTicket = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteTicketData, ThrowOnError>,
+): RequestResult<DeleteTicketResponses, DeleteTicketErrors, ThrowOnError> =>
+    (options.client ?? client).delete<DeleteTicketResponses, DeleteTicketErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/tickets/{number}",
+        ...options,
+    });
+
+/**
+ * One ticket with its members
+ */
+export const getTicket = <ThrowOnError extends boolean = false>(
+    options: Options<GetTicketData, ThrowOnError>,
+): RequestResult<GetTicketResponses, GetTicketErrors, ThrowOnError> =>
+    (options.client ?? client).get<GetTicketResponses, GetTicketErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/tickets/{number}",
+        ...options,
+    });
+
+/**
+ * Close a ticket and save its transcript
+ */
+export const closeTicket = <ThrowOnError extends boolean = false>(
+    options: Options<CloseTicketData, ThrowOnError>,
+): RequestResult<CloseTicketResponses, CloseTicketErrors, ThrowOnError> =>
+    (options.client ?? client).post<CloseTicketResponses, CloseTicketErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/tickets/{number}/close",
+        ...options,
+    });
+
+/**
+ * Reopen a closed ticket
+ */
+export const reopenTicket = <ThrowOnError extends boolean = false>(
+    options: Options<ReopenTicketData, ThrowOnError>,
+): RequestResult<ReopenTicketResponses, ReopenTicketErrors, ThrowOnError> =>
+    (options.client ?? client).post<ReopenTicketResponses, ReopenTicketErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/tickets/{number}/reopen",
+        ...options,
+    });
+
+/**
+ * Remove a deleted ticket for good, with its transcript
+ */
+export const purgeTicket = <ThrowOnError extends boolean = false>(
+    options: Options<PurgeTicketData, ThrowOnError>,
+): RequestResult<PurgeTicketResponses, PurgeTicketErrors, ThrowOnError> =>
+    (options.client ?? client).delete<PurgeTicketResponses, PurgeTicketErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/tickets/{number}/record",
+        ...options,
+    });
+
+/**
+ * Remove every deleted ticket for good, with their transcripts
+ */
+export const purgeDeletedTickets = <ThrowOnError extends boolean = false>(
+    options: Options<PurgeDeletedTicketsData, ThrowOnError>,
+): RequestResult<PurgeDeletedTicketsResponses, PurgeDeletedTicketsErrors, ThrowOnError> =>
+    (options.client ?? client).delete<PurgeDeletedTicketsResponses, PurgeDeletedTicketsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/tickets/deleted",
+        ...options,
+    });
+
+/**
+ * A ticket and its saved messages, for staff and the ticket's opener
+ */
+export const ticketTranscript = <ThrowOnError extends boolean = false>(
+    options: Options<TicketTranscriptData, ThrowOnError>,
+): RequestResult<TicketTranscriptResponses, TicketTranscriptErrors, ThrowOnError> =>
+    (options.client ?? client).get<TicketTranscriptResponses, TicketTranscriptErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/tickets/{number}/transcript",
+        ...options,
+    });
+
+/**
+ * A picture copied from a ticket
+ */
+export const ticketFile = <ThrowOnError extends boolean = false>(
+    options: Options<TicketFileData, ThrowOnError>,
+): RequestResult<TicketFileResponses, TicketFileErrors, ThrowOnError> =>
+    (options.client ?? client).get<TicketFileResponses, TicketFileErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/tickets/{number}/files/{attachment_id}",
         ...options,
     });
 

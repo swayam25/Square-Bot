@@ -5,6 +5,64 @@ export type ClientOptions = {
 };
 
 /**
+ * Activity
+ */
+export type Activity = {
+    days: Array<ActivityDay>;
+};
+
+/**
+ * ActivityDay
+ */
+export type ActivityDay = {
+    date: string;
+    ticketsOpened: number;
+    ticketsClosed: number;
+    invited: number;
+    left: number;
+};
+
+/**
+ * AutoroleUser
+ */
+export type AutoroleUser = {
+    user: Person;
+    member: boolean;
+    roleIds: Array<string>;
+};
+
+/**
+ * AutoroleUserPatch
+ */
+export type AutoroleUserPatch = {
+    /**
+     * A Discord ID
+     */
+    userId: string;
+    roleIds: Array<string>;
+};
+
+/**
+ * Bonus
+ */
+export type Bonus = {
+    /**
+     * A Discord ID
+     */
+    userId: string;
+    bonus: number;
+};
+
+/**
+ * BonusChange
+ */
+export type BonusChange = {
+    userIds: Array<string>;
+    amount: number;
+    mode: "add" | "set";
+};
+
+/**
  * Channel
  */
 export type Channel = {
@@ -51,10 +109,10 @@ export type EqToggle = {
  * GeneralPatch
  */
 export type GeneralPatch = {
-    /**
-     * A Discord ID
-     */
-    autoroleId?: string | null;
+    autoroleIds?: Array<string>;
+    autoroleBotIds?: Array<string>;
+    autoroleSplit?: boolean;
+    autoroleUsers?: Array<AutoroleUserPatch>;
     /**
      * A Discord ID
      */
@@ -65,10 +123,10 @@ export type GeneralPatch = {
  * GeneralSettings
  */
 export type GeneralSettings = {
-    /**
-     * A Discord ID
-     */
-    autoroleId: string | null;
+    autoroleIds: Array<string>;
+    autoroleBotIds: Array<string>;
+    autoroleSplit: boolean;
+    autoroleUsers: Array<AutoroleUser>;
     /**
      * A Discord ID
      */
@@ -99,6 +157,29 @@ export type Health = {
 };
 
 /**
+ * InviteBoard
+ */
+export type InviteBoard = {
+    entries: Array<InviteEntry>;
+    page: number;
+    pages: number;
+    people: number;
+};
+
+/**
+ * InviteEntry
+ */
+export type InviteEntry = {
+    rank: number;
+    user: Person;
+    regular: number;
+    left: number;
+    fake: number;
+    bonus: number;
+    total: number;
+};
+
+/**
  * InvitePatch
  */
 export type InvitePatch = {
@@ -106,10 +187,36 @@ export type InvitePatch = {
 };
 
 /**
+ * InviteProfile
+ */
+export type InviteProfile = {
+    rank: number | null;
+    user: Person;
+    member: boolean;
+    regular: number;
+    left: number;
+    fake: number;
+    bonus: number;
+    total: number;
+    invitedBy: Person | null;
+    invitees: Array<Invitee>;
+};
+
+/**
  * InviteSettings
  */
 export type InviteSettings = {
     fakeDays: number;
+};
+
+/**
+ * Invitee
+ */
+export type Invitee = {
+    user: Person;
+    joinedAt: number;
+    left: boolean;
+    fake: boolean;
 };
 
 /**
@@ -359,6 +466,13 @@ export type Problem = {
 };
 
 /**
+ * Purged
+ */
+export type Purged = {
+    removed: number;
+};
+
+/**
  * QueueMove
  */
 export type QueueMove = {
@@ -450,6 +564,61 @@ export type SkipVote = {
 };
 
 /**
+ * TicketDetail
+ */
+export type TicketDetail = {
+    number: number;
+    label: string;
+    status: "open" | "closed" | "deleted";
+    /**
+     * A Discord ID
+     */
+    channelId: string | null;
+    channelName: string | null;
+    opener: Person;
+    claimedBy: Person | null;
+    reason: string;
+    createdAt: number;
+    closedAt: number | null;
+    messages: number | null;
+    closedBy: Person | null;
+    people: Array<Person>;
+};
+
+/**
+ * TicketEntry
+ */
+export type TicketEntry = {
+    number: number;
+    label: string;
+    status: "open" | "closed" | "deleted";
+    /**
+     * A Discord ID
+     */
+    channelId: string | null;
+    channelName: string | null;
+    opener: Person;
+    claimedBy: Person | null;
+    reason: string;
+    createdAt: number;
+    closedAt: number | null;
+    messages: number | null;
+};
+
+/**
+ * TicketPage
+ */
+export type TicketPage = {
+    entries: Array<TicketEntry>;
+    page: number;
+    pages: number;
+    total: number;
+    open: number;
+    closed: number;
+    deleted: number;
+};
+
+/**
  * TicketPatch
  */
 export type TicketPatch = {
@@ -458,7 +627,7 @@ export type TicketPatch = {
      */
     categoryId?: string | null;
     supportRoleIds?: Array<string>;
-    maxOpen?: 1 | 2 | 3 | 5;
+    maxOpen?: number;
     confirmClose?: boolean;
 };
 
@@ -471,12 +640,21 @@ export type TicketSettings = {
      */
     categoryId: string | null;
     supportRoleIds: Array<string>;
-    maxOpen: 1 | 2 | 3 | 5;
+    maxOpen: number;
     confirmClose: boolean;
     /**
      * A Discord ID
      */
     panelChannelId: string | null;
+};
+
+/**
+ * TicketTranscript
+ */
+export type TicketTranscript = {
+    ticket: TicketDetail;
+    live: boolean;
+    transcript: Transcript | null;
 };
 
 /**
@@ -512,12 +690,191 @@ export type TrackFailure = {
 };
 
 /**
+ * Transcript
+ */
+export type Transcript = {
+    channel: string;
+    savedAt: number;
+    messages: Array<TranscriptMessage>;
+    users?: {
+        [key: string]: TranscriptUser;
+    };
+    roles?: {
+        [key: string]: TranscriptRole;
+    };
+    channels?: {
+        [key: string]: string;
+    };
+};
+
+/**
+ * TranscriptCommand
+ */
+export type TranscriptCommand = {
+    name: string;
+    user: string;
+};
+
+/**
+ * TranscriptComponent
+ */
+export type TranscriptComponent = {
+    kind: "container" | "text" | "section" | "thumbnail" | "gallery" | "file" | "separator" | "row" | "button" | "select";
+    children?: Array<TranscriptComponent>;
+    accessory?: TranscriptComponent | null;
+    text?: string;
+    color?: string;
+    label?: string;
+    emoji?: TranscriptEmoji | null;
+    style?: "" | "primary" | "secondary" | "success" | "danger";
+    url?: string;
+    files?: Array<TranscriptFile>;
+    disabled?: boolean;
+    divider?: boolean;
+    large?: boolean;
+    placeholder?: boolean;
+};
+
+/**
+ * TranscriptEmbed
+ */
+export type TranscriptEmbed = {
+    color?: string;
+    author?: string;
+    authorIcon?: string;
+    title?: string;
+    url?: string;
+    description?: string;
+    fields?: Array<TranscriptField>;
+    image?: string;
+    thumbnail?: string;
+    footer?: string;
+    footerIcon?: string;
+    time?: number | null;
+    media?: "" | "image" | "video";
+    mediaUrl?: string;
+};
+
+/**
+ * TranscriptEmoji
+ */
+export type TranscriptEmoji = {
+    name: string;
+    id?: string;
+    animated?: boolean;
+};
+
+/**
+ * TranscriptField
+ */
+export type TranscriptField = {
+    name: string;
+    value: string;
+    inline?: boolean;
+};
+
+/**
+ * TranscriptFile
+ */
+export type TranscriptFile = {
+    name: string;
+    url: string;
+    id?: string;
+    size?: number;
+    kind?: "image" | "video" | "audio" | "file";
+    width?: number | null;
+    height?: number | null;
+    stored?: boolean;
+};
+
+/**
+ * TranscriptMessage
+ */
+export type TranscriptMessage = {
+    id: string;
+    author: string;
+    time: number;
+    content?: string;
+    edited?: boolean;
+    command?: TranscriptCommand | null;
+    system?: "" | "join" | "pin" | "boost" | "other";
+    reply?: TranscriptReply | null;
+    replyDeleted?: boolean;
+    attachments?: Array<TranscriptFile>;
+    embeds?: Array<TranscriptEmbed>;
+    components?: Array<TranscriptComponent>;
+    stickers?: Array<TranscriptSticker>;
+    reactions?: Array<TranscriptReaction>;
+};
+
+/**
+ * TranscriptReaction
+ */
+export type TranscriptReaction = {
+    emoji: TranscriptEmoji;
+    count: number;
+};
+
+/**
+ * TranscriptReply
+ */
+export type TranscriptReply = {
+    id: string;
+    author: string;
+    preview?: string;
+    attachment?: boolean;
+    ping?: boolean;
+};
+
+/**
+ * TranscriptRole
+ */
+export type TranscriptRole = {
+    name: string;
+    color?: string;
+};
+
+/**
+ * TranscriptSticker
+ */
+export type TranscriptSticker = {
+    name: string;
+    url: string;
+};
+
+/**
+ * TranscriptUser
+ */
+export type TranscriptUser = {
+    name: string;
+    avatar: string;
+    color?: string;
+    bot?: boolean;
+};
+
+/**
+ * UserMatch
+ */
+export type UserMatch = {
+    /**
+     * A Discord ID
+     */
+    id: string;
+    name: string;
+    username: string;
+    avatarUrl: string;
+    bot: boolean;
+    member: boolean;
+};
+
+/**
  * Viewer
  */
 export type Viewer = {
     dj: boolean;
     inChannel: boolean;
     deafened: boolean;
+    queueLock?: string | null;
 };
 
 /**
@@ -673,6 +1030,56 @@ export type GuildRolesResponses = {
 
 export type GuildRolesResponse = GuildRolesResponses[keyof GuildRolesResponses];
 
+export type SearchMembersData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query: {
+        /**
+         * A name, username or Discord ID
+         */
+        q: string;
+    };
+    url: "/guilds/{guild_id}/members/search";
+};
+
+export type SearchMembersErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type SearchMembersError = SearchMembersErrors[keyof SearchMembersErrors];
+
+export type SearchMembersResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Array<UserMatch>;
+};
+
+export type SearchMembersResponse = SearchMembersResponses[keyof SearchMembersResponses];
+
 export type MemberJoinsData = {
     body?: never;
     headers: {
@@ -717,6 +1124,51 @@ export type MemberJoinsResponses = {
 };
 
 export type MemberJoinsResponse = MemberJoinsResponses[keyof MemberJoinsResponses];
+
+export type ActivityData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/stats/activity";
+};
+
+export type ActivityErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ActivityError = ActivityErrors[keyof ActivityErrors];
+
+export type ActivityResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Activity;
+};
+
+export type ActivityResponse = ActivityResponses[keyof ActivityResponses];
 
 export type ServerStatsData = {
     body?: never;
@@ -1825,6 +2277,596 @@ export type ResetAllSettingsResponses = {
 };
 
 export type ResetAllSettingsResponse = ResetAllSettingsResponses[keyof ResetAllSettingsResponses];
+
+export type InviteLeaderboardData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: {
+        page?: number;
+        sort?: "total" | "regular" | "left" | "fake" | "bonus";
+        order?: "asc" | "desc";
+    };
+    url: "/guilds/{guild_id}/invites/leaderboard";
+};
+
+export type InviteLeaderboardErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type InviteLeaderboardError = InviteLeaderboardErrors[keyof InviteLeaderboardErrors];
+
+export type InviteLeaderboardResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: InviteBoard;
+};
+
+export type InviteLeaderboardResponse = InviteLeaderboardResponses[keyof InviteLeaderboardResponses];
+
+export type InviteProfileData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        user_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/invites/people/{user_id}";
+};
+
+export type InviteProfileErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type InviteProfileError = InviteProfileErrors[keyof InviteProfileErrors];
+
+export type InviteProfileResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: InviteProfile;
+};
+
+export type InviteProfileResponse = InviteProfileResponses[keyof InviteProfileResponses];
+
+export type ChangeBonusData = {
+    body: BonusChange;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/invites/bonus";
+};
+
+export type ChangeBonusErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type ChangeBonusError = ChangeBonusErrors[keyof ChangeBonusErrors];
+
+export type ChangeBonusResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Array<Bonus>;
+};
+
+export type ChangeBonusResponse = ChangeBonusResponses[keyof ChangeBonusResponses];
+
+export type ListTicketsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: {
+        status?: "open" | "closed" | "deleted" | "all";
+        q?: string | null;
+        order?: "asc" | "desc";
+        page?: number;
+    };
+    url: "/guilds/{guild_id}/tickets";
+};
+
+export type ListTicketsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ListTicketsError = ListTicketsErrors[keyof ListTicketsErrors];
+
+export type ListTicketsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: TicketPage;
+};
+
+export type ListTicketsResponse = ListTicketsResponses[keyof ListTicketsResponses];
+
+export type DeleteTicketData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        number: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/tickets/{number}";
+};
+
+export type DeleteTicketErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type DeleteTicketError = DeleteTicketErrors[keyof DeleteTicketErrors];
+
+export type DeleteTicketResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: TicketDetail;
+};
+
+export type DeleteTicketResponse = DeleteTicketResponses[keyof DeleteTicketResponses];
+
+export type GetTicketData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        number: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/tickets/{number}";
+};
+
+export type GetTicketErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type GetTicketError = GetTicketErrors[keyof GetTicketErrors];
+
+export type GetTicketResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: TicketDetail;
+};
+
+export type GetTicketResponse = GetTicketResponses[keyof GetTicketResponses];
+
+export type CloseTicketData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        number: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/tickets/{number}/close";
+};
+
+export type CloseTicketErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type CloseTicketError = CloseTicketErrors[keyof CloseTicketErrors];
+
+export type CloseTicketResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: TicketDetail;
+};
+
+export type CloseTicketResponse = CloseTicketResponses[keyof CloseTicketResponses];
+
+export type ReopenTicketData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        number: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/tickets/{number}/reopen";
+};
+
+export type ReopenTicketErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type ReopenTicketError = ReopenTicketErrors[keyof ReopenTicketErrors];
+
+export type ReopenTicketResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: TicketDetail;
+};
+
+export type ReopenTicketResponse = ReopenTicketResponses[keyof ReopenTicketResponses];
+
+export type PurgeTicketData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        number: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/tickets/{number}/record";
+};
+
+export type PurgeTicketErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type PurgeTicketError = PurgeTicketErrors[keyof PurgeTicketErrors];
+
+export type PurgeTicketResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Purged;
+};
+
+export type PurgeTicketResponse = PurgeTicketResponses[keyof PurgeTicketResponses];
+
+export type PurgeDeletedTicketsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/tickets/deleted";
+};
+
+export type PurgeDeletedTicketsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type PurgeDeletedTicketsError = PurgeDeletedTicketsErrors[keyof PurgeDeletedTicketsErrors];
+
+export type PurgeDeletedTicketsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Purged;
+};
+
+export type PurgeDeletedTicketsResponse = PurgeDeletedTicketsResponses[keyof PurgeDeletedTicketsResponses];
+
+export type TicketTranscriptData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        number: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/tickets/{number}/transcript";
+};
+
+export type TicketTranscriptErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type TicketTranscriptError = TicketTranscriptErrors[keyof TicketTranscriptErrors];
+
+export type TicketTranscriptResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: TicketTranscript;
+};
+
+export type TicketTranscriptResponse = TicketTranscriptResponses[keyof TicketTranscriptResponses];
+
+export type TicketFileData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        number: number;
+        attachment_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/tickets/{number}/files/{attachment_id}";
+};
+
+export type TicketFileErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type TicketFileError = TicketFileErrors[keyof TicketFileErrors];
+
+export type TicketFileResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Blob | File;
+};
+
+export type TicketFileResponse = TicketFileResponses[keyof TicketFileResponses];
 
 export type MusicPlayerData = {
     body?: never;
