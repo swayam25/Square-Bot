@@ -17,6 +17,7 @@ Advanced multipurpose discord bot for all your needs.
 
 - Music with player controls, DJ roles with vote skip, multi-node failover, smart autoplay, audio filters and much more!
 - Auto-mod, mass moderation, tickets & detailed logging.
+- A web dashboard with a live music player, settings, invite leaderboards and ticket transcripts.
 - Custom emojis synced from a simple `.zip` upload.
 - Fully dockerized, deploys with a single `just up` command.
 
@@ -36,23 +37,43 @@ Advanced multipurpose discord bot for all your needs.
     cd square
     ```
 
-2. Create `config.toml` file from the provided `config.example.toml` and fill in the required values.
+2. Create the bot's `config.toml` from `config.example.toml` and fill it in. Uncomment the `[api]` table and set its `secret` (`openssl rand -hex 32`), and set `dashboard-url` to the dashboard's public address.
     ```sh
     cp apps/bot/config.example.toml apps/bot/config.toml
+    ```
+
+3. Create the dashboard's env file. `BOT_API_SECRET` is the same secret as `[api] secret`, and the Discord values come from the Developer Portal under **OAuth2**. Add `https://<your domain>/auth/callback` as a redirect there. `BOT_API_URL` and `REDIS_URL` are set by the stack, so leave them out.
+    ```sh
+    cp apps/web/.env.example apps/web/.env.production
     ```
 
 > [!TIP]
 > Check [configuration](#-configuration) section for details on the configuration keys.
 
-3. Build the image and start the stack
+4. Build the images and start the stack
     ```sh
     just up
     ```
 
-4. Done! The bot and its Postgres database are up. `just up` rebuilds and redeploys. `just down` stops everything.
+5. Point your reverse proxy at `square:80` on the `edge` Docker network. It handles TLS, Square handles the rest. `just up` creates the network if it doesn't exist yet. `just down` stops everything.
 
 > [!NOTE]
-> The production stack is only the bot and its Postgres database. It has no web UI and exposes no ports. Logs go to stdout, follow them with `just logs`. Any monitoring or database tooling is yours to add.
+> Only the `square` container (Caddy) joins `edge`. The dashboard, the bot's API, Postgres and Redis stay on the stack's private network and publish no ports.
+
+## 🧭 How it fits together
+
+```mermaid
+flowchart LR
+    user([Browser]) --> proxy[Your reverse proxy<br/>TLS]
+    proxy -- edge network --> caddy[square<br/>Caddy]
+    caddy -- "/_app/immutable/*<br/>from disk" --> caddy
+    caddy --> web[web<br/>SvelteKit]
+    web --> redis[(Redis<br/>sessions, caches)]
+    web -- "API +<br/>WebSocket" --> bot[bot<br/>Pycord + Litestar]
+    bot --> db[(Postgres)]
+    bot --> lavalink[Lavalink nodes]
+    bot <--> discord([Discord])
+```
 
 ## 🪇 Setup Lavalink
 
@@ -88,26 +109,36 @@ Running your own node gives you full control over performance, uptime, and audio
 
 ## 🔑 Configuration
 
-| Key                  | Type        | Description                                                                                                            |
-| -------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `owner-id`           | `int`       | The Discord ID of the bot owner.                                                                                       |
-| `owner-guild-ids`    | `list[int]` | A list of Discord IDs of the owner's guilds. Owner/Developer only commands are created only in these guilds.           |
-| `system-channel-id`  | `int`       | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.                |
-| `support-server-url` | `str`       | The invite URL of the support server.                                                                                  |
-| `bot-token`          | `str`       | Discord Bot Token. Get this from developer portal.                                                                     |
-| `database-url`       | `str`       | The URL for the PostgreSQL database.                                                                                   |
-| `log-level`          | `str`       | *Optional.* `DEBUG`, `INFO` (default), `WARNING` or `ERROR`. The `SQUARE_LOG_LEVEL` environment variable overrides it. |
-| `log-file`           | `bool`      | *Optional.* Also write logs to `.cache/logs/square.log`, rotated at 5 × 5 MB. Defaults to `false`.                     |
-| `colors.theme`       | `str`       | The color theme for the bot's view containers.                                                                         |
-| `colors.green`       | `str`       | The color code for green color in view containers.                                                                     |
-| `colors.red`         | `str`       | The color code for red color in view containers.                                                                       |
-| `colors.orange`      | `str`       | The color code for orange color in view containers.                                                                    |
-| `[[lavalink]]`       | `table`     | A Lavalink node. Multiple `[[lavalink]]` tables can be configured, players fail over to another node if one dies.      |
-| `lavalink.host`      | `str`       | The host of the Lavalink server.                                                                                       |
-| `lavalink.port`      | `int`       | The port of the Lavalink server.                                                                                       |
-| `lavalink.password`  | `str`       | The password for the Lavalink server.                                                                                  |
-| `lavalink.secure`    | `bool`      | Whether to use secure connection (wss) for Lavalink.                                                                   |
-| `lavalink.regions`   | `list[str]` | Optional. Discord voice regions this node serves, e.g. `["india"]`.                                                    |
+The bot reads `apps/bot/config.toml` and the dashboard reads `apps/web/.env` (`.env.production` in production). Keys on the same row hold the same value.
+
+| `config.toml` (bot)     | `.env` (dashboard)      | Type          | Description                                                                                                                                                         |
+| ----------------------- | ----------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `owner-id`              |                         | `int`         | The Discord ID of the bot owner.                                                                                                                                    |
+| `owner-guild-ids`       |                         | `list[int]`   | A list of Discord IDs of the owner's guilds. Owner/Developer only commands are created only in these guilds.                                                        |
+| `system-channel-id`     |                         | `int`         | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.                                                             |
+| `support-server-url`    |                         | `str`         | The invite URL of the support server.                                                                                                                               |
+| `dashboard-url`         |                         | `str`         | The dashboard's public address. Links in Discord (transcripts, settings) point here.                                                                                |
+| `bot-token`             |                         | `str`         | Discord Bot Token. Get this from developer portal.                                                                                                                  |
+| `database-url`          |                         | `str`         | The URL for the PostgreSQL database.                                                                                                                                |
+| `log-level`             |                         | `str`         | *Optional.* `DEBUG`, `INFO` (default), `WARNING` or `ERROR`. The `SQUARE_LOG_LEVEL` environment variable overrides it.                                              |
+| `log-file`              |                         | `bool`        | *Optional.* Also write logs to `.cache/logs/square.log`, rotated at 5 × 5 MB. Defaults to `false`.                                                                  |
+| `[api]`                 |                         | `table`       | *Optional.* Turns on the API the dashboard uses.         Leave it out to run the bot alone.                                                                         |
+| `api.secret`            | `BOT_API_SECRET`        | `str`         | The same secret on both sides, so only the dashboard can call the bot's API. At least 32 characters.                                                                |
+| `api.host` / `api.port` | `BOT_API_URL`           | `str` / `int` | *Optional.* Where the API listens (`127.0.0.1:8080` by default) and the URL the dashboard calls it at. The production stack sets both, the host through `API_HOST`. |
+| `api.docs`              |                         | `bool`        | *Optional.* Serves API docs at `/docs`. Keep it off in production.                                                                                                  |
+|                         | `REDIS_URL`             | `str`         | Redis for logins, sessions and caches. The production stack sets it.                                                                                                |
+|                         | `DISCORD_CLIENT_ID`     | `str`         | The application ID from the Developer Portal, the same app as `bot-token`.                                                                                          |
+|                         | `DISCORD_CLIENT_SECRET` | `str`         | The OAuth2 client secret from the Developer Portal, under **OAuth2**.                                                                                               |
+| `colors.theme`          |                         | `str`         | The color theme for the bot's view containers.                                                                                                                      |
+| `colors.green`          |                         | `str`         | The color code for green color in view containers.                                                                                                                  |
+| `colors.red`            |                         | `str`         | The color code for red color in view containers.                                                                                                                    |
+| `colors.orange`         |                         | `str`         | The color code for orange color in view containers.                                                                                                                 |
+| `[[lavalink]]`          |                         | `table`       | A Lavalink node. Multiple `[[lavalink]]` tables can be configured, players fail over to another node if one dies.                                                   |
+| `lavalink.host`         |                         | `str`         | The host of the Lavalink server.                                                                                                                                    |
+| `lavalink.port`         |                         | `int`         | The port of the Lavalink server.                                                                                                                                    |
+| `lavalink.password`     |                         | `str`         | The password for the Lavalink server.                                                                                                                               |
+| `lavalink.secure`       |                         | `bool`        | Whether to use secure connection (wss) for Lavalink.                                                                                                                |
+| `lavalink.regions`      |                         | `list[str]`   | Optional. Discord voice regions this node serves, e.g. `["india"]`.                                                                                                 |
 
 ## ✨ Custom Emojis
 
@@ -158,4 +189,4 @@ If your emojis are already on Discord, you can skip syncing and create `.cache/e
 
 ## ❤️ Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to get a local copy running, how the code is laid out, and what we look for in a pull request.
+Contributions are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to get a local copy running and what we look for in a pull request.

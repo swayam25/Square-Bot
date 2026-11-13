@@ -6,7 +6,7 @@ dist
 pnpm-lock.yaml
 uv.lock
 apps/web/static
-# Ruff formats the bot, and its Jinja templates aren't valid HTML to Prettier
+# Ruff formats the bot
 apps/bot
 *.md
 # Generated from the bot API by `pnpm run generate`
