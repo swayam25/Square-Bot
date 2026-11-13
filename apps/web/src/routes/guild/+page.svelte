@@ -1,10 +1,12 @@
 <script lang="ts">
+    import { frames } from "#lib/animated.ts";
     import { openPopup } from "#lib/auth.ts";
     import Button from "#lib/components/ui/Button.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import GuildIcon from "#lib/components/ui/GuildIcon.svelte";
     import Input from "#lib/components/ui/Input.svelte";
     import Shape from "#lib/components/ui/Shape.svelte";
+    import { focusRing } from "#lib/components/ui/styles.ts";
     import { plural } from "#lib/format.ts";
     import { ripple } from "#lib/motion.ts";
     import { refreshAll } from "$app/navigation";
@@ -17,6 +19,7 @@
     let { data }: PageProps = $props();
 
     let search = $state("");
+    let hovered = $state<string | null>(null);
     const query = $derived(search.trim().toLowerCase());
     const matches = (guild: { name: string }) => guild.name.toLowerCase().includes(query);
     const guilds = $derived(data.guilds.filter(matches));
@@ -28,8 +31,6 @@
         if (event.ctrlKey || event.metaKey || event.shiftKey) return;
         if (openPopup(event.currentTarget.href, "square-invite")) event.preventDefault();
     }
-
-    const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 </script>
 
 <svelte:head>
@@ -41,7 +42,7 @@
         <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div class="flex flex-col gap-2">
                 <h1 id="servers" class="font-display text-3xl font-semibold tracking-tight md:text-4xl">Your servers</h1>
-                <p class="text-mist-400">Pick a server to open its dashboard.</p>
+                <p class="text-gray-400">Pick a server to open its dashboard.</p>
             </div>
             <div class="flex gap-2">
                 {#if searchable}
@@ -68,18 +69,25 @@
                             href="/guild/{guild.id}"
                             class={["group ripple flex flex-col rounded-4xl bg-surface-1 p-2 hover:bg-surface-2", focusRing]}
                             {@attach ripple}
+                            onpointerenter={() => (hovered = guild.id)}
+                            onpointerleave={() => hovered === guild.id && (hovered = null)}
                         >
                             <div class="relative isolate flex h-32 items-center justify-center overflow-hidden rounded-3xl bg-surface-2">
                                 {#if guild.iconUrl}
                                     <img
-                                        src={guild.iconUrl}
+                                        src={frames(guild.iconUrl)?.still ?? guild.iconUrl}
                                         alt=""
                                         class="absolute inset-0 -z-10 size-full scale-150 object-cover opacity-60 blur-2xl"
                                     />
                                 {:else}
                                     <Shape lobes={12} depth={0.05} class="absolute -z-10 size-48 text-surface-3" />
                                 {/if}
-                                <GuildIcon src={guild.iconUrl} name={guild.name} class="size-16 rounded-2xl shadow-lg shadow-black/20" />
+                                <GuildIcon
+                                    src={guild.iconUrl}
+                                    name={guild.name}
+                                    animate={hovered === guild.id}
+                                    class="size-16 rounded-2xl shadow-lg shadow-black/20"
+                                />
                                 {#if !guild.canManage}
                                     <Chip tone="muted" class="absolute top-2 right-2 backdrop-blur-xl">
                                         <MaterialSymbolsMusicNoteRounded />Music only
@@ -89,12 +97,12 @@
                             <div class="flex items-center gap-4 p-4 pb-2">
                                 <div class="flex min-w-0 flex-1 flex-col">
                                     <h2 class="truncate font-display text-lg font-semibold">{guild.name}</h2>
-                                    <p class="font-mono text-xs text-mist-400">
+                                    <p class="font-mono text-xs text-gray-400">
                                         {plural(guild.memberCount, "member")}
                                     </p>
                                 </div>
                                 <MaterialSymbolsArrowForwardRounded
-                                    class="size-6 shrink-0 text-mist-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-mist-100"
+                                    class="size-6 shrink-0 text-gray-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-gray-100"
                                 />
                             </div>
                         </a>
@@ -102,13 +110,13 @@
                 {/each}
             </ul>
         {:else if query}
-            <p class="text-mist-400">No servers match "{search.trim()}".</p>
+            <p class="text-gray-400">No servers match "{search.trim()}".</p>
         {:else}
             <div class="relative isolate flex flex-col items-center gap-6 py-16 text-center">
                 <Shape lobes={12} depth={0.05} class="absolute top-1/2 left-1/2 -z-10 size-72 -translate-1/2 text-accent/10" />
                 <div class="flex flex-col gap-2">
                     <h2 class="font-display text-2xl font-semibold tracking-tight">Square isn't in any of your servers yet</h2>
-                    <p class="max-w-md text-mist-400">Add it to a server you manage, or ask a server owner to add it.</p>
+                    <p class="max-w-md text-gray-400">Add it to a server you manage, or ask a server owner to add it.</p>
                 </div>
                 <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={invite}>
                     <MaterialSymbolsAddRounded />Add Square
@@ -121,7 +129,7 @@
         <section aria-labelledby="add" class="flex flex-col gap-8">
             <div class="flex flex-col gap-2">
                 <h2 id="add" class="font-display text-2xl font-semibold tracking-tight">Add Square</h2>
-                <p class="text-mist-400">Servers you manage that don't have Square yet.</p>
+                <p class="text-gray-400">Servers you manage that don't have Square yet.</p>
             </div>
             <ul class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {#each invitable as guild (guild.id)}
@@ -136,7 +144,7 @@
                         >
                             <GuildIcon src={guild.iconUrl} name={guild.name} class="size-12 rounded-xl" />
                             <span class="min-w-0 flex-1 truncate font-medium">{guild.name}</span>
-                            <span class="flex items-center gap-1 text-sm font-medium text-mist-400 group-hover:text-accent">
+                            <span class="flex items-center gap-1 text-sm font-medium text-gray-400 group-hover:text-accent">
                                 <MaterialSymbolsAddRounded class="size-5" />Add
                             </span>
                         </a>

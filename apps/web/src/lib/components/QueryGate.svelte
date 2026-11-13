@@ -1,18 +1,22 @@
 <script lang="ts">
     import PageHeading from "#lib/components/PageHeading.svelte";
-    import Button from "#lib/components/ui/Button.svelte";
+    import PageSkeleton from "#lib/components/PageSkeleton.svelte";
+    import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import type { Snippet } from "svelte";
-    import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
 
     let {
         queries,
         title,
         description,
+        actions = false,
+        skeleton,
         children,
     }: {
-        queries: { ready: boolean; error?: { message?: string } }[];
+        queries: { ready: boolean; error?: { message?: string }; refresh?: () => Promise<unknown> }[];
         title?: string;
         description?: string;
+        actions?: boolean;
+        skeleton?: Snippet;
         children: Snippet;
     } = $props();
 
@@ -20,21 +24,27 @@
     const failed = $derived(queries.find((query) => query.error)?.error);
 </script>
 
+{#snippet actionsSkeleton()}
+    <span aria-hidden="true" class="h-12 w-28 skeleton rounded-full md:h-10"></span>
+{/snippet}
+
 {#if ready}
     {@render children()}
 {:else}
-    <div class="flex flex-col gap-8">
-        {#if title}<PageHeading {title} {description} />{/if}
+    <div class="flex flex-col gap-6">
+        {#if title}
+            <PageHeading {title} {description} actions={actions && !failed ? actionsSkeleton : undefined} />
+        {/if}
         {#if failed}
-            <div role="alert" class="flex flex-col items-start gap-4 rounded-4xl bg-red-400/10 p-6">
-                <p class="text-sm font-medium text-red-400">{failed.message ?? "Square couldn't load this."}</p>
-                <Button onclick={() => location.reload()}><MaterialSymbolsRefreshRounded />Try again</Button>
-            </div>
+            <EmptyState
+                tone="danger"
+                card
+                title="Couldn't load this page"
+                text={failed.message ?? "Square didn't answer. Try again in a moment."}
+                retry={() => Promise.all(queries.filter((query) => query.error).map((query) => query.refresh?.()))}
+            />
         {:else}
-            <div aria-hidden="true" class="grid gap-4 lg:grid-cols-2">
-                <div class="h-48 animate-pulse rounded-4xl bg-surface-1"></div>
-                <div class="h-48 animate-pulse rounded-4xl bg-surface-1"></div>
-            </div>
+            {#if skeleton}{@render skeleton()}{:else}<PageSkeleton />{/if}
         {/if}
     </div>
 {/if}

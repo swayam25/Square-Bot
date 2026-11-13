@@ -5,18 +5,19 @@
 </script>
 
 <script lang="ts">
+    import Chip from "#lib/components/ui/Chip.svelte";
     import Drawer from "#lib/components/ui/Drawer.svelte";
-    import Input, { field, fieldText } from "#lib/components/ui/Input.svelte";
+    import Input from "#lib/components/ui/Input.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Portal from "#lib/components/ui/Portal.svelte";
     import ScrollRow from "#lib/components/ui/ScrollRow.svelte";
+    import { field, fieldText, menuItem, menuNote, menuPanel, sheetItem } from "#lib/components/ui/styles.ts";
     import { mobile } from "#lib/media.ts";
     import { ripple } from "#lib/motion.ts";
     import { createListCollection } from "@ark-ui/svelte/collection";
     import { Combobox } from "@ark-ui/svelte/combobox";
     import type { ClassValue } from "svelte/elements";
     import MaterialSymbolsCheckRounded from "~icons/material-symbols/check-rounded";
-    import MaterialSymbolsCloseRounded from "~icons/material-symbols/close-rounded";
     import MaterialSymbolsKeyboardArrowDownRounded from "~icons/material-symbols/keyboard-arrow-down-rounded";
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
 
@@ -79,18 +80,17 @@
 
 {#snippet marker(option: Option)}
     {#if option.icon}
-        <option.icon class="size-5 shrink-0 text-mist-400" />
+        <option.icon class="size-4 shrink-0 text-gray-400" />
     {:else if option.color}
-        <span class="flex size-5 shrink-0 items-center justify-center"
-            ><span class="size-2 rounded-full" style:background-color={option.color}></span></span
-        >
+        <!-- Fills the same box as the icon markers, minus the blank edge a glyph leaves -->
+        <span class="size-4 shrink-0 p-0.5"><span class="block size-full rounded-full" style:background-color={option.color}></span></span>
     {/if}
 {/snippet}
 
 {#snippet label(option: Option)}
     {@render marker(option)}
     <span class="min-w-0 flex-1 truncate">{option.label}</span>
-    {#if option.hint}<span class="shrink-0 font-mono text-xs text-mist-400">{option.hint}</span>{/if}
+    {#if option.hint}<span class="shrink-0 font-mono text-xs text-gray-400">{option.hint}</span>{/if}
 {/snippet}
 
 <div class={["flex flex-col gap-2", className]}>
@@ -98,9 +98,9 @@
         <Drawer bind:open {title} triggerClass={[field, "pr-2 text-left", disabled && "pointer-events-none opacity-50"]}>
             {#snippet trigger()}
                 {#if selected}{@render marker(selected)}{/if}
-                <span class={["min-w-0 flex-1 truncate", !selected && "text-mist-400"]}>{selected?.label ?? placeholder}</span>
-                {#if multiple && max !== Infinity}<span class="shrink-0 font-mono text-xs text-mist-400">{values.length}/{max}</span>{/if}
-                <MaterialSymbolsKeyboardArrowDownRounded class="size-6 shrink-0 text-mist-400" />
+                <span class={["min-w-0 flex-1 truncate", !selected && "text-gray-400"]}>{selected?.label ?? placeholder}</span>
+                {#if multiple && max !== Infinity}<span class="shrink-0 font-mono text-xs text-gray-400">{values.length}/{max}</span>{/if}
+                <MaterialSymbolsKeyboardArrowDownRounded class="size-5 shrink-0 text-gray-400" />
             {/snippet}
             <div class="flex flex-col gap-4">
                 <Input type="search" icon={MaterialSymbolsSearchRounded} placeholder="Search" aria-label="Search {title}" bind:value={search} />
@@ -111,14 +111,14 @@
                             role="option"
                             aria-selected={multiple ? values.includes(option.value) : option.value === value}
                             disabled={multiple && full && !values.includes(option.value)}
-                            class="ripple flex h-12 shrink-0 items-center gap-4 rounded-2xl px-4 text-left text-sm font-medium hover:bg-white/10 disabled:opacity-50 aria-selected:bg-accent/10 aria-selected:text-accent"
+                            class={sheetItem}
                             {@attach ripple}
                             onclick={() => pick(option.value)}
                         >
                             {@render label(option)}
                         </button>
                     {:else}
-                        <p class="px-4 py-2 text-sm text-mist-400">No matches</p>
+                        <p class={menuNote}>No matches</p>
                     {/each}
                 </div>
             </div>
@@ -152,27 +152,21 @@
                     placeholder={open && selected ? selected.label : placeholder}
                     class={[fieldText, "h-full", !open && "cursor-pointer"]}
                 />
-                {#if multiple && max !== Infinity}<span class="shrink-0 font-mono text-xs text-mist-400">{values.length}/{max}</span>{/if}
-                <Combobox.Trigger class="flex size-6 shrink-0 items-center justify-center text-mist-400">
-                    <MaterialSymbolsKeyboardArrowDownRounded class={["size-6 transition-transform duration-200", open && "rotate-180"]} />
+                {#if multiple && max !== Infinity}<span class="shrink-0 font-mono text-xs text-gray-400">{values.length}/{max}</span>{/if}
+                <Combobox.Trigger class="flex size-6 shrink-0 items-center justify-center text-gray-400">
+                    <MaterialSymbolsKeyboardArrowDownRounded class={["size-5 transition-transform duration-200", open && "rotate-180"]} />
                 </Combobox.Trigger>
             </Combobox.Control>
             <Portal>
                 <Combobox.Positioner class="z-50">
-                    <Combobox.Content
-                        bind:ref={menu}
-                        class="max-h-72 origin-(--transform-origin) overflow-y-auto overscroll-contain rounded-2xl bg-surface-2 p-2 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
-                    >
+                    <Combobox.Content bind:ref={menu} class={menuPanel}>
                         {#each collection.items as option (option.value)}
-                            <Combobox.Item
-                                item={option}
-                                class="flex h-10 cursor-pointer items-center gap-4 rounded-xl px-4 text-sm font-medium data-disabled:cursor-default data-disabled:opacity-50 data-highlighted:bg-white/10 data-[state=checked]:text-accent"
-                            >
+                            <Combobox.Item item={option} class={menuItem}>
                                 {@render label(option)}
                                 <Combobox.ItemIndicator><MaterialSymbolsCheckRounded class="size-5" /></Combobox.ItemIndicator>
                             </Combobox.Item>
                         {:else}
-                            <p class="px-4 py-2 text-sm text-mist-400">No matches</p>
+                            <p class={menuNote}>No matches</p>
                         {/each}
                     </Combobox.Content>
                     <OverlayScrollbar viewport={menu} inset={8} />
@@ -183,18 +177,18 @@
     {#if chosen.length}
         <ScrollRow as="ul" aria-label="Picked">
             {#each chosen as option (option.value)}
-                <li class="flex h-8 items-center gap-2 rounded-full bg-white/10 pr-1 pl-3 text-xs font-medium">
-                    {@render marker(option)}
-                    <span class="max-w-48 truncate">{option.label}</span>
-                    <button
-                        type="button"
-                        aria-label="Remove {option.label}"
-                        {disabled}
-                        class="flex size-6 items-center justify-center rounded-full text-mist-400 hover:bg-white/10 hover:text-mist-100"
-                        onclick={() => (values = values.filter((id) => id !== option.value))}
+                <li>
+                    <Chip
+                        class="pl-3"
+                        remove={{
+                            label: `Remove ${option.label}`,
+                            disabled,
+                            onclick: () => (values = values.filter((id) => id !== option.value)),
+                        }}
                     >
-                        <MaterialSymbolsCloseRounded class="size-4" />
-                    </button>
+                        {@render marker(option)}
+                        <span class="max-w-48 truncate">{option.label}</span>
+                    </Chip>
                 </li>
             {/each}
         </ScrollRow>

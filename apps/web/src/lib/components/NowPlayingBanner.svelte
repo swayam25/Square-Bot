@@ -35,7 +35,7 @@
 <a
     href="/guild/{guild}/player"
     aria-label={track ? `Open the player: ${track.title} by ${track.author}` : "Open the player"}
-    class="group ripple relative isolate flex flex-col gap-6 overflow-clip rounded-4xl bg-surface-1 p-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+    class="group ripple relative isolate flex flex-col gap-4 overflow-clip rounded-3xl bg-surface-1 p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     {@attach ripple}
 >
     {#if track?.artworkUrl}
@@ -56,7 +56,7 @@
         <Shape lobes={4} depth={0.2} class="absolute right-40 -bottom-10 -z-10 size-20 rotate-12 text-violet-500/30" />
     {/if}
 
-    <div class="flex items-center gap-6">
+    <div class="flex items-center gap-4">
         <span class="relative shrink-0">
             <Cover src={track?.artworkUrl} class="size-20 rounded-2xl text-accent shadow-xl shadow-black/40 md:size-24" />
         </span>
@@ -67,7 +67,7 @@
             </span>
             {#if track}
                 <span class="truncate font-display text-xl font-semibold md:text-2xl">{track.title}</span>
-                <span class="flex min-w-0 items-center gap-2 text-sm text-mist-400">
+                <span class="flex min-w-0 items-center gap-2 text-sm text-gray-400">
                     <span class="truncate">{track.author}</span>
                     {#if track.requester}
                         <span aria-hidden="true">·</span>
@@ -79,10 +79,10 @@
                 </span>
             {:else if player}
                 <span class="font-display text-xl font-semibold">Nothing is playing</span>
-                <span class="text-sm text-mist-400">Open the player to search and queue something.</span>
+                <span class="text-sm text-gray-400">Open the player to search and queue something.</span>
             {:else}
-                <span aria-hidden="true" class="h-7 w-48 animate-pulse rounded-full bg-surface-2"></span>
-                <span aria-hidden="true" class="h-5 w-32 animate-pulse rounded-full bg-surface-2"></span>
+                <span aria-hidden="true" class="h-7 w-48 skeleton rounded-full"></span>
+                <span aria-hidden="true" class="h-5 w-32 skeleton rounded-full"></span>
             {/if}
         </span>
 
@@ -94,7 +94,7 @@
     </div>
 
     {#if track}
-        <div class="flex items-center gap-4 font-mono text-xs text-mist-400">
+        <div class="flex items-center gap-4 font-mono text-xs text-gray-400">
             <span class="w-12 shrink-0">{time(position)}</span>
             <WavyProgress
                 value={track.isStream ? 1 : track.lengthMs ? position / track.lengthMs : 0}

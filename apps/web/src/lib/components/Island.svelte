@@ -17,7 +17,7 @@
         info: { icon: MaterialSymbolsInfoRounded, class: "bg-accent/10 text-accent" },
         warning: { icon: MaterialSymbolsWarningRounded, class: "bg-amber-400/10 text-amber-400" },
         error: { icon: MaterialSymbolsErrorRounded, class: "bg-red-400/10 text-red-400" },
-        loading: { icon: SvgSpinners90RingWithBg, class: "bg-surface-2 text-mist-400" },
+        loading: { icon: SvgSpinners90RingWithBg, class: "bg-surface-2 text-gray-400" },
     };
 
     let held = $state<Toast | null>(null);
@@ -87,7 +87,7 @@
                             {/if}
                             <span class="flex min-w-0 flex-col">
                                 <span class="line-clamp-4 text-sm font-semibold wrap-break-word">{item.message}</span>
-                                {#if item.description}<span class="line-clamp-4 text-xs wrap-break-word text-mist-400">{item.description}</span>{/if}
+                                {#if item.description}<span class="line-clamp-4 text-xs wrap-break-word text-gray-400">{item.description}</span>{/if}
                             </span>
                         </button>
                     {/key}

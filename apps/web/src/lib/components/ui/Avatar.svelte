@@ -25,31 +25,21 @@
 </script>
 
 <script lang="ts">
-    import { Avatar } from "@ark-ui/svelte/avatar";
+    import Picture from "#lib/components/ui/Picture.svelte";
     import type { ClassValue } from "svelte/elements";
 
-    let { src, name, class: className = "size-10" }: { src?: string | null; name: string; class?: ClassValue } = $props();
-
-    let status = $state<"loading" | "loaded" | "error">("loading");
-    $effect.pre(() => {
-        void src;
-        status = "loading";
-    });
+    let { src, name, class: className = "size-10", animate }: { src?: string | null; name: string; class?: ClassValue; animate?: boolean } = $props();
 </script>
 
-<Avatar.Root
-    onStatusChange={(details) => (status = details.status)}
-    class={["relative inline-flex shrink-0 overflow-hidden rounded-full", className]}
->
-    <Avatar.Fallback
-        class={[
-            "flex size-full items-center justify-center font-semibold text-mist-950",
-            src && status === "loading" ? "animate-pulse bg-surface-3" : PASTELS[crc32(name) % PASTELS.length],
-        ]}
-    >
-        {#if !src || status === "error"}{initial(name)}{/if}
-    </Avatar.Fallback>
-    {#if src}
-        <Avatar.Image {src} alt={name} class="size-full animate-fade-in object-cover" />
-    {/if}
-</Avatar.Root>
+<Picture {src} alt={name} {animate} class={["rounded-full", className]}>
+    {#snippet fallback({ loading })}
+        <span
+            class={[
+                "flex size-full items-center justify-center font-semibold text-gray-950",
+                loading ? "skeleton" : PASTELS[crc32(name) % PASTELS.length],
+            ]}
+        >
+            {#if !loading}{initial(name)}{/if}
+        </span>
+    {/snippet}
+</Picture>

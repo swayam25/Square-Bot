@@ -111,7 +111,7 @@
             role="presentation"
             class={[
                 "pointer-events-auto absolute right-0.5 cursor-grab rounded-full transition-[opacity,width,background-color] duration-300",
-                dragging ? "w-2.5 cursor-grabbing bg-mist-300/70" : "w-1.5 bg-mist-400/40 hover:w-2.5 hover:bg-mist-400/60",
+                dragging ? "w-2.5 cursor-grabbing bg-gray-300/70" : "w-1.5 bg-gray-400/40 hover:w-2.5 hover:bg-gray-400/60",
                 !visible && "pointer-events-none opacity-0",
             ]}
             style="top: {inset + bar.start}px; height: {bar.size}px"

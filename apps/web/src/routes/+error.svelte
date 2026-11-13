@@ -30,7 +30,7 @@
     <span class="font-mono text-5xl font-medium tracking-tight text-accent">{status}</span>
     <div class="flex flex-col gap-2">
         <h1 class="font-display text-3xl font-semibold tracking-tight">{title}</h1>
-        <p class="text-base text-mist-400">{detail}</p>
+        <p class="text-base text-gray-400">{detail}</p>
     </div>
     <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
         {#if status === MODULE_OFF && page.params.guildId}

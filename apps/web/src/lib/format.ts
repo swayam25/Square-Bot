@@ -13,3 +13,7 @@ export function time(ms: number) {
     const rest = `${Math.floor((seconds % 3600) / 60)}:${String(seconds % 60).padStart(2, "0")}`;
     return hours ? `${hours}:${rest.padStart(5, "0")}` : rest;
 }
+
+export const day = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
+export const dateTime = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" });
+export const monthYear = new Intl.DateTimeFormat("en", { month: "short", year: "numeric" });

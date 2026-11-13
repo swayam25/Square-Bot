@@ -41,7 +41,7 @@
 
     .slider {
         --x: calc(var(--p) * (100% - 4px) + 2px);
-        --fill: var(--color-mist-100);
+        --fill: var(--color-gray-100);
         --gap: 0px;
         transition: --gap 400ms var(--ease-spring);
     }

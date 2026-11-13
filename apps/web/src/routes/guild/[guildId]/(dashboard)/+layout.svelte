@@ -1,4 +1,5 @@
 <script lang="ts">
+    import AccountMenu from "#lib/components/AccountMenu.svelte";
     import Island from "#lib/components/Island.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Button from "#lib/components/ui/Button.svelte";
@@ -6,6 +7,7 @@
     import GuildIcon from "#lib/components/ui/GuildIcon.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Popup from "#lib/components/ui/Popup.svelte";
+    import { focusRing, menuRow } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { Details, setDetails } from "#lib/details.svelte.ts";
     import { plural } from "#lib/format.ts";
@@ -22,7 +24,6 @@
     import MaterialSymbolsCloseRounded from "~icons/material-symbols/close-rounded";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
     import MaterialSymbolsHomeRounded from "~icons/material-symbols/home-rounded";
-    import MaterialSymbolsLogoutRounded from "~icons/material-symbols/logout-rounded";
     import MaterialSymbolsMusicNoteRounded from "~icons/material-symbols/music-note-rounded";
     import MaterialSymbolsPlayCircleRounded from "~icons/material-symbols/play-circle-rounded";
     import MaterialSymbolsPlayShapesRounded from "~icons/material-symbols/play-shapes-rounded";
@@ -149,12 +150,11 @@
         }
     }
 
-    const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
     const stacked = "h-14 flex-col justify-center gap-0.5 rounded-2xl text-2xs";
 </script>
 
 {#snippet servers()}
-    <nav aria-label="Servers" class="flex max-h-96 flex-col gap-1 overflow-y-auto overscroll-contain">
+    <nav aria-label="Servers" class="-m-1 flex max-h-96 flex-col gap-1 overflow-y-auto overscroll-contain p-1">
         {#each data.guilds as guild (guild.id)}
             <a
                 href={switchHref(guild)}
@@ -163,7 +163,7 @@
                 {@attach ripple}
                 onclick={closeSwitcher}
             >
-                <GuildIcon src={guild.iconUrl} name={guild.name} class="size-8 rounded-lg text-mist-100" />
+                <GuildIcon src={guild.iconUrl} name={guild.name} class="size-8 rounded-lg text-gray-100" />
                 <span class="min-w-0 flex-1 truncate">{guild.name}</span>
                 {#if guild.id === data.guild.id}<MaterialSymbolsCheckRounded class="size-5 shrink-0" />{/if}
             </a>
@@ -176,50 +176,29 @@
         {@attach ripple}
         onclick={closeSwitcher}
     >
-        <MaterialSymbolsPlayShapesRounded class="size-5 text-mist-400" />All servers
+        <MaterialSymbolsPlayShapesRounded class="size-5 text-gray-400" />All servers
     </a>
 {/snippet}
 
 {#snippet refreshIcon()}
     {#if refreshing}
-        <SvgSpinners90RingWithBg class="size-5 shrink-0 text-mist-400" />
+        <SvgSpinners90RingWithBg class="size-5 shrink-0 text-gray-400" />
     {:else}
-        <MaterialSymbolsRefreshRounded class="size-5 shrink-0 text-mist-400" />
+        <MaterialSymbolsRefreshRounded class="size-5 shrink-0 text-gray-400" />
     {/if}
 {/snippet}
 
 {#snippet accountMenu()}
     {#if data.user}
-        <div class="flex items-center gap-4 p-2 pb-4">
-            <Avatar src={data.user.avatarUrl} name={data.user.name} class="size-12" />
-            <div class="flex min-w-0 flex-col">
-                <span class="truncate font-semibold">{data.user.name}</span>
-                <span class="truncate font-mono text-sm text-mist-400">@{data.user.username}</span>
-            </div>
-        </div>
+        <AccountMenu user={data.user}>
+            <a href="/" class={menuRow} {@attach ripple}><MaterialSymbolsHomeRounded />Home</a>
+            {#if data.guild.canManage && mobile.current}
+                <button disabled={refreshing} aria-busy={refreshing} class={menuRow} {@attach ripple} onclick={refreshServer}>
+                    {@render refreshIcon()}{refreshing ? "Syncing…" : "Sync server"}
+                </button>
+            {/if}
+        </AccountMenu>
     {/if}
-    <a href="/" class="ripple flex h-10 items-center gap-4 rounded-xl px-4 text-sm font-medium hover:bg-white/10" {@attach ripple}>
-        <MaterialSymbolsHomeRounded class="size-5 text-mist-400" />Home
-    </a>
-    {#if data.guild.canManage && mobile.current}
-        <button
-            disabled={refreshing}
-            aria-busy={refreshing}
-            class="ripple flex h-10 w-full items-center gap-4 rounded-xl px-4 text-sm font-medium hover:bg-white/10"
-            {@attach ripple}
-            onclick={refreshServer}
-        >
-            {@render refreshIcon()}{refreshing ? "Syncing…" : "Sync server"}
-        </button>
-    {/if}
-    <form method="POST" action="/logout">
-        <button
-            class="ripple flex h-10 w-full items-center gap-4 rounded-xl px-4 text-sm font-medium text-red-400 hover:bg-red-400/10"
-            {@attach ripple}
-        >
-            <MaterialSymbolsLogoutRounded class="size-5" />Log out
-        </button>
-    </form>
 {/snippet}
 
 {#snippet link(item: Item, row: boolean)}
@@ -228,7 +207,7 @@
             <span
                 aria-disabled="true"
                 class={[
-                    "flex w-full shrink-0 cursor-not-allowed items-center font-medium text-mist-400 opacity-40",
+                    "flex w-full shrink-0 cursor-not-allowed items-center font-medium text-gray-400 opacity-40",
                     row ? "h-10 gap-2 rounded-full px-4 text-sm" : stacked,
                 ]}
             >
@@ -241,7 +220,7 @@
             href={item.href}
             aria-current={isCurrent(item.href) ? "page" : undefined}
             class={[
-                "ripple flex shrink-0 items-center font-medium text-mist-400 hover:bg-white/10 hover:text-mist-100 aria-[current=page]:bg-accent/10 aria-[current=page]:text-accent",
+                "ripple flex shrink-0 items-center font-medium text-gray-400 hover:bg-white/10 hover:text-gray-100 aria-[current=page]:bg-accent/10 aria-[current=page]:text-accent",
                 row ? "h-10 gap-2 rounded-full px-4 text-sm" : [stacked, "w-full"],
                 focusRing,
             ]}
@@ -276,9 +255,9 @@
                     {#if expanded}
                         <span class="flex min-w-0 flex-1 flex-col">
                             <span class="truncate text-sm font-semibold">{data.guild.name}</span>
-                            <span class="font-mono text-xs text-mist-400">{plural(data.guild.memberCount, "member")}</span>
+                            <span class="font-mono text-xs text-gray-400">{plural(data.guild.memberCount, "member")}</span>
                         </span>
-                        <MaterialSymbolsUnfoldMoreRounded class="size-5 shrink-0 text-mist-400" />
+                        <MaterialSymbolsUnfoldMoreRounded class="size-5 shrink-0 text-gray-400" />
                     {/if}
                 {/snippet}
                 {@render servers()}
@@ -290,7 +269,7 @@
                 <div class="flex flex-col gap-1">
                     {#if expanded && group.label}
                         <div class="flex items-center gap-2 px-4 pb-1">
-                            <span class="font-mono text-2xs font-semibold tracking-wider text-mist-400 uppercase">{group.label}</span>
+                            <span class="font-mono text-2xs font-semibold tracking-wider text-gray-400 uppercase">{group.label}</span>
                             <span class="h-px flex-1 bg-white/10"></span>
                         </div>
                     {:else if !expanded && index > 0}
@@ -313,9 +292,8 @@
                     <button
                         disabled={refreshing}
                         aria-busy={refreshing}
-                        aria-label={expanded ? undefined : "Sync server"}
                         class={[
-                            "ripple flex items-center gap-4 rounded-full text-sm font-medium text-mist-400 hover:bg-surface-2 hover:text-mist-100",
+                            "ripple flex items-center gap-4 rounded-full text-sm font-medium text-gray-400 hover:bg-surface-2 hover:text-gray-100",
                             expanded ? "h-10 w-full px-4" : "size-12 justify-center",
                             focusRing,
                         ]}
@@ -346,7 +324,7 @@
                         {#if expanded}
                             <span class="flex min-w-0 flex-1 flex-col">
                                 <span class="truncate text-sm font-semibold">{data.user!.name}</span>
-                                <span class="truncate font-mono text-xs text-mist-400">@{data.user!.username}</span>
+                                <span class="truncate font-mono text-xs text-gray-400">@{data.user!.username}</span>
                             </span>
                         {/if}
                     {/snippet}
@@ -366,11 +344,11 @@
         class="group hidden w-2 shrink-0 cursor-col-resize justify-center md:flex"
         onpointerdown={resizeSidebar}
     >
-        <span class="h-full w-1 rounded-full transition-colors duration-200 group-hover:bg-mist-400 group-active:bg-mist-400"></span>
+        <span class="h-full w-1 rounded-full transition-colors duration-200 group-hover:bg-gray-400 group-active:bg-gray-400"></span>
     </div>
 
-    <div class="relative min-h-0 min-w-0 flex-1 animate-shell-in overflow-hidden rounded-b-4xl bg-mist-950 md:rounded-4xl">
-        <main bind:this={scroller} class="size-full overflow-y-auto overscroll-contain px-4 py-8 md:px-10">
+    <div class="relative min-h-0 min-w-0 flex-1 animate-shell-in overflow-hidden rounded-b-4xl bg-gray-950 md:rounded-4xl">
+        <main bind:this={scroller} class="size-full overflow-y-auto overscroll-contain px-4 py-6 md:px-8">
             {#key page.url.pathname}
                 <div class="animate-page-in">{@render children()}</div>
             {/key}
@@ -394,16 +372,16 @@
                 class="group flex w-2 shrink-0 cursor-col-resize justify-center"
                 onpointerdown={resizeDetails}
             >
-                <span class="h-full w-1 rounded-full transition-colors duration-200 group-hover:bg-mist-400 group-active:bg-mist-400"></span>
+                <span class="h-full w-1 rounded-full transition-colors duration-200 group-hover:bg-gray-400 group-active:bg-gray-400"></span>
             </div>
             <aside aria-label={details.title} class="flex w-[calc(var(--details)-0.5rem)] shrink-0 flex-col">
                 {#key details.key}
                     <div class="flex min-h-0 flex-1 animate-panel-in flex-col">
                         <div class="flex items-center gap-4 py-2 pr-2 pl-4">
                             <h2 class="min-w-0 flex-1 truncate font-display text-xl font-semibold">{details.title}</h2>
-                            <Button variant="ghost" icon aria-label="Close panel" onclick={() => details.close()}
-                                ><MaterialSymbolsCloseRounded /></Button
-                            >
+                            <Tooltip content="Close panel">
+                                <Button variant="ghost" icon onclick={() => details.close()}><MaterialSymbolsCloseRounded /></Button>
+                            </Tooltip>
                         </div>
                         <div class="relative min-h-0 flex-1">
                             <div bind:this={detailsScroller} class="size-full overflow-y-auto overscroll-contain p-4">
@@ -417,9 +395,9 @@
         {/if}
     {/if}
 
-    <nav aria-label="Dashboard" class="shrink-0 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:hidden">
+    <nav aria-label="Dashboard" class="shrink-0 pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))] md:hidden">
         <div class="flex scrollbar-none overflow-x-auto">
-            <div class="flex w-max min-w-full items-center justify-evenly gap-2 px-4">
+            <div class="flex w-max min-w-full items-center justify-evenly gap-2 px-4 py-1">
                 <Popup
                     bind:open={mobileSwitcherOpen}
                     title="Switch server"
@@ -427,7 +405,7 @@
                 >
                     {#snippet trigger()}
                         <GuildIcon src={data.guild.iconUrl} name={data.guild.name} class="size-6 rounded-lg" />
-                        <span class="max-w-full truncate font-medium text-mist-400">Server</span>
+                        <span class="max-w-full truncate font-medium text-gray-400">Server</span>
                     {/snippet}
                     {@render servers()}
                 </Popup>
@@ -446,7 +424,7 @@
                     >
                         {#snippet trigger()}
                             <Avatar src={data.user!.avatarUrl} name={data.user!.name} class="size-6" />
-                            <span class="max-w-full truncate font-medium text-mist-400">You</span>
+                            <span class="max-w-full truncate font-medium text-gray-400">You</span>
                         {/snippet}
                         {@render accountMenu()}
                     </Popup>

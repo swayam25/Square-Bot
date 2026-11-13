@@ -3,6 +3,9 @@
     import square from "#lib/assets/square.svg";
     import { openLoginPopup } from "#lib/auth.ts";
     import BrandIcon from "#lib/components/BrandIcon.svelte";
+    import DiscordActionRow from "#lib/components/discord/DiscordActionRow.svelte";
+    import DiscordButton from "#lib/components/discord/DiscordButton.svelte";
+    import DiscordContainer from "#lib/components/discord/DiscordContainer.svelte";
     import DiscordMedia from "#lib/components/discord/DiscordMedia.svelte";
     import DiscordMessage from "#lib/components/discord/DiscordMessage.svelte";
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
@@ -29,10 +32,7 @@
 
     let { data }: PageProps = $props();
 
-    const discordContainer = "flex w-full max-w-[600px] flex-col gap-2 rounded-lg border border-[#323237] bg-[#242429] p-4";
     const discordEmoji = "mr-[0.05em] ml-[0.1em] inline size-[1.375em] align-bottom";
-    const discordButton =
-        "inline-flex h-8 min-w-[60px] items-center justify-center gap-2 rounded-lg px-4 py-0.5 text-sm font-medium whitespace-nowrap text-white transition-colors";
 
     const features = [
         {
@@ -73,7 +73,7 @@
             icon: MaterialSymbolsDescriptionRounded,
             lobes: 5,
             fill: "text-white/10",
-            ink: "text-mist-100",
+            ink: "text-gray-100",
         },
         {
             name: "Web dashboard",
@@ -118,11 +118,11 @@
                     </Button>
                 {/if}
             </div>
-            <p class="h-5 text-sm text-mist-400">
+            <p class="h-5 text-sm text-gray-400">
                 {#await data.servers then servers}
                     {#if servers}
                         <span class="animate-fade-in">
-                            In <span class="font-mono font-medium text-mist-100">{formatCount(servers)}</span>
+                            In <span class="font-mono font-medium text-gray-100">{formatCount(servers)}</span>
                             {servers === 1 ? "server" : "servers"}
                         </span>
                     {/if}
@@ -151,7 +151,7 @@
                     <h2 id="features" class="font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">
                         Everything your server needs
                     </h2>
-                    <p class="text-mist-400">One bot for music, support, growth and safety, set up from Discord or the web.</p>
+                    <p class="text-gray-400">One bot for music, support, growth and safety, set up from Discord or the web.</p>
                 </div>
                 <ul class="grid gap-x-8 gap-y-10 sm:grid-cols-2">
                     {#each features as feature (feature.name)}
@@ -169,7 +169,7 @@
                             </span>
                             <div class="flex flex-col gap-2">
                                 <h3 class="font-display text-lg font-semibold">{feature.name}</h3>
-                                <p class="text-sm text-mist-400">
+                                <p class="text-sm text-gray-400">
                                     {#if typeof feature.text === "string"}{feature.text}{:else}{@render feature.text()}{/if}
                                 </p>
                             </div>
@@ -183,7 +183,7 @@
     <section aria-labelledby="in-discord" class="mx-auto flex max-w-6xl flex-col gap-24 px-4 pt-32 md:px-6">
         <div class="flex max-w-2xl flex-col gap-4">
             <h2 id="in-discord" class="font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">Right inside Discord</h2>
-            <p class="text-mist-400 md:text-lg">Square answers with clean cards and buttons, so your members never have to leave the chat.</p>
+            <p class="text-gray-400 md:text-lg">Square answers with clean cards and buttons, so your members never have to leave the chat.</p>
         </div>
 
         {#snippet story(
@@ -198,7 +198,7 @@
             <div class={["flex flex-col gap-6", index % 2 === 1 && "lg:order-2"]}>
                 <span class={["flex items-center gap-2 text-sm font-semibold", ink]}><Icon class="size-5" />{eyebrow}</span>
                 <h3 class="font-display text-3xl font-semibold tracking-tight text-balance">{title}</h3>
-                <p class="text-mist-400 md:text-lg">{text}</p>
+                <p class="text-gray-400 md:text-lg">{text}</p>
                 <ul class="flex flex-col gap-2">
                     {#each points as point (point)}
                         <li class="flex items-center gap-2 text-sm"><MaterialSymbolsCheckCircleRounded class={["size-5 shrink-0", ink]} />{point}</li>
@@ -222,16 +222,16 @@
                 <span aria-hidden="true" class="absolute -bottom-4 -left-6 -z-10 h-8 w-20 -rotate-24 rounded-full bg-violet-500/30"></span>
                 <DiscordWindow channel="music">
                     <DiscordMessage command="play">
-                        <div class={[discordContainer, "border-l-4 border-l-[#e74c3c]"]}>
+                        <DiscordContainer color="#e74c3c">
                             <p>
                                 <BrandIcon brand="youtube" class={discordEmoji} /> Added
-                                <span class="text-[#4d96ee]"><strong>{demo.track.title}</strong> by <strong>{demo.track.author}</strong></span>
+                                <span class="text-dc-link"><strong>{demo.track.title}</strong> by <strong>{demo.track.author}</strong></span>
                                 [{time(demo.track.duration)}].
                             </p>
-                        </div>
+                        </DiscordContainer>
                     </DiscordMessage>
                     <DiscordMessage command="now-playing" ephemeral>
-                        <div class={discordContainer}>
+                        <DiscordContainer>
                             <DiscordMedia>
                                 <NowPlayingCard
                                     data={{
@@ -257,19 +257,10 @@
                                     }}
                                 />
                             </DiscordMedia>
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            <span class={[discordButton, "border border-[#97979f]/4 bg-[#97979f]/12"]}>
-                                <BrandIcon brand="youtube" class="size-4.5" />Open on YouTube
-                                <svg
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                    class="size-4 fill-none stroke-current stroke-2 [stroke-linecap:round] [stroke-linejoin:round]"
-                                >
-                                    <path d="M14 4h6v6m0-6-9 9m7 1v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
-                                </svg>
-                            </span>
-                        </div>
+                        </DiscordContainer>
+                        <DiscordActionRow>
+                            <DiscordButton href=""><BrandIcon brand="youtube" class="size-4.5" />Open on YouTube</DiscordButton>
+                        </DiscordActionRow>
                     </DiscordMessage>
                 </DiscordWindow>
             </div>
@@ -290,7 +281,7 @@
                 <Shape lobes={4} depth={0.2} class="absolute -right-6 -bottom-8 -z-10 size-20 rotate-12 text-amber-400/30" />
                 <DiscordWindow channel="general">
                     <DiscordMessage command="invites">
-                        <div class={discordContainer}>
+                        <DiscordContainer>
                             <DiscordMedia>
                                 <InviteCard
                                     data={{
@@ -308,7 +299,7 @@
                                     }}
                                 />
                             </DiscordMedia>
-                        </div>
+                        </DiscordContainer>
                     </DiscordMessage>
                 </DiscordWindow>
             </div>
@@ -329,15 +320,13 @@
                 <span aria-hidden="true" class="absolute -bottom-4 -left-8 -z-10 h-8 w-20 rotate-12 rounded-full bg-accent/20"></span>
                 <DiscordWindow channel="support">
                     <DiscordMessage>
-                        <div class={discordContainer}>
-                            <h2 class="mb-2 text-xl leading-snug font-bold text-[#fbfbfb]">Need Help?</h2>
+                        <DiscordContainer>
+                            <h2 class="mb-2 text-xl leading-snug font-bold text-dc-strong">Need Help?</h2>
                             <p>Press the button below to open a ticket. Staff will reply in a private channel.</p>
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            <button type="button" class={[discordButton, "bg-[#5865f2] hover:bg-[#4752c4]"]}>
-                                <MaterialSymbolsConfirmationNumberRounded class="size-4.5" />Open a ticket
-                            </button>
-                        </div>
+                        </DiscordContainer>
+                        <DiscordActionRow>
+                            <DiscordButton style="primary"><MaterialSymbolsConfirmationNumberRounded class="size-4.5" />Open a ticket</DiscordButton>
+                        </DiscordActionRow>
                     </DiscordMessage>
                 </DiscordWindow>
             </div>
@@ -355,7 +344,7 @@
             <span class="absolute bottom-20 left-8 h-8 w-20 -rotate-24 rounded-full bg-emerald-400/20 md:left-24"></span>
         </div>
         <h2 id="join" class="max-w-2xl font-display text-4xl font-semibold tracking-tight text-balance md:text-6xl">Ready to bring Square in?</h2>
-        <p class="max-w-md text-mist-400 md:text-lg">Add it in a few clicks, then set it up from Discord or the dashboard.</p>
+        <p class="max-w-md text-gray-400 md:text-lg">Add it in a few clicks, then set it up from Discord or the dashboard.</p>
         <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <Button variant="primary" size="lg" href={data.inviteUrl}><SimpleIconsDiscord />Add to Discord</Button>
             <Button size="lg" href="https://github.com/swayam25/Square-Bot"><SimpleIconsGithub />View on GitHub</Button>

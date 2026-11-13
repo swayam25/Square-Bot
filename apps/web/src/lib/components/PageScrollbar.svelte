@@ -118,7 +118,7 @@
         <div
             class={[
                 "pointer-events-none absolute right-0.5 rounded-full transition-[opacity,width,background-color] duration-300",
-                dragging ? "w-2.5 bg-mist-300/70" : hovering ? "w-2.5 bg-mist-400/60" : "w-1.5 bg-mist-400/40",
+                dragging ? "w-2.5 bg-gray-300/70" : hovering ? "w-2.5 bg-gray-400/60" : "w-1.5 bg-gray-400/40",
                 !visible && "opacity-0",
             ]}
             style="top: {thumb.top}px; height: {thumb.height}px"

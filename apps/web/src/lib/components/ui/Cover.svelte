@@ -19,7 +19,7 @@
         class={["shrink-0 bg-surface-2 object-cover", className]}
     />
 {:else}
-    <span class={["flex shrink-0 items-center justify-center bg-surface-2 text-mist-400", className]}>
+    <span class={["flex shrink-0 items-center justify-center bg-surface-2 text-gray-400", className]}>
         <MaterialSymbolsMusicNoteRounded class="size-1/2" />
     </span>
 {/if}

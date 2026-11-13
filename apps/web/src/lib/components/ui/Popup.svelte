@@ -16,6 +16,7 @@
         placement = "bottom-end",
         contentClass = "w-72",
         children,
+        disabled = false,
     }: {
         open?: boolean;
         title: string;
@@ -24,14 +25,15 @@
         placement?: Placement;
         contentClass?: ClassValue;
         children: Snippet;
+        disabled?: boolean;
     } = $props();
 </script>
 
 {#if mobile.current}
-    <Drawer bind:open {title} {trigger} {triggerClass} {children} />
+    <Drawer bind:open {title} {trigger} {triggerClass} {disabled} {children} />
 {:else}
     <Popover.Root bind:open positioning={{ placement, gutter: 8 }}>
-        <Popover.Trigger class={triggerClass}>{@render trigger()}</Popover.Trigger>
+        <Popover.Trigger class={triggerClass} {disabled}>{@render trigger()}</Popover.Trigger>
         <Portal>
             <Popover.Positioner class="z-50">
                 <Popover.Content

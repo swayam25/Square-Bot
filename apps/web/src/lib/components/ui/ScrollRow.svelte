@@ -59,7 +59,7 @@
     this={as}
     {...rest}
     class={[
-        "edge-fade-x flex scrollbar-none gap-2 overflow-x-auto overscroll-x-contain [&::-webkit-scrollbar]:hidden [&>*]:shrink-0",
+        "edge-fade-x -my-1 flex scrollbar-none gap-2 overflow-x-auto overscroll-x-contain py-1 [&::-webkit-scrollbar]:hidden [&>*]:shrink-0",
         dragging && "cursor-grabbing select-none **:cursor-grabbing",
         className,
     ]}

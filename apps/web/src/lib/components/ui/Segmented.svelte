@@ -66,12 +66,12 @@
                 onclick={() => (value = option.value)}
                 class={[
                     "relative flex h-10 w-full items-center justify-center gap-2 rounded-full px-4 text-sm font-medium transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 md:h-8",
-                    value === option.value ? "text-mist-50" : "text-mist-400 enabled:hover:text-mist-100",
+                    value === option.value ? "text-gray-50" : "text-gray-400 enabled:hover:text-gray-100",
                 ]}
             >
                 {#if option.icon}<option.icon class="size-4 shrink-0" />{/if}
                 {option.label}
-                {#if option.count}<span class="font-mono text-xs text-mist-400">{formatCount(option.count)}</span>{/if}
+                {#if option.count}<span class="font-mono text-xs text-gray-400">{formatCount(option.count)}</span>{/if}
             </button>
         </Tooltip>
     {/each}

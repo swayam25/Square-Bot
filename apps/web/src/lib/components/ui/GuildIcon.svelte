@@ -10,32 +10,27 @@
 </script>
 
 <script lang="ts">
-    import { Avatar } from "@ark-ui/svelte/avatar";
+    import Picture from "#lib/components/ui/Picture.svelte";
     import type { ClassValue } from "svelte/elements";
 
-    let { src, name, class: className = "size-12 rounded-2xl" }: { src?: string | null; name: string; class?: ClassValue } = $props();
-
-    let status = $state<"loading" | "loaded" | "error">("loading");
-    $effect.pre(() => {
-        void src;
-        status = "loading";
-    });
+    let {
+        src,
+        name,
+        class: className = "size-12 rounded-2xl",
+        animate,
+    }: { src?: string | null; name: string; class?: ClassValue; animate?: boolean } = $props();
 
     const letters = $derived(acronym(name));
     const scale = $derived(letters.length <= 2 ? 38 : letters.length <= 4 ? 30 : 22);
 </script>
 
-<Avatar.Root onStatusChange={(details) => (status = details.status)} class={["@container relative inline-flex shrink-0 overflow-hidden", className]}>
-    <Avatar.Fallback
-        class={[
-            "flex size-full items-center justify-center bg-surface-2 font-medium whitespace-nowrap",
-            src && status === "loading" && "animate-pulse",
-        ]}
-        style="font-size: {scale}cqw"
-    >
-        {#if !src || status === "error"}{letters}{/if}
-    </Avatar.Fallback>
-    {#if src}
-        <Avatar.Image {src} alt={name} class="size-full animate-fade-in object-cover" />
-    {/if}
-</Avatar.Root>
+<Picture {src} alt={name} {animate} class={["@container", className]}>
+    {#snippet fallback({ loading })}
+        <span
+            class={["flex size-full items-center justify-center bg-surface-2 font-medium whitespace-nowrap", loading && "animate-pulse"]}
+            style="font-size: {scale}cqw"
+        >
+            {#if !loading}{letters}{/if}
+        </span>
+    {/snippet}
+</Picture>
