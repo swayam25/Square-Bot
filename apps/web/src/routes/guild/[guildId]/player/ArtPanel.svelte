@@ -138,13 +138,12 @@
             referrerpolicy="no-referrer"
             class="absolute inset-0 -z-10 size-full scale-125 object-cover opacity-40 blur-3xl"
         />
-        <span aria-hidden="true" class="absolute inset-0 -z-10 bg-linear-to-b from-mist-950/20 to-mist-950/70"></span>
+        <span aria-hidden="true" class="absolute inset-0 -z-10 bg-linear-to-b from-gray-950/20 to-gray-950/70"></span>
     {/if}
 
     <div class="flex w-full items-center justify-between gap-4">
         <a
             href={server.href}
-            aria-label="Back to the {server.name} dashboard"
             class="group flex min-w-0 items-center gap-2 rounded-full bg-black/30 py-1 pr-4 pl-1 backdrop-blur-xl transition-colors hover:bg-black/50"
         >
             <span class="relative size-8 shrink-0">
@@ -152,10 +151,7 @@
                 <MaterialSymbolsArrowBackRounded class="absolute inset-0 m-auto size-5 opacity-0 transition-opacity group-hover:opacity-100" />
             </span>
             <span class="truncate text-sm font-semibold">{server.name}</span>
-            <span
-                title={online ? "Live" : "Offline, showing the last known state"}
-                class={["size-2 shrink-0 rounded-full", online ? "bg-emerald-400" : "animate-pulse bg-amber-400"]}
-            ></span>
+            <span class={["size-2 shrink-0 rounded-full", online ? "bg-emerald-400" : "animate-pulse bg-amber-400"]}></span>
         </a>
         <Segmented
             label="Show"
@@ -207,10 +203,10 @@
         <div class="flex w-full max-w-md flex-col items-center gap-2 text-center">
             {#if track}
                 <h2 class="line-clamp-2 font-display text-2xl font-semibold wrap-anywhere md:text-3xl">{track.title}</h2>
-                <p class="truncate text-mist-400">{track.author}</p>
+                <p class="truncate text-gray-400">{track.author}</p>
             {:else}
                 <h2 class="font-display text-2xl font-semibold">Nothing is playing</h2>
-                <p class="text-sm text-mist-400">Add a song from search to start.</p>
+                <p class="text-sm text-gray-400">Add a song from search to start.</p>
             {/if}
         </div>
     </div>
@@ -222,7 +218,7 @@
                     <span class="flex h-10 min-w-0 items-center gap-2 rounded-full bg-black/30 pr-4 pl-1 text-sm backdrop-blur-xl">
                         <Avatar src={track.requester.avatarUrl} name={track.requester.name} class="size-8 text-xs" />
                         <span class="flex min-w-0 flex-col leading-tight">
-                            <span class="text-2xs text-mist-400">Requested by</span>
+                            <span class="text-2xs text-gray-400">Requested by</span>
                             <span class="truncate font-semibold">{track.requester.name}</span>
                         </span>
                     </span>
@@ -241,7 +237,6 @@
                     <Tooltip content="Full screen">
                         <button
                             type="button"
-                            aria-label="Full screen"
                             aria-haspopup="dialog"
                             class="ripple flex size-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-xl transition-colors hover:bg-black/50"
                             {@attach ripple}

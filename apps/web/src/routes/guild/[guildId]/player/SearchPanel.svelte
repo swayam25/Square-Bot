@@ -12,9 +12,12 @@
 
 <script lang="ts">
     import BrandIcon from "#lib/components/BrandIcon.svelte";
+    import EmptyState from "#lib/components/ui/EmptyState.svelte";
+    import FilterChip from "#lib/components/ui/FilterChip.svelte";
     import Input from "#lib/components/ui/Input.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import ScrollRow from "#lib/components/ui/ScrollRow.svelte";
+    import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { errorMessage } from "#lib/errors.ts";
     import { formatCount, time } from "#lib/format.ts";
     import { ripple } from "#lib/motion.ts";
@@ -27,7 +30,7 @@
     import { control } from "./player.ts";
     import TrackRow from "./TrackRow.svelte";
 
-    let { guild }: { guild: string } = $props();
+    let { guild, lock = null, contain }: { guild: string; lock?: string | null; contain?: string } = $props();
 
     const DEBOUNCE_MS = 450;
 
@@ -116,93 +119,86 @@
 
     <ScrollRow role="radiogroup" aria-label="Search on" class="shrink-0 px-4 md:px-6">
         {#each SOURCES as option (option.value)}
-            <button
-                type="button"
-                role="radio"
-                aria-checked={source === option.value}
-                class={[
-                    "ripple flex h-8 items-center gap-2 rounded-full px-3 text-xs font-medium whitespace-nowrap transition-colors",
-                    source === option.value ? "bg-accent/10 text-accent" : "bg-surface-2 text-mist-400 hover:bg-surface-3 hover:text-mist-100",
-                ]}
-                {@attach ripple}
-                onclick={() => pick(option.value)}
-            >
+            <FilterChip checked={source === option.value} onclick={() => pick(option.value)}>
                 <BrandIcon brand={option.value} class="size-4" />{option.label}
-            </button>
+            </FilterChip>
         {/each}
     </ScrollRow>
 
     <div class="relative min-h-0 flex-1">
-        <div bind:this={list} aria-live="polite" class="flex size-full flex-col gap-2 overflow-y-auto overscroll-contain px-2 pb-6 md:px-4">
+        <div bind:this={list} aria-live="polite" class={["flex size-full flex-col gap-2 overflow-y-auto px-2 pt-1 pb-6 md:px-4", contain]}>
             {#if searching && !results}
                 <ul aria-label="Searching" aria-busy="true" class="flex flex-col gap-1">
                     {#each [64, 48, 72, 56, 40, 68, 52, 60] as width, i (i)}
                         <li class="flex items-center gap-4 p-2">
-                            <span class="size-12 shrink-0 animate-pulse rounded-xl bg-surface-2" style:animation-delay="{i * 80}ms"></span>
+                            <span class="size-12 shrink-0 skeleton rounded-xl" style:animation-delay="{i * 80}ms"></span>
                             <span class="flex flex-1 flex-col gap-2">
-                                <span class="h-4 animate-pulse rounded-full bg-surface-2" style:width="{width}%" style:animation-delay="{i * 80}ms"
-                                ></span>
-                                <span class="h-3 w-1/4 animate-pulse rounded-full bg-surface-2" style:animation-delay="{i * 80}ms"></span>
+                                <span class="h-4 skeleton rounded-full" style:width="{width}%" style:animation-delay="{i * 80}ms"></span>
+                                <span class="h-3 w-1/4 skeleton rounded-full" style:animation-delay="{i * 80}ms"></span>
                             </span>
-                            <span class="h-3 w-8 animate-pulse rounded-full bg-surface-2" style:animation-delay="{i * 80}ms"></span>
+                            <span class="h-3 w-8 skeleton rounded-full" style:animation-delay="{i * 80}ms"></span>
                         </li>
                     {/each}
                 </ul>
             {:else if problem}
-                <p class="px-2 text-sm text-red-400">{problem}</p>
+                <EmptyState tone="danger" compact title="Couldn't search" text={problem} retry={search} />
             {:else if results}
                 {#if results.playlist}
                     <div class="flex items-center gap-4 rounded-2xl bg-surface-2 p-4">
                         <MaterialSymbolsPlaylistAddRounded class="size-6 shrink-0 text-accent" />
                         <div class="flex min-w-0 flex-1 flex-col">
                             <span class="truncate text-sm font-semibold">{results.playlist.name}</span>
-                            <span class="text-xs text-mist-400">
+                            <span class="text-xs text-gray-400">
                                 Playlist · {formatCount(results.playlist.trackCount)} tracks{results.tracks.length < results.playlist.trackCount
                                     ? `, first ${results.tracks.length} below`
                                     : ""}
                             </span>
                         </div>
-                        <button
-                            type="button"
-                            disabled={adding.has("playlist")}
-                            class="ripple flex h-10 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-cyan-950 hover:bg-cyan-300"
-                            {@attach ripple}
-                            onclick={() => add("playlist", text.trim())}
-                        >
-                            {#if adding.has("playlist")}<SvgSpinners90RingWithBg class="size-4" />{/if}Add all
-                        </button>
+                        <Tooltip content={lock}>
+                            <button
+                                type="button"
+                                disabled={!!lock || adding.has("playlist")}
+                                class="ripple flex h-10 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-cyan-950 hover:bg-cyan-300"
+                                {@attach ripple}
+                                onclick={() => add("playlist", text.trim())}
+                            >
+                                {#if adding.has("playlist")}<SvgSpinners90RingWithBg class="size-4" />{/if}Add all
+                            </button>
+                        </Tooltip>
                     </div>
                 {/if}
                 <ul class={["flex flex-col gap-1 transition-opacity", searching && "opacity-50"]}>
                     {#each results.tracks as track, i (`${i}-${track.identifier}`)}
                         {@const busy = adding.has(track.identifier)}
                         <li>
-                            <button
-                                type="button"
-                                aria-label="Add {track.title} by {track.author} to the queue"
-                                aria-busy={busy}
-                                disabled={!track.uri}
-                                class="ripple flex w-full items-center gap-4 rounded-2xl p-2 text-left transition-colors hover:bg-surface-2 active:bg-surface-3 disabled:opacity-50"
-                                {@attach ripple}
-                                onclick={() => add(track.identifier, track.uri!)}
-                            >
-                                <TrackRow {track}>
-                                    {#snippet trailing()}
-                                        <span class="flex w-12 shrink-0 justify-end pr-2 font-mono text-xs text-mist-400">
-                                            {#if busy}<SvgSpinners90RingWithBg class="size-4 text-accent" />{:else}{track.isStream
-                                                    ? "Live"
-                                                    : time(track.lengthMs)}{/if}
-                                        </span>
-                                    {/snippet}
-                                </TrackRow>
-                            </button>
+                            <Tooltip content={lock} class="w-full">
+                                <button
+                                    type="button"
+                                    aria-label="Add {track.title} by {track.author} to the queue"
+                                    aria-busy={busy}
+                                    disabled={!!lock || !track.uri}
+                                    class="ripple flex w-full items-center gap-4 rounded-2xl p-2 text-left transition-colors hover:bg-surface-2 active:bg-surface-3 disabled:opacity-50"
+                                    {@attach ripple}
+                                    onclick={() => add(track.identifier, track.uri!)}
+                                >
+                                    <TrackRow {track}>
+                                        {#snippet trailing()}
+                                            <span class="flex w-12 shrink-0 justify-end pr-2 font-mono text-xs text-gray-400">
+                                                {#if busy}<SvgSpinners90RingWithBg class="size-4 text-accent" />{:else}{track.isStream
+                                                        ? "Live"
+                                                        : time(track.lengthMs)}{/if}
+                                            </span>
+                                        {/snippet}
+                                    </TrackRow>
+                                </button>
+                            </Tooltip>
                         </li>
                     {:else}
-                        <li class="px-2 text-sm text-mist-400">No results. Try other words, or another source.</li>
+                        <li class="px-2 text-sm text-gray-400">No results. Try other words, or another source.</li>
                     {/each}
                 </ul>
             {:else}
-                <p class="px-2 text-sm text-mist-400">Search for a song, or paste a YouTube, Spotify or Apple Music link.</p>
+                <p class="px-2 text-sm text-gray-400">Search for a song, or paste a YouTube, Spotify or Apple Music link.</p>
             {/if}
         </div>
         <OverlayScrollbar viewport={list} inset={16} />

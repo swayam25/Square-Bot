@@ -1,5 +1,6 @@
 <script lang="ts">
     import Button from "#lib/components/ui/Button.svelte";
+    import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import Popup from "#lib/components/ui/Popup.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { mobile } from "#lib/media.ts";
@@ -8,7 +9,7 @@
     import type { EqPreset, PlayerState } from "@square/api-client";
     import type { ClassValue } from "svelte/elements";
     import MaterialSymbolsEqualizerRounded from "~icons/material-symbols/equalizer-rounded";
-    import MaterialSymbolsRestartAltRounded from "~icons/material-symbols/restart-alt-rounded";
+    import MaterialSymbolsReplayRounded from "~icons/material-symbols/replay-rounded";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
     import { control } from "./player.ts";
 
@@ -57,13 +58,13 @@
             class="w-full"
             onclick={() => run(RESET, music.resetEq({ guild }))}
         >
-            {#if busy !== RESET}<MaterialSymbolsRestartAltRounded />{/if}Reset
+            {#if busy !== RESET}<MaterialSymbolsReplayRounded />{/if}Reset
         </Button>
     </Tooltip>
 {/snippet}
 
-<Tooltip content={active.length ? `Equalizer: ${active.join(", ")}` : "Equalizer"}>
-    <Popup title="Equalizer" placement="top-end" contentClass="w-96" {triggerClass}>
+<Tooltip content={lock ?? (active.length ? `Equalizer: ${active.join(", ")}` : "Equalizer")}>
+    <Popup title="Equalizer" placement="top-end" contentClass="w-96" {triggerClass} disabled={!!lock}>
         {#snippet trigger()}
             <MaterialSymbolsEqualizerRounded /><span class="sr-only">Equalizer</span>
         {/snippet}
@@ -79,7 +80,7 @@
             {#if presets}
                 {#each groups as group (group.title)}
                     <section class="flex flex-col gap-2">
-                        <h3 class="flex items-baseline justify-between gap-4 text-xs font-medium text-mist-400">
+                        <h3 class="flex items-baseline justify-between gap-4 text-xs font-medium text-gray-400">
                             {group.title}<span class="text-2xs font-normal">{group.hint}</span>
                         </h3>
                         <div class="flex flex-wrap gap-2">
@@ -93,7 +94,7 @@
                                         disabled={!!lock || (busy !== null && busy !== preset.name)}
                                         class={[
                                             "ripple relative inline-flex h-10 items-center rounded-full px-4 text-sm font-medium transition-colors disabled:opacity-50",
-                                            on ? "bg-accent/20 text-cyan-300 hover:bg-accent/30" : "bg-white/10 text-mist-100 hover:bg-white/15",
+                                            on ? "bg-accent/20 text-cyan-300 hover:bg-accent/30" : "bg-white/10 text-gray-100 hover:bg-white/15",
                                         ]}
                                         {@attach ripple}
                                         onclick={() => run(preset.name, music.setEq({ guild, preset: preset.name, enabled: !on }))}
@@ -107,11 +108,17 @@
                     </section>
                 {/each}
             {:else if presetsQuery.error}
-                <p role="alert" class="text-sm font-medium text-red-400">Square couldn't load the equalizer. Try again in a moment.</p>
+                <EmptyState
+                    tone="danger"
+                    compact
+                    title="Couldn't load the equalizer"
+                    text={presetsQuery.error.message ?? "Square didn't answer. Try again in a moment."}
+                    retry={() => presetsQuery.refresh()}
+                />
             {:else}
                 <div aria-hidden="true" class="flex flex-wrap gap-2">
                     {#each [24, 28, 20, 24, 16, 28, 20, 24] as width, i (i)}
-                        <span class="h-10 animate-pulse rounded-full bg-white/10" style:width="{width * 0.25}rem"></span>
+                        <span class="h-10 skeleton rounded-full" style:width="{width * 0.25}rem"></span>
                     {/each}
                 </div>
             {/if}

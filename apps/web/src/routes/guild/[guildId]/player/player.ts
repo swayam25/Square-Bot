@@ -4,7 +4,7 @@ import type { PlayerState } from "@square/api-client";
 
 export type Tab = "search" | "queue" | "history" | "lyrics";
 
-export type Access = { dj: boolean; inChannel: boolean; me: string | null };
+export type Access = { dj: boolean; inChannel: boolean; queueLock: string | null; me: string | null };
 
 export function locked(access: Access, { own = false } = {}): string | null {
     if (!access.inChannel) return "Join the bot's voice channel first";

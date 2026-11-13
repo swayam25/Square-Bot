@@ -2,6 +2,7 @@
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import Dialog from "#lib/components/ui/Dialog.svelte";
+    import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { ripple } from "#lib/motion.ts";
     import { page } from "$app/state";
     import type { Person } from "@square/api-client";
@@ -16,26 +17,27 @@
 </script>
 
 {#if listeners.length}
-    <button
-        type="button"
-        aria-label="{label}, see who"
-        aria-haspopup="dialog"
-        class="ripple flex h-10 min-w-0 items-center gap-2 rounded-full bg-black/30 pr-4 pl-1 text-sm font-semibold backdrop-blur-xl transition-colors hover:bg-black/50"
-        {@attach ripple}
-        onclick={() => (open = true)}
-    >
-        <span class="flex shrink-0 -space-x-2">
-            {#each listeners.slice(0, STACK) as person, i (person.id)}
-                <Avatar
-                    src={person.avatarUrl}
-                    name={person.name}
-                    class={["size-8 text-xs", i < Math.min(listeners.length, STACK) - 1 && "stack-bite"]}
-                />
-            {/each}
-        </span>
-        <MaterialSymbolsHeadphonesRounded class="size-4 shrink-0 text-mist-400" />
-        <span class="truncate tabular-nums">{listeners.length}</span>
-    </button>
+    <Tooltip content="{label}, see who">
+        <button
+            type="button"
+            aria-haspopup="dialog"
+            class="ripple flex h-10 min-w-0 items-center gap-2 rounded-full bg-black/30 pr-4 pl-1 text-sm font-semibold backdrop-blur-xl transition-colors hover:bg-black/50"
+            {@attach ripple}
+            onclick={() => (open = true)}
+        >
+            <span class="flex shrink-0 -space-x-2">
+                {#each listeners.slice(0, STACK) as person, i (person.id)}
+                    <Avatar
+                        src={person.avatarUrl}
+                        name={person.name}
+                        class={["size-8 text-xs", i < Math.min(listeners.length, STACK) - 1 && "stack-bite"]}
+                    />
+                {/each}
+            </span>
+            <MaterialSymbolsHeadphonesRounded class="size-4 shrink-0 text-gray-400" />
+            <span class="truncate tabular-nums">{listeners.length}</span>
+        </button>
+    </Tooltip>
 {/if}
 
 <Dialog

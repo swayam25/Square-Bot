@@ -3,11 +3,12 @@
     import Button from "#lib/components/ui/Button.svelte";
     import Cover from "#lib/components/ui/Cover.svelte";
     import Dialog from "#lib/components/ui/Dialog.svelte";
+    import FilterChip from "#lib/components/ui/FilterChip.svelte";
     import Input from "#lib/components/ui/Input.svelte";
     import ScrollRow from "#lib/components/ui/ScrollRow.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { Debounced } from "#lib/debounced.svelte.ts";
     import { formatCount, plural, time } from "#lib/format.ts";
-    import { ripple } from "#lib/motion.ts";
     import * as music from "#lib/music.remote.ts";
     import { sortable } from "#lib/sortable.ts";
     import { toast } from "#lib/toast.svelte.ts";
@@ -80,16 +81,8 @@
     });
     const person = $derived(people.some((p) => p.id === who) ? who : null);
     const FILTER_MS = 300;
-    let needle = $state("");
-    $effect(() => {
-        const next = text.trim().toLocaleLowerCase();
-        if (!next) {
-            needle = "";
-            return;
-        }
-        const timer = setTimeout(() => (needle = next), FILTER_MS);
-        return () => clearTimeout(timer);
-    });
+    const filter = new Debounced(() => text.trim().toLocaleLowerCase(), FILTER_MS);
+    const needle = $derived(filter.current);
     const filtering = $derived(!!needle || person !== null);
     const shown = $derived(
         tracks
@@ -158,38 +151,30 @@
     async function runWhole() {
         if (!whole) return;
         wholeBusy = true;
-        const ok = await control(whole === "clear" ? music.clearQueue({ guild }) : music.reverseQueue({ guild }), { announce: true });
+        const clear = whole === "clear";
+        const ok = await control(clear ? music.clearQueue({ guild }) : music.reverseQueue({ guild }), { announce: clear });
         wholeBusy = false;
         if (ok) wholeOpen = false;
     }
 
-    const action = "flex size-8 items-center justify-center rounded-full text-mist-300 transition-colors";
-    const chip = "ripple flex h-8 items-center gap-2 rounded-full px-3 text-xs font-medium whitespace-nowrap transition-colors";
-    const picked = "bg-accent/10 text-accent";
-    const unpicked = "bg-surface-2 text-mist-400 hover:bg-surface-3 hover:text-mist-100";
-    const neutral = [action, "hover:bg-surface-3 hover:text-mist-50"];
+    const action = "flex size-8 items-center justify-center rounded-full text-gray-300 transition-colors";
+    const neutral = [action, "hover:bg-surface-3 hover:text-gray-50"];
 </script>
 
 <section aria-labelledby="up-next" class="flex flex-col gap-2">
     <div class="flex items-center justify-between gap-4 px-2">
         <h2 id="up-next" class="font-display text-lg font-semibold">
-            Up next <span class="font-mono text-sm font-normal text-mist-400">{formatCount(queue.total)}</span>
+            Up next <span class="font-mono text-sm font-normal text-gray-400">{formatCount(queue.total)}</span>
         </h2>
         {#if queue.total}
             <div class="flex gap-1">
                 <Tooltip content={lock ?? (queue.total < 2 ? "Needs two songs or more" : "Reverse the queue")}>
-                    <Button
-                        variant="ghost"
-                        icon
-                        aria-label="Reverse the queue"
-                        disabled={!!lock || queue.total < 2}
-                        onclick={() => askWhole("reverse")}
-                    >
+                    <Button variant="ghost" icon disabled={!!lock || queue.total < 2} onclick={() => askWhole("reverse")}>
                         <MaterialSymbolsSwapVertRounded />
                     </Button>
                 </Tooltip>
                 <Tooltip content={lock ?? "Clear the queue"}>
-                    <Button variant="ghost" icon aria-label="Clear the queue" disabled={!!lock} onclick={() => askWhole("clear")}>
+                    <Button variant="ghost" icon disabled={!!lock} onclick={() => askWhole("clear")}>
                         <MaterialSymbolsClearAllRounded />
                     </Button>
                 </Tooltip>
@@ -207,28 +192,12 @@
             />
             {#if people.length > 1}
                 <ScrollRow role="radiogroup" aria-label="Added by">
-                    <button
-                        type="button"
-                        role="radio"
-                        aria-checked={person === null}
-                        class={[chip, person === null ? picked : unpicked]}
-                        {@attach ripple}
-                        onclick={() => (who = null)}
-                    >
-                        Everyone
-                    </button>
+                    <FilterChip checked={person === null} onclick={() => (who = null)}>Everyone</FilterChip>
                     {#each people as p (p.id)}
-                        <button
-                            type="button"
-                            role="radio"
-                            aria-checked={person === p.id}
-                            class={[chip, "pl-1", person === p.id ? picked : unpicked]}
-                            {@attach ripple}
-                            onclick={() => (who = person === p.id ? null : p.id)}
-                        >
+                        <FilterChip checked={person === p.id} onclick={() => (who = person === p.id ? null : p.id)} class="pl-1">
                             <Avatar src={p.avatarUrl} name={p.name} class="size-6 text-2xs" />{p.name}
                             <span class="font-mono opacity-60">{p.count}</span>
-                        </button>
+                        </FilterChip>
                     {/each}
                 </ScrollRow>
             {/if}
@@ -246,17 +215,16 @@
                         data-sortable-index={index}
                         class="group relative flex items-center gap-2 rounded-2xl py-2 pr-2 transition-colors hover:bg-surface-2 data-dragging:z-10 data-dragging:bg-surface-3 data-dragging:shadow-xl data-dragging:shadow-black/50"
                     >
-                        <Tooltip content={lock ?? (filtering ? "Clear the search and filter to reorder" : null)}>
+                        <Tooltip content={lock ?? (filtering ? "Clear the search and filter to reorder" : "Drag to reorder")}>
                             <button
                                 type="button"
                                 data-drag-handle
                                 data-no-drag
-                                aria-label="Reorder {track.title}. Use the arrow keys to move it."
                                 aria-disabled={filtering || !!lock}
                                 disabled={!!lock}
                                 class={[
-                                    "flex h-12 w-8 shrink-0 touch-none items-center justify-center rounded-xl text-mist-400 transition-[color,opacity]",
-                                    filtering || lock ? "cursor-default opacity-40" : "cursor-grab hover:text-mist-50 active:cursor-grabbing",
+                                    "flex h-12 w-8 shrink-0 touch-none items-center justify-center rounded-xl text-gray-400 transition-[color,opacity]",
+                                    filtering || lock ? "cursor-default opacity-40" : "cursor-grab hover:text-gray-50 active:cursor-grabbing",
                                 ]}
                             >
                                 <MaterialSymbolsDragIndicator class="size-5" />
@@ -268,7 +236,7 @@
                                 <span class="relative flex h-8 shrink-0 items-center justify-end">
                                     <span
                                         class={[
-                                            "pr-2 font-mono text-xs text-mist-400 transition-opacity duration-200 ease-out group-focus-within:opacity-0 group-hover:opacity-0 pointer-coarse:hidden",
+                                            "pr-2 font-mono text-xs text-gray-400 transition-opacity duration-200 ease-out group-focus-within:opacity-0 group-hover:opacity-0 pointer-coarse:hidden",
                                             pending && "opacity-0",
                                         ]}
                                     >
@@ -283,7 +251,6 @@
                                         <Tooltip content={lock ?? "Play now"}>
                                             <button
                                                 type="button"
-                                                aria-label="Play {track.title} now"
                                                 aria-busy={busy.has(`jump:${track.identifier}`)}
                                                 disabled={pending || !!lock}
                                                 class={neutral}
@@ -299,7 +266,6 @@
                                             <Tooltip content={lock ?? `Remove every song ${requester.name} added`}>
                                                 <button
                                                     type="button"
-                                                    aria-label="Remove every song {requester.name} added"
                                                     class={neutral}
                                                     disabled={pending || !!lock}
                                                     onclick={() => askRemove(requester)}
@@ -311,11 +277,11 @@
                                         <Tooltip content={removeLock ?? "Remove"}>
                                             <button
                                                 type="button"
-                                                aria-label="Remove {track.title}"
                                                 aria-busy={busy.has(`remove:${track.identifier}`)}
                                                 disabled={pending || !!removeLock}
                                                 class={[action, "hover:bg-red-400/10 hover:text-red-400"]}
-                                                onclick={() => run(`remove:${track.identifier}`, () => control(music.removeTrack(at)))}
+                                                onclick={() =>
+                                                    run(`remove:${track.identifier}`, () => control(music.removeTrack(at), { announce: true }))}
                                             >
                                                 {#if busy.has(`remove:${track.identifier}`)}<SvgSpinners90RingWithBg
                                                         class="size-4 text-red-400"
@@ -331,15 +297,15 @@
             </ol>
         {/key}
         {#if filtering && !shown.length}
-            <p class="px-2 text-sm text-mist-400">No songs in the queue match.</p>
+            <p class="px-2 text-sm text-gray-400">No songs in the queue match.</p>
         {/if}
         {#if queue.total > tracks.length}
-            <p class="px-2 text-xs text-mist-400">
+            <p class="px-2 text-xs text-gray-400">
                 {filtering ? `Only the first ${tracks.length} songs are searched.` : `And ${formatCount(queue.total - tracks.length)} more.`}
             </p>
         {/if}
     {:else}
-        <p class="px-2 text-sm text-mist-400">
+        <p class="px-2 text-sm text-gray-400">
             The queue is empty. Anything you add from search shows up here{autoplay ? ", and autoplay keeps the music going until then" : ""}.
         </p>
     {/if}
@@ -348,10 +314,10 @@
         <div class="mt-4 flex items-center gap-2 px-2">
             <MaterialSymbolsAutoplayRounded class="size-5 text-accent" />
             <h3 class="font-display text-lg font-semibold">Autoplay</h3>
-            {#if queue.autoplay.length}<span class="font-mono text-sm text-mist-400">{queue.autoplay.length}</span>{/if}
+            {#if queue.autoplay.length}<span class="font-mono text-sm text-gray-400">{queue.autoplay.length}</span>{/if}
         </div>
         {#if queue.autoplay.length}
-            <p class="px-2 text-xs text-mist-400">Similar songs that play once the queue runs out.</p>
+            <p class="px-2 text-xs text-gray-400">Similar songs that play once the queue runs out.</p>
             <ol class="flex flex-col gap-1">
                 {#each queue.autoplay as track, index (autoKeys[index])}
                     <li
@@ -361,14 +327,14 @@
                     >
                         <TrackRow track={{ ...track, requester: null }}>
                             {#snippet trailing()}
-                                <span class="shrink-0 pr-2 font-mono text-xs text-mist-400">{track.isStream ? "Live" : time(track.lengthMs)}</span>
+                                <span class="shrink-0 pr-2 font-mono text-xs text-gray-400">{track.isStream ? "Live" : time(track.lengthMs)}</span>
                             {/snippet}
                         </TrackRow>
                     </li>
                 {/each}
             </ol>
         {:else}
-            <p class="px-2 text-xs text-mist-400">Related songs get picked automatically when the queue ends.</p>
+            <p class="px-2 text-xs text-gray-400">Related songs get picked automatically when the queue ends.</p>
         {/if}
     {/if}
 </section>
@@ -384,7 +350,7 @@
                 <Avatar src={target.avatarUrl} name={target.name} class="size-12 text-lg" />
                 <div class="flex min-w-0 flex-col">
                     <span class="truncate font-semibold">{target.name}</span>
-                    <span class="text-xs text-mist-400">
+                    <span class="text-xs text-gray-400">
                         {plural(theirs.length, "song")} in the queue{theirLength ? ` · ${time(theirLength)}` : ""}
                     </span>
                 </div>
@@ -395,15 +361,15 @@
                         <Cover src={track.artworkUrl} class="size-10 rounded-xl" />
                         <span class="flex min-w-0 flex-1 flex-col">
                             <span class="truncate font-medium">{track.title}</span>
-                            <span class="truncate text-xs text-mist-400">{track.author}</span>
+                            <span class="truncate text-xs text-gray-400">{track.author}</span>
                         </span>
-                        <span class="shrink-0 font-mono text-xs text-mist-400">{track.isStream ? "Live" : time(track.lengthMs)}</span>
+                        <span class="shrink-0 font-mono text-xs text-gray-400">{track.isStream ? "Live" : time(track.lengthMs)}</span>
                     </li>
                 {/each}
             </ul>
-            {#if theirs.length > 5}<p class="text-xs text-mist-400">And {plural(theirs.length - 5, "more song")}.</p>{/if}
+            {#if theirs.length > 5}<p class="text-xs text-gray-400">And {plural(theirs.length - 5, "more song")}.</p>{/if}
             {#if queue.total > tracks.length}
-                <p class="text-xs text-mist-400">Songs past the first {tracks.length} in the queue are removed too.</p>
+                <p class="text-xs text-gray-400">Songs past the first {tracks.length} in the queue are removed too.</p>
             {/if}
         </div>
     {/if}
@@ -430,14 +396,14 @@
                 </span>
                 <span class="flex min-w-0 flex-col">
                     <span class="font-semibold">{plural(queue.total, "song")}</span>
-                    {#if queue.total === tracks.length && loadedLength}<span class="text-xs text-mist-400">{time(loadedLength)} of music</span>{/if}
+                    {#if queue.total === tracks.length && loadedLength}<span class="text-xs text-gray-400">{time(loadedLength)} of music</span>{/if}
                 </span>
             </div>
-            <p class="text-mist-400">Every song in the queue goes, whoever added it. What's playing now keeps playing.</p>
+            <p class="text-gray-400">Every song in the queue goes, whoever added it. What's playing now keeps playing.</p>
         {:else if whole === "reverse" && tracks.length}
             {@const first = tracks[0]}
             {@const last = queue.total === tracks.length ? tracks.at(-1) : null}
-            <p class="text-mist-400">The queue plays in the opposite order, so the last song comes up next.</p>
+            <p class="text-gray-400">The queue plays in the opposite order, so the last song comes up next.</p>
             <div class="flex flex-col gap-2 rounded-2xl bg-surface-2 p-4">
                 {#if last}
                     <span class="text-2xs font-semibold tracking-wider text-accent uppercase">Up next after this</span>
@@ -445,16 +411,16 @@
                         <Cover src={last.artworkUrl} class="size-10 rounded-xl" />
                         <span class="flex min-w-0 flex-col">
                             <span class="truncate font-medium">{last.title}</span>
-                            <span class="truncate text-xs text-mist-400">{last.author}</span>
+                            <span class="truncate text-xs text-gray-400">{last.author}</span>
                         </span>
                     </span>
                 {/if}
-                <span class="text-2xs font-semibold tracking-wider text-mist-400 uppercase">Moves to the end</span>
+                <span class="text-2xs font-semibold tracking-wider text-gray-400 uppercase">Moves to the end</span>
                 <span class="flex items-center gap-4">
                     <Cover src={first.artworkUrl} class="size-10 rounded-xl" />
                     <span class="flex min-w-0 flex-col">
                         <span class="truncate font-medium">{first.title}</span>
-                        <span class="truncate text-xs text-mist-400">{first.author}</span>
+                        <span class="truncate text-xs text-gray-400">{first.author}</span>
                     </span>
                 </span>
             </div>

@@ -1,7 +1,7 @@
 <script lang="ts">
     import Island from "#lib/components/Island.svelte";
-    import Button from "#lib/components/ui/Button.svelte";
     import Drawer from "#lib/components/ui/Drawer.svelte";
+    import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { formatCount } from "#lib/format.ts";
@@ -13,12 +13,11 @@
     import MaterialSymbolsHistoryRounded from "~icons/material-symbols/history-rounded";
     import MaterialSymbolsLyricsRounded from "~icons/material-symbols/lyrics-rounded";
     import MaterialSymbolsQueueMusicRounded from "~icons/material-symbols/queue-music-rounded";
-    import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
     import type { PageProps } from "./$types";
     import ArtPanel from "./ArtPanel.svelte";
     import ControlsBar from "./ControlsBar.svelte";
-    import { control, type Access, type Tab } from "./player.ts";
+    import { control, locked, type Access, type Tab } from "./player.ts";
     import SidePanel from "./SidePanel.svelte";
     import SkipVote from "./SkipVote.svelte";
     import ZenView, { enterFullscreen } from "./ZenView.svelte";
@@ -34,6 +33,7 @@
     const access = $derived<Access>({
         dj: player?.viewer.dj ?? false,
         inChannel: player?.viewer.inChannel ?? false,
+        queueLock: player?.viewer.queueLock ?? null,
         me: data.user?.id ?? null,
     });
     const queue = $derived(queueQuery.current);
@@ -142,13 +142,13 @@
             onclick={() => openSheet(value)}
         >
             <Icon class="size-5 shrink-0" />{label}
-            {#if count}<span class="font-mono text-xs text-mist-400">{formatCount(count)}</span>{/if}
+            {#if count}<span class="font-mono text-xs text-gray-400">{formatCount(count)}</span>{/if}
         </button>
     </Tooltip>
 {/snippet}
 
 <div class="flex h-dvh overflow-hidden bg-surface-1 md:p-2">
-    <div class="relative min-h-0 min-w-0 flex-1 animate-shell-in overflow-hidden bg-mist-950 md:rounded-4xl">
+    <div class="relative min-h-0 min-w-0 flex-1 animate-shell-in overflow-hidden bg-gray-950 md:rounded-4xl">
         <main
             bind:this={scroller}
             class="flex size-full flex-col gap-2 overflow-y-auto overscroll-contain p-2 max-md:overflow-hidden max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:overflow-hidden"
@@ -157,7 +157,7 @@
                 {#if mobile.current}
                     <ArtPanel {player} position={playhead} {server} {online} onzen={openZen} />
                     {#if player.vote}<SkipVote {guild} {player} vote={player.vote} {access} />{/if}
-                    <ControlsBar {guild} {player} {position} {access} bind:seeking onseek={seek} />
+                    <ControlsBar {guild} {player} {position} {access} queued={queue?.total ?? 0} bind:seeking onseek={seek} />
                     <nav aria-label="Search, queue, history and lyrics" class="grid shrink-0 grid-cols-4 gap-2">
                         {@render sheetButton("search", "Search", MaterialSymbolsSearchRounded)}
                         {@render sheetButton("queue", "Queue", MaterialSymbolsQueueMusicRounded, false, queue?.total)}
@@ -173,19 +173,23 @@
                         <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} {access} bind:tab={() => tab, setTab} />
                     </div>
                     {#if player.vote}<SkipVote {guild} {player} vote={player.vote} {access} />{/if}
-                    <ControlsBar {guild} {player} {position} {access} bind:seeking onseek={seek} />
+                    <ControlsBar {guild} {player} {position} {access} queued={queue?.total ?? 0} bind:seeking onseek={seek} />
                 {/if}
             {:else if playerQuery.error}
-                <div role="alert" class="flex flex-col items-start gap-4 rounded-3xl bg-red-400/10 p-6">
-                    <p class="text-sm font-medium text-red-400">{playerQuery.error.message ?? "Square couldn't load the player."}</p>
-                    <Button onclick={() => location.reload()}><MaterialSymbolsRefreshRounded />Try again</Button>
-                </div>
+                <EmptyState
+                    tone="danger"
+                    card
+                    class="flex-1"
+                    title="Couldn't load the player"
+                    text={playerQuery.error.message ?? "Square didn't answer. Try again in a moment."}
+                    retry={() => playerQuery.reconnect()}
+                />
             {:else}
                 <div aria-hidden="true" class="grid flex-1 gap-2 md:flex-none lg:min-h-0 lg:flex-1 lg:grid-cols-2">
-                    <div class="h-full animate-pulse rounded-3xl bg-surface-1 md:h-112 lg:h-auto"></div>
-                    <div class="hidden h-112 animate-pulse rounded-3xl bg-surface-1 md:block lg:h-auto"></div>
+                    <div class="h-full skeleton rounded-3xl md:h-112 lg:h-auto"></div>
+                    <div class="hidden h-112 skeleton rounded-3xl md:block lg:h-auto"></div>
                 </div>
-                <div aria-hidden="true" class="h-24 shrink-0 animate-pulse rounded-3xl bg-surface-1"></div>
+                <div aria-hidden="true" class="h-24 shrink-0 skeleton rounded-3xl"></div>
             {/if}
         </main>
         <OverlayScrollbar viewport={scroller} inset={24} />
@@ -194,5 +198,5 @@
 </div>
 
 {#if player?.track}
-    <ZenView bind:open={zen} {guild} track={player.track} {position} playing={!player.paused && online} {lyricsOff} />
+    <ZenView bind:open={zen} {guild} track={player.track} {position} playing={!player.paused && online} {lyricsOff} lock={locked(access)} />
 {/if}

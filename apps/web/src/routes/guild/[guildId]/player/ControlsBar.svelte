@@ -30,10 +30,12 @@
         seeking = $bindable(null),
         onseek,
         access,
+        queued,
     }: {
         guild: string;
         player: PlayerState;
         access: Access;
+        queued: number;
         position: number;
         seeking?: number | null;
         onseek: (ms: number) => void;
@@ -42,6 +44,9 @@
     const track = $derived(player.track);
     const playing = $derived(!!track && !player.paused);
     const lock = $derived(locked(access));
+    // The bot refuses these with nothing playing, and shuffle and queue looping also need songs waiting
+    const idle = $derived(lock ?? (track ? null : "Nothing is playing"));
+    const shuffleLock = $derived(idle ?? (queued ? null : "Add songs to the queue first"));
     const skip = $derived(skipping(player, access));
     const skipLabel = $derived(skip.now ? "Next" : player.vote ? "Vote to skip" : "Start a vote to skip");
     let volume = $derived(player.volume);
@@ -69,18 +74,18 @@
     }
     const blocked = (action: Action) => busy !== null && busy !== action;
 
-    function setVolume(next: number) {
+    async function setVolume(next: number) {
         volume = next;
-        return control(music.setVolume({ guild, volume: next }));
+        if (!(await control(music.setVolume({ guild, volume: next })))) volume = player.volume;
     }
 
-    const LOOP_NEXT = { off: "queue", queue: "track", track: "off" } as const;
+    const loopNext = $derived(player.loop === "off" ? (queued ? "queue" : "track") : player.loop === "queue" ? "track" : "off");
     const LOOP_LABEL = { off: "Loop off", queue: "Looping the queue", track: "Looping this track" } as const;
 
     const icon = "ripple flex size-10 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40 [&_svg]:size-5";
     const toggle = (on: boolean) => [
         icon,
-        on ? "bg-accent/10 text-accent hover:bg-accent/20" : "text-mist-400 hover:bg-surface-2 hover:text-mist-100",
+        on ? "bg-accent/10 text-accent hover:bg-accent/20" : "text-gray-400 hover:bg-surface-2 hover:text-gray-100",
     ];
 </script>
 
@@ -100,23 +105,21 @@
 
     <div class="flex items-center gap-4 max-sm:flex-col max-sm:gap-2">
         <div class="flex shrink-0 items-center gap-2">
-            <Tooltip content={track ? lock : null}>
+            <Tooltip content={(track && lock) || "Previous"}>
                 <button
                     type="button"
-                    aria-label="Previous"
                     aria-busy={busy === "previous"}
                     disabled={!track || !!lock || blocked("previous")}
-                    class={[icon, "text-mist-100 hover:bg-surface-2"]}
+                    class={[icon, "text-gray-100 hover:bg-surface-2"]}
                     {@attach ripple}
                     onclick={() => act("previous", () => control(music.previousTrack({ guild })))}
                 >
                     {#if busy === "previous"}<SvgSpinners90RingWithBg />{:else}<MaterialSymbolsSkipPreviousRounded />{/if}
                 </button>
             </Tooltip>
-            <Tooltip content={track ? lock : null}>
+            <Tooltip content={(track && lock) || (playing ? "Pause" : "Play")}>
                 <button
                     type="button"
-                    aria-label={playing ? "Pause" : "Play"}
                     aria-busy={busy === "pause"}
                     disabled={!track || !!lock || blocked("pause")}
                     class={[
@@ -132,17 +135,16 @@
                         />{:else}<MaterialSymbolsPlayArrowRounded class="size-7" />{/if}
                 </button>
             </Tooltip>
-            <Tooltip content={track ? (skip.lock ?? (skip.now ? null : skipLabel)) : null}>
+            <Tooltip content={(track && skip.lock) || skipLabel}>
                 <!-- The badge sits beside the button, which clips anything outside it for the ripple -->
                 <span class="relative flex">
                     <button
                         type="button"
-                        aria-label={skipLabel}
                         aria-busy={busy === "next"}
                         disabled={!track || !!skip.lock || blocked("next")}
-                        class={[icon, "text-mist-100 hover:bg-surface-2"]}
+                        class={[icon, "text-gray-100 hover:bg-surface-2"]}
                         {@attach ripple}
-                        onclick={() => act("next", () => control(music.skipTrack({ guild }), { announce: true }))}
+                        onclick={() => act("next", () => control(music.skipTrack({ guild })))}
                     >
                         {#if busy === "next"}<SvgSpinners90RingWithBg />{:else}<MaterialSymbolsSkipNextRounded />{/if}
                     </button>
@@ -156,7 +158,7 @@
                     {/if}
                 </span>
             </Tooltip>
-            <span class="hidden pl-2 font-mono text-xs text-mist-400 sm:inline">
+            <span class="hidden pl-2 font-mono text-xs text-gray-400 sm:inline">
                 {#if track}
                     <span class={[seeking !== null && "text-accent"]}>{time(seeking === null || !track ? position : seeking * track.lengthMs)}</span>
                     / {track.isStream ? "Live" : time(track.lengthMs)}
@@ -167,76 +169,71 @@
         </div>
 
         <div class="ml-auto flex shrink-0 items-center gap-1 max-sm:ml-0 max-sm:w-full max-sm:justify-evenly">
-            <Tooltip content={lock ?? (player.shuffle ? "Shuffle on" : "Shuffle off")}>
+            <Tooltip content={shuffleLock ?? (player.shuffle ? "Shuffle on" : "Shuffle off")}>
                 <button
                     type="button"
-                    aria-label="Shuffle"
                     aria-pressed={player.shuffle}
                     class={toggle(player.shuffle)}
                     {@attach ripple}
                     aria-busy={busy === "shuffle"}
-                    disabled={!!lock || blocked("shuffle")}
+                    disabled={!!shuffleLock || blocked("shuffle")}
                     onclick={() => act("shuffle", () => control(music.setShuffle({ guild, enabled: !player.shuffle })))}
                 >
                     {#if busy === "shuffle"}<SvgSpinners90RingWithBg />{:else}<MaterialSymbolsShuffleRounded />{/if}
                 </button>
             </Tooltip>
-            <Tooltip content={lock ?? LOOP_LABEL[player.loop]}>
+            <Tooltip content={idle ?? LOOP_LABEL[player.loop]}>
                 <button
                     type="button"
-                    aria-label={LOOP_LABEL[player.loop]}
                     aria-pressed={player.loop !== "off"}
                     class={toggle(player.loop !== "off")}
                     {@attach ripple}
                     aria-busy={busy === "loop"}
-                    disabled={!!lock || blocked("loop")}
-                    onclick={() => act("loop", () => control(music.setLoop({ guild, mode: LOOP_NEXT[player.loop] })))}
+                    disabled={!!idle || blocked("loop")}
+                    onclick={() => act("loop", () => control(music.setLoop({ guild, mode: loopNext })))}
                 >
                     {#if busy === "loop"}<SvgSpinners90RingWithBg />{:else if player.loop === "track"}<MaterialSymbolsRepeatOneRounded
                         />{:else}<MaterialSymbolsRepeatRounded />{/if}
                 </button>
             </Tooltip>
-            <Tooltip content={lock ?? (player.autoplay ? "Autoplay on" : "Autoplay off")}>
+            <Tooltip content={idle ?? (player.autoplay ? "Autoplay on" : "Autoplay off")}>
                 <button
                     type="button"
-                    aria-label="Autoplay"
                     aria-pressed={player.autoplay}
                     class={toggle(player.autoplay)}
                     {@attach ripple}
                     aria-busy={busy === "autoplay"}
-                    disabled={!!lock || blocked("autoplay")}
+                    disabled={!!idle || blocked("autoplay")}
                     onclick={() => act("autoplay", () => control(music.setAutoplay({ guild, enabled: !player.autoplay })))}
                 >
                     {#if busy === "autoplay"}<SvgSpinners90RingWithBg />{:else}<MaterialSymbolsAutoplayRounded />{/if}
                 </button>
             </Tooltip>
-            <Equalizer {guild} {player} {lock} triggerClass={toggle(player.eq.length > 0)} />
+            <Equalizer {guild} {player} lock={idle} triggerClass={toggle(player.eq.length > 0)} />
             <div class="hidden items-center gap-1 pl-2 md:flex">
-                <Tooltip content={lock ?? (volume === 0 ? "Unmute" : "Mute")}>
+                <Tooltip content={idle ?? (volume === 0 ? "Unmute" : "Mute")}>
                     <button
                         type="button"
-                        aria-label={volume === 0 ? "Unmute" : "Mute"}
                         aria-pressed={volume === 0}
-                        disabled={!!lock}
-                        class={[icon, volume === 0 ? "text-red-400 hover:bg-red-400/10" : "text-mist-400 hover:bg-surface-2 hover:text-mist-100"]}
+                        disabled={!!idle}
+                        class={[icon, volume === 0 ? "text-red-400 hover:bg-red-400/10" : "text-gray-400 hover:bg-surface-2 hover:text-gray-100"]}
                         {@attach ripple}
                         onclick={() => setVolume(volume === 0 ? restore : 0)}
                     >
                         <VolumeIcon />
                     </button>
                 </Tooltip>
-                <Slider label="Volume" min={0} max={100} disabled={!!lock} bind:value={volume} onchange={setVolume} class="w-24" />
+                <Slider label="Volume" min={0} max={100} disabled={!!idle} bind:value={volume} onchange={setVolume} class="w-24" />
             </div>
             {#if track}
                 <Tooltip content={lock ?? "Stop and leave"}>
                     <button
                         type="button"
-                        aria-label="Stop and leave"
                         class={[icon, "text-red-400 hover:bg-red-400/10"]}
                         {@attach ripple}
                         aria-busy={busy === "stop"}
                         disabled={!!lock || blocked("stop")}
-                        onclick={() => act("stop", () => control(music.stopPlayer({ guild }), { announce: true }))}
+                        onclick={() => act("stop", () => control(music.stopPlayer({ guild })))}
                     >
                         {#if busy === "stop"}<SvgSpinners90RingWithBg />{:else}<MaterialSymbolsStopRounded />{/if}
                     </button>

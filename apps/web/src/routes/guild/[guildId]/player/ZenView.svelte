@@ -20,7 +20,16 @@
         position,
         playing,
         lyricsOff,
-    }: { open?: boolean; guild: string; track: Track; position: number; playing: boolean; lyricsOff: string | false } = $props();
+        lock,
+    }: {
+        open?: boolean;
+        guild: string;
+        track: Track;
+        position: number;
+        playing: boolean;
+        lyricsOff: string | false;
+        lock: string | null;
+    } = $props();
 
     const IDLE_MS = 2500;
     let idle = $state(false);
@@ -68,7 +77,7 @@
         <Dialog.Positioner class="fixed inset-0 z-50">
             <Dialog.Content
                 class={[
-                    "relative isolate flex size-full flex-col overflow-hidden bg-mist-950 outline-none data-[state=closed]:animate-fade-out data-[state=open]:animate-shell-in",
+                    "relative isolate flex size-full flex-col overflow-hidden bg-gray-950 outline-none data-[state=closed]:animate-fade-out data-[state=open]:animate-shell-in",
                     idle && "cursor-none",
                 ]}
                 onpointermove={wake}
@@ -84,13 +93,13 @@
                         class="absolute inset-0 -z-10 size-full scale-150 object-cover opacity-40 blur-3xl saturate-150"
                     />
                 {/if}
-                <span aria-hidden="true" class="absolute inset-0 -z-10 bg-linear-to-b from-mist-950/20 to-mist-950/70"></span>
+                <span aria-hidden="true" class="absolute inset-0 -z-10 bg-linear-to-b from-gray-950/20 to-gray-950/70"></span>
                 <Dialog.Title class="sr-only">{track.title} by {track.author}</Dialog.Title>
 
                 <Dialog.CloseTrigger
                     aria-label="Exit full screen"
                     class={[
-                        "absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 flex size-12 items-center justify-center rounded-full bg-black/30 text-mist-100 backdrop-blur-xl transition-opacity duration-500 hover:bg-black/50 focus-visible:opacity-100 md:top-6 md:right-6",
+                        "absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 flex size-12 items-center justify-center rounded-full bg-black/30 text-gray-100 backdrop-blur-xl transition-opacity duration-500 hover:bg-black/50 focus-visible:opacity-100 md:top-6 md:right-6",
                         idle ? "pointer-events-none opacity-0" : "opacity-100",
                     ]}
                 >
@@ -115,7 +124,7 @@
                         </div>
                         <div class="flex min-h-0 flex-col pb-[env(safe-area-inset-bottom)]">
                             {#key track.identifier}
-                                <Lyrics {guild} {track} {position} {playing} zen />
+                                <Lyrics {guild} {track} {position} {playing} {lock} zen />
                             {/key}
                         </div>
                     </div>
@@ -128,6 +137,6 @@
 {#snippet info(align: string)}
     <div class={["flex min-w-0 flex-col gap-1 lg:gap-2", align]}>
         <p class="line-clamp-2 font-display text-lg font-semibold wrap-anywhere lg:text-4xl">{track.title}</p>
-        <p class="truncate text-sm text-mist-400 lg:text-xl">{track.author}</p>
+        <p class="truncate text-sm text-gray-400 lg:text-xl">{track.author}</p>
     </div>
 {/snippet}

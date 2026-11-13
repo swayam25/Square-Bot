@@ -22,7 +22,7 @@
     let busy = $state(false);
     async function press() {
         busy = true;
-        await control(music.skipTrack({ guild }), { announce: !skip.now });
+        await control(music.skipTrack({ guild }));
         busy = false;
     }
 </script>
@@ -38,9 +38,9 @@
         <div class="flex min-w-0 flex-col gap-1">
             <p class="truncate text-sm font-semibold">
                 {vote.startedBy ? `${vote.startedBy.name} wants to skip` : "Vote to skip"}
-                {#if player.track}<span class="font-normal text-mist-400">{player.track.title}</span>{/if}
+                {#if player.track}<span class="font-normal text-gray-400">{player.track.title}</span>{/if}
             </p>
-            <div class="flex items-center gap-2 text-xs text-mist-400">
+            <div class="flex items-center gap-2 text-xs text-gray-400">
                 <span
                     role="meter"
                     aria-label="Votes"

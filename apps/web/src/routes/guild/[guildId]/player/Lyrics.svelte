@@ -1,5 +1,6 @@
 <script lang="ts">
     import Button from "#lib/components/ui/Button.svelte";
+    import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { trackLyrics } from "#lib/lyrics.remote.ts";
@@ -21,7 +22,9 @@
         position: playhead,
         playing,
         zen = false,
-    }: { guild: string; track: Track; position: number; playing: boolean; zen?: boolean } = $props();
+        lock = null,
+        contain = "overscroll-contain",
+    }: { guild: string; track: Track; position: number; playing: boolean; zen?: boolean; lock?: string | null; contain?: string } = $props();
 
     const offset = $derived(lyricsSync.offset);
     const position = $derived(playhead - offset);
@@ -188,7 +191,7 @@
         };
     };
 
-    const canSeek = $derived(!track.isStream);
+    const canSeek = $derived(!track.isStream && !lock);
     const seek = (start: number) => control(music.seekTrack({ guild, positionMs: Math.max(0, Math.round(start + offset)) }));
 </script>
 
@@ -215,22 +218,13 @@
     {/if}
 {/snippet}
 
-{#snippet empty(icon: typeof MaterialSymbolsLyricsRounded, title: string, text: string)}
-    {@const Icon = icon}
-    <div class="flex flex-1 flex-col items-center justify-center gap-2 p-10 text-center">
-        <span class="mb-2 flex size-14 items-center justify-center rounded-2xl bg-surface-2 text-mist-100"><Icon class="size-7" /></span>
-        <p class="font-display text-lg font-semibold">{title}</p>
-        <p class="text-sm text-mist-400">{text}</p>
-    </div>
-{/snippet}
-
 {#if lyrics?.instrumental}
-    {@render empty(MaterialSymbolsMusicNoteRounded, "Instrumental", "Nothing to sing along to.")}
+    <EmptyState icon={MaterialSymbolsMusicNoteRounded} title="Instrumental" text="Nothing to sing along to." />
 {:else if lyrics && lines.length}
     <div class="relative flex min-h-0 flex-1 flex-col">
         <div
             bind:this={scroller}
-            class={["lyrics min-h-0 flex-1 overflow-y-auto overscroll-contain", browsing && "browsing", zen && "zen"]}
+            class={["lyrics min-h-0 flex-1 overflow-y-auto", contain, browsing && "browsing", zen && "zen"]}
             role="region"
             aria-label="Lyrics"
             tabindex="-1"
@@ -291,16 +285,15 @@
             </div>
         {/if}
         {#if !zen}
-            <div class="flex items-center justify-between gap-4 px-4 pt-2 pb-4 text-xs text-mist-400 md:px-6">
+            <div class="flex items-center justify-between gap-4 px-4 pt-2 pb-4 text-xs text-gray-400 md:px-6">
                 <p>Lyrics from {lyrics.source}</p>
                 <div role="group" aria-label="Lyrics sync" class="flex items-center gap-1">
                     <span class="mr-1 font-medium">Sync</span>
                     <Tooltip content="Show lyrics {SYNC_STEP_MS / 1000}s earlier">
                         <button
                             type="button"
-                            aria-label="Show lyrics {SYNC_STEP_MS / 1000}s earlier"
                             disabled={offset <= -SYNC_LIMIT_MS}
-                            class="flex size-8 items-center justify-center rounded-full text-mist-300 transition-colors hover:bg-surface-2 hover:text-mist-50 disabled:opacity-40"
+                            class="flex size-8 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-surface-2 hover:text-gray-50 disabled:opacity-40"
                             onclick={() => nudgeSync(-SYNC_STEP_MS)}
                         >
                             <MaterialSymbolsRemoveRounded class="size-4" />
@@ -309,12 +302,11 @@
                     <Tooltip content={offset === 0 ? "In sync with the song" : "Reset sync"}>
                         <button
                             type="button"
-                            aria-label={offset === 0 ? "Lyrics in sync with the song" : `Lyrics shifted ${syncLabel(offset)}, reset`}
                             aria-live="polite"
                             disabled={offset === 0}
                             class={[
                                 "h-8 min-w-14 rounded-full px-2 font-mono text-xs tabular-nums transition-colors enabled:hover:bg-surface-2",
-                                offset === 0 ? "text-mist-400" : "text-accent",
+                                offset === 0 ? "text-gray-400" : "text-accent",
                             ]}
                             onclick={() => (lyricsSync.offset = 0)}>{syncLabel(offset)}</button
                         >
@@ -322,9 +314,8 @@
                     <Tooltip content="Show lyrics {SYNC_STEP_MS / 1000}s later">
                         <button
                             type="button"
-                            aria-label="Show lyrics {SYNC_STEP_MS / 1000}s later"
                             disabled={offset >= SYNC_LIMIT_MS}
-                            class="flex size-8 items-center justify-center rounded-full text-mist-300 transition-colors hover:bg-surface-2 hover:text-mist-50 disabled:opacity-40"
+                            class="flex size-8 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-surface-2 hover:text-gray-50 disabled:opacity-40"
                             onclick={() => nudgeSync(SYNC_STEP_MS)}
                         >
                             <MaterialSymbolsAddRounded class="size-4" />
@@ -337,32 +328,32 @@
 {:else if lyrics}
     <div class="relative flex min-h-0 flex-1 flex-col">
         <div class="relative min-h-0 flex-1">
-            <div bind:this={plainScroller} class="size-full overflow-y-auto overscroll-contain px-4 pb-6 md:px-6">
-                <p class="font-display text-xl leading-relaxed font-semibold whitespace-pre-line text-mist-100">
+            <div bind:this={plainScroller} class={["size-full overflow-y-auto px-4 pt-1 pb-6 md:px-6", contain]}>
+                <p class="font-display text-xl leading-relaxed font-semibold whitespace-pre-line text-gray-100">
                     {lyrics.lines.map((line) => line.text).join("\n")}
                 </p>
             </div>
             <OverlayScrollbar viewport={plainScroller} inset={16} />
         </div>
         {#if !zen}
-            <div class="flex h-14 items-center justify-between gap-4 px-4 pt-2 pb-4 text-xs text-mist-400 md:px-6">
+            <div class="flex h-14 items-center justify-between gap-4 px-4 pt-2 pb-4 text-xs text-gray-400 md:px-6">
                 <p>Lyrics from {lyrics.source}</p>
                 <p class="font-medium">Not synced to the song</p>
             </div>
         {/if}
     </div>
 {:else if lyricsQuery.error}
-    {@render empty(
-        MaterialSymbolsLyricsRounded,
-        "Couldn't load lyrics",
-        lyricsQuery.error.status === 429 ? lyricsQuery.error.message : "The lyrics service didn't answer.",
-    )}
+    <EmptyState
+        icon={MaterialSymbolsLyricsRounded}
+        title="Couldn't load lyrics"
+        text={lyricsQuery.error.status === 429 ? lyricsQuery.error.message : "The lyrics service didn't answer."}
+    />
 {:else if lyrics === null}
-    {@render empty(MaterialSymbolsLyricsRounded, "No lyrics for this one", "BetterLyrics and LRCLIB don't have this song yet.")}
+    <EmptyState icon={MaterialSymbolsLyricsRounded} title="No lyrics for this one" text="BetterLyrics and LRCLIB don't have this song yet." />
 {:else}
     <div class="flex flex-col gap-4 p-6" aria-label="Loading lyrics" role="status">
         {#each [78, 62, 86, 54, 70] as width, i (i)}
-            <span class="h-7 animate-pulse rounded-full bg-surface-2" style:width="{width}%" style:animation-delay="{i * 120}ms"></span>
+            <span class="h-7 skeleton rounded-full" style:width="{width}%" style:animation-delay="{i * 120}ms"></span>
         {/each}
     </div>
 {/if}
@@ -388,7 +379,7 @@
         font-size: var(--text-2xl);
         line-height: 1.3;
         font-weight: 700;
-        color: color-mix(in srgb, var(--color-mist-50) 36%, transparent);
+        color: color-mix(in srgb, var(--color-gray-50) 36%, transparent);
         transform-origin: left center;
         scale: 0.95;
         filter: blur(calc(var(--d, 0) * 0.4px));
@@ -413,7 +404,7 @@
     }
     .line.on {
         scale: 1;
-        color: var(--color-mist-50);
+        color: var(--color-gray-50);
         filter: none;
     }
     .line:enabled {
@@ -430,7 +421,7 @@
         background-color: color-mix(in srgb, var(--color-white) 8%, transparent);
     }
     .line:enabled:hover:not(.on) {
-        color: color-mix(in srgb, var(--color-mist-50) 64%, transparent);
+        color: color-mix(in srgb, var(--color-gray-50) 64%, transparent);
     }
 
     .word {
@@ -441,7 +432,7 @@
         display: inline-block;
         white-space: pre;
         transform-origin: 50% 100%;
-        color: color-mix(in srgb, var(--color-mist-50) calc(36% + 64% * var(--l)), transparent);
+        color: color-mix(in srgb, var(--color-gray-50) calc(36% + 64% * var(--l)), transparent);
         translate: 0 calc(var(--y) * -0.05em);
         scale: calc(1 + 0.04 * var(--l) * (1 - var(--l)) * 4);
         text-shadow:
@@ -463,8 +454,8 @@
         display: inline-block;
         background-image: linear-gradient(
             var(--sweep-dir),
-            var(--color-mist-50) calc(var(--p) * (100% + var(--edge)) - var(--edge)),
-            color-mix(in srgb, var(--color-mist-50) 36%, transparent) calc(var(--p) * (100% + var(--edge)))
+            var(--color-gray-50) calc(var(--p) * (100% + var(--edge)) - var(--edge)),
+            color-mix(in srgb, var(--color-gray-50) 36%, transparent) calc(var(--p) * (100% + var(--edge)))
         );
         background-clip: text;
         -webkit-background-clip: text;
@@ -498,10 +489,10 @@
         overflow: visible;
     }
     .note .base {
-        fill: color-mix(in srgb, var(--color-mist-50) 30%, transparent);
+        fill: color-mix(in srgb, var(--color-gray-50) 30%, transparent);
     }
     .note .lit {
-        fill: var(--color-mist-50);
+        fill: var(--color-gray-50);
         filter: drop-shadow(0 0 calc(2px + var(--p) * 6px) color-mix(in srgb, var(--glow) 70%, transparent));
     }
 

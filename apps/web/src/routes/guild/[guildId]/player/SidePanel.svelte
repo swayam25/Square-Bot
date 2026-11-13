@@ -1,4 +1,5 @@
 <script lang="ts">
+    import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Segmented from "#lib/components/ui/Segmented.svelte";
     import type { PlayerState, QueueState } from "@square/api-client";
@@ -11,7 +12,7 @@
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
     import History from "./History.svelte";
     import Lyrics from "./Lyrics.svelte";
-    import type { Access, Tab } from "./player.ts";
+    import { locked, type Access, type Tab } from "./player.ts";
     import Queue from "./Queue.svelte";
     import SearchPanel from "./SearchPanel.svelte";
 
@@ -40,6 +41,7 @@
     let queueList = $state<HTMLElement | null>(null);
     let historyList = $state<HTMLElement | null>(null);
     const track = $derived(player.track);
+    const contain = $derived(sheet ? "overscroll-contain" : "lg:overscroll-contain");
     const ORDER: Tab[] = ["search", "queue", "history", "lyrics"];
     let direction = $state(1);
     function choose(next: Tab) {
@@ -73,33 +75,27 @@
             in:fly={{ x: 24 * direction, duration: sheet ? 0 : 300, easing: cubicOut }}
         >
             {#if tab === "search"}
-                <SearchPanel {guild} />
+                <SearchPanel {guild} lock={access.queueLock} {contain} />
             {:else if tab === "queue"}
                 <div class="relative min-h-0 flex-1">
-                    <div bind:this={queueList} class="size-full overflow-y-auto overscroll-contain px-2 pb-6 md:px-4">
+                    <div bind:this={queueList} class={["size-full overflow-y-auto px-2 pt-1 pb-6 md:px-4", contain]}>
                         {#if queue}<Queue {guild} {queue} {access} autoplay={player.autoplay} />{/if}
                     </div>
                     <OverlayScrollbar viewport={queueList} inset={16} />
                 </div>
             {:else if tab === "history"}
                 <div class="relative min-h-0 flex-1">
-                    <div bind:this={historyList} class="size-full overflow-y-auto overscroll-contain px-2 pb-6 md:px-4">
+                    <div bind:this={historyList} class={["size-full overflow-y-auto px-2 pt-1 pb-6 md:px-4", contain]}>
                         <History {guild} {access} />
                     </div>
                     <OverlayScrollbar viewport={historyList} inset={16} />
                 </div>
             {:else if track && !track.isStream}
                 {#key track.identifier}
-                    <Lyrics {guild} {track} {position} playing={!player.paused && online} />
+                    <Lyrics {guild} {track} {position} playing={!player.paused && online} lock={locked(access)} {contain} />
                 {/key}
             {:else}
-                <div class="flex flex-1 flex-col items-center justify-center gap-2 p-10 text-center">
-                    <span class="mb-2 flex size-14 items-center justify-center rounded-2xl bg-surface-2 text-mist-100">
-                        <MaterialSymbolsLyricsRounded class="size-7" />
-                    </span>
-                    <p class="font-display text-lg font-semibold">No lyrics</p>
-                    <p class="text-sm text-mist-400">{lyricsOff || "Lyrics show up while a song plays"}</p>
-                </div>
+                <EmptyState icon={MaterialSymbolsLyricsRounded} title="No lyrics" text={lyricsOff || "Lyrics show up while a song plays"} />
             {/if}
         </div>
     {/key}
