@@ -26,7 +26,8 @@
 </script>
 
 <svelte:head>
-    <link rel="icon" href={favicon} />
+    <link rel="icon" href={favicon} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     {#each [display, sans, mono] as font (font)}
         <link rel="preload" href={font} as="font" type="font/woff2" crossorigin="anonymous" />
     {/each}

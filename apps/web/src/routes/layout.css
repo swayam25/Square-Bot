@@ -31,9 +31,26 @@
 @theme {
     --color-accent: #1fceec;
 
-    --color-surface-1: oklch(18% 0.007 222);
-    --color-surface-2: oklch(21.5% 0.009 220);
-    --color-surface-3: oklch(25.5% 0.011 218);
+    --color-surface-1: var(--color-gray-900);
+    --color-surface-2: var(--color-gray-800);
+    --color-surface-3: var(--color-gray-700);
+
+    --color-dc-bg: #1a1a1e;
+    --color-dc-hover: #1e1e22;
+    --color-dc-surface: #242429;
+    --color-dc-border: #323237;
+    --color-dc-line: #29292d;
+    --color-dc-text: #dfe0e2;
+    --color-dc-strong: #fbfbfb;
+    --color-dc-muted: #82838b;
+    --color-dc-icon: #96979e;
+    --color-dc-link: #4d96ee;
+    --color-dc-blurple: #5865f2;
+    --color-dc-mention: #c9cdfb;
+    --color-dc-code: #1f202f;
+    --color-dc-code-border: #373845;
+    --color-dc-green: #00863a;
+    --color-dc-red: #d22d39;
 
     --font-display:
         "Twemoji", "Saira Variable", "Geist Variable", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif;
@@ -133,6 +150,7 @@
     );
 
     --animate-fade-in: fade-in 200ms ease-out;
+    --animate-dc-flash: dc-flash 2s ease-out;
     --animate-fade-out: fade-out 150ms ease-in;
     --animate-pop-in: pop-in 400ms var(--ease-spring);
     --animate-pop-out: pop-out 150ms ease-in;
@@ -143,10 +161,22 @@
     --animate-panel-in: panel-in 200ms cubic-bezier(0.33, 1, 0.68, 1) both;
     --animate-nudge: nudge 400ms ease-out;
     --animate-shell-in: shell-in 500ms var(--ease-smooth) backwards;
+    --animate-wave-flow: wave-flow 1.2s linear infinite;
 
+    @keyframes wave-flow {
+        to {
+            transform: translateX(32px);
+        }
+    }
     @keyframes fade-in {
         from {
             opacity: 0;
+        }
+    }
+    @keyframes dc-flash {
+        from {
+            background: rgb(88 101 242 / 0.16);
+            box-shadow: inset 2px 0 var(--color-dc-blurple);
         }
     }
     @keyframes fade-out {
@@ -214,6 +244,11 @@
     }
 }
 
+/* Loading placeholder. Translucent, so it reads the same on the page, a card or a popup */
+@utility skeleton {
+    @apply animate-pulse bg-white/5;
+}
+
 @utility ripple {
     position: relative;
     overflow: hidden;
@@ -234,7 +269,7 @@
 @layer base {
     html {
         color-scheme: dark;
-        @apply bg-mist-950 font-sans text-mist-100 antialiased;
+        @apply bg-gray-950 font-sans text-gray-100 antialiased;
     }
 
     @media (pointer: fine) {
@@ -261,7 +296,7 @@
     --color-surface-100: var(--color-surface-2);
     --color-surface-200: var(--color-surface-2);
     --color-surface-300: var(--color-surface-2);
-    --color-surface-content: var(--color-mist-100);
+    --color-surface-content: var(--color-gray-100);
 }
 
 @layer components {
