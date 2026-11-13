@@ -1,5 +1,39 @@
 {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "prettier.requireConfig": true,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
     "files.associations": {
         "*.css": "tailwindcss"
+    },
+
+    "python.defaultInterpreterPath": "${workspaceFolder}/apps/bot/.venv/bin/python",
+    "python.analysis.extraPaths": ["${workspaceFolder}/apps/bot/src"],
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.interpreter": ["${workspaceFolder}/apps/bot/.venv/bin/python"],
+
+    "eslint.workingDirectories": [{ "mode": "auto" }],
+    "eslint.validate": ["javascript", "typescript", "svelte"],
+    "tailwindCSS.experimental.configFile": "apps/web/src/routes/layout.css",
+
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/.venv/**": true,
+        "**/.svelte-kit/**": true,
+        "**/build/**": true
+    },
+    "search.exclude": {
+        "**/.svelte-kit": true,
+        "**/build": true,
+        "pnpm-lock.yaml": true,
+        "apps/bot/uv.lock": true,
+        "packages/api-client/openapi.json": true,
+        "packages/api-client/src/gen": true
     }
 }
