@@ -1,8 +1,11 @@
 <script lang="ts">
     import PageHeading from "#lib/components/PageHeading.svelte";
+    import PageSkeleton from "#lib/components/PageSkeleton.svelte";
     import QueryGate from "#lib/components/QueryGate.svelte";
     import ResetButton from "#lib/components/ResetButton.svelte";
     import SaveBar from "#lib/components/SaveBar.svelte";
+    import SettingGroup from "#lib/components/SettingGroup.svelte";
+    import SettingRow from "#lib/components/SettingRow.svelte";
     import Select from "#lib/components/ui/Select.svelte";
     import { OFF, off, picked, textChannelOptions } from "#lib/options.ts";
     import * as settings from "#lib/settings.remote.ts";
@@ -72,8 +75,9 @@
     const isDefault = $derived(LOGS.every(({ key }) => !saved.channels[key]));
 </script>
 
-<QueryGate queries={[savedQuery, channelsQuery]} title="Logs" description="Pick where Square posts what happens in {data.guild.name}.">
-    <div class="flex flex-col gap-8">
+<QueryGate queries={[savedQuery, channelsQuery]} title="Logs" description="Pick where Square posts what happens in {data.guild.name}." actions>
+    {#snippet skeleton()}<PageSkeleton groups={[{ rows: 1, title: false }, { rows: LOGS.length }]} />{/snippet}
+    <div class="flex flex-col gap-6">
         <PageHeading title="Logs" description="Pick where Square posts what happens in {data.guild.name}.">
             {#snippet actions()}
                 <ResetButton
@@ -88,40 +92,27 @@
             {/snippet}
         </PageHeading>
 
-        <section class="flex flex-col gap-6 rounded-4xl bg-surface-1 p-6">
-            <div class="flex items-start gap-4">
-                <span class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-accent">
-                    <MaterialSymbolsDescriptionRounded class="size-6" />
-                </span>
-                <div class="flex min-w-0 flex-1 flex-col gap-1">
-                    <h2 class="font-display text-xl font-semibold">Every log</h2>
-                    <p class="text-sm text-mist-400">Send all of them to one channel, then change the ones you want somewhere else.</p>
-                </div>
-            </div>
-            <Select title="Every log" placeholder="Different channels" options={choices} bind:value={() => shared, setAll} class="md:max-w-sm" />
-        </section>
+        <SettingGroup>
+            <SettingRow
+                label="Every log"
+                description="Send all of them to one channel, then change the ones you want somewhere else."
+                icon={MaterialSymbolsDescriptionRounded}
+            >
+                <Select title="Every log" placeholder="Different channels" options={choices} bind:value={() => shared, setAll} />
+            </SettingRow>
+        </SettingGroup>
 
-        <section aria-label="Log channels" class="flex flex-col gap-2 rounded-4xl bg-surface-1 p-4 md:p-6">
+        <SettingGroup title="Log channels">
             {#each LOGS as log (log.key)}
-                <div class="flex flex-col gap-4 rounded-2xl p-2 md:flex-row md:items-center">
-                    <div class="flex min-w-0 flex-1 items-center gap-4">
-                        <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-2 text-accent">
-                            <log.icon class="size-5" />
-                        </span>
-                        <div class="flex min-w-0 flex-col">
-                            <h2 class="font-semibold">{log.label}</h2>
-                            <p class="text-sm text-mist-400">{log.description}</p>
-                        </div>
-                    </div>
+                <SettingRow label={log.label} description={log.description} icon={log.icon}>
                     <Select
                         title="{log.label} log"
                         options={choices}
                         bind:value={() => drafts[log.key], (value) => (drafts = { ...drafts, [log.key]: value })}
-                        class="md:w-72"
                     />
-                </div>
+                </SettingRow>
             {/each}
-        </section>
+        </SettingGroup>
     </div>
 
     <SaveBar

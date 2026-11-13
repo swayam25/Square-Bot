@@ -9,6 +9,10 @@ const guildId = z.string().regex(/^\d{17,20}$/);
 export const guildChannels = query(guildId, (guild) => read(sdk.guildChannels(forGuild(guild))));
 export const guildRoles = query(guildId, (guild) => read(sdk.guildRoles(forGuild(guild))));
 
+export const searchMembers = query(z.object({ guild: guildId, q: z.string().trim().min(1).max(100) }), ({ guild, q }) =>
+    read(sdk.searchMembers({ ...forGuild(guild), query: { q } })),
+);
+
 export const generalSettings = query(guildId, (guild) => read(sdk.getGeneralSettings(forGuild(guild))));
 
 export const updateGeneral = command(schema.zGeneralPatch.extend({ guild: guildId }), async ({ guild, ...body }) => {

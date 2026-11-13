@@ -7,3 +7,4 @@ const guildId = z.string().regex(/^\d{17,20}$/);
 
 export const memberJoins = query(guildId, (guild) => read(sdk.memberJoins(forGuild(guild))));
 export const serverStats = query(guildId, (guild) => read(sdk.serverStats(forGuild(guild))));
+export const activity = query(guildId, (guild) => read(sdk.activity(forGuild(guild))));

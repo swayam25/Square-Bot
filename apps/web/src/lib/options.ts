@@ -34,5 +34,5 @@ export const textChannelOptions = (channels: Channel[]) => channelOptions(channe
 export function roleOptions(roles: Role[], { assignable = false, keep = [] }: { assignable?: boolean; keep?: string[] } = {}): Option[] {
     return roles
         .filter((role) => keep.includes(role.id) || (assignable ? role.assignable : !role.managed))
-        .map((role) => ({ value: role.id, label: role.name, color: role.color ?? "var(--color-mist-400)" }));
+        .map((role) => ({ value: role.id, label: role.name, color: role.color ?? "var(--color-gray-400)" }));
 }

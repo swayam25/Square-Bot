@@ -1,11 +1,14 @@
 <script lang="ts">
-    import Mention from "#lib/components/discord/Mention.svelte";
     import NowPlayingBanner from "#lib/components/NowPlayingBanner.svelte";
     import PageHeading from "#lib/components/PageHeading.svelte";
+    import PageSkeleton from "#lib/components/PageSkeleton.svelte";
     import QueryGate from "#lib/components/QueryGate.svelte";
     import ResetButton from "#lib/components/ResetButton.svelte";
     import SaveBar from "#lib/components/SaveBar.svelte";
+    import SettingGroup from "#lib/components/SettingGroup.svelte";
+    import SettingRow from "#lib/components/SettingRow.svelte";
     import Button from "#lib/components/ui/Button.svelte";
+    import ReadonlyField from "#lib/components/ui/ReadonlyField.svelte";
     import Select from "#lib/components/ui/Select.svelte";
     import Toggle from "#lib/components/ui/Toggle.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
@@ -18,6 +21,7 @@
     import MaterialSymbolsDeleteRounded from "~icons/material-symbols/delete-rounded";
     import MaterialSymbolsHeadphonesRounded from "~icons/material-symbols/headphones-rounded";
     import MaterialSymbolsQueueMusicRounded from "~icons/material-symbols/queue-music-rounded";
+    import MaterialSymbolsShieldPersonRounded from "~icons/material-symbols/shield-person-rounded";
     import MaterialSymbolsTagRounded from "~icons/material-symbols/tag-rounded";
     import type { PageProps } from "./$types";
 
@@ -80,8 +84,15 @@
     queries={[savedQuery, rolesQuery, channelsQuery]}
     title="Music"
     description="The request channel, 24/7 and who controls the player in {data.guild.name}."
+    actions
 >
-    <div class="flex flex-col gap-8">
+    {#snippet skeleton()}
+        <div class="flex flex-col gap-6">
+            <NowPlayingBanner {guild} />
+            <PageSkeleton groups={[{ rows: 2 }, { rows: 2 }]} />
+        </div>
+    {/snippet}
+    <div class="flex flex-col gap-6">
         <PageHeading title="Music" description="The request channel, 24/7 and who controls the player in {data.guild.name}.">
             {#snippet actions()}
                 <ResetButton
@@ -101,81 +112,62 @@
 
         <NowPlayingBanner {guild} />
 
-        <section class="flex flex-col gap-6 rounded-4xl bg-surface-1 p-6">
-            <div class="flex items-start gap-4">
-                <span class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-accent">
-                    <MaterialSymbolsQueueMusicRounded class="size-6" />
-                </span>
-                <div class="flex min-w-0 flex-1 flex-col gap-1">
-                    <h2 class="font-display text-xl font-semibold">Request channel</h2>
-                    <p class="text-sm text-mist-400">A channel with the player pinned. Anything members type there gets queued.</p>
-                </div>
-            </div>
-            <div class="flex flex-col gap-4 md:flex-row md:items-center">
+        <SettingGroup title="Channels">
+            <SettingRow
+                label="Request channel"
+                description="A channel with the player pinned. Anything members type there gets queued."
+                icon={MaterialSymbolsQueueMusicRounded}
+            >
                 {#if saved.requestChannelId}
-                    <span class="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full bg-surface-2 px-4 text-sm font-medium md:h-10">
-                        <MaterialSymbolsTagRounded class="size-5 shrink-0 text-mist-400" />
-                        <span class="truncate">{requestChannel?.name ?? "Unknown channel"}</span>
-                    </span>
-                    <Tooltip content={dirty ? "Save or discard your changes first" : null}>
-                        <ResetButton
-                            title="Delete the request channel?"
-                            done="Request channel deleted"
-                            description="Square deletes the channel along with the player in it."
-                            label="Delete channel"
-                            icon={MaterialSymbolsDeleteRounded}
-                            disabled={dirty}
-                            reset={() => settings.removeRequestChannel(guild)}
-                            apply={(next) => {
-                                warn(next.notes);
-                                savedQuery.set(next.settings);
-                                channelsQuery.refresh();
-                            }}
-                        />
-                    </Tooltip>
+                    <div class="flex items-center gap-2">
+                        <ReadonlyField icon={MaterialSymbolsTagRounded} text={requestChannel?.name ?? "Unknown channel"} />
+                        <Tooltip content={dirty ? "Save or discard your changes first" : null}>
+                            <ResetButton
+                                title="Delete the request channel?"
+                                done="Request channel deleted"
+                                description="Square deletes the channel along with the player in it."
+                                label="Delete"
+                                icon={MaterialSymbolsDeleteRounded}
+                                disabled={dirty}
+                                reset={() => settings.removeRequestChannel(guild)}
+                                apply={(next) => {
+                                    warn(next.notes);
+                                    savedQuery.set(next.settings);
+                                    channelsQuery.refresh();
+                                }}
+                            />
+                        </Tooltip>
+                    </div>
                 {:else}
-                    <p class="min-w-0 flex-1 text-sm text-mist-400">
-                        No request channel yet. Square creates <Mention name="music-requests" /> for it.
-                    </p>
-                    <Tooltip content={dirty ? "Save or discard your changes first" : null}>
-                        <Button variant="primary" loading={creating} disabled={dirty} onclick={createRequestChannel}>
+                    <Tooltip content={dirty ? "Save or discard your changes first" : "Square creates #music-requests for it"} class="w-full">
+                        <Button variant="primary" class="w-full" loading={creating} disabled={dirty} onclick={createRequestChannel}>
                             {#if !creating}<MaterialSymbolsAddRounded />{/if}{creating ? "Creating…" : "Create channel"}
                         </Button>
                     </Tooltip>
                 {/if}
-            </div>
-        </section>
-
-        <div class="grid gap-4 lg:grid-cols-2">
-            <section class="flex flex-col gap-6 rounded-4xl bg-surface-1 p-6">
-                <div class="flex items-start gap-4">
-                    <span class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-accent">
-                        <MaterialSymbolsAllInclusiveRounded class="size-6" />
-                    </span>
-                    <div class="flex min-w-0 flex-1 flex-col gap-1">
-                        <h2 class="font-display text-xl font-semibold">24/7</h2>
-                        <p class="text-sm text-mist-400">Square stays in this voice channel even when nothing is playing.</p>
-                    </div>
-                </div>
+            </SettingRow>
+            <SettingRow
+                label="24/7"
+                description="Square stays in this voice channel even when nothing is playing."
+                icon={MaterialSymbolsAllInclusiveRounded}
+            >
                 <Select title="24/7 channel" options={voiceChoices} bind:value={stayChannel} />
-            </section>
-            <section class="flex flex-col gap-6 rounded-4xl bg-surface-1 p-6">
-                <div class="flex items-start gap-4">
-                    <span class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-accent">
-                        <MaterialSymbolsHeadphonesRounded class="size-6" />
-                    </span>
-                    <div class="flex min-w-0 flex-1 flex-col gap-1">
-                        <h2 class="font-display text-xl font-semibold">DJ mode</h2>
-                        <p class="text-sm text-mist-400">
-                            With it on, only DJ roles and server managers control the player. Others can still vote to skip.
-                        </p>
-                    </div>
-                    <div class="shrink-0"><Toggle label="DJ mode" bind:checked={djMode} /></div>
-                </div>
+            </SettingRow>
+        </SettingGroup>
 
+        <SettingGroup title="Who controls the player">
+            <SettingRow
+                label="DJ mode"
+                description="Only DJ roles and server managers control the player. Others can still vote to skip."
+                icon={MaterialSymbolsHeadphonesRounded}
+                layout="inline"
+            >
+                <Toggle label="DJ mode" bind:checked={djMode} />
+            </SettingRow>
+            <SettingRow label="DJ roles" description="Members with these roles count as DJs." icon={MaterialSymbolsShieldPersonRounded}>
                 <Select title="DJ roles" placeholder="Add a DJ role" options={roleChoices} multiple max={MAX_DJ_ROLES} bind:values={djRoles} />
-            </section>
-        </div>
+            </SettingRow>
+        </SettingGroup>
     </div>
 
     <SaveBar {dirty} onsave={() => settings.updateMusic({ guild, ...changes })} ondiscard={discard} />
