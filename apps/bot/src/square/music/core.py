@@ -16,6 +16,19 @@ class SquareAutoPlay(AutoPlayHandler):
     """Seeds autoplay from the track's own service. Sonolink builds a YouTube radio from any ID, Spotify ones included."""
 
     _twin: str | None = None
+    _staging = False
+
+    async def stage(self) -> None:
+        """Queues picks without playing one, so the Autoplay list fills the moment autoplay turns on."""
+        queue = self._player.queue
+        if self._player.current is None or len(queue) or queue.autoplay_tracks or self._lock.locked():
+            return
+        async with self._lock:
+            self._staging = True
+            try:
+                await self._fill_auto_queue()
+            finally:
+                self._staging = False
 
     async def _fill_auto_queue(self) -> Playable | None:
         history = self._player.queue.history
@@ -31,7 +44,11 @@ class SquareAutoPlay(AutoPlayHandler):
         return await super()._fill_auto_queue()
 
     async def _apply_discovery(self, tracks: list[Playable]) -> Playable | None:
-        return await super()._apply_discovery([track for track in tracks if track.identifier != self._twin])
+        tracks = [track for track in tracks if track.identifier != self._twin]
+        if not self._staging:
+            return await super()._apply_discovery(tracks)
+        self._player.queue.put_autoplay(tracks[: self._settings.discovery_count])
+        return None
 
     async def _youtube_twin(self, track: Playable) -> str | None:
         try:
@@ -49,7 +66,7 @@ class SquarePlayer(sonolink.Player):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("history_settings", HistorySettings(enabled=True, max_items=50))
         super().__init__(*args, **kwargs)
-        self._autoplay_handler = SquareAutoPlay(self, settings=self._autoplay_handler._settings)
+        self._autoplay_handler: SquareAutoPlay = SquareAutoPlay(self, settings=self._autoplay_handler._settings)
         self.presets: dict[str, Filters] = {}
         self._empty_task: asyncio.Task | None = None
 
@@ -75,8 +92,13 @@ class SquarePlayer(sonolink.Player):
     def autoplay_on(self) -> bool:
         return self.autoplay is sonolink.AutoPlayMode.ENABLED
 
-    def toggle_autoplay(self) -> bool:
+    async def toggle_autoplay(self) -> bool:
         self.autoplay = sonolink.AutoPlayMode.DISABLED if self.autoplay_on else sonolink.AutoPlayMode.ENABLED
+        if self.autoplay_on:
+            await self._autoplay_handler.stage()
+        else:
+            # Sonolink plays staged picks even with autoplay off, and has no public call to drop them
+            self.queue._autoplay_items.clear()
         return self.autoplay_on
 
     async def settle(self, started: Playable, began: float) -> bool:

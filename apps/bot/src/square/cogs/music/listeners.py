@@ -246,6 +246,9 @@ class Listeners:
             return
         player = get_player(self.client, member.guild.id)
         if not player or not player.connected or player.channel not in (before.channel, after.channel):
+            # Joining or leaving any channel changes whether the dashboard lets this member queue
+            if before.channel != after.channel:
+                self.client.dispatch("music_update", member.guild.id)
             return
         if before.channel != after.channel:
             # Sonolink only re-checks on track ends and the bot's own voice changes.

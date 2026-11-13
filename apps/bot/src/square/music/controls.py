@@ -287,7 +287,7 @@ async def set_autoplay(guild: discord.Guild, member: discord.Member, enabled: bo
     player = require_player(guild, member)
     await require_dj(member, player)
     if enabled is None or enabled != player.autoplay_on:
-        player.toggle_autoplay()
+        await player.toggle_autoplay()
     return await _done(player, member, emoji.autoplay, f"{'enabled' if player.autoplay_on else 'disabled'} autoplay")
 
 
