@@ -1,18 +1,37 @@
 <script lang="ts">
+    import HashIcon from "#lib/components/discord/HashIcon.svelte";
     import type { Snippet } from "svelte";
+    import type { ClassValue } from "svelte/elements";
 
-    let { channel, children }: { channel: string; children: Snippet } = $props();
+    let {
+        channel,
+        topic,
+        spaced = true,
+        class: className,
+        aside,
+        footer,
+        children,
+    }: {
+        channel: string;
+        topic?: string;
+        spaced?: boolean;
+        class?: ClassValue;
+        aside?: Snippet;
+        footer?: Snippet;
+        children: Snippet;
+    } = $props();
 </script>
 
-<div class="w-full overflow-hidden rounded-2xl bg-[#1a1a1e] text-base leading-5.5 text-[#dfe0e2] shadow-2xl shadow-black/40">
-    <div class="flex h-12 items-center gap-2 border-b border-[#29292d] px-4">
-        <svg viewBox="0 0 24 24" aria-hidden="true" class="size-6 fill-[#81828a]">
-            <path
-                fill-rule="evenodd"
-                d="M10.99 3.16A1 1 0 1 0 9 2.84L8.15 8H4a1 1 0 0 0 0 2h3.82l-.67 4H3a1 1 0 1 0 0 2h3.82l-.8 4.84a1 1 0 0 0 1.97.32L8.85 16h4.97l-.8 4.84a1 1 0 0 0 1.97.32l.86-5.16H20a1 1 0 1 0 0-2h-3.82l.67-4H21a1 1 0 1 0 0-2h-3.82l.8-4.84a1 1 0 1 0-1.97-.32L15.15 8h-4.97l.8-4.84ZM14.15 14l.67-4H9.85l-.67 4h4.97Z"
-            />
-        </svg>
-        <span class="font-semibold text-[#fbfbfb]">{channel}</span>
+<div class={["w-full overflow-hidden rounded-2xl bg-dc-bg text-base leading-5.5 text-dc-text shadow-2xl shadow-black/40", className]}>
+    <div class="flex h-12 items-center gap-2 border-b border-dc-line px-4">
+        <HashIcon class="size-6 shrink-0 text-dc-muted" />
+        <span class="truncate font-semibold text-dc-strong">{channel}</span>
+        {#if topic}
+            <span aria-hidden="true" class="size-1 shrink-0 rounded-full bg-dc-muted"></span>
+            <span class="min-w-0 flex-1 truncate text-sm font-medium text-dc-muted">{topic}</span>
+        {/if}
+        {#if aside}<div class="ml-auto flex shrink-0 items-center gap-2 text-sm font-medium text-dc-muted">{@render aside()}</div>{/if}
     </div>
-    <div class="flex flex-col gap-4.25 pt-4 pb-6">{@render children()}</div>
+    <div class={["flex flex-col pt-4 pb-6", spaced && "gap-4.25"]}>{@render children()}</div>
+    {#if footer}<div class="border-t border-dc-line px-4 py-3">{@render footer()}</div>{/if}
 </div>

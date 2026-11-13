@@ -9,8 +9,12 @@ export const bot = createClient({ baseUrl: BOT_API_URL, auth: BOT_API_SECRET });
 const QUICK = 5_000;
 const PATIENT = 30_000;
 
+// A search asks other sites, and a transcript of a ticket that's still there reads its whole channel first
+const SLOW_READS = ["/music/search", "/transcript"];
+
 bot.interceptors.request.use((request) => {
-    const quick = request.method === "GET" && !new URL(request.url).pathname.endsWith("/music/search");
+    const { pathname } = new URL(request.url);
+    const quick = request.method === "GET" && !SLOW_READS.some((path) => pathname.endsWith(path));
     return new Request(request, { signal: AbortSignal.any([request.signal, AbortSignal.timeout(quick ? QUICK : PATIENT)]) });
 });
 

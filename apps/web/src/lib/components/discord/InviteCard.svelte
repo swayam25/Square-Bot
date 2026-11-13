@@ -15,6 +15,7 @@
 </script>
 
 <script lang="ts">
+    import CardFrame from "#lib/components/discord/CardFrame.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import SplitBar from "#lib/components/ui/SplitBar.svelte";
@@ -35,12 +36,12 @@
     });
 </script>
 
-<div class="flex w-180 flex-col gap-6 bg-surface-1 p-6 font-sans text-mist-100">
+<CardFrame>
     <div class="flex items-center gap-4">
         <Avatar src={data.avatar} name={data.name} class="size-14 text-2xl" />
         <div class="flex min-w-0 flex-1 flex-col gap-0.5">
             <span class="truncate font-display text-xl font-semibold">{data.name}</span>
-            <div class="flex items-center gap-2 text-sm text-mist-400">
+            <div class="flex items-center gap-2 text-sm text-gray-400">
                 <span class="font-mono">@{data.username}</span>
                 <span>·</span>
                 {#if data.guildIcon}
@@ -55,7 +56,7 @@
     <div class="flex flex-col gap-4">
         <div class="flex items-baseline gap-4">
             <span class="font-mono text-5xl font-medium tracking-tight">{formatCount(data.regular + data.bonus)}</span>
-            <span class="text-mist-400">total invites</span>
+            <span class="text-gray-400">total invites</span>
         </div>
         <SplitBar parts={counted} label={counted[0].value ? `${share}% regular` : undefined} />
     </div>
@@ -63,7 +64,7 @@
     <div class="flex gap-2">
         {#each kinds as kind (kind.label)}
             <div class="flex flex-1 flex-col gap-2 rounded-2xl bg-surface-2 p-4">
-                <span class="flex items-center gap-2 text-sm text-mist-400"
+                <span class="flex items-center gap-2 text-sm text-gray-400"
                     ><span class={["size-2 rounded-full", kind.class]}></span>{kind.label}</span
                 >
                 <span class="font-mono text-2xl font-medium">{formatCount(kind.value)}</span>
@@ -71,7 +72,7 @@
         {/each}
     </div>
 
-    <p class="text-xs text-mist-400">
+    <p class="text-xs text-gray-400">
         Total counts regular and bonus invites. Fake invites are accounts younger than {data.fakeDays} days when they joined.
     </p>
-</div>
+</CardFrame>

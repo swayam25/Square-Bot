@@ -34,6 +34,7 @@
 
 <script lang="ts">
     import BrandIcon, { brandOf } from "#lib/components/BrandIcon.svelte";
+    import CardFrame from "#lib/components/discord/CardFrame.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
@@ -69,7 +70,7 @@
     {/if}
 {/snippet}
 
-<div class="flex w-180 flex-col gap-6 bg-surface-1 p-6 font-sans text-mist-100">
+<CardFrame>
     <div class="flex gap-6">
         {@render artwork(data.artwork, "size-40 rounded-2xl")}
         <div class="flex min-w-0 flex-1 flex-col">
@@ -87,9 +88,9 @@
                 </Chip>
             </div>
             <span class="mt-4 truncate font-display text-2xl font-semibold tracking-tight">{data.title}</span>
-            <span class="mt-0.5 truncate text-mist-400">{data.author}</span>
+            <span class="mt-0.5 truncate text-gray-400">{data.author}</span>
             {#if data.requester}
-                <div class="mt-auto flex items-center gap-2 text-sm text-mist-400">
+                <div class="mt-auto flex items-center gap-2 text-sm text-gray-400">
                     <Avatar src={data.requesterAvatar} name={data.requester} class="size-6 text-xs" />
                     <span class="truncate">Requested by {data.requester}</span>
                 </div>
@@ -99,7 +100,7 @@
 
     <div class="flex flex-col gap-2">
         <WavyProgress value={data.stream ? 1 : data.progress} playing={!data.paused} />
-        <div class="flex justify-between font-mono text-xs text-mist-400">
+        <div class="flex justify-between font-mono text-xs text-gray-400">
             <span>{data.elapsed}</span>
             <span>{data.stream ? "Live" : data.duration}</span>
         </div>
@@ -120,15 +121,15 @@
         <div class={["flex h-12 items-center gap-2 rounded-2xl bg-surface-2 pr-4", data.upNext ? "pl-2" : "pl-4"]}>
             {#if data.upNext}{@render artwork(data.upNextArtwork, "size-8 rounded-lg")}{/if}
             <div class="flex min-w-0 flex-col">
-                <span class="font-mono text-[10px] leading-3 font-semibold tracking-wider text-mist-400 uppercase">
+                <span class="font-mono text-[10px] leading-3 font-semibold tracking-wider text-gray-400 uppercase">
                     {data.queued ? `Up next · ${data.queued} queued` : "Up next"}
                 </span>
                 {#if data.upNext}
                     <span class="truncate text-sm font-medium">{data.upNext}</span>
                 {:else}
-                    <span class="text-sm font-medium text-mist-400">Nothing queued</span>
+                    <span class="text-sm font-medium text-gray-400">Nothing queued</span>
                 {/if}
             </div>
         </div>
     </div>
-</div>
+</CardFrame>
