@@ -17,7 +17,9 @@ class GuildTable(Model):
     guild_id = fields.BigIntField(unique=True)
     modules: list[str] = fields.JSONField(default=lambda: list(DEFAULT_MODULES))
     media_only_channel_id = fields.BigIntField(null=True)
-    autorole = fields.BigIntField(null=True)
+    autorole_ids: list[int] = fields.JSONField(default=list)
+    autorole_bot_ids: list[int] = fields.JSONField(default=list)
+    autorole_split = fields.BooleanField(default=False)
     dj_mode = fields.BooleanField(default=False)
     music_channel_id = fields.BigIntField(null=True)
     music_message_id = fields.BigIntField(null=True)
@@ -33,6 +35,7 @@ class GuildTable(Model):
 
     log_channels: fields.ReverseRelation[LogChannelTable]
     dj_roles: fields.ReverseRelation[DJRoleTable]
+    autorole_users: fields.ReverseRelation[AutoroleUserTable]
     invite_joins: fields.ReverseRelation[InviteJoinTable]
     invite_bonuses: fields.ReverseRelation[InviteBonusTable]
     tickets: fields.ReverseRelation[TicketTable]
@@ -64,6 +67,19 @@ class DJRoleTable(Model):
     class Meta:
         table = "dj_role"
         unique_together = (("guild", "role_id"),)
+
+
+class AutoroleUserTable(Model):
+    id = fields.IntField(primary_key=True)
+    guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
+        "models.GuildTable", related_name="autorole_users", on_delete=fields.CASCADE
+    )
+    user_id = fields.BigIntField()
+    role_ids: list[int] = fields.JSONField(default=list)
+
+    class Meta:
+        table = "autorole_user"
+        unique_together = (("guild", "user_id"),)
 
 
 class InviteJoinTable(Model):
@@ -113,6 +129,8 @@ class TicketTable(Model):
     log_message_id = fields.BigIntField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     closed_at = fields.DatetimeField(null=True)
+    message_count = fields.IntField(null=True)
+    participant_ids: list[int] = fields.JSONField(default=list)
 
     members: fields.ReverseRelation[TicketMemberTable]
 
@@ -132,3 +150,34 @@ class TicketMemberTable(Model):
     class Meta:
         table = "ticket_member"
         unique_together = (("ticket", "user_id"),)
+
+
+class TicketTranscriptTable(Model):
+    """Kept apart from the ticket row so listing tickets never loads their messages."""
+
+    id = fields.IntField(primary_key=True)
+    ticket: fields.OneToOneRelation[TicketTable] = fields.OneToOneField(
+        "models.TicketTable", related_name="transcript", on_delete=fields.CASCADE
+    )
+    data = fields.JSONField()
+    saved_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = "ticket_transcript"
+
+
+class TicketFileTable(Model):
+    """A copy of a ticket's picture, since Discord's attachment links stop working after about a day."""
+
+    id = fields.IntField(primary_key=True)
+    ticket: fields.ForeignKeyRelation[TicketTable] = fields.ForeignKeyField(
+        "models.TicketTable", related_name="files", on_delete=fields.CASCADE
+    )
+    attachment_id = fields.BigIntField()
+    content_type = fields.CharField(max_length=32)
+    size = fields.IntField()
+    data = fields.BinaryField()
+
+    class Meta:
+        table = "ticket_file"
+        unique_together = (("ticket", "attachment_id"),)

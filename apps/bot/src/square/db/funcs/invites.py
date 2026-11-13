@@ -1,11 +1,13 @@
 import discord
 from dataclasses import dataclass
+from datetime import datetime
 from square.db import cache
 from square.db.funcs.guild import fetch_guild_settings
 from square.db.schema import GuildTable, InviteBonusTable, InviteJoinTable
 from tortoise import connections
 from tortoise.expressions import Q
 from tortoise.functions import Count
+from tortoise.transactions import in_transaction
 
 
 @dataclass(frozen=True)
@@ -126,6 +128,24 @@ async def add_bonus(guild_id: int, user_id: int, amount: int) -> int:
     return row.amount
 
 
+async def fetch_invitees(guild_id: int, user_id: int, limit: int) -> list[InviteJoinTable]:
+    return (
+        await InviteJoinTable.filter(guild__guild_id=guild_id, inviter_id=user_id).order_by("-joined_at").limit(limit)
+    )
+
+
+async def change_bonuses(guild_id: int, user_ids: list[int], amount: int, *, add: bool) -> dict[int, int]:
+    guild = await fetch_guild_settings(guild_id)
+    bonuses: dict[int, int] = {}
+    async with in_transaction():
+        for user_id in user_ids:
+            row, _ = await InviteBonusTable.get_or_create(guild=guild, user_id=user_id)
+            row.amount = row.amount + amount if add else amount
+            await row.save(update_fields=["amount"])
+            bonuses[user_id] = row.amount
+    return bonuses
+
+
 async def reset_invites(guild_id: int, user_id: int | None = None) -> None:
     guild = await GuildTable.filter(guild_id=guild_id).first()
     if not guild:
@@ -136,3 +156,10 @@ async def reset_invites(guild_id: int, user_id: int | None = None) -> None:
         joins, bonuses = joins.filter(inviter_id=user_id), bonuses.filter(user_id=user_id)
     await joins.delete()
     await bonuses.delete()
+
+
+async def invite_times_since(guild_id: int, since: datetime) -> tuple[list[datetime], list[datetime]]:
+    joins = InviteJoinTable.filter(guild__guild_id=guild_id)
+    invited = await joins.filter(joined_at__gte=since, inviter_id__isnull=False).values_list("joined_at", flat=True)
+    left = await joins.filter(left_at__gte=since).values_list("left_at", flat=True)
+    return list(invited), list(left)

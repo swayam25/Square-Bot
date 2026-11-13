@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, fields
-from square.db.schema import DJRoleTable, GuildTable, LogChannelTable
+from square.db.schema import AutoroleUserTable, DJRoleTable, GuildTable, LogChannelTable
 from square.modules import DEFAULT_MODULES, Module
 
 
@@ -7,7 +7,9 @@ from square.modules import DEFAULT_MODULES, Module
 class GuildSettings:
     modules: list[str] = field(default_factory=lambda: list(DEFAULT_MODULES))
     media_only_channel_id: int | None = None
-    autorole: int | None = None
+    autorole_ids: list[int] = field(default_factory=list)
+    autorole_bot_ids: list[int] = field(default_factory=list)
+    autorole_split: bool = False
     dj_mode: bool = False
     music_channel_id: int | None = None
     music_message_id: int | None = None
@@ -21,11 +23,14 @@ class GuildSettings:
     ticket_confirm_close: bool = True
     dj_roles: list[int] = field(default_factory=list)
     log_channels: dict[str, int] = field(default_factory=dict)
+    autorole_users: dict[int, list[int]] = field(default_factory=dict)
 
 
 _settings: dict[int, GuildSettings] = {}
 _DEFAULT = GuildSettings()
-_GUILD_COLUMNS = tuple(f.name for f in fields(GuildSettings) if f.name not in ("dj_roles", "log_channels"))
+_GUILD_COLUMNS = tuple(
+    f.name for f in fields(GuildSettings) if f.name not in ("dj_roles", "log_channels", "autorole_users")
+)
 
 
 async def load() -> None:
@@ -39,6 +44,10 @@ async def load() -> None:
         entry(guild_id).log_channels[log_type] = channel_id
     for guild_id, role_id in await DJRoleTable.all().values_list("guild__guild_id", "role_id"):
         entry(guild_id).dj_roles.append(role_id)
+    for guild_id, user_id, role_ids in await AutoroleUserTable.all().values_list(
+        "guild__guild_id", "user_id", "role_ids"
+    ):
+        entry(guild_id).autorole_users[user_id] = role_ids
 
 
 def get(guild_id: int) -> GuildSettings:

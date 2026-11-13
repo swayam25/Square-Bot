@@ -10,7 +10,7 @@ from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView, error_view, modal, show_loading, success_view
 from square.db import cache
-from square.db.funcs.tickets import fetch_ticket
+from square.db.funcs.tickets import fetch_ticket, save_ticket
 from square.db.schema import TicketTable
 from square.modules import Module, ModuleOff
 from square.music.utils import delete_quietly
@@ -46,16 +46,17 @@ class Tickets(
         return None
 
     @staticmethod
-    def _with_file(file: discord.File) -> tuple[DesignerView, discord.File]:
-        return cards.transcript_reply(file.filename or "transcript.html"), file
+    async def _reply(interaction: discord.Interaction, view: DesignerView) -> None:
+        if interaction.response.is_done():
+            await interaction.followup.send(view=view, ephemeral=True)
+        else:
+            await interaction.response.send_message(view=view, ephemeral=True)
 
     @staticmethod
-    async def _reply(interaction: discord.Interaction, view: DesignerView, file: discord.File | None = None) -> None:
-        if interaction.response.is_done():
-            await interaction.followup.send(view=view, file=file or discord.utils.MISSING, ephemeral=True)
-        else:
-            # Unlike followup.send, send_message rejects MISSING and wants None for "no file"
-            await interaction.response.send_message(view=view, file=file, ephemeral=True)
+    async def _saved(guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable) -> DesignerView:
+        if await actions.save_transcript(guild, channel, ticket):
+            return cards.transcript_reply(ticket, guild.id)
+        return error_view("I couldn't read this channel's messages. Try again in a moment.")
 
     async def _with_loading(
         self,
@@ -121,6 +122,9 @@ class Tickets(
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel):
         if panel.is_panel_channel(channel.guild.id, channel.id):
             await panel.unbind(channel.guild.id)
+        # A channel deleted by hand would otherwise stay "open" forever and count against its opener's limit
+        elif (ticket := await fetch_ticket(channel.id)) and ticket.status != "deleted":
+            await save_ticket(ticket, status="deleted")
 
     @commands.Cog.listener()
     async def on_interaction(self, interaction: discord.Interaction):
@@ -186,10 +190,10 @@ class Tickets(
                 return
 
             async def send_transcript() -> None:
-                await self._reply(interaction, *self._with_file(await actions.transcript(guild, channel, ticket)))
+                await self._reply(interaction, await self._saved(guild, channel, ticket))
                 await interaction.edit_original_response(view=card())
 
-            await self._with_loading(interaction, card, "Generating...", send_transcript)
+            await self._with_loading(interaction, card, "Saving...", send_transcript)
             return
         if not support:
             await self._reply(interaction, error_view("Only staff can do that."))
@@ -273,12 +277,11 @@ class Tickets(
             view._store = False  # from_message has no option for it, and the listener handles these buttons
             return view
 
-        async def send_transcript() -> None:
-            await self._reply(interaction, *self._with_file(await actions.transcript(guild, channel, None)))
-            await interaction.edit_original_response(view=card())
-
         if custom_id == "ticket_transcript":
-            await self._with_loading(interaction, card, "Generating...", send_transcript)
+            await self._reply(
+                interaction,
+                error_view("This ticket was opened before transcripts moved to the dashboard, so it has none."),
+            )
         else:
             await self._with_loading(
                 interaction, card, "Closing...", lambda: actions.close_legacy(self.client, guild, channel, member)
@@ -395,12 +398,11 @@ class Tickets(
     @ticket.command(name="transcript")
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def transcript_ticket(self, ctx: discord.ApplicationContext):
-        """Gets this closed ticket's transcript as a file."""
+        """Saves this closed ticket's transcript and links to it on the dashboard."""
         if found := await self._ticket_here(ctx, staff=False, closed="Close the ticket first to get its transcript."):
             guild, _, channel, ticket = found
             await ctx.defer(ephemeral=True)
-            view, file = self._with_file(await actions.transcript(guild, channel, ticket))
-            await ctx.respond(view=view, file=file, ephemeral=True)
+            await ctx.respond(view=await self._saved(guild, channel, ticket), ephemeral=True)
 
 
 def setup(client: Client):

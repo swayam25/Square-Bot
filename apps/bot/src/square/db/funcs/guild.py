@@ -1,6 +1,7 @@
 from square.db import cache
-from square.db.schema import GuildTable
+from square.db.schema import AutoroleUserTable, GuildTable
 from square.modules import Module
+from tortoise.transactions import in_transaction
 
 
 async def fetch_guild_ids() -> list[int]:
@@ -47,8 +48,27 @@ async def set_media_only(guild_id: int, channel_id: int | None) -> None:
     cache.entry(guild_id).media_only_channel_id = channel_id
 
 
-async def set_autorole(guild_id: int, role_id: int | None) -> None:
+async def set_autoroles(
+    guild_id: int, *, humans: list[int] | None = None, bots: list[int] | None = None, split: bool | None = None
+) -> None:
     guild = await fetch_guild_settings(guild_id)
-    guild.autorole = role_id
-    await guild.save(update_fields=["autorole"])
-    cache.entry(guild_id).autorole = role_id
+    if humans is not None:
+        guild.autorole_ids = list(humans)
+    if bots is not None:
+        guild.autorole_bot_ids = list(bots)
+    if split is not None:
+        guild.autorole_split = split
+    await guild.save(update_fields=["autorole_ids", "autorole_bot_ids", "autorole_split"])
+    settings = cache.entry(guild_id)
+    settings.autorole_ids, settings.autorole_bot_ids = list(guild.autorole_ids), list(guild.autorole_bot_ids)
+    settings.autorole_split = guild.autorole_split
+
+
+async def set_autorole_users(guild_id: int, users: dict[int, list[int]]) -> None:
+    guild = await fetch_guild_settings(guild_id)
+    async with in_transaction():
+        await AutoroleUserTable.filter(guild=guild).delete()
+        await AutoroleUserTable.bulk_create(
+            [AutoroleUserTable(guild=guild, user_id=user_id, role_ids=role_ids) for user_id, role_ids in users.items()]
+        )
+    cache.entry(guild_id).autorole_users = {user_id: list(role_ids) for user_id, role_ids in users.items()}

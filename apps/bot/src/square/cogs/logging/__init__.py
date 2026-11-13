@@ -5,7 +5,6 @@ from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView
 from square.db import cache
-from square.transcript import transcript_file
 from square.utils import config, invites, server_log, webhook
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count
@@ -231,28 +230,13 @@ class Logging(Cog):
             return
         if cache.log_channel(guild.id, server_log.LogType.MESSAGES.key) is None:
             return
-        msgs = list(payload.cached_messages)
-        uncached_ids = set(payload.message_ids) - {msg.id for msg in msgs}
-        channel = guild.get_channel_or_thread(payload.channel_id)
-        name = channel.name if channel else str(payload.channel_id)
-        filename = "deleted-messages.html"
-        file = await transcript_file(
-            filename,
-            msgs,
-            guild=guild,
-            channel_name=name,
-            title="Deleted Messages",
-            summary=[("Channel", f"#{name}"), ("Messages Deleted", str(len(payload.message_ids)))],
-            unknown_ids=uncached_ids,
-        )
         view = log_view(
             "Bulk Message Deleted",
             f"{emoji.channel_red} **Channel**: <#{payload.channel_id}>\n"
             f"{emoji.description_red} **Messages Deleted**: {len(payload.message_ids)}",
             color=config.color.red,
-            extra=[ui.File(f"attachment://{filename}")],
         )
-        await server_log.post(self.client, guild, server_log.LogType.MESSAGES, view, file=file)
+        await self.send_log(guild, server_log.LogType.MESSAGES, view)
 
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):

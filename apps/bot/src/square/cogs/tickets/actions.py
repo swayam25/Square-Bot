@@ -2,23 +2,19 @@
 
 import asyncio
 import discord
-import io
 import logging
-from babel.dates import format_timedelta
 from discord import ui
-from square.cogs.tickets import cards
+from square.cogs.tickets import cards, snapshot
 from square.core import Client
 from square.core.view import DesignerView
 from square.db import cache
 from square.db.funcs import tickets as db
 from square.db.schema import TicketTable
-from square.transcript import render_transcript
 from square.utils import config, server_log
 from square.utils.emoji import emoji
 
 log = logging.getLogger(__name__)
 
-TRANSCRIPT_LIMIT = 5000
 _MEMBER_PERMISSIONS = {
     "view_channel": True,
     "send_messages": True,
@@ -109,7 +105,7 @@ async def open_ticket(
     except discord.HTTPException:
         # Needs `pin_messages`, which `manage_messages` stopped covering. A ticket still works without the pin.
         log.warning("Couldn't pin the card of ticket %s in guild %s", ticket.number, guild.id)
-    log_id = await server_log.post(client, guild, server_log.LogType.TICKETS, cards.log_card(ticket))
+    log_id = await server_log.post(client, guild, server_log.LogType.TICKETS, cards.log_card(ticket, guild.id))
     await db.save_ticket(ticket, control_message_id=message.id, log_message_id=log_id)
     return channel
 
@@ -122,7 +118,9 @@ async def refresh(client: Client, guild: discord.Guild, ticket: TicketTable) -> 
         except discord.HTTPException:
             log.warning("Couldn't update the controls of ticket %s in guild %s", ticket.number, guild.id)
     if ticket.log_message_id and ticket.status == "open":
-        await server_log.edit(client, guild, server_log.LogType.TICKETS, ticket.log_message_id, cards.log_card(ticket))
+        await server_log.edit(
+            client, guild, server_log.LogType.TICKETS, ticket.log_message_id, cards.log_card(ticket, guild.id)
+        )
 
 
 async def claim(client: Client, guild: discord.Guild, ticket: TicketTable, member: discord.Member) -> str:
@@ -158,40 +156,26 @@ async def remove_members(
     return f"Removed {', '.join(member.mention for member in removable)} from this ticket."
 
 
-async def _transcript(
-    guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable | None
-) -> tuple[bytes, int, list[int]]:
-    messages = [message async for message in channel.history(limit=TRANSCRIPT_LIMIT)]
-    summary: list[tuple[str, str]] = []
-    if ticket is not None:
-
-        def name(user_id: int | None) -> str:
-            member = guild.get_member(user_id) if user_id else None
-            return member.display_name if member else ("Nobody" if user_id is None else str(user_id))
-
-        summary = [
-            ("Opened By", name(ticket.opener_id)),
-            ("Reason", ticket.reason),
-            ("Claimed By", name(ticket.claimed_by)),
-        ]
-        if ticket.closed_by:
-            summary.append(("Closed By", name(ticket.closed_by)))
-        if ticket.closed_at:
-            summary.append(("Open For", format_timedelta(ticket.closed_at - ticket.created_at, locale="en")))
-    page = await render_transcript(
-        messages,
-        guild=guild,
-        channel_name=channel.name,
-        title=f"Ticket {cards.label(ticket)}" if ticket else channel.name,
-        summary=summary,
-    )
-    participants = sorted({message.author.id for message in messages if not message.author.bot})
-    return page.encode(), len(messages), participants
+async def save_transcript(
+    guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable, *, unless_saved_after: int | None = None
+) -> bool:
+    """Saves what's in the channel right now. False when Discord wouldn't hand the messages over."""
+    try:
+        await snapshot.save(guild, channel, ticket, unless_saved_after=unless_saved_after)
+    except discord.HTTPException:
+        log.warning("Couldn't save the transcript of ticket %s in guild %s", ticket.number, guild.id)
+        return False
+    return True
 
 
-async def transcript(guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable | None) -> discord.File:
-    page, _, _ = await _transcript(guild, channel, ticket)
-    return discord.File(io.BytesIO(page), filename=f"{cards.unlocked_name(channel.name)}.html")
+async def _log(client: Client, guild: discord.Guild, ticket: TicketTable) -> None:
+    card = cards.log_card(ticket, guild.id)
+    if ticket.log_message_id and await server_log.edit(
+        client, guild, server_log.LogType.TICKETS, ticket.log_message_id, card
+    ):
+        return
+    log_id = await server_log.post(client, guild, server_log.LogType.TICKETS, card)
+    await db.save_ticket(ticket, log_message_id=log_id)
 
 
 async def close(
@@ -201,22 +185,8 @@ async def close(
     for user_id in [ticket.opener_id, *await db.fetch_ticket_members(ticket)]:
         if member := guild.get_member(user_id):
             await channel.set_permissions(member, overwrite=discord.PermissionOverwrite(view_channel=False))
-    page, count, participants = await _transcript(guild, channel, ticket)
-    filename = f"{cards.unlocked_name(channel.name)}.html"
-    card = cards.log_card(ticket, transcript=filename, messages=count, participants=participants)
-    edited = ticket.log_message_id is not None and await server_log.edit(
-        client,
-        guild,
-        server_log.LogType.TICKETS,
-        ticket.log_message_id,
-        card,
-        file=discord.File(io.BytesIO(page), filename),
-    )
-    if not edited:
-        log_id = await server_log.post(
-            client, guild, server_log.LogType.TICKETS, card, file=discord.File(io.BytesIO(page), filename)
-        )
-        await db.save_ticket(ticket, log_message_id=log_id)
+    await save_transcript(guild, channel, ticket)
+    await _log(client, guild, ticket)
     await refresh(client, guild, ticket)
     _rename(channel, True, f"Ticket closed by {by}")
 
@@ -231,33 +201,37 @@ async def reopen(client: Client, guild: discord.Guild, ticket: TicketTable, chan
 
 
 async def delete(
-    client: Client, guild: discord.Guild, ticket: TicketTable, channel: discord.TextChannel, by: discord.Member
+    client: Client,
+    guild: discord.Guild,
+    ticket: TicketTable,
+    channel: discord.TextChannel,
+    by: discord.Member,
+    *,
+    delay: float = 5,
 ) -> None:
-    """Deletes the channel. The ticket row and its log card stay, so the record survives."""
+    """Deletes the channel. The ticket and its transcript stay until someone removes them on the dashboard."""
+    # Staff can keep talking in a closed ticket, so this is the last chance to save those messages
+    await save_transcript(guild, channel, ticket)
     await db.save_ticket(ticket, status="deleted")
     if ticket.log_message_id:
-        await server_log.edit(client, guild, server_log.LogType.TICKETS, ticket.log_message_id, cards.log_card(ticket))
-    await asyncio.sleep(5)
+        await server_log.edit(
+            client, guild, server_log.LogType.TICKETS, ticket.log_message_id, cards.log_card(ticket, guild.id)
+        )
+    await asyncio.sleep(delay)
     await channel.delete(reason=f"Ticket deleted by {by}")
 
 
 async def close_legacy(client: Client, guild: discord.Guild, channel: discord.TextChannel, by: discord.Member) -> None:
-    page, count, _ = await _transcript(guild, channel, None)
     opener = channel.name.removeprefix("ticket-")
-    filename = f"{channel.name}.html"
     view = DesignerView(
         ui.Container(
             ui.TextDisplay("## Ticket Closed"),
             ui.TextDisplay(
-                f"{emoji.user_red} **Opened By**: <@{opener}>\n{emoji.lock_red} **Closed By**: {by.mention}\n"
-                f"{emoji.messages_red} **Messages**: `{count}`"
+                f"{emoji.user_red} **Opened By**: <@{opener}>\n{emoji.lock_red} **Closed By**: {by.mention}"
             ),
-            ui.File(f"attachment://{filename}"),
             color=config.color.red,
         )
     )
-    await server_log.post(
-        client, guild, server_log.LogType.TICKETS, view, file=discord.File(io.BytesIO(page), filename)
-    )
+    await server_log.post(client, guild, server_log.LogType.TICKETS, view)
     await asyncio.sleep(5)
     await channel.delete(reason=f"Ticket closed by {by}")

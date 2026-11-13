@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import logging
 from collections import defaultdict
@@ -10,6 +11,7 @@ from square.api import resolve
 from square.api.auth import provide_guild, provide_member
 from square.api.resolve import SettingError
 from square.api.schemas import (
+    AutoroleUser,
     GeneralPatch,
     GeneralSettings,
     InvitePatch,
@@ -26,7 +28,9 @@ from square.api.schemas import (
     TicketPatch,
     TicketSettings,
     id_of,
+    person_of,
 )
+from square.api.users import find_user
 from square.cogs.tickets import cards
 from square.cogs.tickets.panel import post as post_panel
 from square.cogs.tickets.panel import unbind as unbind_panel
@@ -59,53 +63,87 @@ def _notes(guild: discord.Guild, *notes: str | None) -> Notes:
     return Notes(notes=[resolve.plain(guild, note) for note in notes if note])
 
 
-def _general(guild: discord.Guild) -> GeneralSettings:
+def _role_ids(guild: discord.Guild, role_ids: list[int]) -> list[str]:
+    return [str(role_id) for role_id in role_ids if guild.get_role(role_id)]
+
+
+async def _general(client: Client, guild: discord.Guild) -> GeneralSettings:
     settings = cache.get(guild.id)
+    user_ids = list(settings.autorole_users)
+    users = await asyncio.gather(*(find_user(client, guild, user_id) for user_id in user_ids))
     return GeneralSettings(
-        autorole_id=id_of(guild.get_role(settings.autorole) if settings.autorole else None),
+        autorole_ids=_role_ids(guild, settings.autorole_ids),
+        autorole_bot_ids=_role_ids(guild, settings.autorole_bot_ids),
+        autorole_split=settings.autorole_split,
+        autorole_users=[
+            AutoroleUser(
+                user=person_of(user_id, user),
+                member=isinstance(user, discord.Member),
+                role_ids=_role_ids(guild, settings.autorole_users[user_id]),
+            )
+            for user_id, user in zip(user_ids, users, strict=True)
+        ],
         media_only_channel_id=id_of(
             guild.get_channel(settings.media_only_channel_id) if settings.media_only_channel_id else None
         ),
     )
 
 
+def _givable(guild: discord.Guild, role_ids: list[str]) -> list[int]:
+    roles = resolve.roles(guild, role_ids)
+    for role in roles:
+        if role.managed or role >= guild.me.top_role:
+            raise SettingError(f"I can't give out {role.mention}, it's above my role or managed.")
+    return [role.id for role in roles]
+
+
 async def _reset_general(guild: discord.Guild) -> None:
-    await guild_db.set_autorole(guild.id, None)
+    await guild_db.set_autoroles(guild.id, humans=[], bots=[], split=False)
+    await guild_db.set_autorole_users(guild.id, {})
     await guild_db.set_media_only(guild.id, None)
 
 
-@get("/general", summary="Auto role and media-only channel")
-async def get_general_settings(guild: discord.Guild) -> GeneralSettings:
-    return _general(guild)
+@get("/general", summary="Auto roles and media-only channel")
+async def get_general_settings(client: Client, guild: discord.Guild) -> GeneralSettings:
+    return await _general(client, guild)
 
 
-@patch("/general", summary="Change the auto role or media-only channel", responses=REFUSED)
-async def update_general_settings(guild: discord.Guild, member: discord.Member, data: GeneralPatch) -> GeneralSettings:
+@patch("/general", summary="Change the auto roles or media-only channel", responses=REFUSED)
+async def update_general_settings(
+    client: Client, guild: discord.Guild, member: discord.Member, data: GeneralPatch
+) -> GeneralSettings:
     # Resolve and check everything first, so a refusal doesn't leave the change half applied
-    role = resolve.role(guild, data.autorole_id) if data.autorole_id is not UNSET else UNSET
+    humans = _givable(guild, data.autorole_ids) if data.autorole_ids is not UNSET else None
+    bots = _givable(guild, data.autorole_bot_ids) if data.autorole_bot_ids is not UNSET else None
+    split = data.autorole_split if data.autorole_split is not UNSET else None
+    users = None
+    if data.autorole_users is not UNSET:
+        if len({entry.user_id for entry in data.autorole_users}) != len(data.autorole_users):
+            raise SettingError("Each person can only be listed once.")
+        users = {int(entry.user_id): _givable(guild, entry.role_ids) for entry in data.autorole_users}
     channel = (
         resolve.text_channel(guild, data.media_only_channel_id) if data.media_only_channel_id is not UNSET else UNSET
     )
-    if role and (role.is_default() or role.managed or role >= guild.me.top_role):
-        raise SettingError(f"I can't give out {role.mention}, it's above my role or managed.")
     if channel:
         perms = channel.permissions_for(guild.me)
         if not (perms.send_messages and perms.manage_messages):
             raise SettingError(f"I need `Send Messages` and `Manage Messages` in {channel.mention}.")
 
-    if role is not UNSET:
-        await guild_db.set_autorole(guild.id, role.id if role else None)
+    if humans is not None or bots is not None or split is not None:
+        await guild_db.set_autoroles(guild.id, humans=humans, bots=bots, split=split)
+    if users is not None:
+        await guild_db.set_autorole_users(guild.id, users)
     if channel is not UNSET:
         await guild_db.set_media_only(guild.id, channel.id if channel else None)
     _audit(member, "updated general settings")
-    return _general(guild)
+    return await _general(client, guild)
 
 
 @delete("/general", summary="Reset general settings", status_code=200)
-async def reset_general_settings(guild: discord.Guild, member: discord.Member) -> GeneralSettings:
+async def reset_general_settings(client: Client, guild: discord.Guild, member: discord.Member) -> GeneralSettings:
     await _reset_general(guild)
     _audit(member, "reset general settings")
-    return _general(guild)
+    return await _general(client, guild)
 
 
 def _logs(guild: discord.Guild) -> LogSettings:
@@ -517,7 +555,7 @@ async def reset_all_settings(client: Client, guild: discord.Guild, member: disco
     return _notes(guild, *notes)
 
 
-def _refused(request: Request, exc: SettingError) -> Response[Problem]:
+def refused(request: Request, exc: SettingError) -> Response[Problem]:
     client: Client | None = request.app.state.client
     guild = client.get_guild(int(request.path_params["guild_id"])) if client else None
     return Response(Problem(detail=resolve.plain(guild, str(exc)) if guild else str(exc)), status_code=422)
@@ -526,7 +564,7 @@ def _refused(request: Request, exc: SettingError) -> Response[Problem]:
 router = Router(
     "/guilds/{guild_id:str}/settings",
     tags=["Settings"],
-    exception_handlers={SettingError: _refused},
+    exception_handlers={SettingError: refused},
     dependencies={
         "guild": Provide(provide_guild, sync_to_thread=False),
         "member": Provide(provide_member, sync_to_thread=False),

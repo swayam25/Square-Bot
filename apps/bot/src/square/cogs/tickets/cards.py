@@ -89,13 +89,22 @@ def controls(ticket: TicketTable, guild: discord.Guild) -> DesignerView:
     )
 
 
-def log_card(
-    ticket: TicketTable,
-    *,
-    transcript: str | None = None,
-    messages: int | None = None,
-    participants: list[int] | None = None,
-) -> DesignerView:
+def transcript_url(guild_id: int, ticket: TicketTable) -> str:
+    return f"{config.dashboard_url}/guild/{guild_id}/tickets/{ticket.number}"
+
+
+def _transcript_button(guild_id: int, ticket: TicketTable) -> ui.ActionRow:
+    return ui.ActionRow(
+        ui.Button(
+            label="Show Transcript",
+            emoji=emoji.transcript_white,
+            style=discord.ButtonStyle.link,
+            url=transcript_url(guild_id, ticket),
+        )
+    )
+
+
+def log_card(ticket: TicketTable, guild_id: int) -> DesignerView:
     if ticket.status == "open":
         lines = [
             f"{emoji.user} **Opened By**: <@{ticket.opener_id}>",
@@ -116,17 +125,23 @@ def log_card(
     if ticket.closed_at:
         open_for = format_timedelta(ticket.closed_at - ticket.created_at, locale="en")
         lines.append(f"{emoji.duration_red} **Open For**: {open_for}")
-    if messages is not None:
-        lines.append(f"{emoji.messages_red} **Messages**: `{messages}`")
-    if participants:
+    if ticket.message_count is not None:
+        lines.append(f"{emoji.messages_red} **Messages**: `{ticket.message_count}`")
+    if participants := ticket.participant_ids:
         shown = ", ".join(f"<@{user_id}>" for user_id in participants[:_PARTICIPANTS_SHOWN])
         more = len(participants) - _PARTICIPANTS_SHOWN
         lines.append(f"{emoji.members_red} **Participants**: {shown}{f' and `{more}` more' if more > 0 else ''}")
     state = "Deleted" if ticket.status == "deleted" else "Closed"
-    items: list[ui.ViewItem] = [ui.TextDisplay(f"## Ticket {label(ticket)} {state}"), ui.TextDisplay("\n".join(lines))]
-    if transcript:
-        items.append(ui.File(f"attachment://{transcript}"))
-    return DesignerView(ui.Container(*items, color=config.color.red))
+    items: list[ui.ViewItem] = [
+        ui.Container(
+            ui.TextDisplay(f"## Ticket {label(ticket)} {state}"),
+            ui.TextDisplay("\n".join(lines)),
+            color=config.color.red,
+        )
+    ]
+    if ticket.message_count is not None:
+        items.append(_transcript_button(guild_id, ticket))
+    return DesignerView(*items)
 
 
 def panel() -> DesignerView:
@@ -150,12 +165,10 @@ def confirm(action: str, text: str) -> DesignerView:
     )
 
 
-def transcript_reply(filename: str) -> DesignerView:
-    """A reply carrying a transcript. Components messages only show attachments they reference."""
+def transcript_reply(ticket: TicketTable, guild_id: int) -> DesignerView:
     return DesignerView(
         ui.Container(
-            ui.TextDisplay(f"{emoji.success} Here's the transcript."),
-            ui.File(f"attachment://{filename}"),
-            color=config.color.green,
-        )
+            ui.TextDisplay(f"{emoji.success} Saved the transcript of ticket {label(ticket)}."), color=config.color.green
+        ),
+        _transcript_button(guild_id, ticket),
     )

@@ -4,7 +4,6 @@ from square.core import Client
 from square.core.cog import Cog
 from square.core.view import error_view
 from square.db import cache
-from square.db.funcs.guild import set_autorole
 
 
 class AutoMod(Cog):
@@ -36,19 +35,24 @@ class AutoMod(Cog):
                     pass
 
     @commands.Cog.listener()
-    async def on_member_join(self, user: discord.Member):
-        if user.bot:
+    async def on_member_join(self, member: discord.Member):
+        settings = cache.get(member.guild.id)
+        role_ids = [
+            *(settings.autorole_bot_ids if member.bot and settings.autorole_split else settings.autorole_ids),
+            *settings.autorole_users.get(member.id, ()),
+        ]
+        top = member.guild.me.top_role
+        roles = [
+            role
+            for role_id in dict.fromkeys(role_ids)
+            if (role := member.guild.get_role(role_id)) and not role.managed and role < top
+        ]
+        if not roles:
             return
-        autorole = cache.get(user.guild.id).autorole
-        if autorole is None:
-            return
-        if role := user.guild.get_role(autorole):
-            try:
-                await user.add_roles(role)
-            except discord.Forbidden, discord.NotFound:
-                pass
-        else:
-            await set_autorole(user.guild.id, None)
+        try:
+            await member.add_roles(*roles, reason="Auto role")
+        except discord.Forbidden, discord.NotFound:
+            pass
 
 
 def setup(client: Client):

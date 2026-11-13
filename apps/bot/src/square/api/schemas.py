@@ -4,6 +4,8 @@ import time
 from msgspec import UNSET, UnsetType
 from sonolink import QueueMode
 from sonolink.models import Playable, Playlist
+from square.api import resolve
+from square.cogs.tickets.snapshot import Transcript
 from square.core import Client
 from square.modules import Module
 from square.music import dj, store
@@ -25,7 +27,12 @@ QUEUE_LIMIT = 100
 PLAYLIST_LIMIT = 500
 MAX_FAKE_DAYS = 365
 MAX_SUPPORT_ROLES = 10
-MaxOpen = Literal[1, 2, 3, 5]
+MAX_AUTOROLES = 10
+MAX_AUTOROLE_USERS = 50
+MAX_BONUS_USERS = 100
+MAX_BONUS = 100_000
+MAX_OPEN_TICKETS = 25
+MaxOpen = Annotated[int, msgspec.Meta(ge=1, le=MAX_OPEN_TICKETS)]
 
 
 class Schema(msgspec.Struct, rename="camel", kw_only=True, forbid_unknown_fields=True):
@@ -73,6 +80,18 @@ class MemberJoins(Schema):
     members: int
 
 
+class ActivityDay(Schema):
+    date: str  # UTC day, YYYY-MM-DD
+    tickets_opened: int
+    tickets_closed: int
+    invited: int
+    left: int
+
+
+class Activity(Schema):
+    days: list[ActivityDay]
+
+
 class ServerStats(Schema):
     humans: int
     bots: int
@@ -89,6 +108,15 @@ class Person(Schema):
     id: Snowflake
     name: str
     avatar_url: str
+
+
+class UserMatch(Schema):
+    id: Snowflake
+    name: str
+    username: str
+    avatar_url: str
+    bot: bool
+    member: bool
 
 
 class Track(Schema):
@@ -121,6 +149,7 @@ class Viewer(Schema):
     dj: bool
     in_channel: bool
     deafened: bool
+    queue_lock: str | None = None  # why the bot would refuse to queue for them right now
 
 
 class PlayerState(Schema):
@@ -166,13 +195,123 @@ class Notes(Schema):
     notes: list[str]
 
 
+AutoroleIds = Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_AUTOROLES)]
+
+
+class AutoroleUser(Schema):
+    user: Person
+    member: bool
+    role_ids: list[Snowflake]
+
+
+class AutoroleUserPatch(Schema):
+    user_id: Snowflake
+    role_ids: Annotated[list[Snowflake], msgspec.Meta(min_length=1, max_length=MAX_AUTOROLES)]
+
+
+class InviteEntry(Schema):
+    rank: int
+    user: Person
+    regular: int
+    left: int
+    fake: int
+    bonus: int
+    total: int
+
+
+class InviteBoard(Schema):
+    entries: list[InviteEntry]
+    page: int
+    pages: int
+    people: int
+
+
+class Invitee(Schema):
+    user: Person
+    joined_at: int  # Unix ms
+    left: bool
+    fake: bool
+
+
+class InviteProfile(Schema):
+    rank: int | None
+    user: Person
+    member: bool
+    regular: int
+    left: int
+    fake: int
+    bonus: int
+    total: int
+    invited_by: Person | None
+    invitees: list[Invitee]
+
+
+class BonusChange(Schema):
+    user_ids: Annotated[list[Snowflake], msgspec.Meta(min_length=1, max_length=MAX_BONUS_USERS)]
+    amount: Annotated[int, msgspec.Meta(ge=-MAX_BONUS, le=MAX_BONUS)]
+    mode: Literal["add", "set"]
+
+
+class Bonus(Schema):
+    user_id: Snowflake
+    bonus: int
+
+
+TicketStatus = Literal["open", "closed", "deleted"]
+
+
+class TicketEntry(Schema):
+    number: int
+    label: str
+    status: TicketStatus
+    channel_id: Snowflake | None
+    channel_name: str | None
+    opener: Person
+    claimed_by: Person | None
+    reason: str
+    created_at: int  # Unix ms
+    closed_at: int | None
+    messages: int | None
+
+
+class TicketPage(Schema):
+    entries: list[TicketEntry]
+    page: int
+    pages: int
+    total: int
+    open: int
+    closed: int
+    deleted: int
+
+
+class TicketDetail(TicketEntry):
+    closed_by: Person | None
+    people: list[Person]
+
+
+class TicketTranscript(Schema):
+    ticket: TicketDetail
+    live: bool  # the channel still exists, so links to its files still work
+    transcript: Transcript | None
+
+
+class Purged(Schema):
+    removed: int
+
+
 class GeneralSettings(Schema):
-    autorole_id: Snowflake | None
+    autorole_ids: list[Snowflake]
+    autorole_bot_ids: list[Snowflake]
+    autorole_split: bool
+    autorole_users: list[AutoroleUser]
     media_only_channel_id: Snowflake | None
 
 
 class GeneralPatch(Schema):
-    autorole_id: Snowflake | None | UnsetType = UNSET
+    autorole_ids: AutoroleIds | UnsetType = UNSET
+    autorole_bot_ids: AutoroleIds | UnsetType = UNSET
+    autorole_split: bool | UnsetType = UNSET
+    autorole_users: Annotated[list[AutoroleUserPatch], msgspec.Meta(max_length=MAX_AUTOROLE_USERS)] | UnsetType = UNSET
     media_only_channel_id: Snowflake | None | UnsetType = UNSET
 
 
@@ -324,6 +463,27 @@ def _person_out(user: discord.User | discord.Member) -> Person:
     )
 
 
+def person_of(user_id: int, user: discord.User | discord.Member | None) -> Person:
+    if user:
+        return _person_out(user)
+    return Person(
+        id=str(user_id),
+        name=str(user_id),
+        avatar_url=f"https://cdn.discordapp.com/embed/avatars/{(user_id >> 22) % 6}.png",
+    )
+
+
+def user_match(user: discord.User | discord.Member, member: bool) -> UserMatch:
+    return UserMatch(
+        id=str(user.id),
+        name=user.display_name,
+        username=user.name,
+        avatar_url=user.display_avatar.replace(size=64, static_format="webp").url,
+        bot=user.bot,
+        member=member,
+    )
+
+
 def _person(player: SquarePlayer, user_id: int) -> Person | None:
     user = player.guild.get_member(user_id) or player.client.get_user(user_id)
     return None if user is None else _person_out(user)
@@ -378,12 +538,17 @@ def _vote(player: SquarePlayer) -> SkipVote | None:
 
 
 def _viewer(player: SquarePlayer | None, member: discord.Member) -> Viewer:
+    # Local: `music/play.py` pulls in the player modules, which import this one
+    from square.music.play import voice_error
+
     voice = member.voice
     in_channel = player is not None and voice is not None and voice.channel == player.channel
+    refused = voice_error(member)
     return Viewer(
         dj=dj.is_dj(member, player),
         in_channel=in_channel,
         deafened=in_channel and (voice.deaf or voice.self_deaf),
+        queue_lock=resolve.plain(member.guild, refused) if refused else None,
     )
 
 

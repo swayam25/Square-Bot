@@ -20,7 +20,12 @@ class Icon(discord.PartialEmoji):
 
 
 class Emoji:
-    """Every emoji the bot uses. Add a line here and a same-named file in `emojis/`, then sync from `/emoji`."""
+    """
+    Every emoji the bot uses. Add a line here and a same-named file in `emojis/`, then sync from `/emoji`.
+
+    Mass moderation builds some names at runtime (`owner` + `_red`/`_orange`/`_green`), so a text search can't prove
+    an emoji unused.
+    """
 
     bullet = Icon("•")
     bullet_red = Icon("•")

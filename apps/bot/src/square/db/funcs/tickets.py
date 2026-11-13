@@ -1,7 +1,11 @@
 import discord
+from datetime import datetime
 from square.db import cache
 from square.db.funcs.guild import fetch_guild_settings
-from square.db.schema import GuildTable, TicketMemberTable, TicketTable
+from square.db.schema import GuildTable, TicketFileTable, TicketMemberTable, TicketTable, TicketTranscriptTable
+from tortoise.exceptions import IntegrityError
+from tortoise.expressions import Q
+from tortoise.functions import Count
 from tortoise.transactions import in_transaction
 
 
@@ -91,3 +95,83 @@ async def save_ticket(ticket: TicketTable, **changes) -> None:
     for name, value in changes.items():
         setattr(ticket, name, value)
     await ticket.save(update_fields=list(changes))
+
+
+async def fetch_ticket_by_number(guild_id: int, number: int) -> TicketTable | None:
+    return await TicketTable.filter(guild__guild_id=guild_id, number=number).first()
+
+
+async def count_by_status(guild_id: int) -> dict[str, int]:
+    rows = (
+        await TicketTable.filter(guild__guild_id=guild_id)
+        .annotate(n=Count("id"))
+        .group_by("status")
+        .values("status", "n")
+    )
+    return {row["status"]: row["n"] for row in rows}
+
+
+def _tickets(guild_id: int, statuses: list[str], search: Q | None):
+    query = TicketTable.filter(guild__guild_id=guild_id, status__in=statuses)
+    return query.filter(search) if search is not None else query
+
+
+async def count_tickets(guild_id: int, *, statuses: list[str], search: Q | None) -> int:
+    return await _tickets(guild_id, statuses, search).count()
+
+
+async def list_tickets(
+    guild_id: int, *, statuses: list[str], search: Q | None, newest_first: bool, offset: int, limit: int
+) -> list[TicketTable]:
+    query = _tickets(guild_id, statuses, search).order_by("-number" if newest_first else "number")
+    return list(await query.offset(offset).limit(limit))
+
+
+async def save_transcript(ticket: TicketTable, data: dict, messages: int, participants: list[int]) -> None:
+    async with in_transaction() as conn:
+        await TicketTranscriptTable.update_or_create(defaults={"data": data}, using_db=conn, ticket=ticket)
+        ticket.message_count, ticket.participant_ids = messages, participants
+        await ticket.save(using_db=conn, update_fields=["message_count", "participant_ids"])
+
+
+async def fetch_transcript(ticket: TicketTable) -> TicketTranscriptTable | None:
+    return await TicketTranscriptTable.filter(ticket=ticket).first()
+
+
+async def stored_file_sizes(ticket: TicketTable) -> dict[int, int]:
+    rows = await TicketFileTable.filter(ticket=ticket).values("attachment_id", "size")
+    return {row["attachment_id"]: row["size"] for row in rows}
+
+
+async def add_file(ticket: TicketTable, attachment_id: int, content_type: str, data: bytes) -> None:
+    try:
+        await TicketFileTable.create(
+            ticket=ticket, attachment_id=attachment_id, content_type=content_type, size=len(data), data=data
+        )
+    except IntegrityError:
+        pass  # two saves raced, and the other one stored it
+
+
+async def delete_files(ticket: TicketTable, attachment_ids: set[int]) -> None:
+    await TicketFileTable.filter(ticket=ticket, attachment_id__in=list(attachment_ids)).delete()
+
+
+async def fetch_file(ticket: TicketTable, attachment_id: int) -> tuple[str, bytes] | None:
+    row = await TicketFileTable.filter(ticket=ticket, attachment_id=attachment_id).first()
+    return (row.content_type, bytes(row.data)) if row else None
+
+
+async def purge_ticket(ticket: TicketTable) -> None:
+    await ticket.delete()
+
+
+async def purge_deleted_tickets(guild_id: int) -> int:
+    guild = await fetch_guild_settings(guild_id)
+    return await TicketTable.filter(guild=guild, status="deleted").delete()
+
+
+async def ticket_times_since(guild_id: int, since: datetime) -> tuple[list[datetime], list[datetime]]:
+    tickets = TicketTable.filter(guild__guild_id=guild_id)
+    opened = await tickets.filter(created_at__gte=since).values_list("created_at", flat=True)
+    closed = await tickets.filter(closed_at__gte=since).values_list("closed_at", flat=True)
+    return list(opened), list(closed)
