@@ -10,13 +10,6 @@ database-url = "asyncpg://postgres:youcannotpass@db:5432/square"
 log-level = "INFO"
 log-file = false
 
-# Uncomment to serve the API the dashboard uses. The secret needs 32+ characters, e.g. `openssl rand -hex 32`
-# [api]
-# secret = ""
-# host = "127.0.0.1"
-# port = 8080
-# docs = false
-
 [colors]
 theme = "#1FCEEC"
 green = "#2ECC71"
@@ -30,9 +23,9 @@ password = ""
 secure = true
 regions = []
 
-[[lavalink]]
-host = ""
-port = 0
-password = ""
-secure = true
-regions = []
+# Uncomment to serve the API the dashboard uses. The secret needs 32+ characters, e.g. `openssl rand -hex 32`
+# [api]
+# secret = ""
+# host = "127.0.0.1"
+# port = 8080
+# docs = false

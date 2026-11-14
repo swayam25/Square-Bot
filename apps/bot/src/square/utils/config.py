@@ -50,9 +50,7 @@ def _load() -> _Config:
         with open(CONFIG_FILE_PATH, "rb") as file:
             return msgspec.toml.decode(file.read(), type=_Config)
     except FileNotFoundError:
-        raise SystemExit(
-            f"{CONFIG_FILE_PATH} not found. Copy config.example.toml to config.toml and fill it in."
-        ) from None
+        raise SystemExit(f"{CONFIG_FILE_PATH} not found. Run `just init` to create it.") from None
     except msgspec.ValidationError as e:
         raise SystemExit(f"Invalid {CONFIG_FILE_PATH}: {e}") from None
 

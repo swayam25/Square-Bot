@@ -23,11 +23,13 @@ Advanced multipurpose discord bot for all your needs.
 
 ## 💫 Prerequisites
 
-| Tool                                                                                                                                    | Version | Purpose                                             |
-| --------------------------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------------- |
-| [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/) | 20.10+  | To run the bot in a containerized environment.      |
-| [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)             | 2.50+   | To clone the repository and manage version control. |
-| [![Just](https://img.shields.io/badge/Just-%23EF4041?style=for-the-badge&logo=just&logoColor=%23FFFFFF)](https://github.com/casey/just) | 1.27+   | A command runner for the project's recipes.         |
+| Tool                                                                                                                                     | Version | Purpose                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------------- |
+| [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/)  | 20.10+  | To run the bot in a containerized environment.      |
+| [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)              | 2.50+   | To clone the repository and manage version control. |
+| [![Just](https://img.shields.io/badge/Just-%23EF4041?style=for-the-badge&logo=just&logoColor=%23FFFFFF)](https://github.com/casey/just)  | 1.27+   | A command runner for the project's recipes.         |
+| [![Node.js](https://img.shields.io/badge/Node.js-%235FA04E?style=for-the-badge&logo=nodedotjs&logoColor=%23FFFFFF)](https://nodejs.org/) | 24+     | Runs `just init` and the dashboard tooling.         |
+| [![pnpm](https://img.shields.io/badge/pnpm-%23F69220?style=for-the-badge&logo=pnpm&logoColor=%23FFFFFF)](https://pnpm.io/)               | 12+     | Installs the JavaScript packages.                   |
 
 ## 🚀 Production
 
@@ -37,28 +39,28 @@ Advanced multipurpose discord bot for all your needs.
     cd square
     ```
 
-2. Create the bot's `config.toml` from `config.example.toml` and fill it in. Uncomment the `[api]` table and set its `secret` (`openssl rand -hex 32`), and set `dashboard-url` to the dashboard's public address.
+2. Set up the config
     ```sh
-    cp apps/bot/config.example.toml apps/bot/config.toml
-    ```
-
-3. Create the dashboard's env file. `BOT_API_SECRET` is the same secret as `[api] secret`, and the Discord values come from the Developer Portal under **OAuth2**. Add `https://<your domain>/auth/callback` as a redirect there. `BOT_API_URL` and `REDIS_URL` are set by the stack, so leave them out.
-    ```sh
-    cp apps/web/.env.example apps/web/.env.production
+    just init
     ```
 
 > [!TIP]
 > Check [configuration](#-configuration) section for details on the configuration keys.
 
-4. Build the images and start the stack
+3. Build the images and start the stack
     ```sh
     just up
     ```
 
-5. Point your reverse proxy at `square:80` on the `edge` Docker network. It handles TLS, Square handles the rest. `just up` creates the network if it doesn't exist yet. `just down` stops everything.
+4. Point your reverse proxy at `square:80` on the `edge` Docker network. It handles TLS, Square handles the rest. `just up` creates the network if it doesn't exist yet. `just down` stops everything.
+
+5. Optionally, point it at `square-gateway:4983` too, for [Drizzle Gateway](https://gateway.drizzle.team), a browser and editor for the database.
+
+> [!WARNING]
+> Drizzle Gateway has no login of its own. Put it behind your proxy's SSO, or anyone who finds the hostname can read and change every table.
 
 > [!NOTE]
-> Only the `square` container (Caddy) joins `edge`. The dashboard, the bot's API, Postgres and Redis stay on the stack's private network and publish no ports.
+> Only `square` (Caddy) and `square-gateway` join `edge`. The dashboard, the bot's API, Postgres and Redis stay on the stack's private network and publish no ports.
 
 ## 🧭 How it fits together
 
@@ -71,6 +73,8 @@ flowchart LR
     web --> redis[(Redis<br/>sessions, caches)]
     web -- "API +<br/>WebSocket" --> bot[bot<br/>Pycord + Litestar]
     bot --> db[(Postgres)]
+    proxy -- "edge network<br/>behind SSO" --> gateway[square-gateway<br/>Drizzle Gateway]
+    gateway --> db
     bot --> lavalink[Lavalink nodes]
     bot <--> discord([Discord])
 ```
@@ -111,34 +115,34 @@ Running your own node gives you full control over performance, uptime, and audio
 
 The bot reads `apps/bot/config.toml` and the dashboard reads `apps/web/.env` (`.env.production` in production). Keys on the same row hold the same value.
 
-| `config.toml` (bot)     | `.env` (dashboard)      | Type          | Description                                                                                                                                                         |
-| ----------------------- | ----------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `owner-id`              |                         | `int`         | The Discord ID of the bot owner.                                                                                                                                    |
-| `owner-guild-ids`       |                         | `list[int]`   | A list of Discord IDs of the owner's guilds. Owner/Developer only commands are created only in these guilds.                                                        |
-| `system-channel-id`     |                         | `int`         | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.                                                             |
-| `support-server-url`    |                         | `str`         | The invite URL of the support server.                                                                                                                               |
-| `dashboard-url`         |                         | `str`         | The dashboard's public address. Links in Discord (transcripts, settings) point here.                                                                                |
-| `bot-token`             |                         | `str`         | Discord Bot Token. Get this from developer portal.                                                                                                                  |
-| `database-url`          |                         | `str`         | The URL for the PostgreSQL database.                                                                                                                                |
-| `log-level`             |                         | `str`         | *Optional.* `DEBUG`, `INFO` (default), `WARNING` or `ERROR`. The `SQUARE_LOG_LEVEL` environment variable overrides it.                                              |
-| `log-file`              |                         | `bool`        | *Optional.* Also write logs to `.cache/logs/square.log`, rotated at 5 × 5 MB. Defaults to `false`.                                                                  |
-| `[api]`                 |                         | `table`       | *Optional.* Turns on the API the dashboard uses.         Leave it out to run the bot alone.                                                                         |
-| `api.secret`            | `BOT_API_SECRET`        | `str`         | The same secret on both sides, so only the dashboard can call the bot's API. At least 32 characters.                                                                |
-| `api.host` / `api.port` | `BOT_API_URL`           | `str` / `int` | *Optional.* Where the API listens (`127.0.0.1:8080` by default) and the URL the dashboard calls it at. The production stack sets both, the host through `API_HOST`. |
-| `api.docs`              |                         | `bool`        | *Optional.* Serves API docs at `/docs`. Keep it off in production.                                                                                                  |
-|                         | `REDIS_URL`             | `str`         | Redis for logins, sessions and caches. The production stack sets it.                                                                                                |
-|                         | `DISCORD_CLIENT_ID`     | `str`         | The application ID from the Developer Portal, the same app as `bot-token`.                                                                                          |
-|                         | `DISCORD_CLIENT_SECRET` | `str`         | The OAuth2 client secret from the Developer Portal, under **OAuth2**.                                                                                               |
-| `colors.theme`          |                         | `str`         | The color theme for the bot's view containers.                                                                                                                      |
-| `colors.green`          |                         | `str`         | The color code for green color in view containers.                                                                                                                  |
-| `colors.red`            |                         | `str`         | The color code for red color in view containers.                                                                                                                    |
-| `colors.orange`         |                         | `str`         | The color code for orange color in view containers.                                                                                                                 |
-| `[[lavalink]]`          |                         | `table`       | A Lavalink node. Multiple `[[lavalink]]` tables can be configured, players fail over to another node if one dies.                                                   |
-| `lavalink.host`         |                         | `str`         | The host of the Lavalink server.                                                                                                                                    |
-| `lavalink.port`         |                         | `int`         | The port of the Lavalink server.                                                                                                                                    |
-| `lavalink.password`     |                         | `str`         | The password for the Lavalink server.                                                                                                                               |
-| `lavalink.secure`       |                         | `bool`        | Whether to use secure connection (wss) for Lavalink.                                                                                                                |
-| `lavalink.regions`      |                         | `list[str]`   | Optional. Discord voice regions this node serves, e.g. `["india"]`.                                                                                                 |
+| `config.toml` (bot)     | `.env` (dashboard)      | Type          | Description                                                                                                                                     |
+| ----------------------- | ----------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `owner-id`              |                         | `int`         | The Discord ID of the bot owner.                                                                                                                |
+| `owner-guild-ids`       |                         | `list[int]`   | A list of Discord IDs of the owner's guilds. Owner/Developer only commands are created only in these guilds.                                    |
+| `system-channel-id`     |                         | `int`         | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.                                         |
+| `support-server-url`    |                         | `str`         | The invite URL of the support server.                                                                                                           |
+| `dashboard-url`         |                         | `str`         | The dashboard's public address. Links in Discord (transcripts, settings) point here.                                                            |
+| `bot-token`             |                         | `str`         | Discord Bot Token. Get this from developer portal.                                                                                              |
+| `database-url`          |                         | `str`         | The URL for the PostgreSQL database.                                                                                                            |
+| `log-level`             |                         | `str`         | *Optional.* `DEBUG`, `INFO` (default), `WARNING` or `ERROR`. The `SQUARE_LOG_LEVEL` environment variable overrides it.                          |
+| `log-file`              |                         | `bool`        | *Optional.* Also write logs to `.cache/logs/square.log`, rotated at 5 × 5 MB. Defaults to `false`.                                              |
+| `[api]`                 |                         | `table`       | *Optional.* Turns on the API the dashboard uses. Leave it out to run the bot alone.                                                             |
+| `api.secret`            | `BOT_API_SECRET`        | `str`         | The same secret on both sides, so only the dashboard can call the bot's API. At least 32 characters.                                            |
+| `api.host` / `api.port` | `BOT_API_URL`           | `str` / `int` | *Optional.* Where the API listens (`127.0.0.1:8080` by default) and the URL the dashboard calls it at.                                          |
+| `api.docs`              |                         | `bool`        | *Optional.* Serves API docs at `/docs`. Keep it off in production.                                                                              |
+|                         | `REDIS_URL`             | `str`         | Redis for logins, sessions and caches.                                                                                                          |
+|                         | `DISCORD_CLIENT_ID`     | `str`         | The application ID from the Developer Portal, the same app as `bot-token`. Under **OAuth2**, add `<dashboard-url>/auth/callback` as a redirect. |
+|                         | `DISCORD_CLIENT_SECRET` | `str`         | The OAuth2 client secret from the Developer Portal, under **OAuth2**.                                                                           |
+| `colors.theme`          |                         | `str`         | The color theme for the bot's view containers.                                                                                                  |
+| `colors.green`          |                         | `str`         | The color code for green color in view containers.                                                                                              |
+| `colors.red`            |                         | `str`         | The color code for red color in view containers.                                                                                                |
+| `colors.orange`         |                         | `str`         | The color code for orange color in view containers.                                                                                             |
+| `[[lavalink]]`          |                         | `table`       | A Lavalink node. Multiple `[[lavalink]]` tables can be configured, players fail over to another node if one dies.                               |
+| `lavalink.host`         |                         | `str`         | The host of the Lavalink server.                                                                                                                |
+| `lavalink.port`         |                         | `int`         | The port of the Lavalink server.                                                                                                                |
+| `lavalink.password`     |                         | `str`         | The password for the Lavalink server.                                                                                                           |
+| `lavalink.secure`       |                         | `bool`        | Whether to use secure connection (wss) for Lavalink.                                                                                            |
+| `lavalink.regions`      |                         | `list[str]`   | Optional. Discord voice regions this node serves, e.g. `["india"]`.                                                                             |
 
 ## ✨ Custom Emojis
 

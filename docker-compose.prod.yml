@@ -95,6 +95,26 @@ services:
       retries: 5
     logging: *logging
 
+  gateway:
+    image: ghcr.io/drizzle-team/gateway:latest@sha256:3f09490584ad97cb5fa6d2a7335b405b8ac96e3b17a427830930f4ff70fe3993
+    container_name: square-gateway
+    restart: unless-stopped
+    user: "65532:65532"
+    environment:
+      DATABASE_URL_Square: postgresql://postgres:youcannotpass@db:5432/square
+    expose:
+      - "4983"
+    networks: [default, edge]
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    # Connections are only read from the environment while /app is empty, so it never persists
+    tmpfs:
+      - /app:uid=65532,gid=65532
+      - /tmp
+    logging: *logging
+
 volumes:
   postgres_data:
   redis_data:

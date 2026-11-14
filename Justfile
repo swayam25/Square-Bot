@@ -10,16 +10,17 @@ _cache:
 
 [private]
 _prep: _cache
-    @printf '\033[43m\033[30m SYNC \033[0m \033[33mSyncing Dependencies\033[0m\n'
+    @printf '\033[43m\033[30m SYNC \033[0m \033[33mInstalling dependencies and git hooks\033[0m\n'
     @uv --directory apps/bot sync
-    @printf '\033[43m\033[30m HOOK \033[0m \033[33mInstalling packages and git hooks\033[0m\n'
     @pnpm install
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDone\033[0m\n'
 
-# Create config.toml, the cache dir, and install dependencies
-init: _prep
-    @[[ -f apps/bot/config.toml ]] || cp apps/bot/config.example.toml apps/bot/config.toml
-    @printf '\033[42m\033[30m  OK  \033[0m \033[32mNow edit \033[36mapps/bot/config.toml\033[32m, then run: \033[36mjust dev\033[0m\n'
+# Ask for the required settings and write the bot and dashboard config (--dev for local services)
+init *args: _cache
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ "{{ args }}" == *--dev* ]]; then just _prep; else pnpm install --frozen-lockfile; fi
+    pnpm run init {{ args }}
 
 # Rebuild and deploy the production stack (--dev for local services)
 up *args: _cache
@@ -30,7 +31,6 @@ up *args: _cache
         docker compose up -d --build
         printf '\033[42m\033[30m  OK  \033[0m \033[32mServices ready\033[0m\n'
     else
-        # The proxy joins a shared network. Made here when it's missing, so the stack also runs on its own
         docker network inspect edge > /dev/null 2>&1 || docker network create edge > /dev/null
         printf '\033[43m\033[30m BLD  \033[0m \033[33mRebuilding images\033[0m\n'
         docker compose -f docker-compose.prod.yml build --pull
