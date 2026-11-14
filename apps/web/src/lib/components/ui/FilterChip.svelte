@@ -13,7 +13,7 @@
     aria-checked={checked}
     class={[
         "ripple flex h-8 shrink-0 items-center gap-2 rounded-full px-3 text-xs font-medium whitespace-nowrap transition-colors [&>svg]:size-4",
-        checked ? "bg-accent/10 text-accent" : "bg-surface-2 text-gray-400 hover:bg-surface-3 hover:text-gray-100",
+        checked ? "bg-accent/10 text-accent" : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-100",
         focusRing,
         className,
     ]}

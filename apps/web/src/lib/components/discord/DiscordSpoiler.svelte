@@ -12,7 +12,7 @@
     <button
         type="button"
         aria-label="Show spoiler"
-        class="cursor-pointer rounded-sm bg-[#2e2e34] text-transparent select-none *:invisible hover:bg-[#36363d]"
+        class="cursor-pointer rounded-sm bg-dc-spoiler text-transparent select-none *:invisible hover:bg-dc-spoiler-hover"
         onclick={() => (shown = true)}>{@render children()}</button
     >
 {/if}

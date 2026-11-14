@@ -7,8 +7,8 @@
     import SiteHeader from "#lib/components/SiteHeader.svelte";
     import { refreshAll } from "$app/navigation";
     import { page } from "$app/state";
-    import sans from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
     import mono from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";
+    import sans from "@fontsource-variable/noto-sans/files/noto-sans-latin-wght-normal.woff2?url";
     import display from "@fontsource-variable/saira/files/saira-latin-wght-normal.woff2?url";
     import { onMount } from "svelte";
     import type { LayoutProps } from "./$types";

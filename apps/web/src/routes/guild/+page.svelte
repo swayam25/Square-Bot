@@ -67,12 +67,12 @@
                     <li>
                         <a
                             href="/guild/{guild.id}"
-                            class={["group ripple flex flex-col rounded-4xl bg-surface-1 p-2 hover:bg-surface-2", focusRing]}
+                            class={["group ripple flex flex-col rounded-4xl bg-gray-900 p-2 hover:bg-gray-800", focusRing]}
                             {@attach ripple}
                             onpointerenter={() => (hovered = guild.id)}
                             onpointerleave={() => hovered === guild.id && (hovered = null)}
                         >
-                            <div class="relative isolate flex h-32 items-center justify-center overflow-hidden rounded-3xl bg-surface-2">
+                            <div class="relative isolate flex h-32 items-center justify-center overflow-hidden rounded-3xl bg-gray-800">
                                 {#if guild.iconUrl}
                                     <img
                                         src={frames(guild.iconUrl)?.still ?? guild.iconUrl}
@@ -80,7 +80,7 @@
                                         class="absolute inset-0 -z-10 size-full scale-150 object-cover opacity-60 blur-2xl"
                                     />
                                 {:else}
-                                    <Shape lobes={12} depth={0.05} class="absolute -z-10 size-48 text-surface-3" />
+                                    <Shape lobes={12} depth={0.05} class="absolute -z-10 size-48 text-gray-700" />
                                 {/if}
                                 <GuildIcon
                                     src={guild.iconUrl}
@@ -139,7 +139,7 @@
                             target="_blank"
                             rel="noopener"
                             onclick={invite}
-                            class={["group ripple flex items-center gap-4 rounded-3xl bg-surface-1 p-2 pr-4 hover:bg-surface-2", focusRing]}
+                            class={["group ripple flex items-center gap-4 rounded-3xl bg-gray-900 p-2 pr-4 hover:bg-gray-800", focusRing]}
                             {@attach ripple}
                         >
                             <GuildIcon src={guild.iconUrl} name={guild.name} class="size-12 rounded-xl" />

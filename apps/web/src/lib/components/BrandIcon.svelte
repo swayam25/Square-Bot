@@ -11,11 +11,11 @@
     // The logos are one-colour shapes whose marks are holes; the backing fills those holes white like the real ones.
     // Spotify's bars are black in its own logo, so it gets no backing.
     const BRANDS: Record<Brand, { icon: Component; color: string; backing?: string }> = {
-        youtube_music: { icon: SimpleIconsYoutubemusic, color: "#ff0000", backing: "inset-[18%] rounded-full" },
-        youtube: { icon: SimpleIconsYoutube, color: "#ff0000", backing: "inset-x-[30%] inset-y-[32%]" },
-        spotify: { icon: SimpleIconsSpotify, color: "#1ed760" },
-        apple_music: { icon: SimpleIconsApplemusic, color: "#fa243c", backing: "inset-[20%]" },
-        soundcloud: { icon: SimpleIconsSoundcloud, color: "#ff5500" },
+        youtube_music: { icon: SimpleIconsYoutubemusic, color: "text-youtube", backing: "inset-[18%] rounded-full" },
+        youtube: { icon: SimpleIconsYoutube, color: "text-youtube", backing: "inset-x-[30%] inset-y-[32%]" },
+        spotify: { icon: SimpleIconsSpotify, color: "text-spotify" },
+        apple_music: { icon: SimpleIconsApplemusic, color: "text-apple-music", backing: "inset-[20%]" },
+        soundcloud: { icon: SimpleIconsSoundcloud, color: "text-soundcloud" },
     };
 
     const SOURCES: Record<string, Brand> = { youtube: "youtube", spotify: "spotify", applemusic: "apple_music", soundcloud: "soundcloud" };
@@ -32,5 +32,5 @@
 
 <span aria-hidden="true" class={["relative inline-flex shrink-0", className]}>
     {#if backing}<span class={["absolute bg-white", backing]}></span>{/if}
-    <Icon class="relative size-full" style="color: {color}" />
+    <Icon class="relative size-full {color}" />
 </span>

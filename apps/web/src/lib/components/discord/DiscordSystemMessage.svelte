@@ -32,7 +32,7 @@
 </script>
 
 <div {id} class={["relative min-h-5.5 py-0.5 pr-4 pl-18 wrap-anywhere text-dc-muted hover:bg-dc-hover", className]}>
-    <Icon aria-hidden="true" class={["absolute top-1.25 left-7 size-4", kind === "join" && "text-[#23a55a]", kind === "boost" && "text-[#ff73fa]"]} />
+    <Icon aria-hidden="true" class={["absolute top-1.25 left-7 size-4", kind === "join" && "text-dc-online", kind === "boost" && "text-dc-boost"]} />
     {@render children()}
     <Tooltip lazy content={timeTitle} class="ml-1"><time class="text-xs font-medium">{time}</time></Tooltip>
 </div>

@@ -18,7 +18,7 @@
             <span class="size-12 shrink-0 skeleton rounded-full md:size-10"></span>
         </div>
     {/if}
-    <div class="flex flex-col divide-y divide-white/5 rounded-3xl bg-surface-1">
+    <div class="flex flex-col divide-y divide-white/5 rounded-3xl bg-gray-900">
         <div class="flex h-10 items-center gap-8 px-4">
             <span class="h-2 w-16 skeleton rounded-full"></span>
             <span class="h-2 w-12 skeleton rounded-full"></span>

@@ -12,7 +12,7 @@ EMOJI = "Twemoji.ttf"
 
 # Mirrors the website's font stacks, so keep both in sync.
 # NOTE: No CJK font yet (~16 MB), so CJK renders as boxes until one is added here.
-_FALLBACK = ("Geist.ttf", "NotoSans.ttf", "NotoSansMath.ttf", "NotoSansSymbols.ttf", "NotoSansSymbols2.ttf", EMOJI)
+_FALLBACK = ("NotoSans.ttf", "NotoSansMath.ttf", "NotoSansSymbols.ttf", "NotoSansSymbols2.ttf", EMOJI)
 CHAINS: dict[Family, tuple[str, ...]] = {
     "display": ("Saira.ttf", *_FALLBACK),
     "sans": _FALLBACK,
@@ -52,7 +52,7 @@ def _joins_previous(char: str) -> bool:
 
 
 def _wants_emoji(char: str, following: str) -> bool:
-    """Above Latin-1 Twemoji wins even where Geist has a glyph (❤ ★), like on Discord. Below it, only U+FE0F asks."""
+    """Above Latin-1 Twemoji wins even where Noto Sans has a glyph (❤ ★), like on Discord. Below it, only U+FE0F asks."""
     code = ord(char)
     if code not in _coverage(EMOJI) or following == _TEXT_STYLE:
         return False

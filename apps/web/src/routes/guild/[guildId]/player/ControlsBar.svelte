@@ -94,11 +94,11 @@
     ]);
     const toggle = (on: boolean) => [
         icon,
-        on ? "bg-accent/10 text-accent hover:bg-accent/20" : "text-gray-400 hover:bg-surface-2 hover:text-gray-100",
+        on ? "bg-accent/10 text-accent hover:bg-accent/20" : "text-gray-400 hover:bg-gray-800 hover:text-gray-100",
     ];
     const tile = (on: boolean) => [
         "ripple flex h-14 w-full items-center gap-4 rounded-2xl px-4 text-sm font-medium transition-colors disabled:opacity-40 [&_svg]:size-6",
-        on ? "bg-accent/10 text-accent hover:bg-accent/20" : "bg-surface-2 hover:bg-surface-3",
+        on ? "bg-accent/10 text-accent hover:bg-accent/20" : "bg-gray-800 hover:bg-gray-700",
     ];
     let options = $state(false);
 </script>
@@ -136,7 +136,7 @@
             type="button"
             aria-busy={busy === "previous"}
             disabled={!track || !!lock || blocked("previous")}
-            class={[icon, "text-gray-100 hover:bg-surface-2"]}
+            class={[icon, "text-gray-100 hover:bg-gray-800"]}
             {@attach ripple}
             onclick={() => act("previous", () => control(music.previousTrack({ guild })))}
         >
@@ -175,7 +175,7 @@
                 type="button"
                 aria-busy={busy === "next"}
                 disabled={!track || !!skip.lock || blocked("next")}
-                class={[icon, "text-gray-100 hover:bg-surface-2"]}
+                class={[icon, "text-gray-100 hover:bg-gray-800"]}
                 {@attach ripple}
                 onclick={() => act("next", () => control(music.skipTrack({ guild })))}
             >
@@ -232,7 +232,7 @@
             type="button"
             aria-pressed={volume === 0}
             disabled={!!idle}
-            class={[icon, volume === 0 ? "text-red-400 hover:bg-red-400/10" : "text-gray-400 hover:bg-surface-2 hover:text-gray-100"]}
+            class={[icon, volume === 0 ? "text-red-400 hover:bg-red-400/10" : "text-gray-400 hover:bg-gray-800 hover:text-gray-100"]}
             {@attach ripple}
             onclick={() => setVolume(volume === 0 ? restore : 0)}
         >
@@ -242,7 +242,7 @@
 {/snippet}
 
 {#if mobile.current}
-    <section aria-label="Player controls" class="flex shrink-0 flex-col gap-2 rounded-3xl bg-surface-1 px-4 pt-2 pb-4">
+    <section aria-label="Player controls" class="flex shrink-0 flex-col gap-2 rounded-3xl bg-gray-900 px-4 pt-2 pb-4">
         {@render progress()}
         <div class="flex justify-between font-mono text-xs text-gray-400">
             <span>{@render elapsed()}</span><span>{@render total()}</span>
@@ -256,10 +256,10 @@
         </div>
     </section>
 
-    <nav aria-label="Player" class="flex shrink-0 items-center justify-around rounded-full bg-surface-1 p-1">
+    <nav aria-label="Player" class="flex shrink-0 items-center justify-around rounded-full bg-gray-900 p-1">
         {@render dock?.()}
         <Tooltip content="More">
-            <Drawer bind:open={options} title="More" triggerClass={[icon, "text-gray-400 hover:bg-surface-2 hover:text-gray-100"]}>
+            <Drawer bind:open={options} title="More" triggerClass={[icon, "text-gray-400 hover:bg-gray-800 hover:text-gray-100"]}>
                 {#snippet trigger()}<MaterialSymbolsMoreHorizRounded />{/snippet}
                 <div class="flex flex-col gap-4">
                     <div class="flex items-center gap-2">
@@ -304,7 +304,7 @@
         </Tooltip>
     </nav>
 {:else}
-    <section aria-label="Player controls" class="flex flex-col gap-2 rounded-3xl bg-surface-1 px-6 pt-2 pb-4">
+    <section aria-label="Player controls" class="flex flex-col gap-2 rounded-3xl bg-gray-900 px-6 pt-2 pb-4">
         {@render progress()}
         <div class="flex items-center gap-4">
             <div class="flex shrink-0 items-center gap-2">

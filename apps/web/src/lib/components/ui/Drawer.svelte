@@ -57,7 +57,7 @@
             <Drawer.Content
                 bind:ref={content}
                 class={[
-                    "relative flex max-h-[calc(100dvh-4rem)] flex-col rounded-t-[28px] bg-surface-1 pb-[env(safe-area-inset-bottom)] shadow-2xl shadow-black/50 outline-none after:absolute after:inset-x-0 after:top-full after:h-dvh after:bg-surface-1 data-[state=closed]:animate-slide-down data-[state=open]:animate-slide-up",
+                    "relative flex max-h-[calc(100dvh-4rem)] flex-col rounded-t-[28px] bg-gray-900 pb-[env(safe-area-inset-bottom)] shadow-2xl shadow-black/50 outline-none after:absolute after:inset-x-0 after:top-full after:h-dvh after:bg-gray-900 data-[state=closed]:animate-slide-down data-[state=open]:animate-slide-up",
                     className,
                 ]}
             >

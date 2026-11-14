@@ -18,7 +18,7 @@
     <nav
         class="pointer-events-auto mx-auto flex h-16 max-w-6xl items-center gap-2 rounded-full bg-gray-950/70 p-2 shadow-lg shadow-black/20 backdrop-blur-xl"
     >
-        <a href="/" class="ripple flex h-12 items-center gap-2 rounded-full pr-4 pl-2 hover:bg-surface-2" {@attach ripple}>
+        <a href="/" class="ripple flex h-12 items-center gap-2 rounded-full pr-4 pl-2 hover:bg-gray-800" {@attach ripple}>
             <img src={square} alt="" class="size-8" />
             <span class="font-display text-xl font-semibold">Square</span>
         </a>

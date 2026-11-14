@@ -39,7 +39,7 @@
                 <Popover.Content
                     aria-label={title}
                     class={[
-                        "origin-(--transform-origin) rounded-2xl bg-surface-2 p-2 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
+                        "origin-(--transform-origin) rounded-2xl bg-gray-800 p-2 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
                         contentClass,
                     ]}
                 >

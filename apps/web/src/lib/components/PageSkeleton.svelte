@@ -23,7 +23,7 @@
         {#each groups as { rows, title = true }, g (g)}
             <div class="flex flex-col gap-2">
                 {#if title}<div class="flex h-7 items-center px-2"><span class="h-4 w-40 skeleton rounded-full"></span></div>{/if}
-                <div class="flex flex-col divide-y divide-white/5 rounded-3xl bg-surface-1">
+                <div class="flex flex-col divide-y divide-white/5 rounded-3xl bg-gray-900">
                     {#each { length: rows }, i (i)}
                         <div class="flex flex-col gap-4 p-4 md:flex-row md:items-center">
                             <div class="flex min-w-0 flex-1 items-center gap-4">

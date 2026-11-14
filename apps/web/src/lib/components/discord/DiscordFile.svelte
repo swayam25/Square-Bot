@@ -15,8 +15,8 @@
 <div class="flex w-108 max-w-full flex-col gap-3 rounded-lg border border-dc-border bg-dc-surface p-4">
     <div class="flex items-center gap-2">
         <svg viewBox="0 0 30 40" aria-hidden="true" class="h-10 w-7.5 shrink-0">
-            <path fill="#d3d6fd" d="M0 3a3 3 0 0 1 3-3h17l10 10v27a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3z" />
-            <path fill="#939bf9" d="M20 0l10 10h-7a3 3 0 0 1-3-3z" />
+            <path class="fill-dc-file" d="M0 3a3 3 0 0 1 3-3h17l10 10v27a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3z" />
+            <path class="fill-dc-file-fold" d="M20 0l10 10h-7a3 3 0 0 1-3-3z" />
         </svg>
         <div class="flex min-w-0 flex-1 flex-col">
             {#if href}

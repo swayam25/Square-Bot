@@ -158,7 +158,7 @@
     }
 
     const action = "flex size-8 items-center justify-center rounded-full text-gray-300 transition-colors";
-    const neutral = [action, "hover:bg-surface-3 hover:text-gray-50"];
+    const neutral = [action, "hover:bg-gray-700 hover:text-gray-50"];
 </script>
 
 <section aria-labelledby="up-next" class="flex flex-col gap-2">
@@ -213,7 +213,7 @@
                         in:row={{ from: 24 }}
                         out:row={{ from: -24 }}
                         data-sortable-index={index}
-                        class="group relative flex items-center gap-2 rounded-2xl py-2 pr-2 transition-colors hover:bg-surface-2 data-dragging:z-10 data-dragging:bg-surface-3 data-dragging:shadow-xl data-dragging:shadow-black/50"
+                        class="group relative flex items-center gap-2 rounded-2xl py-2 pr-2 transition-colors hover:bg-gray-800 data-dragging:z-10 data-dragging:bg-gray-700 data-dragging:shadow-xl data-dragging:shadow-black/50"
                     >
                         <Tooltip content={lock ?? (filtering ? "Clear the search and filter to reorder" : "Drag to reorder")}>
                             <button
@@ -244,7 +244,7 @@
                                     </span>
                                     <span
                                         class={[
-                                            "absolute -inset-y-2 right-0 flex items-center gap-1 bg-linear-to-r from-transparent via-surface-2 via-40% to-surface-2 pl-12 transition-opacity duration-200 ease-out group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 group-data-dragging:via-surface-3 group-data-dragging:to-surface-3 pointer-coarse:pointer-events-auto pointer-coarse:static pointer-coarse:bg-none pointer-coarse:pl-0 pointer-coarse:opacity-100",
+                                            "absolute -inset-y-2 right-0 flex items-center gap-1 bg-linear-to-r from-transparent via-gray-800 via-40% to-gray-800 pl-12 transition-opacity duration-200 ease-out group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 group-data-dragging:via-gray-700 group-data-dragging:to-gray-700 pointer-coarse:pointer-events-auto pointer-coarse:static pointer-coarse:bg-none pointer-coarse:pl-0 pointer-coarse:opacity-100",
                                             pending ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
                                         ]}
                                     >
@@ -323,7 +323,7 @@
                     <li
                         in:row={{ from: 24 }}
                         out:row={{ from: -24 }}
-                        class="flex items-center gap-4 rounded-2xl p-2 pl-10 transition-colors hover:bg-surface-2"
+                        class="flex items-center gap-4 rounded-2xl p-2 pl-10 transition-colors hover:bg-gray-800"
                     >
                         <TrackRow track={{ ...track, requester: null }}>
                             {#snippet trailing()}
@@ -346,7 +346,7 @@
 >
     {#if target}
         <div class="flex flex-col gap-4 text-sm">
-            <div class="flex items-center gap-4 rounded-2xl bg-surface-2 p-4">
+            <div class="flex items-center gap-4 rounded-2xl bg-gray-800 p-4">
                 <Avatar src={target.avatarUrl} name={target.name} class="size-12 text-lg" />
                 <div class="flex min-w-0 flex-col">
                     <span class="truncate font-semibold">{target.name}</span>
@@ -388,10 +388,10 @@
 >
     <div class="flex flex-col gap-4 text-sm">
         {#if whole === "clear"}
-            <div class="flex items-center gap-4 rounded-2xl bg-surface-2 p-4">
+            <div class="flex items-center gap-4 rounded-2xl bg-gray-800 p-4">
                 <span class="flex shrink-0 -space-x-4">
                     {#each tracks.slice(0, 4) as track, i (`${i}-${track.identifier}`)}
-                        <Cover src={track.artworkUrl} class="size-10 rounded-xl ring-2 ring-surface-2" />
+                        <Cover src={track.artworkUrl} class="size-10 rounded-xl ring-2 ring-gray-800" />
                     {/each}
                 </span>
                 <span class="flex min-w-0 flex-col">
@@ -404,7 +404,7 @@
             {@const first = tracks[0]}
             {@const last = queue.total === tracks.length ? tracks.at(-1) : null}
             <p class="text-gray-400">The queue plays in the opposite order, so the last song comes up next.</p>
-            <div class="flex flex-col gap-2 rounded-2xl bg-surface-2 p-4">
+            <div class="flex flex-col gap-2 rounded-2xl bg-gray-800 p-4">
                 {#if last}
                     <span class="text-2xs font-semibold tracking-wider text-accent uppercase">Up next after this</span>
                     <span class="flex items-center gap-4">

@@ -18,7 +18,7 @@
         info: { icon: MaterialSymbolsInfoRounded, class: "bg-accent/10 text-accent" },
         warning: { icon: MaterialSymbolsWarningRounded, class: "bg-amber-400/10 text-amber-400" },
         error: { icon: MaterialSymbolsErrorRounded, class: "bg-red-400/10 text-red-400" },
-        loading: { icon: SvgSpinners90RingWithBg, class: "bg-surface-2 text-gray-400" },
+        loading: { icon: SvgSpinners90RingWithBg, class: "bg-gray-800 text-gray-400" },
     };
 
     let held = $state<Toast | null>(null);
@@ -64,7 +64,7 @@
         style:height="{open ? height : 0}px"
         style:transition={motion}
         style:--fillet={open ? "1.5rem" : "0px"}
-        class={["relative shrink-0 bg-surface-1", shape, !attached && "shadow-2xl shadow-black/50", open && "pointer-events-auto"]}
+        class={["relative shrink-0 bg-gray-900", shape, !attached && "shadow-2xl shadow-black/50", open && "pointer-events-auto"]}
     >
         {#if attached}
             {#if mobile.current}
@@ -126,10 +126,10 @@
     .fillet {
         width: var(--fillet);
         height: var(--fillet);
-        background: radial-gradient(circle farthest-side at 0 0, transparent 98%, var(--color-surface-1) 100%);
+        background: radial-gradient(circle farthest-side at 0 0, transparent 98%, var(--color-gray-900) 100%);
     }
 
     .fillet-flip {
-        background: radial-gradient(circle farthest-side at 100% 0, transparent 98%, var(--color-surface-1) 100%);
+        background: radial-gradient(circle farthest-side at 100% 0, transparent 98%, var(--color-gray-900) 100%);
     }
 </style>

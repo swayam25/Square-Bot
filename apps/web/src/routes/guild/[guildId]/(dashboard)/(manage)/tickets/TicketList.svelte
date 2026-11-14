@@ -248,7 +248,7 @@
 
             <div class="flex flex-col gap-2">
                 <h3 class="text-sm font-medium">Reason</h3>
-                <p class="rounded-2xl bg-surface-2 p-4 text-sm wrap-anywhere whitespace-pre-wrap text-gray-200">{detail.reason}</p>
+                <p class="rounded-2xl bg-gray-800 p-4 text-sm wrap-anywhere whitespace-pre-wrap text-gray-200">{detail.reason}</p>
             </div>
 
             {#if detail.people.length}

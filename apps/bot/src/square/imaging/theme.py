@@ -16,9 +16,9 @@ def blend(color: RGB, alpha: float, base: RGB) -> RGB:
 
 WHITE: RGB = rgb(0xFFFFFF)
 GRAY_950: RGB = rgb(0x030712)
-GRAY_900: RGB = rgb(0x111827)
-GRAY_400: RGB = rgb(0x9CA3AF)
-GRAY_300: RGB = rgb(0xD1D5DB)
+GRAY_900: RGB = rgb(0x101828)
+GRAY_400: RGB = rgb(0x99A1AF)
+GRAY_300: RGB = rgb(0xD1D5DC)
 GRAY_100: RGB = rgb(0xF3F4F6)
 CYAN_950: RGB = rgb(0x053345)
 CYAN_300: RGB = rgb(0x53EAFD)
@@ -36,7 +36,7 @@ AVATAR_FILLS: tuple[RGB, ...] = tuple(
         0xFFA1AD,
         0xA4F4CF,
         0xDDD6FF,
-        0xFFD6A7,
+        0xFFD6A8,
         0xB8E6FE,
         0xFCCEE8,
     )

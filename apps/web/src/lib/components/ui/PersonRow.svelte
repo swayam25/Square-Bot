@@ -15,7 +15,7 @@
     } = $props();
 </script>
 
-<div class="flex min-h-12 items-center gap-4 rounded-2xl bg-surface-2 p-2">
+<div class="flex min-h-12 items-center gap-4 rounded-2xl bg-gray-800 p-2">
     {#if person}
         <Avatar src={person.avatarUrl} name={person.name} class="size-8" />
     {:else}

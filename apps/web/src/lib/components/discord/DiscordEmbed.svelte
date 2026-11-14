@@ -26,7 +26,7 @@
     {@render picture(embed.mediaUrl, "max-h-87.5 max-w-[min(550px,100%)]")}
 {:else}
     <div
-        style:border-left-color={embed.color || "#3c3c43"}
+        style:border-left-color={embed.color || "var(--color-dc-embed)"}
         class="grid max-w-129 grid-cols-[minmax(0,1fr)_auto] rounded-sm border border-l-4 border-dc-border bg-dc-surface pt-2 pr-4 pb-4 pl-3 text-sm leading-4.5"
     >
         <div class="flex min-w-0 flex-col gap-2 pt-2">

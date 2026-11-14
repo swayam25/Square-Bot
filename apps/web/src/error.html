@@ -8,12 +8,12 @@
         <style>
             :root {
                 color-scheme: dark;
-                --page: #030712;
-                --text: #f3f4f6;
-                --muted: #9ca3af;
+                --gray-950: #030712;
+                --gray-100: #f3f4f6;
+                --gray-400: #99a1af;
                 --accent: #1fceec;
-                --on-accent: oklch(30.2% 0.056 229.695);
-                --surface: #1f2937;
+                --cyan-950: oklch(30.2% 0.056 229.695);
+                --gray-800: #1e2939;
             }
             * {
                 box-sizing: border-box;
@@ -24,9 +24,9 @@
                 min-height: 100dvh;
                 place-items: center;
                 padding: 64px 16px;
-                background: var(--page);
-                color: var(--text);
-                font-family: system-ui, sans-serif;
+                background: var(--gray-950);
+                color: var(--gray-100);
+                font-family: "Noto Sans", system-ui, sans-serif;
                 text-align: center;
                 -webkit-font-smoothing: antialiased;
             }
@@ -51,7 +51,7 @@
             }
             p {
                 margin-top: 8px;
-                color: var(--muted);
+                color: var(--gray-400);
                 font-size: 16px;
                 line-height: 1.5;
             }
@@ -67,7 +67,7 @@
                 align-items: center;
                 border-radius: 9999px;
                 padding: 0 16px;
-                background: var(--surface);
+                background: var(--gray-800);
                 color: inherit;
                 font-size: 14px;
                 font-weight: 500;
@@ -75,7 +75,7 @@
             }
             a.primary {
                 background: var(--accent);
-                color: var(--on-accent);
+                color: var(--cyan-950);
                 font-weight: 600;
             }
             a:focus-visible {

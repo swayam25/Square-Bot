@@ -74,7 +74,7 @@
                 role="region"
                 aria-label="Unsaved changes"
                 class={[
-                    "pointer-events-auto flex w-full max-w-2xl flex-col gap-4 rounded-3xl bg-surface-2 p-4 shadow-2xl shadow-black/50 md:flex-row md:items-center md:rounded-full md:py-2 md:pr-2 md:pl-6",
+                    "pointer-events-auto flex w-full max-w-2xl flex-col gap-4 rounded-3xl bg-gray-800 p-4 shadow-2xl shadow-black/50 md:flex-row md:items-center md:rounded-full md:py-2 md:pr-2 md:pl-6",
                     nudges > 0 && "animate-nudge",
                 ]}
             >

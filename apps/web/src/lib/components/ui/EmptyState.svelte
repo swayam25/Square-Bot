@@ -43,7 +43,7 @@
     class={[
         "flex flex-1 flex-col items-center justify-center text-center",
         compact ? "gap-1 p-4" : "gap-2 p-8",
-        card && "rounded-3xl bg-surface-1",
+        card && "rounded-3xl bg-gray-900",
         card && (compact ? "min-h-48" : "min-h-80"),
         className,
     ]}
@@ -52,7 +52,7 @@
         class={[
             "flex shrink-0 items-center justify-center",
             compact ? "mb-2 size-10 rounded-xl" : "mb-2 size-14 rounded-2xl",
-            tone === "danger" ? "bg-red-400/10 text-red-400" : "bg-surface-2 text-gray-100",
+            tone === "danger" ? "bg-red-400/10 text-red-400" : "bg-gray-800 text-gray-100",
         ]}
     >
         <Icon class={compact ? "size-5" : "size-7"} />

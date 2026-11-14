@@ -14,7 +14,7 @@
 
     const variants: Record<Variant, string> = {
         primary: "bg-accent font-semibold text-cyan-950 hover:bg-cyan-300",
-        secondary: "bg-surface-2 font-medium hover:bg-surface-3",
+        secondary: "bg-gray-800 font-medium hover:bg-gray-700",
         danger: "bg-red-400/10 font-medium text-red-400 hover:bg-red-400/20",
         ghost: "font-medium text-gray-400 hover:bg-surface-2 hover:text-gray-100",
         // For a delete action that repeats down a list, where a red fill on every row would shout

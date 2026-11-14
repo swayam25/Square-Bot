@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "@fontsource-variable/saira";
-@import "@fontsource-variable/geist";
 @import "@fontsource-variable/jetbrains-mono";
 @import "@fontsource-variable/noto-sans";
 @import "@fontsource/noto-sans-math";
@@ -31,10 +30,6 @@
 @theme {
     --color-accent: #1fceec;
 
-    --color-surface-1: var(--color-gray-900);
-    --color-surface-2: var(--color-gray-800);
-    --color-surface-3: var(--color-gray-700);
-
     --color-dc-bg: #1a1a1e;
     --color-dc-hover: #1e1e22;
     --color-dc-surface: #242429;
@@ -51,13 +46,34 @@
     --color-dc-code-border: #373845;
     --color-dc-green: #00863a;
     --color-dc-red: #d22d39;
+    --color-dc-blurple-hover: #4752c4;
+    --color-dc-green-hover: #047e37;
+    --color-dc-red-hover: #b42831;
+    --color-dc-secondary: #97979f;
+    --color-dc-border-strong: #4e4f58;
+    --color-dc-reply: #b5b6bc;
+    --color-dc-command: #efeff1;
+    --color-dc-command-name: #ababaf;
+    --color-dc-embed: #3c3c43;
+    --color-dc-spoiler: #2e2e34;
+    --color-dc-spoiler-hover: #36363d;
+    --color-dc-online: #23a55a;
+    --color-dc-boost: #ff73fa;
+    --color-dc-file: #d3d6fd;
+    --color-dc-file-fold: #939bf9;
+    --color-dc-media-panel: #201f24;
+    --color-dc-media-icon: #a8a9ae;
 
-    --font-display:
-        "Twemoji", "Saira Variable", "Geist Variable", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif;
-    --font-sans: "Twemoji", "Geist Variable", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif;
-    --font-mono:
-        "Twemoji", "JetBrains Mono Variable", "Geist Variable", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2",
-        monospace;
+    --color-embed-red: #e74c3c;
+
+    --color-youtube: #ff0000;
+    --color-spotify: #1ed760;
+    --color-apple-music: #fa243c;
+    --color-soundcloud: #ff5500;
+
+    --font-display: "Twemoji", "Saira Variable", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif;
+    --font-sans: "Twemoji", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif;
+    --font-mono: "Twemoji", "JetBrains Mono Variable", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", monospace;
 
     --text-2xs: 10px;
     --text-2xs--line-height: 12px;
@@ -244,7 +260,6 @@
     }
 }
 
-/* Loading placeholder. Translucent, so it reads the same on the page, a card or a popup */
 @utility skeleton {
     @apply animate-pulse bg-white/5;
 }
@@ -293,15 +308,15 @@
 .lc-root-container,
 .lc-tooltip-root {
     --color-primary: var(--color-accent);
-    --color-surface-100: var(--color-surface-2);
-    --color-surface-200: var(--color-surface-2);
-    --color-surface-300: var(--color-surface-2);
+    --color-surface-100: var(--color-gray-800);
+    --color-surface-200: var(--color-gray-800);
+    --color-surface-300: var(--color-gray-800);
     --color-surface-content: var(--color-gray-100);
 }
 
 @layer components {
     .lc-tooltip-container[data-variant="default"] {
-        @apply rounded-2xl bg-surface-2 px-4 py-2 font-mono text-xs shadow-2xl shadow-black/50 backdrop-blur-none;
+        @apply rounded-2xl bg-gray-800 px-4 py-2 font-mono text-xs shadow-2xl shadow-black/50 backdrop-blur-none;
     }
 }
 

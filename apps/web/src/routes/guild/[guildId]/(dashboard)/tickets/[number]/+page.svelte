@@ -109,7 +109,7 @@
             <div class="h-96 skeleton rounded-3xl"></div>
         </div>
     {:else}
-        <div class="grid grid-cols-2 gap-2 rounded-3xl bg-surface-1 p-2 md:grid-cols-3">
+        <div class="grid grid-cols-2 gap-2 rounded-3xl bg-gray-900 p-2 md:grid-cols-3">
             <PersonRow label="Opened by" person={ticket.opener} />
             <PersonRow label="Claimed by" person={ticket.claimedBy} />
             {#if ticket.status !== "open"}<PersonRow label="Closed by" person={ticket.closedBy} />{/if}

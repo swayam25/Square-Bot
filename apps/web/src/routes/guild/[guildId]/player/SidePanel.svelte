@@ -59,10 +59,7 @@
 
 <section
     aria-label="Search, queue, history and lyrics"
-    class={[
-        "flex flex-col gap-4 overflow-hidden",
-        sheet ? "min-h-0 flex-1 pt-2" : "h-144 rounded-3xl bg-surface-1 pt-4 md:pt-6 lg:h-auto lg:min-h-0",
-    ]}
+    class={["flex flex-col gap-4 overflow-hidden", sheet ? "min-h-0 flex-1 pt-2" : "h-144 rounded-3xl bg-gray-900 pt-4 md:pt-6 lg:h-auto lg:min-h-0"]}
 >
     {#if !sheet}
         <div class="shrink-0 px-4 md:px-6"><Segmented label="Panel" options={tabs} bind:value={() => tab, choose} /></div>

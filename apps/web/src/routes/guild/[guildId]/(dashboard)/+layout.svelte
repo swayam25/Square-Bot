@@ -235,7 +235,7 @@
 <div
     style:--sidebar="{width}px"
     style:--details={detailsOpen ? `${detailsWidth + 8}px` : "0px"}
-    class="flex h-dvh flex-col overflow-hidden bg-surface-1 md:flex-row md:p-2"
+    class="flex h-dvh flex-col overflow-hidden bg-gray-900 md:flex-row md:p-2"
 >
     <aside class="hidden w-(--sidebar) shrink-0 flex-col gap-4 overflow-hidden py-2 md:flex">
         <div class={["flex flex-col gap-4", expanded ? "px-4" : "items-center px-2"]}>
@@ -246,7 +246,7 @@
                 contentClass={expanded ? "w-(--reference-width)" : "w-72"}
                 triggerClass={[
                     "ripple flex items-center text-left",
-                    expanded ? "w-full gap-4 rounded-2xl bg-surface-2 p-2 pr-4 hover:bg-surface-3" : "rounded-2xl",
+                    expanded ? "w-full gap-4 rounded-2xl bg-gray-800 p-2 pr-4 hover:bg-gray-700" : "rounded-2xl",
                     focusRing,
                 ]}
             >
@@ -293,7 +293,7 @@
                         disabled={refreshing}
                         aria-busy={refreshing}
                         class={[
-                            "ripple flex items-center gap-4 rounded-full text-sm font-medium text-gray-400 hover:bg-surface-2 hover:text-gray-100",
+                            "ripple flex items-center gap-4 rounded-full text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100",
                             expanded ? "h-10 w-full px-4" : "size-12 justify-center",
                             focusRing,
                         ]}
@@ -314,7 +314,7 @@
                     title="Your account"
                     placement={expanded ? "top-start" : "right-end"}
                     triggerClass={[
-                        "ripple flex items-center gap-4 rounded-full text-left hover:bg-surface-2",
+                        "ripple flex items-center gap-4 rounded-full text-left hover:bg-gray-800",
                         expanded ? "w-full p-2 pr-4" : "p-2",
                         focusRing,
                     ]}

@@ -33,9 +33,9 @@
 
 <footer class="mt-12">
     <svg viewBox="0 0 {W} {H}" preserveAspectRatio="none" aria-hidden="true" class="-mb-px block h-16 w-full md:h-24">
-        <path d={WAVE} class="drift fill-surface-1" />
+        <path d={WAVE} class="drift fill-gray-900" />
     </svg>
-    <div class="relative overflow-hidden bg-surface-1">
+    <div class="relative overflow-hidden bg-gray-900">
         <div class="mx-auto flex max-w-6xl flex-col gap-8 px-4 pt-16 md:flex-row md:items-start md:justify-between md:px-6">
             <div class="flex flex-col gap-4">
                 <a href="/" class="flex w-fit items-center gap-2">
@@ -63,7 +63,7 @@
         <div aria-hidden="true" class="flex justify-center pt-4 select-none">
             {#each [..."SQUARE"] as letter, index (index)}
                 <span
-                    class="inline-block translate-y-[18%] font-display text-[22vw] leading-[0.8] font-bold text-surface-2 transition-[translate,color] duration-400 ease-spring hover:translate-y-0 hover:text-accent/20 lg:text-[256px]"
+                    class="inline-block translate-y-[18%] font-display text-[22vw] leading-[0.8] font-bold text-gray-800 transition-[translate,color] duration-400 ease-spring hover:translate-y-0 hover:text-accent/20 lg:text-[256px]"
                 >
                     {letter}
                 </span>

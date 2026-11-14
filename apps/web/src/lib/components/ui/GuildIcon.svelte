@@ -27,7 +27,7 @@
 <Picture {src} alt={name} {animate} class={["@container", className]}>
     {#snippet fallback({ loading })}
         <span
-            class={["flex size-full items-center justify-center bg-surface-2 font-medium whitespace-nowrap", loading && "animate-pulse"]}
+            class={["flex size-full items-center justify-center bg-gray-800 font-medium whitespace-nowrap", loading && "animate-pulse"]}
             style="font-size: {scale}cqw"
         >
             {#if !loading}{letters}{/if}

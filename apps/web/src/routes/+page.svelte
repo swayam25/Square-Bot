@@ -144,8 +144,8 @@
     </section>
 
     <section aria-labelledby="features" class="mx-auto max-w-6xl px-4 md:px-6">
-        <div class="relative isolate overflow-hidden rounded-4xl bg-surface-1 px-6 py-16 md:px-12">
-            <Shape lobes={16} depth={0.04} class="absolute -bottom-32 -left-24 -z-10 size-80 text-surface-2" />
+        <div class="relative isolate overflow-hidden rounded-4xl bg-gray-900 px-6 py-16 md:px-12">
+            <Shape lobes={16} depth={0.04} class="absolute -bottom-32 -left-24 -z-10 size-80 text-gray-800" />
             <div class="grid gap-12 lg:grid-cols-[1fr_2fr]">
                 <div class="flex flex-col gap-4">
                     <h2 id="features" class="font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">

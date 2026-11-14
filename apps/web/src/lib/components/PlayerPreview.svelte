@@ -16,9 +16,9 @@
     $effect(() => demo.attach());
 </script>
 
-<section aria-label="Preview of the web player" class="flex w-full max-w-md flex-col gap-6 rounded-4xl bg-surface-1 p-6 shadow-2xl shadow-black/40">
+<section aria-label="Preview of the web player" class="flex w-full max-w-md flex-col gap-6 rounded-4xl bg-gray-900 p-6 shadow-2xl shadow-black/40">
     <div class="flex items-center gap-4">
-        <img src={demo.track.artwork} alt="" class="size-20 shrink-0 rounded-2xl bg-surface-2 object-cover" />
+        <img src={demo.track.artwork} alt="" class="size-20 shrink-0 rounded-2xl bg-gray-800 object-cover" />
         <div class="flex min-w-0 flex-col gap-1">
             <span class="truncate font-display text-xl font-semibold">{demo.track.title}</span>
             <span class="truncate text-sm text-gray-400">{demo.track.author}</span>
@@ -45,7 +45,7 @@
             <button
                 type="button"
                 onclick={() => demo.previous()}
-                class="ripple flex size-12 items-center justify-center rounded-full bg-surface-2 hover:bg-surface-3"
+                class="ripple flex size-12 items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700"
                 {@attach ripple}
             >
                 <MaterialSymbolsSkipPreviousRounded class="size-5" />
@@ -69,7 +69,7 @@
             <button
                 type="button"
                 onclick={() => demo.skip()}
-                class="ripple flex size-12 items-center justify-center rounded-full bg-surface-2 hover:bg-surface-3"
+                class="ripple flex size-12 items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700"
                 {@attach ripple}
             >
                 <MaterialSymbolsSkipNextRounded class="size-5" />

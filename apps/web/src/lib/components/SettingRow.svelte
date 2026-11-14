@@ -26,7 +26,7 @@
 >
     <div class="flex min-w-0 flex-1 items-center gap-4">
         {#if Icon}
-            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-2 text-accent"><Icon class="size-5" /></span>
+            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-800 text-accent"><Icon class="size-5" /></span>
         {/if}
         <div class="flex min-w-0 flex-col">
             <span class="text-sm font-medium">{label}</span>

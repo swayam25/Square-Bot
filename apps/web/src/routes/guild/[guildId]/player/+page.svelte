@@ -139,7 +139,7 @@
                 type="button"
                 aria-haspopup="dialog"
                 disabled={!!off}
-                class="ripple flex size-12 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-surface-2 hover:text-gray-100 disabled:opacity-40"
+                class="ripple flex size-12 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-100 disabled:opacity-40"
                 {@attach ripple}
                 onclick={() => openSheet(value)}
             >
@@ -164,7 +164,7 @@
     {@render sheetButton("lyrics", "Lyrics", MaterialSymbolsLyricsRounded, lyricsOff)}
 {/snippet}
 
-<div class="flex h-dvh overflow-hidden bg-surface-1 md:p-2">
+<div class="flex h-dvh overflow-hidden bg-gray-900 md:p-2">
     <div class="relative min-h-0 min-w-0 flex-1 animate-shell-in overflow-hidden bg-gray-950 md:rounded-4xl">
         <main
             bind:this={scroller}

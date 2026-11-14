@@ -9,7 +9,7 @@
         value = $bindable(),
         label,
         class: className,
-        pill = "bg-surface-3",
+        pill = "bg-gray-700",
     }: {
         options: { value: T; label: string; count?: number; icon?: Component; disabled?: string | false }[];
         value: T;
@@ -47,7 +47,7 @@
     });
 </script>
 
-<div bind:this={track} role="tablist" aria-label={label} class={["relative flex rounded-full bg-surface-2 p-1", className]}>
+<div bind:this={track} role="tablist" aria-label={label} class={["relative flex rounded-full bg-gray-800 p-1", className]}>
     {#if bar}
         <span
             aria-hidden="true"

@@ -35,7 +35,7 @@
 <a
     href="/guild/{guild}/player"
     aria-label={track ? `Open the player: ${track.title} by ${track.author}` : "Open the player"}
-    class="group ripple relative isolate flex flex-col gap-4 overflow-clip rounded-3xl bg-surface-1 p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+    class="group ripple relative isolate flex flex-col gap-4 overflow-clip rounded-3xl bg-gray-900 p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     {@attach ripple}
 >
     {#if track?.artworkUrl}
@@ -46,7 +46,7 @@
             referrerpolicy="no-referrer"
             class="absolute inset-0 -z-10 size-full scale-125 object-cover opacity-30 blur-3xl"
         />
-        <span aria-hidden="true" class="absolute inset-0 -z-10 bg-linear-to-r from-surface-1 via-surface-1/70 to-surface-1/30"></span>
+        <span aria-hidden="true" class="absolute inset-0 -z-10 bg-linear-to-r from-gray-900 via-gray-900/70 to-gray-900/30"></span>
     {:else}
         <Shape
             lobes={12}
@@ -87,7 +87,7 @@
         </span>
 
         <span
-            class="hidden shrink-0 items-center gap-2 rounded-full bg-surface-2 px-4 text-sm font-medium transition-colors group-hover:bg-surface-3 sm:flex sm:h-10"
+            class="hidden shrink-0 items-center gap-2 rounded-full bg-gray-800 px-4 text-sm font-medium transition-colors group-hover:bg-gray-700 sm:flex sm:h-10"
         >
             Open player<MaterialSymbolsArrowForwardRounded class="size-4" />
         </span>

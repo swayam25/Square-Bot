@@ -27,10 +27,7 @@
     }
 </script>
 
-<section
-    aria-label="Skip vote"
-    class="flex shrink-0 animate-pop-in flex-wrap items-center gap-x-4 gap-y-3 rounded-3xl bg-surface-1 px-4 py-3 md:px-6"
->
+<section aria-label="Skip vote" class="flex shrink-0 animate-pop-in flex-wrap items-center gap-x-4 gap-y-3 rounded-3xl bg-gray-900 px-4 py-3 md:px-6">
     <div class="flex min-w-0 flex-1 items-center gap-3">
         {#if vote.startedBy}
             <Avatar src={vote.startedBy.avatarUrl} name={vote.startedBy.name} class="size-8 shrink-0 text-xs" />

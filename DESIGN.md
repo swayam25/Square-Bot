@@ -5,7 +5,7 @@ How the dashboard, the landing page and the bot's image cards look. The code is 
 ## Rules
 
 - Dark only. No light theme.
-- Tailwind tokens only, and `gray` is the only grey. Its values are pinned to the hexes tailwindcss.com copies, so the bot's images match the site exactly. The accent is the one custom color.
+- Tailwind tokens only, and `gray` is the only grey. Tailwind's own values are used as they are. The bot's `theme.py` holds the sRGB colors the browser renders for them, so the images match the site exactly. The accent is the one custom color.
 - Even steps for size and spacing (`p-2`, `gap-4`, `h-8`). `px-3` on icon chips is the one exception.
 - No borders on buttons, cards or popups. Depth comes from surfaces and shadows.
 - Icons are Material Symbols, filled rounded only.
@@ -13,22 +13,22 @@ How the dashboard, the landing page and the bot's image cards look. The code is 
 
 ## Color
 
-| Token       | Value                               | Used for                                            |
-| ----------- | ----------------------------------- | --------------------------------------------------- |
-| page        | `gray-950` `#030712`                | Page and the dashboard frame                        |
-| `surface-1` | `gray-900` `#111827`                | Panels, cards, drawers, dashboard shell             |
-| `surface-2` | `gray-800` `#1F2937`                | Cards on a panel, secondary buttons, fields, popups |
-| `surface-3` | `gray-700` `#374151`                | Rows in cards, hover on `surface-2`                 |
-| `accent`    | `#1FCEEC`                           | Primary buttons, focus, checked state, links        |
-| text        | `gray-100` / `gray-400`             | Body / secondary                                    |
-| status      | `emerald-400` `amber-400` `red-400` | Success, warning, danger (fills at `/10`)           |
-| `dc-*`      | Discord's dark theme                | Only inside things drawn to look like Discord       |
+| Class                   | Value                               | Used for                                            |
+| ----------------------- | ----------------------------------- | --------------------------------------------------- |
+| `gray-950`              | `#030712`                           | Page, the dashboard frame and bot image cards       |
+| `gray-900`              | `#101828`                           | Panels, cards, drawers, dashboard shell             |
+| `gray-800`              | `#1E2939`                           | Cards on a panel, secondary buttons, fields, popups |
+| `gray-700`              | `#364153`                           | Rows in cards, hover on `gray-800`                  |
+| `accent`                | `#1FCEEC`                           | Primary buttons, focus, checked state, links        |
+| `gray-100` / `gray-400` | text                                | Body / secondary                                    |
+| status                  | `emerald-400` `amber-400` `red-400` | Success, warning, danger (fills at `/10`)           |
+| `dc-*`                  | Discord's dark theme                | Only inside things drawn to look like Discord       |
 
 ```mermaid
 flowchart LR
-    page[gray-950 page] --> s1[surface-1 panel]
-    s1 --> s2[surface-2 card / field / popup]
-    s2 --> s3[surface-3 row / hover]
+    page[gray-950 page] --> s1[gray-900 panel]
+    s1 --> s2[gray-800 card / field / popup]
+    s2 --> s3[gray-700 row / hover]
 ```
 
 Each layer sits a step lighter than the one under it, so a control is always lighter than what it sits on.
@@ -38,7 +38,7 @@ Each layer sits a step lighter than the one under it, so a control is always lig
 | Role                   | Font           | Class          |
 | ---------------------- | -------------- | -------------- |
 | Headings               | Saira          | `font-display` |
-| Body                   | Geist          | `font-sans`    |
+| Body                   | Noto Sans      | `font-sans`    |
 | Numbers, counts, times | JetBrains Mono | `font-mono`    |
 | Emoji                  | Twemoji first  | in every stack |
 
@@ -148,7 +148,7 @@ Springs are `--ease-spring` (small bounce) and `--ease-smooth` (none). Reduced m
 
 ## Bot image cards
 
-The bot draws the same cards as the website mockups (`discord/CardFrame`, `InviteCard`, `NowPlayingCard`). Both sides share surfaces, chip size (h-8, 16px icons), radii and the wave progress bar.
+The bot draws the same cards as the website mockups (`discord/CardFrame`, `InviteCard`, `NowPlayingCard`). A card is drawn like the page: `gray-950` fill with `gray-900` tiles on it. Both sides share surfaces, chip size (h-8, 16px icons), radii and the wave progress bar.
 
 ```mermaid
 flowchart LR

@@ -128,7 +128,7 @@
 
 <section
     aria-label="Now playing"
-    class="relative isolate flex min-h-0 flex-1 flex-col items-center overflow-clip rounded-3xl bg-surface-1 p-4 md:min-h-112 md:p-6 lg:min-h-0"
+    class="relative isolate flex min-h-0 flex-1 flex-col items-center overflow-clip rounded-3xl bg-gray-900 p-4 md:min-h-112 md:p-6 lg:min-h-0"
 >
     {#if track?.artworkUrl}
         <img

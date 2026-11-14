@@ -82,7 +82,7 @@
             {:else if block.type === "subtext"}
                 <p class="text-[13px] leading-4.5 text-dc-muted">{@render nodes(block.children)}</p>
             {:else if block.type === "quote"}
-                <blockquote class="rounded-sm border-l-4 border-[#4e4f58] pr-2 pl-3">{@render nodes(block.children)}</blockquote>
+                <blockquote class="rounded-sm border-l-4 border-dc-border-strong pr-2 pl-3">{@render nodes(block.children)}</blockquote>
             {:else if block.type === "item"}
                 <p class="relative pl-5 before:absolute before:left-1.5 before:content-['•']">{@render nodes(block.children)}</p>
             {:else if block.type === "codeblock"}

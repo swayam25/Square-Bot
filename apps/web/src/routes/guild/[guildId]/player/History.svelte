@@ -30,7 +30,7 @@
     {#if played?.length}
         <ol class="flex flex-col gap-1">
             {#each played as track, index (`${index}:${track.identifier}`)}
-                <li class="flex items-center gap-2 rounded-2xl p-2 transition-colors hover:bg-surface-2">
+                <li class="flex items-center gap-2 rounded-2xl p-2 transition-colors hover:bg-gray-800">
                     <TrackRow {track}>
                         {#snippet trailing()}
                             <span class="shrink-0 pr-1 font-mono text-xs text-gray-400">{track.isStream ? "Live" : time(track.lengthMs)}</span>
@@ -39,7 +39,7 @@
                                     type="button"
                                     aria-busy={busy.has(track.identifier)}
                                     disabled={!!lock || busy.has(track.identifier)}
-                                    class="flex size-8 shrink-0 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-surface-3 hover:text-gray-50 disabled:opacity-40"
+                                    class="flex size-8 shrink-0 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-gray-700 hover:text-gray-50 disabled:opacity-40"
                                     onclick={() => replay(index, track.identifier)}
                                 >
                                     {#if busy.has(track.identifier)}<SvgSpinners90RingWithBg class="size-4" />{:else}<MaterialSymbolsAddRounded

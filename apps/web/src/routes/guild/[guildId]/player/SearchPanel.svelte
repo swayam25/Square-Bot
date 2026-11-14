@@ -144,7 +144,7 @@
                 <EmptyState tone="danger" compact title="Couldn't search" text={problem} retry={search} />
             {:else if results}
                 {#if results.playlist}
-                    <div class="flex items-center gap-4 rounded-2xl bg-surface-2 p-4">
+                    <div class="flex items-center gap-4 rounded-2xl bg-gray-800 p-4">
                         <MaterialSymbolsPlaylistAddRounded class="size-6 shrink-0 text-accent" />
                         <div class="flex min-w-0 flex-1 flex-col">
                             <span class="truncate text-sm font-semibold">{results.playlist.name}</span>
@@ -177,7 +177,7 @@
                                     aria-label="Add {track.title} by {track.author} to the queue"
                                     aria-busy={busy}
                                     disabled={!!lock || !track.uri}
-                                    class="ripple flex w-full items-center gap-4 rounded-2xl p-2 text-left transition-colors hover:bg-surface-2 active:bg-surface-3 disabled:opacity-50"
+                                    class="ripple flex w-full items-center gap-4 rounded-2xl p-2 text-left transition-colors hover:bg-gray-800 active:bg-gray-700 disabled:opacity-50"
                                     {@attach ripple}
                                     onclick={() => add(track.identifier, track.uri!)}
                                 >

@@ -14,5 +14,5 @@
             {#if actions}<div class="flex shrink-0 gap-2">{@render actions()}</div>{/if}
         </div>
     {/if}
-    <div class="flex flex-col divide-y divide-white/5 rounded-3xl bg-surface-1">{@render children()}</div>
+    <div class="flex flex-col divide-y divide-white/5 rounded-3xl bg-gray-900">{@render children()}</div>
 </section>

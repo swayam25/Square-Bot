@@ -59,7 +59,7 @@
 </script>
 
 {#snippet spine()}
-    <span aria-hidden="true" class="absolute top-1.75 -left-9 h-3.5 w-8 rounded-tl-md border-t-2 border-l-2 border-[#4e4f58]"></span>
+    <span aria-hidden="true" class="absolute top-1.75 -left-9 h-3.5 w-8 rounded-tl-md border-t-2 border-l-2 border-dc-border-strong"></span>
 {/snippet}
 
 <div
@@ -79,7 +79,7 @@
         </Tooltip>
     {:else}
         {#if command}
-            <div class="relative mb-1 flex h-4.5 items-center gap-1 text-sm leading-4.5 whitespace-nowrap text-[#efeff1]">
+            <div class="relative mb-1 flex h-4.5 items-center gap-1 text-sm leading-4.5 whitespace-nowrap text-dc-command">
                 {@render spine()}
                 <Avatar src={commandUser.avatar} name={commandUser.name} class="size-4 text-2xs" animate={hovered} />
                 <span class="mr-1 font-medium text-[#ababaf]">{commandUser.name}</span>
@@ -104,7 +104,7 @@
                     >
                     <button
                         type="button"
-                        class="flex min-w-0 cursor-pointer items-center gap-1 text-[#b5b6bc] hover:text-dc-strong"
+                        class="flex min-w-0 cursor-pointer items-center gap-1 text-dc-reply hover:text-dc-strong"
                         onclick={reply.onclick}
                     >
                         {#if reply.text}

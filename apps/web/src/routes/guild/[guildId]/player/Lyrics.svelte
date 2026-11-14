@@ -293,7 +293,7 @@
                         <button
                             type="button"
                             disabled={offset <= -SYNC_LIMIT_MS}
-                            class="flex size-8 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-surface-2 hover:text-gray-50 disabled:opacity-40"
+                            class="flex size-8 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-50 disabled:opacity-40"
                             onclick={() => nudgeSync(-SYNC_STEP_MS)}
                         >
                             <MaterialSymbolsRemoveRounded class="size-4" />
@@ -305,7 +305,7 @@
                             aria-live="polite"
                             disabled={offset === 0}
                             class={[
-                                "h-8 min-w-14 rounded-full px-2 font-mono text-xs tabular-nums transition-colors enabled:hover:bg-surface-2",
+                                "h-8 min-w-14 rounded-full px-2 font-mono text-xs tabular-nums transition-colors enabled:hover:bg-gray-800",
                                 offset === 0 ? "text-gray-400" : "text-accent",
                             ]}
                             onclick={() => (lyricsSync.offset = 0)}>{syncLabel(offset)}</button
@@ -315,7 +315,7 @@
                         <button
                             type="button"
                             disabled={offset >= SYNC_LIMIT_MS}
-                            class="flex size-8 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-surface-2 hover:text-gray-50 disabled:opacity-40"
+                            class="flex size-8 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-50 disabled:opacity-40"
                             onclick={() => nudgeSync(SYNC_STEP_MS)}
                         >
                             <MaterialSymbolsAddRounded class="size-4" />
@@ -415,7 +415,7 @@
         filter: none;
     }
     .line:enabled:hover {
-        background-color: var(--color-surface-2);
+        background-color: var(--color-gray-800);
     }
     .zen .line:enabled:hover {
         background-color: color-mix(in srgb, var(--color-white) 8%, transparent);
