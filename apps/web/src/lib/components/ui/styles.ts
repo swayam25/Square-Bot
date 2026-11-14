@@ -1,8 +1,7 @@
 export const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 export const field = [
-    "flex h-12 w-full min-w-0 items-center gap-2 rounded-full bg-surface-2 px-4 text-sm md:h-10 [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-400",
-    // Drawn inside the field, so focus never makes it look bigger than the buttons beside it
+    "flex h-12 w-full min-w-0 items-center gap-2 rounded-full bg-gray-800 px-4 text-sm md:h-10 [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-gray-400",
     "ring-0 ring-accent/60 ring-inset transition-[background-color,box-shadow] duration-200 ease-out",
     "hover:bg-gray-700 focus-within:ring-2",
     "has-[[aria-invalid=true]]:bg-red-400/10 has-[[aria-invalid=true]]:ring-red-400/40",

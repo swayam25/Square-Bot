@@ -6,16 +6,17 @@
 
     let { style = "secondary", href, disabled = false, children }: { style?: Style; href?: string; disabled?: boolean; children: Snippet } = $props();
 
-    const styles: Record<Style, string> = {
-        primary: "bg-dc-blurple hover:bg-[#4752c4]",
-        secondary: "border border-[#97979f]/4 bg-[#97979f]/12 hover:bg-[#97979f]/20",
-        success: "bg-dc-green hover:bg-[#047e37]",
-        danger: "bg-dc-red hover:bg-[#b42831]",
+    const styles: Record<Style, [string, string]> = {
+        primary: ["bg-dc-blurple", "hover:bg-dc-blurple-hover"],
+        secondary: ["border border-dc-secondary/4 bg-dc-secondary/12", "hover:bg-dc-secondary/20"],
+        success: ["bg-dc-green", "hover:bg-dc-green-hover"],
+        danger: ["bg-dc-red", "hover:bg-dc-red-hover"],
     };
+    const [fill, hover] = $derived(styles[href ? "secondary" : style]);
     const classes = $derived([
         "inline-flex h-8 min-w-15 items-center justify-center gap-2 rounded-lg px-4 py-0.5 text-sm font-medium whitespace-nowrap text-white transition-colors select-none",
-        styles[href ? "secondary" : style],
-        disabled && "pointer-events-none opacity-50",
+        fill,
+        disabled ? "cursor-not-allowed opacity-50" : ["cursor-pointer", hover],
     ]);
 </script>
 

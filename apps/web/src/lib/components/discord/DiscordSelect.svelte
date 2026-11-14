@@ -8,7 +8,7 @@
     class={[
         "flex min-h-10 w-full max-w-100 items-center justify-between gap-2 rounded-lg border border-dc-border bg-dc-bg py-2 pr-2 pl-3 text-sm",
         placeholder && "text-dc-muted",
-        disabled && "opacity-50",
+        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
     ]}
 >
     <span class="truncate">{label}</span>

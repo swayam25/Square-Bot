@@ -15,6 +15,7 @@
     import { locked, type Access, type Tab } from "./player.ts";
     import Queue from "./Queue.svelte";
     import SearchPanel from "./SearchPanel.svelte";
+    import TrackSkeleton from "./TrackSkeleton.svelte";
 
     let {
         guild,
@@ -76,7 +77,9 @@
             {:else if tab === "queue"}
                 <div class="relative min-h-0 flex-1">
                     <div bind:this={queueList} class={["size-full overflow-y-auto px-2 pt-1 pb-6 md:px-4", contain]}>
-                        {#if queue}<Queue {guild} {queue} {access} autoplay={player.autoplay} />{/if}
+                        {#if queue}<Queue {guild} {queue} {access} autoplay={player.autoplay} />{:else}<TrackSkeleton
+                                label="Loading the queue"
+                            />{/if}
                     </div>
                     <OverlayScrollbar viewport={queueList} inset={16} />
                 </div>

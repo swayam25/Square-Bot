@@ -34,7 +34,6 @@
 
     // A docked island is a bulge of the content frame, so over a scrim it would show as a stray shape: it floats free instead
     const attached = $derived(docked && overlays.open === 0);
-    // An open drawer owns the bottom of a phone screen
     const top = $derived(!attached && mobile.current && overlays.open > 0);
     const shape = $derived(attached ? (mobile.current ? "rounded-t-3xl" : "rounded-tl-3xl") : "rounded-3xl");
 
@@ -76,7 +75,6 @@
         {/if}
 
         <div class={["absolute inset-0 overflow-hidden", shape]}>
-            <!-- Pinned to the island's edge, so the growing shape uncovers the toast instead of dragging it along -->
             <div
                 bind:clientWidth={width}
                 bind:clientHeight={height}

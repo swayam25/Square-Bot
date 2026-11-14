@@ -11,7 +11,7 @@
 <div
     role="img"
     aria-label={shown.map((part) => `${part.label} ${part.value}`).join(", ")}
-    class={["flex h-10 gap-1 rounded-full bg-surface-2 p-1", className]}
+    class={["flex h-10 gap-1 rounded-full bg-gray-900 p-1", className]}
 >
     {#each shown as part, index (part.label)}
         <div

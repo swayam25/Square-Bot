@@ -224,9 +224,38 @@
             retry={() => detailQuery.refresh()}
         />
     {:else if !detail}
-        <div class="flex flex-col gap-4">
-            <div class="h-10 skeleton rounded-2xl"></div>
-            <div class="h-48 skeleton rounded-2xl"></div>
+        <div aria-label="Loading the ticket" aria-busy="true" class="flex flex-col gap-6">
+            <div class="flex items-center gap-2">
+                <span class="h-6 w-16 skeleton rounded-full"></span>
+                <span class="h-3 w-24 skeleton rounded-full"></span>
+            </div>
+            <div class="flex flex-col gap-2">
+                {#each [0, 1] as i (i)}
+                    <div class="flex min-h-12 items-center gap-4 rounded-2xl bg-gray-800 p-2">
+                        <span class="size-8 shrink-0 skeleton rounded-full"></span>
+                        <span class="flex flex-1 flex-col gap-1.5">
+                            <span class="h-3 w-16 skeleton rounded-full"></span>
+                            <span class="h-3.5 w-28 skeleton rounded-full"></span>
+                        </span>
+                    </div>
+                {/each}
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                {#each [0, 1] as i (i)}
+                    <div class="flex min-h-12 flex-col justify-center gap-1.5 rounded-2xl bg-gray-800 px-4 py-2">
+                        <span class="h-3 w-12 skeleton rounded-full"></span>
+                        <span class="h-3.5 w-24 skeleton rounded-full"></span>
+                    </div>
+                {/each}
+            </div>
+            <div class="flex flex-col gap-2">
+                <span class="h-4 w-16 skeleton rounded-full"></span>
+                <div class="flex flex-col gap-2 rounded-2xl bg-gray-800 p-4">
+                    <span class="h-3.5 w-4/5 skeleton rounded-full"></span>
+                    <span class="h-3.5 w-1/2 skeleton rounded-full"></span>
+                </div>
+            </div>
+            <span class="h-12 skeleton rounded-full md:h-10"></span>
         </div>
     {:else}
         <div class="flex flex-col gap-6">

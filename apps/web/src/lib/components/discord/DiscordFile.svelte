@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import DiscordTooltip from "#lib/components/discord/DiscordTooltip.svelte";
     import { getDiscord } from "#lib/discord/context.ts";
     import { fileSize } from "#lib/discord/markdown.ts";
     import type { TranscriptFile } from "@square/api-client";
@@ -29,11 +29,11 @@
             </span>
         </div>
         {#if href}
-            <Tooltip content="Download"
+            <DiscordTooltip content="Download"
                 ><a {href} target="_blank" rel="noopener noreferrer" class="text-dc-icon hover:text-dc-strong">
                     <MaterialSymbolsDownloadRounded aria-hidden="true" class="size-6" />
                     <span class="sr-only">Download {file.name}</span>
-                </a></Tooltip
+                </a></DiscordTooltip
             >
         {/if}
     </div>

@@ -204,7 +204,6 @@
             {/if}
         </main>
         <OverlayScrollbar viewport={scroller} inset={24} />
-        <!-- Full-bleed on phones, so there is no frame edge for the island to bulge out of -->
         <Island docked={!mobile.current} />
     </div>
 </div>

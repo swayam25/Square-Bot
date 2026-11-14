@@ -5,14 +5,14 @@
     import DiscordEmbed from "#lib/components/discord/DiscordEmbed.svelte";
     import DiscordFile from "#lib/components/discord/DiscordFile.svelte";
     import DiscordGallery from "#lib/components/discord/DiscordGallery.svelte";
-    import DiscordImageViewer from "#lib/components/discord/DiscordImageViewer.svelte";
     import DiscordMarkdown from "#lib/components/discord/DiscordMarkdown.svelte";
+    import DiscordMediaViewer from "#lib/components/discord/DiscordMediaViewer.svelte";
     import DiscordMessage from "#lib/components/discord/DiscordMessage.svelte";
     import DiscordReactions from "#lib/components/discord/DiscordReactions.svelte";
     import DiscordSystemMessage from "#lib/components/discord/DiscordSystemMessage.svelte";
+    import DiscordTooltip from "#lib/components/discord/DiscordTooltip.svelte";
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
-    import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { setDiscord } from "#lib/discord/context.ts";
+    import { setDiscord, type Viewing } from "#lib/discord/context.ts";
     import { calendar, clock, fullTime, longDate, sameDay } from "#lib/discord/markdown.ts";
     import type { Transcript, TranscriptFile, TranscriptMessage } from "@square/api-client";
     import type { Snippet } from "svelte";
@@ -36,7 +36,7 @@
     // Long channels skip drawing what's off screen. Short ones don't need it, and jumps land more exactly without it
     const LAZY_FROM = 300;
 
-    let viewing = $state<string | null>(null);
+    let viewing = $state<Viewing | null>(null);
     setDiscord({
         get users() {
             return transcript.users ?? {};
@@ -48,7 +48,7 @@
             return transcript.channels ?? {};
         },
         fileUrl: (file) => fileUrl(file),
-        view: (src) => (viewing = new URL(src, location.href).href),
+        view: (next) => (viewing = next),
     });
 
     const rows = $derived.by(() => {
@@ -147,8 +147,8 @@
                         {#each message.embeds ?? [] as embed, index (index)}<DiscordEmbed {embed} />{/each}
                         {#if message.components?.length}<DiscordComponents components={message.components} />{/if}
                         {#each message.stickers ?? [] as sticker, index (index)}
-                            <Tooltip lazy content={sticker.name}
-                                ><img src={sticker.url} alt={sticker.name} loading="lazy" class="size-40 object-contain" /></Tooltip
+                            <DiscordTooltip lazy content={sticker.name}
+                                ><img src={sticker.url} alt={sticker.name} loading="lazy" class="size-40 object-contain" /></DiscordTooltip
                             >
                         {/each}
                         {#if message.reactions?.length}<DiscordReactions reactions={message.reactions} />{/if}
@@ -159,4 +159,4 @@
     {/each}
 </DiscordWindow>
 
-<DiscordImageViewer bind:src={viewing} />
+<DiscordMediaViewer bind:viewing />

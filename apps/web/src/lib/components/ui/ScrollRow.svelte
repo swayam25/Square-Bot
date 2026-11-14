@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { edgeFade } from "#lib/edge-fade.ts";
     import type { Snippet } from "svelte";
     import type { ClassValue, HTMLAttributes } from "svelte/elements";
 
@@ -64,6 +65,7 @@
         className,
     ]}
     {@attach drag}
+    {@attach edgeFade("x")}
 >
     {@render children()}
 </svelte:element>

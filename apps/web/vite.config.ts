@@ -23,7 +23,8 @@ export default defineConfig({
                     "style-src": ["self", "unsafe-inline"],
                     // Covers and avatars come from Discord and every music service's CDN
                     "img-src": ["self", "data:", "blob:", "https:"],
-                    "media-src": ["self"],
+                    // Transcript videos come from Discord's CDN, and GIF embeds from hosts like Tenor
+                    "media-src": ["self", "https:"],
                     "font-src": ["self", "data:"],
                     "connect-src": ["self"],
                     "frame-src": ["https://www.youtube-nocookie.com"],

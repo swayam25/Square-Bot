@@ -64,7 +64,7 @@
     {#if src}
         <img {src} alt="" class={["shrink-0 object-cover", className]} />
     {:else}
-        <span class={["flex shrink-0 items-center justify-center bg-surface-2 text-accent", className]}
+        <span class={["flex shrink-0 items-center justify-center bg-gray-900 text-accent", className]}
             ><MaterialSymbolsMusicNoteRounded class="size-2/5" /></span
         >
     {/if}
@@ -118,7 +118,7 @@
             <Chip tone={data.autoplay ? "on" : "muted"}><MaterialSymbolsAutoplayRounded />Autoplay</Chip>
             {#if filters}<Chip tone="violet"><MaterialSymbolsEqualizerRounded />{filters}</Chip>{/if}
         </div>
-        <div class={["flex h-12 items-center gap-2 rounded-2xl bg-surface-2 pr-4", data.upNext ? "pl-2" : "pl-4"]}>
+        <div class={["flex h-12 items-center gap-2 rounded-2xl bg-gray-900 pr-4", data.upNext ? "pl-2" : "pl-4"]}>
             {#if data.upNext}{@render artwork(data.upNextArtwork, "size-8 rounded-lg")}{/if}
             <div class="flex min-w-0 flex-col">
                 <span class="font-mono text-[10px] leading-3 font-semibold tracking-wider text-gray-400 uppercase">

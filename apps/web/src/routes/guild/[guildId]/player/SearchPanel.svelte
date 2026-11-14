@@ -29,6 +29,7 @@
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
     import { control } from "./player.ts";
     import TrackRow from "./TrackRow.svelte";
+    import TrackSkeleton from "./TrackSkeleton.svelte";
 
     let { guild, lock = null, contain }: { guild: string; lock?: string | null; contain?: string } = $props();
 
@@ -128,18 +129,7 @@
     <div class="relative min-h-0 flex-1">
         <div bind:this={list} aria-live="polite" class={["flex size-full flex-col gap-2 overflow-y-auto px-2 pt-1 pb-6 md:px-4", contain]}>
             {#if searching && !results}
-                <ul aria-label="Searching" aria-busy="true" class="flex flex-col gap-1">
-                    {#each [64, 48, 72, 56, 40, 68, 52, 60] as width, i (i)}
-                        <li class="flex items-center gap-4 p-2">
-                            <span class="size-12 shrink-0 skeleton rounded-xl" style:animation-delay="{i * 80}ms"></span>
-                            <span class="flex flex-1 flex-col gap-2">
-                                <span class="h-4 skeleton rounded-full" style:width="{width}%" style:animation-delay="{i * 80}ms"></span>
-                                <span class="h-3 w-1/4 skeleton rounded-full" style:animation-delay="{i * 80}ms"></span>
-                            </span>
-                            <span class="h-3 w-8 skeleton rounded-full" style:animation-delay="{i * 80}ms"></span>
-                        </li>
-                    {/each}
-                </ul>
+                <TrackSkeleton label="Searching" />
             {:else if problem}
                 <EmptyState tone="danger" compact title="Couldn't search" text={problem} retry={search} />
             {:else if results}

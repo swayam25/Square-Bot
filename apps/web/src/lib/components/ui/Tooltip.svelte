@@ -9,7 +9,9 @@
         content,
         placement = "top",
         lazy = false,
+        arrow = false,
         class: className,
+        contentClass = "max-w-64 rounded-xl bg-gray-700 px-4 py-2 text-xs font-medium text-gray-100 shadow-xl shadow-black/50",
         children,
     }: {
         content: string | null | undefined;
@@ -17,7 +19,9 @@
         // For plain text in long lists, like a transcript's timestamps: the tooltip is built on first hover, since
         // thousands of them cost seconds to mount. That redraws the content, so never use it around a control
         lazy?: boolean;
+        arrow?: boolean;
         class?: ClassValue;
+        contentClass?: ClassValue;
         children: Snippet;
     } = $props();
 
@@ -66,8 +70,16 @@
         <Portal>
             <Tooltip.Positioner class="z-200">
                 <Tooltip.Content
-                    class="max-w-64 origin-(--transform-origin) rounded-xl bg-surface-3 px-4 py-2 text-xs font-medium wrap-anywhere text-gray-100 shadow-xl shadow-black/50 data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
+                    class={[
+                        "origin-(--transform-origin) wrap-anywhere data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
+                        contentClass,
+                    ]}
                 >
+                    {#if arrow}
+                        <Tooltip.Arrow class="[--arrow-background:var(--tooltip-bg)] [--arrow-size:10px]">
+                            <Tooltip.ArrowTip class="border-t border-l border-(--tooltip-border)" />
+                        </Tooltip.Arrow>
+                    {/if}
                     {label}
                 </Tooltip.Content>
             </Tooltip.Positioner>

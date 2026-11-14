@@ -34,7 +34,6 @@
     let content = $state<HTMLElement | null>(null);
     let layer = $state(50);
 
-    // Drawers can open from inside other drawers (a picker in the side panel), so the newest one always stacks on top
     $effect.pre(() => {
         if (!open) return;
         const release = overlays.hold();
@@ -51,7 +50,7 @@
     <Portal>
         <Drawer.Backdrop
             style="z-index: {layer}"
-            class="fixed inset-0 bg-gray-950/60 data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in"
+            class="fixed inset-0 bg-gray-950/60 backdrop-blur-sm data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in"
         />
         <Drawer.Positioner style="z-index: {layer}" class="fixed inset-x-0 bottom-0">
             <Drawer.Content

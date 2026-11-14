@@ -17,7 +17,6 @@
         fallback: Snippet<[{ loading: boolean }]>;
     } = $props();
 
-    // Like Discord, an animated picture holds still until it's hovered. `animate` lets a parent row decide instead
     const parts = $derived(frames(src));
     const still = $derived(parts?.still ?? src);
     let hovered = $state(false);

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import DiscordTooltip from "#lib/components/discord/DiscordTooltip.svelte";
     import DiscordTranscript from "#lib/components/discord/DiscordTranscript.svelte";
     import PageHeading from "#lib/components/PageHeading.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
@@ -7,7 +8,6 @@
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import Fact from "#lib/components/ui/Fact.svelte";
     import PersonRow from "#lib/components/ui/PersonRow.svelte";
-    import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { fullTime } from "#lib/discord/markdown.ts";
     import { dateTime, plural } from "#lib/format.ts";
     import * as tickets from "#lib/tickets.remote.ts";
@@ -20,6 +20,7 @@
     import MaterialSymbolsOpenInNewRounded from "~icons/material-symbols/open-in-new-rounded";
     import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
     import type { PageProps } from "./$types";
+    import TranscriptSkeleton from "./TranscriptSkeleton.svelte";
 
     let { data }: PageProps = $props();
 
@@ -73,7 +74,7 @@
             </div>
             <p class="text-xs font-medium text-dc-muted">
                 {plural(transcript.messages.length, "message")} • Saved
-                <Tooltip content={fullTime(transcript.savedAt)}><time>{dateTime.format(transcript.savedAt)}</time></Tooltip>
+                <DiscordTooltip content={fullTime(transcript.savedAt)}><time>{dateTime.format(transcript.savedAt)}</time></DiscordTooltip>
             </p>
         </div>
     {/if}
@@ -104,10 +105,7 @@
             retry={() => query.refresh()}
         />
     {:else if !ticket}
-        <div aria-hidden="true" class="flex flex-col gap-4">
-            <div class="h-16 skeleton rounded-3xl"></div>
-            <div class="h-96 skeleton rounded-3xl"></div>
-        </div>
+        <TranscriptSkeleton />
     {:else}
         <div class="grid grid-cols-2 gap-2 rounded-3xl bg-gray-900 p-2 md:grid-cols-3">
             <PersonRow label="Opened by" person={ticket.opener} />
@@ -125,7 +123,7 @@
                 {#snippet aside()}
                     <Chip tone={statusTone[ticket.status]} size="sm">{statusName[ticket.status]}</Chip>
                     {#if loaded?.live}
-                        <Tooltip content="Load new messages">
+                        <DiscordTooltip content="Load new messages">
                             <button
                                 type="button"
                                 disabled={refreshing}
@@ -134,7 +132,7 @@
                             >
                                 <MaterialSymbolsRefreshRounded class={["size-5", refreshing && "animate-spin"]} />
                             </button>
-                        </Tooltip>
+                        </DiscordTooltip>
                     {/if}
                 {/snippet}
             </DiscordTranscript>

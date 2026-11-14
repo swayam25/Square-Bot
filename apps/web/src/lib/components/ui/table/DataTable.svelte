@@ -62,8 +62,7 @@
     const aligned = (align: "start" | "end" | undefined) => (align === "end" ? "text-right" : "text-left");
 </script>
 
-<!-- A container, so columns hide by the table's own width: a side panel can squeeze it at any window size -->
-<div class="@container overflow-x-auto rounded-3xl bg-surface-1">
+<div class="@container overflow-x-auto rounded-3xl bg-gray-900">
     <table aria-label={label} class="w-full table-fixed border-collapse text-sm">
         <thead>
             {#each table.getHeaderGroups() as group (group.id)}

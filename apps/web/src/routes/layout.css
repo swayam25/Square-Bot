@@ -167,6 +167,7 @@
 
     --animate-fade-in: fade-in 200ms ease-out;
     --animate-dc-flash: dc-flash 2s ease-out;
+    --animate-dc-video-flash: dc-video-flash 350ms ease-out both;
     --animate-fade-out: fade-out 150ms ease-in;
     --animate-pop-in: pop-in 400ms var(--ease-spring);
     --animate-pop-out: pop-out 150ms ease-in;
@@ -187,6 +188,20 @@
     @keyframes fade-in {
         from {
             opacity: 0;
+        }
+    }
+    @keyframes dc-video-flash {
+        from {
+            opacity: 0;
+            scale: 0.5;
+        }
+        45% {
+            opacity: 1;
+            scale: 1;
+        }
+        to {
+            opacity: 0;
+            scale: 1.15;
         }
     }
     @keyframes dc-flash {
@@ -330,6 +345,16 @@
     inherits: false;
     initial-value: 0;
 }
+@property --fade-t {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+}
+@property --fade-b {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 0;
+}
 @keyframes edge-fade-l {
     from {
         --fade-l: 0;
@@ -344,6 +369,22 @@
     }
     to {
         --fade-r: 0;
+    }
+}
+@keyframes edge-fade-t {
+    from {
+        --fade-t: 0;
+    }
+    to {
+        --fade-t: 1;
+    }
+}
+@keyframes edge-fade-b {
+    from {
+        --fade-b: 1;
+    }
+    to {
+        --fade-b: 0;
     }
 }
 @supports (animation-timeline: scroll()) {
@@ -363,6 +404,26 @@
         animation-range:
             0 var(--fade-size),
             calc(100% - var(--fade-size)) 100%;
+    }
+    .edge-fade-y {
+        --fade-size: 2rem;
+        mask-image: linear-gradient(
+            to bottom,
+            transparent,
+            #000 calc(var(--fade-size) * var(--fade-t)),
+            #000 calc(100% - var(--fade-size) * var(--fade-b)),
+            transparent
+        );
+        animation:
+            edge-fade-t linear both,
+            edge-fade-b linear both;
+        animation-timeline: scroll(self block), scroll(self block);
+        animation-range:
+            0 var(--fade-size),
+            calc(100% - var(--fade-size)) 100%;
+    }
+    :is(.edge-fade-x, .edge-fade-y)[data-fade-off] {
+        animation: none;
     }
 }
 

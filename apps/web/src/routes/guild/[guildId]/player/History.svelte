@@ -8,6 +8,7 @@
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
     import { control, locked, type Access } from "./player.ts";
     import TrackRow from "./TrackRow.svelte";
+    import TrackSkeleton from "./TrackSkeleton.svelte";
 
     let { guild, access }: { guild: string; access: Access } = $props();
 
@@ -25,7 +26,7 @@
 
 <section aria-labelledby="played" class="flex flex-col gap-2">
     <h2 id="played" class="px-2 font-display text-lg font-semibold">
-        Played <span class="font-mono text-sm font-normal text-gray-400">{played?.length ?? 0}</span>
+        Played {#if played}<span class="font-mono text-sm font-normal text-gray-400">{played.length}</span>{/if}
     </h2>
     {#if played?.length}
         <ol class="flex flex-col gap-1">
@@ -62,5 +63,7 @@
         />
     {:else if played}
         <p class="px-2 text-sm text-gray-400">Songs played in this session show up here.</p>
+    {:else}
+        <TrackSkeleton label="Loading the history" />
     {/if}
 </section>

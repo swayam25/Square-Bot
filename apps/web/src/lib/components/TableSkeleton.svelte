@@ -1,5 +1,4 @@
 <script lang="ts">
-    // `search` is a person search and an action on the right, `filter` a status switch, a wide search and a refresh
     let { rows = 6, toolbar }: { rows?: number; toolbar?: "search" | "filter" } = $props();
 
     const widths = [44, 32, 52, 38, 48, 28];

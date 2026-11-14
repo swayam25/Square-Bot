@@ -19,8 +19,10 @@
 <span
     style:--role={role ? color : undefined}
     class={[
-        "rounded-[3px] px-0.5 font-medium whitespace-nowrap",
-        role ? "bg-[color-mix(in_srgb,var(--role)_10%,transparent)] text-(--role)" : "bg-[#5865f2]/30 text-[#c9cdfb]",
+        "cursor-pointer rounded-[3px] px-0.5 font-medium whitespace-nowrap transition-colors",
+        role
+            ? "bg-[color-mix(in_srgb,var(--role)_10%,transparent)] text-(--role) hover:bg-[color-mix(in_srgb,var(--role)_30%,transparent)]"
+            : "bg-dc-blurple/30 text-dc-mention hover:bg-dc-blurple hover:text-white",
     ]}
 >
     {#if kind === "channel"}
@@ -29,5 +31,5 @@
         <MaterialSymbolsVolumeUpRounded aria-hidden="true" class="mr-0.5 inline size-[1em] align-[-0.125em]" />
     {:else if kind === "command"}
         <MaterialSymbolsPlayShapesRounded aria-hidden="true" class="mr-0.5 inline size-[1em] align-[-0.125em]" />
-    {/if}{kind === "user" || kind === "role" ? "@" : kind === "command" ? "/" : ""}{name}
+    {/if}{kind === "user" || kind === "role" ? "@" : ""}{name}
 </span>

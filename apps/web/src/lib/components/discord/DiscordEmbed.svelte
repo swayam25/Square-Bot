@@ -1,30 +1,60 @@
 <script lang="ts">
+    import DiscordComponents from "#lib/components/discord/DiscordComponents.svelte";
+    import DiscordDownload from "#lib/components/discord/DiscordDownload.svelte";
     import DiscordMarkdown from "#lib/components/discord/DiscordMarkdown.svelte";
-    import { getDiscord } from "#lib/discord/context.ts";
+    import { getDiscord, getMessageAuthor } from "#lib/discord/context.ts";
     import { calendar } from "#lib/discord/markdown.ts";
     import type { TranscriptEmbed } from "@square/api-client";
 
     let { embed }: { embed: TranscriptEmbed } = $props();
 
     const discord = getDiscord();
+    const author = getMessageAuthor();
+    const drawable = $derived(
+        !!(embed.author || embed.title || embed.description || embed.fields?.length || embed.image || embed.thumbnail || embed.footer),
+    );
     const safe = (url: string | undefined) => (url && URL.canParse(url) && /^https?:$/.test(new URL(url).protocol) ? url : undefined);
 </script>
 
 {#snippet picture(src: string, className: string)}
-    {#if discord.view}
-        <button type="button" class={["cursor-pointer", className]} onclick={() => discord.view?.(src)}>
-            <img {src} alt="View full size" loading="lazy" data-discord-image class="size-full rounded-sm object-cover" />
-        </button>
-    {:else}
-        <img {src} alt="" loading="lazy" class={["rounded-sm object-cover", className]} />
-    {/if}
+    <div class={["group/media relative", className]}>
+        {#if discord.view}
+            <button
+                type="button"
+                class="block size-full cursor-pointer"
+                onclick={() => discord.view?.({ media: [{ src, kind: "image" }], index: 0, author })}
+            >
+                <img {src} alt="View full size" loading="lazy" class="size-full rounded-sm object-cover" />
+            </button>
+        {:else}
+            <img {src} alt="" loading="lazy" class="size-full rounded-sm object-cover" />
+        {/if}
+        <DiscordDownload {src} />
+    </div>
 {/snippet}
 
-{#if embed.media === "video" && embed.mediaUrl}
-    <video src={embed.mediaUrl} autoplay loop muted playsinline class="max-h-87.5 max-w-[min(550px,100%)] rounded-lg bg-black"></video>
+{#if embed.components?.length}
+    <DiscordComponents components={embed.components} />
+{:else if embed.media === "video" && embed.mediaUrl}
+    {@const src = embed.mediaUrl}
+    <div class="group/media relative w-fit max-w-full">
+        {#if discord.view}
+            <button
+                type="button"
+                class="block cursor-pointer"
+                onclick={() => discord.view?.({ media: [{ src, kind: "gif", name: "GIF" }], index: 0, author })}
+            >
+                <video {src} autoplay loop muted playsinline class="max-h-87.5 max-w-[min(550px,100%)] rounded-lg bg-black"></video>
+                <span class="sr-only">GIF</span>
+            </button>
+        {:else}
+            <video {src} autoplay loop muted playsinline class="max-h-87.5 max-w-[min(550px,100%)] rounded-lg bg-black"></video>
+        {/if}
+        <DiscordDownload {src} />
+    </div>
 {:else if embed.media === "image" && embed.mediaUrl}
     {@render picture(embed.mediaUrl, "max-h-87.5 max-w-[min(550px,100%)]")}
-{:else}
+{:else if drawable}
     <div
         style:border-left-color={embed.color || "var(--color-dc-embed)"}
         class="grid max-w-129 grid-cols-[minmax(0,1fr)_auto] rounded-sm border border-l-4 border-dc-border bg-dc-surface pt-2 pr-4 pb-4 pl-3 text-sm leading-4.5"

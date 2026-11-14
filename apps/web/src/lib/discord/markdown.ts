@@ -8,6 +8,7 @@ export type Inline =
     | { type: "link"; href: string; children: Inline[] }
     | { type: "emoji"; name: string; id: string; animated: boolean }
     | { type: "user" | "role" | "channel"; id: string }
+    | { type: "command"; name: string }
     | { type: "time"; at: number; style: string };
 
 export type Block =
@@ -31,7 +32,8 @@ const RULES: Rule[] = [
     { pattern: /<@&(\d+)>/g, node: (found) => ({ type: "role", id: found[1] }) },
     { pattern: /<@!?(\d+)>/g, node: (found) => ({ type: "user", id: found[1] }) },
     { pattern: /<#(\d+)>/g, node: (found) => ({ type: "channel", id: found[1] }) },
-    { pattern: /<t:(-?\d+)(?::([tTdDfFR]))?>/g, node: (found) => ({ type: "time", at: Number(found[1]) * 1000, style: found[2] ?? "f" }) },
+    { pattern: /<\/([\w-]+(?: [\w-]+){0,2}):\d+>/g, node: (found) => ({ type: "command", name: found[1] }) },
+    { pattern: /<t:(-?\d+)(?::([tTdDfFsSR]))?>/g, node: (found) => ({ type: "time", at: Number(found[1]) * 1000, style: found[2] ?? "f" }) },
     { pattern: /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, node: (found) => link(found[2], found[1]) },
     { pattern: /<(https?:\/\/[^\s>]+)>/g, node: (found) => link(found[1], null) },
     { pattern: /https?:\/\/[^\s<]+[^\s<.,:;"')\]]/g, node: (found) => link(found[0], null) },
@@ -134,7 +136,8 @@ export function jumbo(blocks: Block[]) {
 
 const format = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(undefined, options);
 const CLOCK = format({ hour: "numeric", minute: "2-digit" });
-const SHORT_DATE = format({ dateStyle: "short" });
+const NUMERIC_DATE: Intl.DateTimeFormatOptions = { year: "numeric", month: "2-digit", day: "2-digit" };
+const SHORT_DATE = format(NUMERIC_DATE);
 const LONG_DATE = format({ dateStyle: "long" });
 const FULL = format({ dateStyle: "full", timeStyle: "short" });
 const STYLES: Record<string, Intl.DateTimeFormat> = {
@@ -144,6 +147,8 @@ const STYLES: Record<string, Intl.DateTimeFormat> = {
     D: LONG_DATE,
     f: format({ dateStyle: "long", timeStyle: "short" }),
     F: FULL,
+    s: format({ ...NUMERIC_DATE, hour: "numeric", minute: "2-digit" }),
+    S: format({ ...NUMERIC_DATE, hour: "numeric", minute: "2-digit", second: "2-digit" }),
 };
 const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
     ["year", 31_536_000],

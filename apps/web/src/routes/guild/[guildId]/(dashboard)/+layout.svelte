@@ -10,6 +10,7 @@
     import { focusRing, menuRow } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { Details, setDetails } from "#lib/details.svelte.ts";
+    import { edgeFade } from "#lib/edge-fade.ts";
     import { plural } from "#lib/format.ts";
     import { mobile } from "#lib/media.ts";
     import { MODULES, type ModuleKey } from "#lib/modules.ts";
@@ -264,7 +265,11 @@
             </Popup>
         </div>
 
-        <nav aria-label="Dashboard" class={["flex min-h-0 flex-1 scrollbar-none flex-col gap-6 overflow-y-auto py-2", expanded ? "px-4" : "px-2"]}>
+        <nav
+            aria-label="Dashboard"
+            class={["edge-fade-y flex min-h-0 flex-1 scrollbar-none flex-col gap-6 overflow-y-auto py-2", expanded ? "px-4" : "px-2"]}
+            {@attach edgeFade("y")}
+        >
             {#each groups as group, index (index)}
                 <div class="flex flex-col gap-1">
                     {#if expanded && group.label}
@@ -396,7 +401,7 @@
     {/if}
 
     <nav aria-label="Dashboard" class="shrink-0 pt-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))] md:hidden">
-        <div class="flex scrollbar-none overflow-x-auto">
+        <div class="edge-fade-x flex scrollbar-none overflow-x-auto" {@attach edgeFade("x")}>
             <div class="flex w-max min-w-full items-center justify-evenly gap-2 px-4 py-1">
                 <Popup
                     bind:open={mobileSwitcherOpen}

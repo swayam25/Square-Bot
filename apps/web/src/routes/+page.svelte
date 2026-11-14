@@ -3,6 +3,7 @@
     import square from "#lib/assets/square.svg";
     import { openLoginPopup } from "#lib/auth.ts";
     import BrandIcon from "#lib/components/BrandIcon.svelte";
+    import DiscordAccessories from "#lib/components/discord/DiscordAccessories.svelte";
     import DiscordActionRow from "#lib/components/discord/DiscordActionRow.svelte";
     import DiscordButton from "#lib/components/discord/DiscordButton.svelte";
     import DiscordContainer from "#lib/components/discord/DiscordContainer.svelte";
@@ -119,7 +120,9 @@
                 {/if}
             </div>
             <p class="h-5 text-sm text-gray-400">
-                {#await data.servers then servers}
+                {#await data.servers}
+                    <span aria-hidden="true" class="inline-block h-4 w-28 skeleton rounded-full align-middle"></span>
+                {:then servers}
                     {#if servers}
                         <span class="animate-fade-in">
                             In <span class="font-mono font-medium text-gray-100">{formatCount(servers)}</span>
@@ -222,45 +225,49 @@
                 <span aria-hidden="true" class="absolute -bottom-4 -left-6 -z-10 h-8 w-20 -rotate-24 rounded-full bg-violet-500/30"></span>
                 <DiscordWindow channel="music">
                     <DiscordMessage command="play">
-                        <DiscordContainer color="#e74c3c">
-                            <p>
-                                <BrandIcon brand="youtube" class={discordEmoji} /> Added
-                                <span class="text-dc-link"><strong>{demo.track.title}</strong> by <strong>{demo.track.author}</strong></span>
-                                [{time(demo.track.duration)}].
-                            </p>
-                        </DiscordContainer>
+                        <DiscordAccessories>
+                            <DiscordContainer color="var(--color-embed-red)">
+                                <p>
+                                    <BrandIcon brand="youtube" class={discordEmoji} /> Added
+                                    <span class="text-dc-link"><strong>{demo.track.title}</strong> by <strong>{demo.track.author}</strong></span>
+                                    [{time(demo.track.duration)}].
+                                </p>
+                            </DiscordContainer>
+                        </DiscordAccessories>
                     </DiscordMessage>
                     <DiscordMessage command="now-playing" ephemeral>
-                        <DiscordContainer>
-                            <DiscordMedia>
-                                <NowPlayingCard
-                                    data={{
-                                        title: demo.track.title,
-                                        author: demo.track.author,
-                                        source: "youtube",
-                                        artwork: demo.track.artwork,
-                                        requester: "Swayam",
-                                        requesterAvatar: swayamAvatar,
-                                        progress: demo.elapsed / demo.track.duration,
-                                        elapsed: time(demo.elapsed),
-                                        duration: time(demo.track.duration),
-                                        stream: false,
-                                        paused: !demo.playing,
-                                        volume: 80,
-                                        loop: "Disabled",
-                                        shuffle: false,
-                                        autoplay: true,
-                                        filters: demo.filters,
-                                        upNext: `${demo.next.title} by ${demo.next.author}`,
-                                        upNextArtwork: demo.next.artwork,
-                                        queued: TRACKS.length - 1,
-                                    }}
-                                />
-                            </DiscordMedia>
-                        </DiscordContainer>
-                        <DiscordActionRow>
-                            <DiscordButton href=""><BrandIcon brand="youtube" class="size-4.5" />Open on YouTube</DiscordButton>
-                        </DiscordActionRow>
+                        <DiscordAccessories>
+                            <DiscordContainer>
+                                <DiscordMedia>
+                                    <NowPlayingCard
+                                        data={{
+                                            title: demo.track.title,
+                                            author: demo.track.author,
+                                            source: "youtube",
+                                            artwork: demo.track.artwork,
+                                            requester: "Swayam",
+                                            requesterAvatar: swayamAvatar,
+                                            progress: demo.elapsed / demo.track.duration,
+                                            elapsed: time(demo.elapsed),
+                                            duration: time(demo.track.duration),
+                                            stream: false,
+                                            paused: !demo.playing,
+                                            volume: 80,
+                                            loop: "Disabled",
+                                            shuffle: false,
+                                            autoplay: true,
+                                            filters: demo.filters,
+                                            upNext: `${demo.next.title} by ${demo.next.author}`,
+                                            upNextArtwork: demo.next.artwork,
+                                            queued: TRACKS.length - 1,
+                                        }}
+                                    />
+                                </DiscordMedia>
+                            </DiscordContainer>
+                            <DiscordActionRow>
+                                <DiscordButton href=""><BrandIcon brand="youtube" class="size-4.5" />Open on YouTube</DiscordButton>
+                            </DiscordActionRow>
+                        </DiscordAccessories>
                     </DiscordMessage>
                 </DiscordWindow>
             </div>
@@ -281,25 +288,27 @@
                 <Shape lobes={4} depth={0.2} class="absolute -right-6 -bottom-8 -z-10 size-20 rotate-12 text-amber-400/30" />
                 <DiscordWindow channel="general">
                     <DiscordMessage command="invites">
-                        <DiscordContainer>
-                            <DiscordMedia>
-                                <InviteCard
-                                    data={{
-                                        name: "Swayam",
-                                        username: "_swayam25",
-                                        avatar: swayamAvatar,
-                                        guildName: "Square HQ",
-                                        guildIcon: square,
-                                        rank: 2,
-                                        regular: 142,
-                                        left: 9,
-                                        fake: 5,
-                                        bonus: 14,
-                                        fakeDays: 7,
-                                    }}
-                                />
-                            </DiscordMedia>
-                        </DiscordContainer>
+                        <DiscordAccessories>
+                            <DiscordContainer>
+                                <DiscordMedia>
+                                    <InviteCard
+                                        data={{
+                                            name: "Swayam",
+                                            username: "_swayam25",
+                                            avatar: swayamAvatar,
+                                            guildName: "Square HQ",
+                                            guildIcon: square,
+                                            rank: 2,
+                                            regular: 142,
+                                            left: 9,
+                                            fake: 5,
+                                            bonus: 14,
+                                            fakeDays: 7,
+                                        }}
+                                    />
+                                </DiscordMedia>
+                            </DiscordContainer>
+                        </DiscordAccessories>
                     </DiscordMessage>
                 </DiscordWindow>
             </div>
@@ -320,13 +329,17 @@
                 <span aria-hidden="true" class="absolute -bottom-4 -left-8 -z-10 h-8 w-20 rotate-12 rounded-full bg-accent/20"></span>
                 <DiscordWindow channel="support">
                     <DiscordMessage>
-                        <DiscordContainer>
-                            <h2 class="mb-2 text-xl leading-snug font-bold text-dc-strong">Need Help?</h2>
-                            <p>Press the button below to open a ticket. Staff will reply in a private channel.</p>
-                        </DiscordContainer>
-                        <DiscordActionRow>
-                            <DiscordButton style="primary"><MaterialSymbolsConfirmationNumberRounded class="size-4.5" />Open a ticket</DiscordButton>
-                        </DiscordActionRow>
+                        <DiscordAccessories>
+                            <DiscordContainer>
+                                <h2 class="mb-2 text-xl leading-snug font-bold text-dc-strong">Need Help?</h2>
+                                <p>Press the button below to open a ticket. Staff will reply in a private channel.</p>
+                            </DiscordContainer>
+                            <DiscordActionRow>
+                                <DiscordButton style="primary"
+                                    ><MaterialSymbolsConfirmationNumberRounded class="size-4.5" />Open a ticket</DiscordButton
+                                >
+                            </DiscordActionRow>
+                        </DiscordAccessories>
                     </DiscordMessage>
                 </DiscordWindow>
             </div>

@@ -32,7 +32,6 @@
 
     let bar = $state<HTMLElement>();
 
-    // The control just changed is often low on a short window, right where the bar lands. Scroll it clear while the bar fades in
     function reveal() {
         let target = document.activeElement;
         if (!bar || !(target instanceof HTMLElement) || target === document.body || bar.contains(target)) return;

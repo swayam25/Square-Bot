@@ -2,17 +2,19 @@
     import DiscordActionRow from "#lib/components/discord/DiscordActionRow.svelte";
     import DiscordButton from "#lib/components/discord/DiscordButton.svelte";
     import DiscordContainer from "#lib/components/discord/DiscordContainer.svelte";
+    import DiscordDownload from "#lib/components/discord/DiscordDownload.svelte";
     import DiscordEmoji from "#lib/components/discord/DiscordEmoji.svelte";
     import DiscordFile from "#lib/components/discord/DiscordFile.svelte";
     import DiscordGallery from "#lib/components/discord/DiscordGallery.svelte";
     import DiscordMarkdown from "#lib/components/discord/DiscordMarkdown.svelte";
     import DiscordSelect from "#lib/components/discord/DiscordSelect.svelte";
-    import { getDiscord } from "#lib/discord/context.ts";
+    import { getDiscord, getMessageAuthor } from "#lib/discord/context.ts";
     import type { TranscriptComponent } from "@square/api-client";
 
     let { components }: { components: TranscriptComponent[] } = $props();
 
     const discord = getDiscord();
+    const author = getMessageAuthor();
 </script>
 
 {#snippet piece(component: TranscriptComponent)}
@@ -31,12 +33,21 @@
         </div>
     {:else if component.kind === "thumbnail"}
         {@const src = component.files?.[0] ? discord.fileUrl(component.files[0]) : null}
-        {#if src && discord.view}
-            <button type="button" class="size-21.25 shrink-0 cursor-pointer" onclick={() => discord.view?.(src)}>
-                <img {src} alt="View full size" loading="lazy" data-discord-image class="size-full rounded-lg object-cover" />
-            </button>
-        {:else if src}
-            <img {src} alt="" loading="lazy" class="size-21.25 shrink-0 rounded-lg object-cover" />
+        {#if src}
+            <div class="group/media relative size-21.25 shrink-0">
+                {#if discord.view}
+                    <button
+                        type="button"
+                        class="block size-full cursor-pointer"
+                        onclick={() => discord.view?.({ media: [{ src, kind: "image" }], index: 0, author })}
+                    >
+                        <img {src} alt="View full size" loading="lazy" class="size-full rounded-lg object-cover" />
+                    </button>
+                {:else}
+                    <img {src} alt="" loading="lazy" class="size-full rounded-lg object-cover" />
+                {/if}
+                <DiscordDownload {src} name={component.files?.[0]?.name} />
+            </div>
         {/if}
     {:else if component.kind === "gallery"}
         <DiscordGallery files={component.files ?? []} />

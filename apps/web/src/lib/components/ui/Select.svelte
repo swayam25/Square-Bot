@@ -82,7 +82,6 @@
     {#if option.icon}
         <option.icon class="size-4 shrink-0 text-gray-400" />
     {:else if option.color}
-        <!-- Fills the same box as the icon markers, minus the blank edge a glyph leaves -->
         <span class="size-4 shrink-0 p-0.5"><span class="block size-full rounded-full" style:background-color={option.color}></span></span>
     {/if}
 {/snippet}

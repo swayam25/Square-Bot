@@ -1,8 +1,8 @@
 <script lang="ts">
     import DiscordEmoji from "#lib/components/discord/DiscordEmoji.svelte";
     import DiscordSpoiler from "#lib/components/discord/DiscordSpoiler.svelte";
+    import DiscordTooltip from "#lib/components/discord/DiscordTooltip.svelte";
     import Mention from "#lib/components/discord/Mention.svelte";
-    import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { getDiscord } from "#lib/discord/context.ts";
     import { fullTime, inline as inlineNodes, jumbo, parse, timestamp, type Inline } from "#lib/discord/markdown.ts";
     import type { ClassValue } from "svelte/elements";
@@ -52,9 +52,11 @@
             />{:else if node.type === "channel"}<Mention
                 kind="channel"
                 name={discord.channels[node.id] ?? "unknown-channel"}
-            />{:else if node.type === "time"}<Tooltip lazy content={fullTime(node.at)}
+            />{:else if node.type === "command"}<Mention kind="command" name={node.name} />{:else if node.type === "time"}<DiscordTooltip
+                lazy
+                content={fullTime(node.at)}
                 ><time datetime={new Date(node.at).toISOString()} class="rounded-[3px] bg-white/6 px-0.5">{timestamp(node.at, node.style)}</time
-                ></Tooltip
+                ></DiscordTooltip
             >{/if}
     {/each}
 {/snippet}

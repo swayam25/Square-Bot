@@ -63,7 +63,7 @@
 
     <div class="flex gap-2">
         {#each kinds as kind (kind.label)}
-            <div class="flex flex-1 flex-col gap-2 rounded-2xl bg-surface-2 p-4">
+            <div class="flex flex-1 flex-col gap-2 rounded-2xl bg-gray-900 p-4">
                 <span class="flex items-center gap-2 text-sm text-gray-400"
                     ><span class={["size-2 rounded-full", kind.class]}></span>{kind.label}</span
                 >

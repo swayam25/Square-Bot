@@ -2,8 +2,9 @@
     import swayam from "#lib/assets/discord/swayam.webp";
     import square from "#lib/assets/square.svg";
     import DiscordMarkdown from "#lib/components/discord/DiscordMarkdown.svelte";
+    import DiscordTooltip from "#lib/components/discord/DiscordTooltip.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
-    import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { setMessageAuthor } from "#lib/discord/context.ts";
     import type { Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
     import MaterialSymbolsImageRounded from "~icons/material-symbols/image-rounded";
@@ -55,6 +56,18 @@
         children: Snippet;
     } = $props();
 
+    setMessageAuthor({
+        get name() {
+            return name;
+        },
+        get avatar() {
+            return avatar;
+        },
+        get time() {
+            return time;
+        },
+    });
+
     let hovered = $state(false);
 </script>
 
@@ -74,17 +87,17 @@
     ]}
 >
     {#if compact}
-        <Tooltip lazy content={timeTitle} class="absolute top-0.5 left-0 w-16 justify-end pr-2 opacity-0 group-hover/message:opacity-100">
+        <DiscordTooltip lazy content={timeTitle} class="absolute top-0.5 left-0 w-16 justify-end pr-2 opacity-0 group-hover/message:opacity-100">
             <time class="text-[11px] leading-5.5 text-dc-muted">{time}</time>
-        </Tooltip>
+        </DiscordTooltip>
     {:else}
         {#if command}
             <div class="relative mb-1 flex h-4.5 items-center gap-1 text-sm leading-4.5 whitespace-nowrap text-dc-command">
                 {@render spine()}
-                <Avatar src={commandUser.avatar} name={commandUser.name} class="size-4 text-2xs" animate={hovered} />
-                <span class="mr-1 font-medium text-[#ababaf]">{commandUser.name}</span>
+                <Avatar src={commandUser.avatar} name={commandUser.name} class="size-4 cursor-pointer text-2xs" animate={hovered} />
+                <span class="mr-1 cursor-pointer font-medium text-dc-command-name hover:underline">{commandUser.name}</span>
                 used
-                <span class="flex items-center gap-1 rounded bg-dc-blurple/24 px-0.5 text-xs text-dc-link">
+                <span class="flex cursor-pointer items-center gap-1 rounded bg-dc-blurple/24 px-0.5 text-xs text-dc-link">
                     <MaterialSymbolsPlayShapesRounded class="size-3.5" />
                     {command}
                 </span>
@@ -119,20 +132,20 @@
         {/if}
         <div class="relative leading-5.5">
             {#if avatar === undefined}
-                <span class="absolute top-0 -left-14 flex size-10 items-center justify-center rounded-full bg-gray-950">
+                <span class="absolute top-0 -left-14 flex size-10 cursor-pointer items-center justify-center rounded-full bg-gray-950">
                     <img src={square} alt="" class="size-7" />
                 </span>
             {:else}
-                <Avatar src={avatar} {name} class="absolute! top-0 -left-14 size-10" animate={hovered} />
+                <Avatar src={avatar} {name} class="absolute! top-0 -left-14 size-10 cursor-pointer" animate={hovered} />
             {/if}
-            <span style:color={color || undefined} class="font-medium text-dc-strong">{name}</span>
+            <span style:color={color || undefined} class="cursor-pointer font-medium text-dc-strong hover:underline">{name}</span>
             {#if bot}
                 <span
                     class="relative -top-px ml-1 inline-block rounded bg-dc-blurple px-1 align-middle text-2xs leading-3.75 font-semibold text-white"
                     >APP</span
                 >
             {/if}
-            <Tooltip lazy content={timeTitle} class="ml-1"><time class="text-xs font-medium text-dc-muted">{time}</time></Tooltip>
+            <DiscordTooltip lazy content={timeTitle} class="ml-1"><time class="text-xs font-medium text-dc-muted">{time}</time></DiscordTooltip>
         </div>
     {/if}
     {@render children()}

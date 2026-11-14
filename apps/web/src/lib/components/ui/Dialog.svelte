@@ -40,7 +40,9 @@
             <Dialog.Trigger class={triggerClass}>{@render trigger()}</Dialog.Trigger>
         {/if}
         <Portal>
-            <Dialog.Backdrop class="fixed inset-0 z-50 bg-gray-950/60 data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
+            <Dialog.Backdrop
+                class="fixed inset-0 z-50 bg-gray-950/60 backdrop-blur-sm data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in"
+            />
             <Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-6">
                 <Dialog.Content
                     class="flex max-h-full w-full max-w-lg flex-col gap-6 rounded-4xl bg-gray-900 p-6 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
