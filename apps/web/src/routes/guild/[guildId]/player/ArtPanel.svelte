@@ -144,13 +144,13 @@
     <div class="flex w-full items-center justify-between gap-4">
         <a
             href={server.href}
-            class="group flex min-w-0 items-center gap-2 rounded-full bg-black/30 py-1 pr-4 pl-1 backdrop-blur-xl transition-colors hover:bg-black/50"
+            class="group flex min-w-0 items-center gap-2 rounded-full bg-black/30 py-1 pr-4 pl-1 backdrop-blur-xl transition-colors hover:bg-black/50 max-md:pr-3"
         >
             <span class="relative size-8 shrink-0">
                 <GuildIcon src={server.iconUrl} name={server.name} class="size-8 rounded-full transition-opacity group-hover:opacity-0" />
                 <MaterialSymbolsArrowBackRounded class="absolute inset-0 m-auto size-5 opacity-0 transition-opacity group-hover:opacity-100" />
             </span>
-            <span class="truncate text-sm font-semibold">{server.name}</span>
+            <span class="truncate text-sm font-semibold max-md:sr-only">{server.name}</span>
             <span class={["size-2 shrink-0 rounded-full", online ? "bg-emerald-400" : "animate-pulse bg-amber-400"]}></span>
         </a>
         <Segmented

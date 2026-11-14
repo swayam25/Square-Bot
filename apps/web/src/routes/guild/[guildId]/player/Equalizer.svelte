@@ -18,7 +18,8 @@
         player,
         lock = null,
         triggerClass,
-    }: { guild: string; player: PlayerState; lock?: string | null; triggerClass?: ClassValue } = $props();
+        labeled = false,
+    }: { guild: string; player: PlayerState; lock?: string | null; triggerClass?: ClassValue; labeled?: boolean } = $props();
 
     const presetsQuery = $derived(music.eqPresets(guild));
     const presets = $derived(presetsQuery.current);
@@ -66,7 +67,7 @@
 <Tooltip content={lock ?? (active.length ? `Equalizer: ${active.join(", ")}` : "Equalizer")}>
     <Popup title="Equalizer" placement="top-end" contentClass="w-96" {triggerClass} disabled={!!lock}>
         {#snippet trigger()}
-            <MaterialSymbolsEqualizerRounded /><span class="sr-only">Equalizer</span>
+            <MaterialSymbolsEqualizerRounded /><span class={[!labeled && "sr-only"]}>Equalizer</span>
         {/snippet}
 
         <div class="flex flex-col gap-4 md:p-2">

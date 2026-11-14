@@ -132,19 +132,36 @@
 </svelte:head>
 
 {#snippet sheetButton(value: Tab, label: string, Icon: typeof MaterialSymbolsSearchRounded, off: string | false = false, count?: number)}
-    <Tooltip content={off || null} class="min-w-0">
-        <button
-            type="button"
-            aria-haspopup="dialog"
-            disabled={!!off}
-            class="ripple flex h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full bg-surface-1 text-sm font-medium transition-colors hover:bg-surface-2 disabled:opacity-40"
-            {@attach ripple}
-            onclick={() => openSheet(value)}
-        >
-            <Icon class="size-5 shrink-0" />{label}
-            {#if count}<span class="font-mono text-xs text-gray-400">{formatCount(count)}</span>{/if}
-        </button>
+    <Tooltip content={off || label}>
+        <!-- The badge sits beside the button, which clips anything outside it for the ripple -->
+        <span class="relative flex">
+            <button
+                type="button"
+                aria-haspopup="dialog"
+                disabled={!!off}
+                class="ripple flex size-12 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-surface-2 hover:text-gray-100 disabled:opacity-40"
+                {@attach ripple}
+                onclick={() => openSheet(value)}
+            >
+                <Icon class="size-6" />
+            </button>
+            {#if count}
+                <span
+                    aria-hidden="true"
+                    class="pointer-events-none absolute top-1 right-0 rounded-full bg-accent px-1.5 font-mono text-2xs leading-4 font-semibold text-cyan-950"
+                >
+                    {formatCount(count)}
+                </span>
+            {/if}
+        </span>
     </Tooltip>
+{/snippet}
+
+{#snippet dock()}
+    {@render sheetButton("search", "Search", MaterialSymbolsSearchRounded)}
+    {@render sheetButton("queue", "Queue", MaterialSymbolsQueueMusicRounded, false, queue?.total)}
+    {@render sheetButton("history", "History", MaterialSymbolsHistoryRounded)}
+    {@render sheetButton("lyrics", "Lyrics", MaterialSymbolsLyricsRounded, lyricsOff)}
 {/snippet}
 
 <div class="flex h-dvh overflow-hidden bg-surface-1 md:p-2">
@@ -157,13 +174,7 @@
                 {#if mobile.current}
                     <ArtPanel {player} position={playhead} {server} {online} onzen={openZen} />
                     {#if player.vote}<SkipVote {guild} {player} vote={player.vote} {access} />{/if}
-                    <ControlsBar {guild} {player} {position} {access} queued={queue?.total ?? 0} bind:seeking onseek={seek} />
-                    <nav aria-label="Search, queue, history and lyrics" class="grid shrink-0 grid-cols-4 gap-2">
-                        {@render sheetButton("search", "Search", MaterialSymbolsSearchRounded)}
-                        {@render sheetButton("queue", "Queue", MaterialSymbolsQueueMusicRounded, false, queue?.total)}
-                        {@render sheetButton("history", "History", MaterialSymbolsHistoryRounded)}
-                        {@render sheetButton("lyrics", "Lyrics", MaterialSymbolsLyricsRounded, lyricsOff)}
-                    </nav>
+                    <ControlsBar {guild} {player} {position} {access} queued={queue?.total ?? 0} bind:seeking onseek={seek} {dock} />
                     <Drawer bind:open={sheet} title={TAB_TITLES[tab]} plain class="h-[calc(100dvh-4rem)]">
                         <SidePanel {guild} {player} {queue} {position} {online} {lyricsOff} {access} bind:tab={() => tab, setTab} sheet />
                     </Drawer>
@@ -193,7 +204,8 @@
             {/if}
         </main>
         <OverlayScrollbar viewport={scroller} inset={24} />
-        <Island docked />
+        <!-- Full-bleed on phones, so there is no frame edge for the island to bulge out of -->
+        <Island docked={!mobile.current} />
     </div>
 </div>
 
