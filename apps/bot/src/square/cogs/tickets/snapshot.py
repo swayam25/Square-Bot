@@ -26,6 +26,7 @@ from discord.components import (
     TextDisplay,
     Thumbnail,
     UnfurledMediaItem,
+    _component_factory,
 )
 from discord.components import Component as DiscordComponent
 from square.db.funcs import tickets as db
@@ -101,6 +102,7 @@ class TranscriptEmbed(Stored):
     footer: str = ""
     footer_icon: str = ""
     time: int | None = None  # Unix ms
+    components: list[TranscriptComponent] = []
     media: Literal["", "image", "video"] = ""  # a bare picture or GIF link, drawn without the embed box
     media_url: str = ""
 
@@ -216,9 +218,10 @@ _BUTTON_STYLES: dict[discord.ButtonStyle, Literal["primary", "success", "danger"
 
 
 class _Builder:
-    def __init__(self, guild: discord.Guild, stored: set[int]):
+    def __init__(self, guild: discord.Guild, stored: set[int], previews: dict[int, list[list[DiscordComponent]]]):
         self.guild = guild
         self.stored = stored
+        self.previews = previews
         self.users: dict[str, TranscriptUser] = {}
         self.texts: list[str] = []
         self.mentioned: dict[int, discord.User | discord.Member] = {}
@@ -330,7 +333,7 @@ class _Builder:
                 )
         return None
 
-    def embed(self, embed: discord.Embed) -> TranscriptEmbed:
+    def embed(self, embed: discord.Embed, components: Sequence[DiscordComponent], drawn: set[int]) -> TranscriptEmbed:
         media, media_url = "", ""
         if embed.type == "gifv" and embed.video and embed.video.url:
             media, media_url = "video", embed.video.url
@@ -352,12 +355,14 @@ class _Builder:
             footer=(embed.footer.text if embed.footer else None) or "",
             footer_icon=(embed.footer.icon_url if embed.footer else None) or "",
             time=_ms(embed.timestamp) if embed.timestamp else None,
+            components=self.components(components, drawn),
             media=media,
             media_url=media_url,
         )
 
     def message(self, message: discord.Message) -> TranscriptMessage:
         system = _system(message)
+        previews = self.previews.get(message.id, [])
         for user in message.mentions:
             self.mentioned[user.id] = user
         drawn: set[int] = set()
@@ -390,7 +395,10 @@ class _Builder:
             reply=reply,
             reply_deleted=reply_deleted,
             attachments=[self.file(a) for a in message.attachments if a.id not in drawn],
-            embeds=[self.embed(embed) for embed in message.embeds],
+            embeds=[
+                self.embed(embed, previews[index] if index < len(previews) else [], drawn)
+                for index, embed in enumerate(message.embeds)
+            ],
             components=components,
             stickers=[TranscriptSticker(name=sticker.name, url=sticker.url) for sticker in message.stickers],
             reactions=[
@@ -471,6 +479,24 @@ async def _copy_images(ticket: TicketTable, messages: Sequence[discord.Message])
     return kept | {attachment_id for attachment_id in copied if attachment_id}
 
 
+async def _previews(
+    channel: discord.TextChannel, messages: Sequence[discord.Message]
+) -> dict[int, list[list[DiscordComponent]]]:
+    previews: dict[int, list[list[DiscordComponent]]] = {}
+    for message in messages:
+        if not any(embed.type == "components" for embed in message.embeds):
+            continue
+        try:
+            raw = await channel._state.http.get_message(channel.id, message.id)
+        except discord.HTTPException:
+            continue
+        previews[message.id] = [
+            [_component_factory(component, state=channel._state) for component in embed.get("components", [])]
+            for embed in raw.get("embeds", [])
+        ]
+    return previews
+
+
 async def save(
     guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable, *, unless_saved_after: int | None = None
 ) -> None:
@@ -488,12 +514,12 @@ async def save(
                 return
         messages = [message async for message in channel.history(limit=MESSAGE_LIMIT)]
         messages.sort(key=lambda message: message.id)
-        builder = _Builder(guild, await _copy_images(ticket, messages))
+        builder = _Builder(guild, await _copy_images(ticket, messages), await _previews(channel, messages))
         saved: list[TranscriptMessage] = []
         for index, message in enumerate(messages):
             saved.append(builder.message(message))
             if index % 250 == 249:
-                await asyncio.sleep(0)  # a long ticket is a lot of work, and the music keeps playing meanwhile
+                await asyncio.sleep(0)  # lets the event loop run, so a long transcript never stalls the bot
         roles, channels = builder.lookups()
         transcript = Transcript(
             channel=channel.name,

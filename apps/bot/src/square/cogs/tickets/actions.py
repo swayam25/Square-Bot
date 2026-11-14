@@ -206,8 +206,6 @@ async def delete(
     ticket: TicketTable,
     channel: discord.TextChannel,
     by: discord.Member,
-    *,
-    delay: float = 5,
 ) -> None:
     """Deletes the channel. The ticket and its transcript stay until someone removes them on the dashboard."""
     # Staff can keep talking in a closed ticket, so this is the last chance to save those messages
@@ -217,7 +215,6 @@ async def delete(
         await server_log.edit(
             client, guild, server_log.LogType.TICKETS, ticket.log_message_id, cards.log_card(ticket, guild.id)
         )
-    await asyncio.sleep(delay)
     await channel.delete(reason=f"Ticket deleted by {by}")
 
 
@@ -233,5 +230,4 @@ async def close_legacy(client: Client, guild: discord.Guild, channel: discord.Te
         )
     )
     await server_log.post(client, guild, server_log.LogType.TICKETS, view)
-    await asyncio.sleep(5)
     await channel.delete(reason=f"Ticket closed by {by}")

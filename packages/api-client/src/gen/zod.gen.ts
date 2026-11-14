@@ -568,26 +568,6 @@ export const zTranscriptField = z.object({
 });
 
 /**
- * TranscriptEmbed
- */
-export const zTranscriptEmbed = z.object({
-    color: z.string().optional().default(""),
-    author: z.string().optional().default(""),
-    authorIcon: z.string().optional().default(""),
-    title: z.string().optional().default(""),
-    url: z.string().optional().default(""),
-    description: z.string().optional().default(""),
-    fields: z.array(zTranscriptField).optional(),
-    image: z.string().optional().default(""),
-    thumbnail: z.string().optional().default(""),
-    footer: z.string().optional().default(""),
-    footerIcon: z.string().optional().default(""),
-    time: z.int().nullish(),
-    media: z.enum(["", "image", "video"]).optional().default(""),
-    mediaUrl: z.string().optional().default(""),
-});
-
-/**
  * TranscriptFile
  */
 export const zTranscriptFile = z.object({
@@ -619,6 +599,27 @@ export const zTranscriptComponent = z.object({
     divider: z.boolean().optional().default(false),
     large: z.boolean().optional().default(false),
     placeholder: z.boolean().optional().default(false),
+});
+
+/**
+ * TranscriptEmbed
+ */
+export const zTranscriptEmbed = z.object({
+    color: z.string().optional().default(""),
+    author: z.string().optional().default(""),
+    authorIcon: z.string().optional().default(""),
+    title: z.string().optional().default(""),
+    url: z.string().optional().default(""),
+    description: z.string().optional().default(""),
+    fields: z.array(zTranscriptField).optional(),
+    image: z.string().optional().default(""),
+    thumbnail: z.string().optional().default(""),
+    footer: z.string().optional().default(""),
+    footerIcon: z.string().optional().default(""),
+    time: z.int().nullish(),
+    components: z.array(zTranscriptComponent).optional(),
+    media: z.enum(["", "image", "video"]).optional().default(""),
+    mediaUrl: z.string().optional().default(""),
 });
 
 /**

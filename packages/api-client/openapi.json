@@ -9510,6 +9510,12 @@
               }
             ]
           },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/TranscriptComponent"
+            },
+            "type": "array"
+          },
           "media": {
             "type": "string",
             "enum": [

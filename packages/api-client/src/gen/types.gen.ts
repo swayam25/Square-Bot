@@ -751,6 +751,7 @@ export type TranscriptEmbed = {
     footer?: string;
     footerIcon?: string;
     time?: number | null;
+    components?: Array<TranscriptComponent>;
     media?: "" | "image" | "video";
     mediaUrl?: string;
 };

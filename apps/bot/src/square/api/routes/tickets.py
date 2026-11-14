@@ -165,7 +165,7 @@ async def delete_ticket(client: Client, guild: discord.Guild, member: discord.Me
     ticket = await _ticket(guild, number)
     if ticket.status == "deleted":
         raise SettingError("That ticket is already deleted.")
-    await actions.delete(client, guild, ticket, _live_channel(guild, ticket), member, delay=0)
+    await actions.delete(client, guild, ticket, _live_channel(guild, ticket), member)
     _audit(member, "deleted", ticket)
     return await _detail(client, guild, ticket)
 
