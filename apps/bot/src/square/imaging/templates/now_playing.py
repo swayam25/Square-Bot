@@ -60,7 +60,7 @@ def _artwork(ui: Kit, data: bytes | None, size: float, radius: float) -> Node:
     if image := open_image(data):
         return Picture(_trim_letterbox(image), size, radius=radius)
     t = ui.theme
-    return Box(ui.icon("music", size * 0.4, t.accent), fill=t.surface_2, radius=radius, width=size, height=size)
+    return Box(ui.icon("music", size * 0.4, t.accent), fill=t.surface, radius=radius, width=size, height=size)
 
 
 def _up_next(ui: Kit, data: NowPlaying) -> Box:
@@ -70,7 +70,7 @@ def _up_next(ui: Kit, data: NowPlaying) -> Box:
     return Box(
         Row(cover, Expand(Column(ui.eyebrow(eyebrow), title)), gap=8),
         padding=(0, 16, 0, 8 if cover else 16),
-        fill=ui.theme.surface_2,
+        fill=ui.theme.surface,
         radius=Radius.XL2,
         height=48,
     )

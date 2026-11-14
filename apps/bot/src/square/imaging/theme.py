@@ -16,6 +16,7 @@ def blend(color: RGB, alpha: float, base: RGB) -> RGB:
 
 WHITE: RGB = rgb(0xFFFFFF)
 GRAY_950: RGB = rgb(0x030712)
+GRAY_900: RGB = rgb(0x111827)
 GRAY_400: RGB = rgb(0x9CA3AF)
 GRAY_300: RGB = rgb(0xD1D5DB)
 GRAY_100: RGB = rgb(0xF3F4F6)
@@ -27,9 +28,6 @@ ORANGE_300: RGB = rgb(0xFFB86A)
 EMERALD_400: RGB = rgb(0x00D492)
 AMBER_400: RGB = rgb(0xFFB900)
 RED_400: RGB = rgb(0xFF6467)
-SURFACE_1: RGB = rgb(0x111827)
-SURFACE_2: RGB = rgb(0x1F2937)
-SURFACE_3: RGB = rgb(0x374151)
 AVATAR_FILLS: tuple[RGB, ...] = tuple(
     rgb(value)
     for value in (
@@ -52,9 +50,7 @@ class Theme:
     warning: RGB = AMBER_400
     danger: RGB = RED_400
     bg: RGB = GRAY_950
-    surface: RGB = SURFACE_1
-    surface_2: RGB = SURFACE_2
-    surface_3: RGB = SURFACE_3
+    surface: RGB = GRAY_900
     text: RGB = GRAY_100
     muted: RGB = GRAY_400
     on_accent: RGB = CYAN_950
@@ -64,10 +60,10 @@ class Theme:
 
     @property
     def line(self) -> RGB:
-        return blend(WHITE, 0.1, self.surface)
+        return blend(WHITE, 0.1, self.bg)
 
     def tint(self, color: RGB, alpha: float, base: RGB | None = None) -> RGB:
-        return blend(color, alpha, base or self.surface)
+        return blend(color, alpha, base or self.bg)
 
 
 @cache

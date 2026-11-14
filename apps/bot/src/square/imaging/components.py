@@ -44,10 +44,10 @@ class Kit:
         return Text(text, style, self.theme.muted, align=align)
 
     def card(self, child: Node) -> Box:
-        return Box(child, padding=24, fill=self.theme.surface, align="stretch")
+        return Box(child, padding=24, fill=self.theme.bg, align="stretch")
 
     def tile(self, *children: Node | None, padding: float | tuple[float, float] = 16, gap: float = 8) -> Box:
-        return Box(Column(*children, gap=gap), padding=padding, fill=self.theme.surface_2, radius=Radius.XL2)
+        return Box(Column(*children, gap=gap), padding=padding, fill=self.theme.surface, radius=Radius.XL2)
 
     def _chip_colors(self, tone: ChipTone) -> tuple[RGB, RGB]:
         t = self.theme
@@ -116,7 +116,7 @@ class Kit:
         return Box(
             Text(letters, TextStyle(size * scale, size, 500), self.theme.text, align="center"),
             padding=(size * 0.08, 0),
-            fill=self.theme.surface_2,
+            fill=self.theme.surface,
             radius=radius,
             width=size,
             height=size,
@@ -133,7 +133,7 @@ class Kit:
 
     def split_bar(self, *segments: tuple[float, RGB], label: str | None = None) -> SplitBar:
         text = Text(label, Type.MONO_XS_SEMIBOLD, self.theme.on_accent) if label else None
-        return SplitBar(list(segments), self.theme.surface_2, label=text)
+        return SplitBar(list(segments), self.theme.surface, label=text)
 
     def progress(self, value: float, *, wavy: bool = False) -> Progress:
         return Progress(value, self.theme.accent, self.theme.line, wavy=wavy)
