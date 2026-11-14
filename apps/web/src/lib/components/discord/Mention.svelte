@@ -1,6 +1,6 @@
 <script lang="ts">
-    import HashIcon from "#lib/components/discord/HashIcon.svelte";
     import MaterialSymbolsPlayShapesRounded from "~icons/material-symbols/play-shapes-rounded";
+    import MaterialSymbolsTagRounded from "~icons/material-symbols/tag-rounded";
     import MaterialSymbolsVolumeUpRounded from "~icons/material-symbols/volume-up-rounded";
 
     let {
@@ -24,7 +24,7 @@
     ]}
 >
     {#if kind === "channel"}
-        <HashIcon class="mr-0.5 inline size-[1em] align-[-0.125em]" />
+        <MaterialSymbolsTagRounded aria-hidden="true" class="mr-0.5 inline size-[1em] align-[-0.125em]" />
     {:else if kind === "voice"}
         <MaterialSymbolsVolumeUpRounded aria-hidden="true" class="mr-0.5 inline size-[1em] align-[-0.125em]" />
     {:else if kind === "command"}

@@ -29,11 +29,11 @@
     import type { Snippet } from "svelte";
     import MaterialSymbolsArrowForwardRounded from "~icons/material-symbols/arrow-forward-rounded";
     import MaterialSymbolsCakeRounded from "~icons/material-symbols/cake-rounded";
-    import MaterialSymbolsDiamondRounded from "~icons/material-symbols/diamond-rounded";
     import MaterialSymbolsGroupRounded from "~icons/material-symbols/group-rounded";
     import MaterialSymbolsHeadphonesRounded from "~icons/material-symbols/headphones-rounded";
     import MaterialSymbolsOpenInNewRounded from "~icons/material-symbols/open-in-new-rounded";
     import MaterialSymbolsPlayCircleRounded from "~icons/material-symbols/play-circle-rounded";
+    import MaterialSymbolsRocketLaunchRounded from "~icons/material-symbols/rocket-launch-rounded";
     import MaterialSymbolsShieldPersonRounded from "~icons/material-symbols/shield-person-rounded";
     import MaterialSymbolsTagRounded from "~icons/material-symbols/tag-rounded";
     import type { PageProps } from "./$types";
@@ -80,7 +80,7 @@
                       label: "Boosts",
                       value: formatCount(stats.boosts),
                       detail: stats.boostLevel ? `Level ${stats.boostLevel}` : "No boost level yet",
-                      icon: MaterialSymbolsDiamondRounded,
+                      icon: MaterialSymbolsRocketLaunchRounded,
                       tone: "text-pink-300",
                   },
                   {

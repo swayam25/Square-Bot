@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { Snippet } from "svelte";
+    import MaterialSymbolsOpenInNewRounded from "~icons/material-symbols/open-in-new-rounded";
 
     type Style = "primary" | "secondary" | "success" | "danger";
 
@@ -19,9 +20,7 @@
 </script>
 
 {#snippet external()}
-    <svg viewBox="0 0 24 24" aria-hidden="true" class="size-4 fill-none stroke-current stroke-2 [stroke-linecap:round] [stroke-linejoin:round]">
-        <path d="M14 4h6v6m0-6-9 9m7 1v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
-    </svg>
+    <MaterialSymbolsOpenInNewRounded aria-hidden="true" class="size-4" />
 {/snippet}
 
 <!-- Only link buttons do anything: the rest are a picture of a button, since their action lives in Discord -->

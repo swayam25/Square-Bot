@@ -3,6 +3,7 @@
     import { getDiscord } from "#lib/discord/context.ts";
     import { fileSize } from "#lib/discord/markdown.ts";
     import type { TranscriptFile } from "@square/api-client";
+    import MaterialSymbolsDownloadRounded from "~icons/material-symbols/download-rounded";
 
     let { file }: { file: TranscriptFile } = $props();
 
@@ -30,13 +31,7 @@
         {#if href}
             <Tooltip content="Download"
                 ><a {href} target="_blank" rel="noopener noreferrer" class="text-dc-icon hover:text-dc-strong">
-                    <svg
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                        class="size-6 fill-none stroke-current stroke-2 [stroke-linecap:round] [stroke-linejoin:round]"
-                    >
-                        <path d="M12 4v11m-5-5 5 5 5-5M5 20h14" />
-                    </svg>
+                    <MaterialSymbolsDownloadRounded aria-hidden="true" class="size-6" />
                     <span class="sr-only">Download {file.name}</span>
                 </a></Tooltip
             >

@@ -1,12 +1,8 @@
-<script module lang="ts">
-    // Drawers can open from inside other drawers (a picker in the side panel), so the newest one always stacks on top
-    let top = 50;
-</script>
-
 <script lang="ts">
     import Portal from "#lib/components/ui/Portal.svelte";
+    import { overlays } from "#lib/overlays.svelte.ts";
     import { Drawer } from "@ark-ui/svelte/drawer";
-    import type { Snippet } from "svelte";
+    import { untrack, type Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
 
     let {
@@ -38,8 +34,12 @@
     let content = $state<HTMLElement | null>(null);
     let layer = $state(50);
 
+    // Drawers can open from inside other drawers (a picker in the side panel), so the newest one always stacks on top
     $effect.pre(() => {
-        if (open) layer = ++top;
+        if (!open) return;
+        const release = overlays.hold();
+        layer = 50 + untrack(() => overlays.open);
+        return release;
     });
 </script>
 

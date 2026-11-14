@@ -11,12 +11,12 @@
     import DiscordReactions from "#lib/components/discord/DiscordReactions.svelte";
     import DiscordSystemMessage from "#lib/components/discord/DiscordSystemMessage.svelte";
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
-    import HashIcon from "#lib/components/discord/HashIcon.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { setDiscord } from "#lib/discord/context.ts";
     import { calendar, clock, fullTime, longDate, sameDay } from "#lib/discord/markdown.ts";
     import type { Transcript, TranscriptFile, TranscriptMessage } from "@square/api-client";
     import type { Snippet } from "svelte";
+    import MaterialSymbolsTagRounded from "~icons/material-symbols/tag-rounded";
 
     let {
         transcript,
@@ -104,7 +104,7 @@
 <DiscordWindow channel={transcript.channel} {topic} spaced={false} {aside} {footer} class="shadow-none">
     <div class="mx-4 mb-2">
         <div class="mb-2 flex size-17 items-center justify-center rounded-full bg-dc-surface text-dc-strong">
-            <HashIcon class="size-10.5" />
+            <MaterialSymbolsTagRounded aria-hidden="true" class="size-10.5" />
         </div>
         <h2 class="my-2 text-3xl leading-10 font-bold wrap-anywhere text-dc-strong">Welcome to #{transcript.channel}!</h2>
         <p class="text-dc-muted">This is the start of the #{transcript.channel} channel.</p>

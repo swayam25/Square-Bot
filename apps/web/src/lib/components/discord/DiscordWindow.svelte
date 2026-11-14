@@ -1,7 +1,7 @@
 <script lang="ts">
-    import HashIcon from "#lib/components/discord/HashIcon.svelte";
     import type { Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
+    import MaterialSymbolsTagRounded from "~icons/material-symbols/tag-rounded";
 
     let {
         channel,
@@ -24,7 +24,7 @@
 
 <div class={["w-full overflow-hidden rounded-2xl bg-dc-bg text-base leading-5.5 text-dc-text shadow-2xl shadow-black/40", className]}>
     <div class="flex h-12 items-center gap-2 border-b border-dc-line px-4">
-        <HashIcon class="size-6 shrink-0 text-dc-muted" />
+        <MaterialSymbolsTagRounded aria-hidden="true" class="size-6 shrink-0 text-dc-muted" />
         <span class="truncate font-semibold text-dc-strong">{channel}</span>
         {#if topic}
             <span aria-hidden="true" class="size-1 shrink-0 rounded-full bg-dc-muted"></span>

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import MaterialSymbolsKeyboardArrowDownRounded from "~icons/material-symbols/keyboard-arrow-down-rounded";
+
     let { label, placeholder = false, disabled = false }: { label: string; placeholder?: boolean; disabled?: boolean } = $props();
 </script>
 
@@ -10,11 +12,5 @@
     ]}
 >
     <span class="truncate">{label}</span>
-    <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        class="size-6 shrink-0 fill-none stroke-dc-icon stroke-2 [stroke-linecap:round] [stroke-linejoin:round]"
-    >
-        <path d="m6 9 6 6 6-6" />
-    </svg>
+    <MaterialSymbolsKeyboardArrowDownRounded aria-hidden="true" class="size-6 shrink-0 text-dc-icon" />
 </div>

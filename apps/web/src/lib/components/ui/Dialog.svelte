@@ -2,6 +2,7 @@
     import Drawer from "#lib/components/ui/Drawer.svelte";
     import Portal from "#lib/components/ui/Portal.svelte";
     import { mobile } from "#lib/media.ts";
+    import { overlays } from "#lib/overlays.svelte.ts";
     import { Dialog } from "@ark-ui/svelte/dialog";
     import type { Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
@@ -25,6 +26,10 @@
         footer?: Snippet;
         dismissable?: boolean;
     } = $props();
+
+    $effect(() => {
+        if (open && !mobile.current) return overlays.hold();
+    });
 </script>
 
 {#if mobile.current}

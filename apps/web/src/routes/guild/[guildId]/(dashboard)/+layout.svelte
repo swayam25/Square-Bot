@@ -73,7 +73,7 @@
     const resizeSidebar = (event: PointerEvent) =>
         drag(
             event,
-            (x) => (width = clamp(x, SIDEBAR.min, SIDEBAR.max)),
+            (x) => (width = clamp(x - 8, SIDEBAR.min, SIDEBAR.max)),
             () => save(STORAGE_KEY, String(width)),
         );
     const resizeDetails = (event: PointerEvent) =>
@@ -235,7 +235,7 @@
 <div
     style:--sidebar="{width}px"
     style:--details={detailsOpen ? `${detailsWidth + 8}px` : "0px"}
-    class="flex h-dvh flex-col overflow-hidden bg-surface-1 md:flex-row md:py-2 md:pr-2"
+    class="flex h-dvh flex-col overflow-hidden bg-surface-1 md:flex-row md:p-2"
 >
     <aside class="hidden w-(--sidebar) shrink-0 flex-col gap-4 overflow-hidden py-2 md:flex">
         <div class={["flex flex-col gap-4", expanded ? "px-4" : "items-center px-2"]}>

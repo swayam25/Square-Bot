@@ -105,13 +105,13 @@
                 </tr>
             {/each}
         </thead>
-        <tbody class="divide-y divide-white/5">
+        <tbody>
             {#each rows as row (row.id)}
                 <tr
                     tabindex={onrowclick ? 0 : undefined}
                     aria-current={active === row.id || undefined}
                     class={[
-                        "transition-colors aria-[current]:bg-white/5",
+                        "transition-colors even:bg-white/2.5 aria-[current]:bg-white/5",
                         onrowclick &&
                             "cursor-pointer hover:bg-white/5 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent",
                     ]}
