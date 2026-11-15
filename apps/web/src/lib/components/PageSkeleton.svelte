@@ -23,9 +23,9 @@
         {#each groups as { rows, title = true }, g (g)}
             <div class="flex flex-col gap-2">
                 {#if title}<div class="flex h-7 items-center px-2"><span class="h-4 w-40 skeleton rounded-full"></span></div>{/if}
-                <div class="flex flex-col divide-y divide-white/5 rounded-3xl bg-gray-900">
+                <div class="@container flex flex-col divide-y divide-white/5 rounded-3xl bg-gray-900">
                     {#each { length: rows }, i (i)}
-                        <div class="flex flex-col gap-4 p-4 md:flex-row md:items-center">
+                        <div class="flex flex-col gap-4 p-4 @2xl:flex-row @2xl:items-center">
                             <div class="flex min-w-0 flex-1 items-center gap-4">
                                 <span class="size-10 shrink-0 skeleton rounded-xl"></span>
                                 <span class="flex flex-1 flex-col gap-2">
@@ -33,7 +33,7 @@
                                     <span class="h-4 skeleton rounded-full" style:width="{widths[(g + i) % widths.length]}%"></span>
                                 </span>
                             </div>
-                            <span class="h-12 skeleton rounded-full md:h-10 md:w-80 md:shrink-0"></span>
+                            <span class="h-12 skeleton rounded-full md:h-10 @2xl:w-80 @2xl:shrink-0"></span>
                         </div>
                     {/each}
                 </div>

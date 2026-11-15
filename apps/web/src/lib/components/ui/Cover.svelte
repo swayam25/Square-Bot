@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { imageLoad } from "#lib/image-load.ts";
     import type { ClassValue } from "svelte/elements";
     import MaterialSymbolsMusicNoteRounded from "~icons/material-symbols/music-note-rounded";
 
@@ -15,7 +16,7 @@
         draggable="false"
         referrerpolicy="no-referrer"
         loading={lazy ? "lazy" : undefined}
-        onerror={() => (broken = true)}
+        {@attach imageLoad(undefined, () => (broken = true))}
         class={["shrink-0 bg-gray-800 object-cover", className]}
     />
 {:else}

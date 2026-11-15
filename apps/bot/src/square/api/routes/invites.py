@@ -1,6 +1,5 @@
 import asyncio
 import discord
-import logging
 from litestar import Router, get, post
 from litestar.di import Provide
 from litestar.params import Parameter
@@ -20,8 +19,6 @@ from square.api.users import find_user, people_of
 from square.core import Client
 from square.db.funcs import invites as invites_db
 from typing import Annotated, Literal
-
-log = logging.getLogger(__name__)
 
 PAGE_SIZE = 25
 SortKey = Literal["total", "regular", "left", "fake", "bonus"]
@@ -104,21 +101,11 @@ async def invite_profile(
 
 
 @post("/bonus", summary="Add to or set the bonus invites of one or more people", status_code=200, responses=REFUSED)
-async def change_bonus(guild: discord.Guild, member: discord.Member, data: BonusChange) -> list[Bonus]:
+async def change_bonus(guild: discord.Guild, data: BonusChange) -> list[Bonus]:
     if data.mode == "add" and data.amount == 0:
         raise SettingError("Pick an amount other than 0.")
     user_ids = list(dict.fromkeys(int(user_id) for user_id in data.user_ids))
     bonuses = await invites_db.change_bonuses(guild.id, user_ids, data.amount, add=data.mode == "add")
-    log.info(
-        "Dashboard: %s (%s) %s %s bonus invites for %d people in %s (%s)",
-        member,
-        member.id,
-        "added" if data.mode == "add" else "set",
-        data.amount,
-        len(user_ids),
-        guild,
-        guild.id,
-    )
     return [Bonus(user_id=str(user_id), bonus=bonus) for user_id, bonus in bonuses.items()]
 
 

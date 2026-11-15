@@ -20,7 +20,7 @@
     class={[
         "flex gap-4 p-4",
         layout === "inline" && "items-center",
-        layout === "side" && "flex-col md:flex-row md:items-center",
+        layout === "side" && "flex-col @2xl:flex-row @2xl:items-center",
         layout === "below" && "flex-col",
     ]}
 >
@@ -34,6 +34,6 @@
         </div>
     </div>
     {#if children}
-        <div class={["min-w-0", layout === "side" && "md:w-80 md:shrink-0", layout === "inline" && "shrink-0"]}>{@render children()}</div>
+        <div class={["min-w-0", layout === "side" && "@2xl:w-80 @2xl:shrink-0", layout === "inline" && "shrink-0"]}>{@render children()}</div>
     {/if}
 </div>

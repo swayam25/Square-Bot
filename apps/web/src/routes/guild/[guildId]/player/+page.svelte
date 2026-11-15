@@ -5,6 +5,7 @@
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { formatCount } from "#lib/format.ts";
+    import { FrameClock } from "#lib/frame-clock.svelte.ts";
     import { trackLyrics } from "#lib/lyrics.remote.ts";
     import { mobile } from "#lib/media.ts";
     import { ripple } from "#lib/motion.ts";
@@ -39,19 +40,11 @@
     const queue = $derived(queueQuery.current);
     const online = $derived(statusQuery.connected && (statusQuery.current ?? false));
 
-    let now = $state(Date.now());
-    $effect(() => {
-        if (!player?.track || player.paused || !online) return;
-        let frame = requestAnimationFrame(function tick() {
-            now = Date.now();
-            frame = requestAnimationFrame(tick);
-        });
-        return () => cancelAnimationFrame(frame);
-    });
+    const now = new FrameClock(() => !!player?.track && !player.paused && online);
 
     const playhead = $derived.by(() => {
         if (!player?.track) return 0;
-        const elapsed = player.paused || !online ? 0 : Math.max(0, now - player.positionAt);
+        const elapsed = player.paused || !online ? 0 : Math.max(0, now.current - player.positionAt);
         const at = player.positionMs + elapsed;
         return player.track.isStream ? at : Math.min(at, player.track.lengthMs);
     });

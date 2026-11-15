@@ -1,6 +1,5 @@
 import asyncio
 import discord
-import logging
 from collections import defaultdict
 from collections.abc import Mapping
 from litestar import Request, Response, Router, delete, get, patch, post
@@ -50,13 +49,7 @@ from square.music.utils import delete_quietly
 from square.utils.invites import refresh as refresh_invites
 from square.utils.server_log import LogType
 
-log = logging.getLogger(__name__)
-
 REFUSED = {422: ResponseSpec(data_container=Problem, description="The bot refused the change", generate_examples=False)}
-
-
-def _audit(member: discord.Member, action: str) -> None:
-    log.info("Dashboard: %s (%s) %s in %s (%s)", member, member.id, action, member.guild, member.guild.id)
 
 
 def _notes(guild: discord.Guild, *notes: str | None) -> Notes:
@@ -109,9 +102,7 @@ async def get_general_settings(client: Client, guild: discord.Guild) -> GeneralS
 
 
 @patch("/general", summary="Change the auto roles or media-only channel", responses=REFUSED)
-async def update_general_settings(
-    client: Client, guild: discord.Guild, member: discord.Member, data: GeneralPatch
-) -> GeneralSettings:
+async def update_general_settings(client: Client, guild: discord.Guild, data: GeneralPatch) -> GeneralSettings:
     # Resolve and check everything first, so a refusal doesn't leave the change half applied
     humans = _givable(guild, data.autorole_ids) if data.autorole_ids is not UNSET else None
     bots = _givable(guild, data.autorole_bot_ids) if data.autorole_bot_ids is not UNSET else None
@@ -135,14 +126,12 @@ async def update_general_settings(
         await guild_db.set_autorole_users(guild.id, users)
     if channel is not UNSET:
         await guild_db.set_media_only(guild.id, channel.id if channel else None)
-    _audit(member, "updated general settings")
     return await _general(client, guild)
 
 
 @delete("/general", summary="Reset general settings", status_code=200)
-async def reset_general_settings(client: Client, guild: discord.Guild, member: discord.Member) -> GeneralSettings:
+async def reset_general_settings(client: Client, guild: discord.Guild) -> GeneralSettings:
     await _reset_general(guild)
-    _audit(member, "reset general settings")
     return await _general(client, guild)
 
 
@@ -189,23 +178,19 @@ async def get_log_settings(guild: discord.Guild) -> LogSettings:
 
 
 @patch("/logs", summary="Send log types to channels, or turn them off", responses=REFUSED)
-async def update_log_settings(
-    client: Client, guild: discord.Guild, member: discord.Member, data: LogPatch
-) -> LogSettings:
+async def update_log_settings(client: Client, guild: discord.Guild, data: LogPatch) -> LogSettings:
     changes = {
         log_type: resolve.text_channel(guild, channel_id)
         for log_type in LogType
         if (channel_id := getattr(data.channels, log_type.key)) is not UNSET
     }
     await _set_log_channels(client, guild, changes)
-    _audit(member, "updated log channels")
     return _logs(guild)
 
 
 @delete("/logs", summary="Turn every log off", status_code=200)
-async def reset_log_settings(client: Client, guild: discord.Guild, member: discord.Member) -> LogSettings:
+async def reset_log_settings(client: Client, guild: discord.Guild) -> LogSettings:
     await _reset_logs(client, guild)
-    _audit(member, "reset log channels")
     return _logs(guild)
 
 
@@ -224,24 +209,21 @@ async def get_invite_settings(guild: discord.Guild) -> InviteSettings:
 
 
 @patch("/invites", summary="Change the fake account age", responses=REFUSED)
-async def update_invite_settings(guild: discord.Guild, member: discord.Member, data: InvitePatch) -> InviteSettings:
+async def update_invite_settings(guild: discord.Guild, data: InvitePatch) -> InviteSettings:
     if data.fake_days is not UNSET:
         await invites_db.set_fake_days(guild.id, data.fake_days)
-    _audit(member, "updated invite settings")
     return _invites(guild)
 
 
 @delete("/invites", summary="Reset the fake account age", status_code=200)
-async def reset_invite_settings(guild: discord.Guild, member: discord.Member) -> InviteSettings:
+async def reset_invite_settings(guild: discord.Guild) -> InviteSettings:
     await _reset_invites(guild)
-    _audit(member, "reset invite settings")
     return _invites(guild)
 
 
 @delete("/invites/counts", summary="Reset everyone's invite counts", status_code=200)
-async def reset_invite_counts(guild: discord.Guild, member: discord.Member) -> InviteSettings:
+async def reset_invite_counts(guild: discord.Guild) -> InviteSettings:
     await invites_db.reset_invites(guild.id)
-    _audit(member, "reset invite counts")
     return _invites(guild)
 
 
@@ -304,9 +286,7 @@ async def get_music_settings(guild: discord.Guild) -> MusicSettings:
 
 
 @patch("/music", summary="Change the 24/7 channel or DJ settings", responses=REFUSED)
-async def update_music_settings(
-    client: Client, guild: discord.Guild, member: discord.Member, data: MusicPatch
-) -> MusicSettings:
+async def update_music_settings(client: Client, guild: discord.Guild, data: MusicPatch) -> MusicSettings:
     # Resolve and check everything first, so a refusal doesn't leave the change half applied
     stay_channel = resolve.voice_channel(guild, data.stay_channel_id) if data.stay_channel_id is not UNSET else UNSET
     dj_roles = resolve.roles(guild, data.dj_role_ids) if data.dj_role_ids is not UNSET else UNSET
@@ -330,19 +310,17 @@ async def update_music_settings(
             await stay.join(client, guild.id)
         except Exception:
             stay.schedule_rejoin(client, guild.id)
-    _audit(member, "updated music settings")
     return _music(guild)
 
 
 @delete("/music", summary="Reset music settings, deleting the request channel", status_code=200)
 async def reset_music_settings(client: Client, guild: discord.Guild, member: discord.Member) -> Notes:
     note = await _reset_music(client, guild, member)
-    _audit(member, "reset music settings")
     return _notes(guild, note)
 
 
 @post("/music/request-channel", summary="Create the music request channel", responses=REFUSED)
-async def create_request_channel(client: Client, guild: discord.Guild, member: discord.Member) -> MusicSettings:
+async def create_request_channel(client: Client, guild: discord.Guild) -> MusicSettings:
     """Creates a channel where anything typed is queued, with the player pinned."""
     if channel := _channel(guild, request.channel_id(guild.id)):
         raise SettingError(f"{channel.mention} is already the music request channel.")
@@ -379,14 +357,12 @@ async def create_request_channel(client: Client, guild: discord.Guild, member: d
     await request.bind(guild.id, channel.id)
     request.prime(client, guild.id)
     await render_player(client, guild.id, wait=True)
-    _audit(member, "created the music request channel")
     return _music(guild)
 
 
 @delete("/music/request-channel", summary="Delete the music request channel", status_code=200)
 async def remove_request_channel(client: Client, guild: discord.Guild, member: discord.Member) -> Notes:
     note = await _remove_request_channel(client, guild, member)
-    _audit(member, "removed the music request channel")
     return _notes(guild, note)
 
 
@@ -442,7 +418,7 @@ async def get_ticket_settings(guild: discord.Guild) -> TicketSettings:
 
 
 @patch("/tickets", summary="Change ticket settings", responses=REFUSED)
-async def update_ticket_settings(guild: discord.Guild, member: discord.Member, data: TicketPatch) -> TicketSettings:
+async def update_ticket_settings(guild: discord.Guild, data: TicketPatch) -> TicketSettings:
     settings = cache.get(guild.id)
     if any(
         value is not UNSET for value in (data.category_id, data.support_role_ids, data.max_open, data.confirm_close)
@@ -467,19 +443,17 @@ async def update_ticket_settings(guild: discord.Guild, member: discord.Member, d
             max_open=data.max_open if data.max_open is not UNSET else settings.ticket_max_open,
             confirm_close=data.confirm_close if data.confirm_close is not UNSET else settings.ticket_confirm_close,
         )
-    _audit(member, "updated ticket settings")
     return _tickets(guild)
 
 
 @delete("/tickets", summary="Reset ticket settings, removing the panel", status_code=200)
 async def reset_ticket_settings(guild: discord.Guild, member: discord.Member) -> Notes:
     note = await _reset_tickets(guild, member)
-    _audit(member, "reset ticket settings")
     return _notes(guild, note)
 
 
 @post("/tickets/panel", summary="Create the ticket panel channel", responses=REFUSED)
-async def create_ticket_panel(guild: discord.Guild, member: discord.Member) -> TicketSettings:
+async def create_ticket_panel(guild: discord.Guild) -> TicketSettings:
     """Creates a read-only channel holding the "Open a ticket" panel, kept up to date like the music card."""
     if channel := _ticket_panel_channel(guild):
         raise SettingError(f"{channel.mention} already holds the ticket panel.")
@@ -509,14 +483,12 @@ async def create_ticket_panel(guild: discord.Guild, member: discord.Member) -> T
         await post_panel(channel)
     except discord.HTTPException as exc:
         raise SettingError(f"I couldn't create the ticket channel: {exc.text or exc}") from exc
-    _audit(member, "created the ticket panel")
     return _tickets(guild)
 
 
 @delete("/tickets/panel", summary="Remove the ticket panel", status_code=200)
 async def remove_ticket_panel(guild: discord.Guild, member: discord.Member) -> Notes:
     note = await _remove_ticket_panel(guild, member)
-    _audit(member, "removed the ticket panel")
     return _notes(guild, note)
 
 
@@ -530,12 +502,11 @@ async def get_module_settings(guild: discord.Guild) -> ModuleSettings:
 
 
 @patch("/modules", summary="Turn modules on or off")
-async def update_module_settings(guild: discord.Guild, member: discord.Member, data: ModulePatch) -> ModuleSettings:
+async def update_module_settings(guild: discord.Guild, data: ModulePatch) -> ModuleSettings:
     for module in Module:
         if (on := getattr(data, module.value)) is not UNSET:
             await guild_db.set_module(guild.id, module, on)
     await refresh_invites(guild)
-    _audit(member, "updated modules")
     return _modules(guild)
 
 
@@ -551,7 +522,6 @@ async def reset_all_settings(client: Client, guild: discord.Guild, member: disco
     request.forget(guild.id)
     stay.forget(guild.id)
     client.dispatch("log_channels_update", guild.id)
-    _audit(member, "reset every setting")
     return _notes(guild, *notes)
 
 

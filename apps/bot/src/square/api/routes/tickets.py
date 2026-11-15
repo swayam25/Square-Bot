@@ -1,5 +1,4 @@
 import discord
-import logging
 from itertools import islice
 from litestar import Router, delete, get, post
 from litestar.di import Provide
@@ -17,8 +16,6 @@ from square.db.funcs import tickets as tickets_db
 from square.db.schema import TicketTable
 from tortoise.expressions import Q
 from typing import Annotated, Literal
-
-log = logging.getLogger(__name__)
 
 PAGE_SIZE = 25
 PEOPLE_SHOWN = 100
@@ -96,10 +93,6 @@ def _live_channel(guild: discord.Guild, ticket: TicketTable) -> discord.TextChan
     return channel
 
 
-def _audit(member: discord.Member, action: str, ticket: TicketTable) -> None:
-    log.info("Dashboard: %s (%s) %s ticket %s in %s", member, member.id, action, ticket.number, member.guild.id)
-
-
 @get("/", summary="Tickets, newest first, filtered by status and search")
 async def list_tickets(
     client: Client,
@@ -144,17 +137,15 @@ async def close_ticket(client: Client, guild: discord.Guild, member: discord.Mem
     if ticket.status != "open":
         raise SettingError("That ticket is already closed.")
     await actions.close(client, guild, ticket, _live_channel(guild, ticket), member)
-    _audit(member, "closed", ticket)
     return await _detail(client, guild, ticket)
 
 
 @post("/{number:int}/reopen", summary="Reopen a closed ticket", status_code=200, responses=REFUSED)
-async def reopen_ticket(client: Client, guild: discord.Guild, member: discord.Member, number: Number) -> TicketDetail:
+async def reopen_ticket(client: Client, guild: discord.Guild, number: Number) -> TicketDetail:
     ticket = await _ticket(guild, number)
     if ticket.status != "closed":
         raise SettingError("Only a closed ticket can be reopened.")
     await actions.reopen(client, guild, ticket, _live_channel(guild, ticket))
-    _audit(member, "reopened", ticket)
     return await _detail(client, guild, ticket)
 
 
@@ -166,7 +157,6 @@ async def delete_ticket(client: Client, guild: discord.Guild, member: discord.Me
     if ticket.status == "deleted":
         raise SettingError("That ticket is already deleted.")
     await actions.delete(client, guild, ticket, _live_channel(guild, ticket), member)
-    _audit(member, "deleted", ticket)
     return await _detail(client, guild, ticket)
 
 
@@ -176,23 +166,19 @@ async def delete_ticket(client: Client, guild: discord.Guild, member: discord.Me
     status_code=200,
     responses=REFUSED,
 )
-async def purge_ticket(guild: discord.Guild, member: discord.Member, number: Number) -> Purged:
+async def purge_ticket(guild: discord.Guild, number: Number) -> Purged:
     ticket = await _ticket(guild, number)
     if _channel(guild, ticket):
         raise SettingError("That ticket still has its channel. Delete the ticket first.")
     await tickets_db.purge_ticket(ticket)
     await files.purge(guild.id, [ticket.id])
-    _audit(member, "permanently removed", ticket)
     return Purged(removed=1)
 
 
 @delete("/deleted", summary="Remove every deleted ticket for good, with their transcripts", status_code=200)
-async def purge_deleted_tickets(guild: discord.Guild, member: discord.Member) -> Purged:
+async def purge_deleted_tickets(guild: discord.Guild) -> Purged:
     removed = await tickets_db.purge_deleted_tickets(guild.id)
     await files.purge(guild.id, removed)
-    log.info(
-        "Dashboard: %s (%s) permanently removed %s deleted tickets in %s", member, member.id, len(removed), guild.id
-    )
     return Purged(removed=len(removed))
 
 

@@ -5,6 +5,8 @@
     import DiscordTooltip from "#lib/components/discord/DiscordTooltip.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import { setMessageAuthor } from "#lib/discord/context.ts";
+    import { clock, fullTime } from "#lib/discord/markdown.ts";
+    import { now } from "#lib/discord/now.svelte.ts";
     import type { Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
     import MaterialSymbolsImageRounded from "~icons/material-symbols/image-rounded";
@@ -17,7 +19,7 @@
         avatar,
         color,
         bot = true,
-        time = "9:04 PM",
+        time,
         timeTitle,
         compact = false,
         command,
@@ -56,6 +58,9 @@
         children: Snippet;
     } = $props();
 
+    const shownTime = $derived(time ?? clock(now.current));
+    const shownTitle = $derived(timeTitle ?? (time ? undefined : fullTime(now.current)));
+
     setMessageAuthor({
         get name() {
             return name;
@@ -64,7 +69,7 @@
             return avatar;
         },
         get time() {
-            return time;
+            return shownTime;
         },
     });
 
@@ -87,8 +92,8 @@
     ]}
 >
     {#if compact}
-        <DiscordTooltip lazy content={timeTitle} class="absolute top-0.5 left-0 w-16 justify-end pr-2 opacity-0 group-hover/message:opacity-100">
-            <time class="text-[11px] leading-5.5 text-dc-muted">{time}</time>
+        <DiscordTooltip lazy content={shownTitle} class="absolute top-0.5 left-0 w-16 justify-end pr-2 opacity-0 group-hover/message:opacity-100">
+            <time class="text-[11px] leading-5.5 text-dc-muted">{shownTime}</time>
         </DiscordTooltip>
     {:else}
         {#if command}
@@ -145,7 +150,7 @@
                     >APP</span
                 >
             {/if}
-            <DiscordTooltip lazy content={timeTitle} class="ml-1"><time class="text-xs font-medium text-dc-muted">{time}</time></DiscordTooltip>
+            <DiscordTooltip lazy content={shownTitle} class="ml-1"><time class="text-xs font-medium text-dc-muted">{shownTime}</time></DiscordTooltip>
         </div>
     {/if}
     {@render children()}

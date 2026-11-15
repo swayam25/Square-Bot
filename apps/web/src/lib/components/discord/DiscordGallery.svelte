@@ -2,6 +2,7 @@
     import DiscordDownload from "#lib/components/discord/DiscordDownload.svelte";
     import DiscordVideo from "#lib/components/discord/DiscordVideo.svelte";
     import { getDiscord, getMessageAuthor, type ViewerMedia } from "#lib/discord/context.ts";
+    import { imageLoad } from "#lib/image-load.ts";
     import type { TranscriptFile } from "@square/api-client";
     import MaterialSymbolsImageNotSupportedRounded from "~icons/material-symbols/image-not-supported-rounded";
     import MaterialSymbolsPlayArrowRounded from "~icons/material-symbols/play-arrow-rounded";
@@ -83,7 +84,7 @@
                             height={file.height}
                             loading="lazy"
                             class={[shape, "bg-dc-surface"]}
-                            onerror={() => (broken[index] = true)}
+                            {@attach imageLoad(undefined, () => (broken[index] = true))}
                         />
                     {/if}
                 </button>
@@ -98,7 +99,7 @@
                     height={file.height}
                     loading="lazy"
                     class={[shape, "bg-dc-surface"]}
-                    onerror={() => (broken[index] = true)}
+                    {@attach imageLoad(undefined, () => (broken[index] = true))}
                 />
             {/if}
             <DiscordDownload {src} name={file.name} />

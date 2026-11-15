@@ -1,5 +1,6 @@
 <script lang="ts">
     import { frames } from "#lib/animated.ts";
+    import { imageLoad } from "#lib/image-load.ts";
     import type { Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
 
@@ -27,7 +28,11 @@
     // A cached picture can finish before the load listener exists, so check once it's in the page and on every new src
     function settle(img: HTMLImageElement) {
         void still;
-        status = img.complete ? (img.naturalWidth ? "loaded" : "error") : "loading";
+        status = "loading";
+        return imageLoad(
+            () => (status = "loaded"),
+            () => (status = "error"),
+        )(img);
     }
 </script>
 
@@ -41,15 +46,7 @@
         {@render fallback({ loading: !!still && status === "loading" })}
     {/if}
     {#if still}
-        <img
-            src={still}
-            {alt}
-            hidden={status !== "loaded"}
-            onload={() => (status = "loaded")}
-            onerror={() => (status = "error")}
-            {@attach settle}
-            class="size-full animate-fade-in object-cover"
-        />
+        <img src={still} {alt} hidden={status !== "loaded"} {@attach settle} class="size-full animate-fade-in object-cover" />
     {/if}
     {#if playing && status === "loaded"}
         <img src={parts!.moving} alt="" class="absolute inset-0 size-full object-cover" />

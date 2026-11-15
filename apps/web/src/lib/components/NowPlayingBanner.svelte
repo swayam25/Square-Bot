@@ -4,6 +4,7 @@
     import Shape from "#lib/components/ui/Shape.svelte";
     import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
     import { time } from "#lib/format.ts";
+    import { FrameClock } from "#lib/frame-clock.svelte.ts";
     import { ripple } from "#lib/motion.ts";
     import * as music from "#lib/music.remote.ts";
     import MaterialSymbolsArrowForwardRounded from "~icons/material-symbols/arrow-forward-rounded";
@@ -15,19 +16,11 @@
     const track = $derived(player?.track ?? null);
     const playing = $derived(!!track && !player?.paused);
 
-    let now = $state(Date.now());
-    $effect(() => {
-        if (!playing) return;
-        let frame = requestAnimationFrame(function tick() {
-            now = Date.now();
-            frame = requestAnimationFrame(tick);
-        });
-        return () => cancelAnimationFrame(frame);
-    });
+    const now = new FrameClock(() => playing);
 
     const position = $derived.by(() => {
         if (!player || !track) return 0;
-        const at = player.positionMs + (player.paused ? 0 : Math.max(0, now - player.positionAt));
+        const at = player.positionMs + (player.paused ? 0 : Math.max(0, now.current - player.positionAt));
         return track.isStream ? at : Math.min(at, track.lengthMs);
     });
 </script>
