@@ -24,8 +24,10 @@
     import { errorMessage } from "#lib/errors.ts";
     import { day, formatCount } from "#lib/format.ts";
     import * as invites from "#lib/invites.remote.ts";
+    import { refetch } from "#lib/refetch.ts";
     import * as settings from "#lib/settings.remote.ts";
     import { toast } from "#lib/toast.svelte.ts";
+    import { afterNavigate } from "$app/navigation";
     import type { InviteEntry, Person } from "@square/api-client";
     import { renderSnippet, type RowSelectionState, type SortingState } from "@tanstack/svelte-table";
     import MaterialSymbolsAddCircleRounded from "~icons/material-symbols/add-circle-rounded";
@@ -62,6 +64,7 @@
     const sort = $derived((sorting[0]?.id ?? "total") as SortKey);
     const order = $derived(sorting[0] && !sorting[0].desc ? "asc" : "desc");
     const boardQuery = $derived(invites.inviteLeaderboard({ guild, page, sort, order }));
+    const revisit = () => refetch(() => boardQuery);
     const board = $derived(boardQuery.current);
 
     let fakeDays = $derived<number | null>(saved.fakeDays);
@@ -109,16 +112,22 @@
         Number.isInteger(amount) && Math.abs(amount!) <= MAX_BONUS && (mode === "set" || amount !== 0);
 
     async function giveBonus(userIds: string[], amount: number, mode: Mode) {
-        await invites.changeBonus({ guild, userIds, amount, mode });
-        await Promise.all([boardQuery.refresh(), profileQuery?.refresh()]);
+        await invites.changeBonus({ guild, userIds, amount, mode }).updates(boardQuery, ...(profileQuery ? [profileQuery] : []));
     }
 
-    const open = (person: Person) => details.show("Invites", profilePanel, person.id);
+    function open(person: Person) {
+        details.show("Invites", profilePanel, person.id);
+        refetch(() => profileQuery);
+    }
 
     const BULK = "bonus";
     const profileKey = $derived(details.key && details.key !== BULK ? details.key : null);
     const profileQuery = $derived(profileKey ? invites.inviteProfile({ guild, user: profileKey }) : null);
     const profile = $derived(profileQuery?.current);
+    afterNavigate(() => {
+        refetch(() => boardQuery);
+        refetch(() => profileQuery);
+    });
     let panelMode = $state<Mode>("add");
     let panelAmount = $state<number | null>(null);
     let panelBusy = $state(false);
@@ -424,6 +433,7 @@
                                 (next) => {
                                     sorting = next;
                                     page = 1;
+                                    revisit();
                                 }
                             }
                             selectable
@@ -432,7 +442,14 @@
                             onrowclick={(entry) => open(entry.user)}
                         />
                         <div class="flex items-center justify-end gap-2 empty:hidden">
-                            <Pager page={board.page} pages={board.pages} onpage={(next) => (page = next)} />
+                            <Pager
+                                page={board.page}
+                                pages={board.pages}
+                                onpage={(next) => {
+                                    page = next;
+                                    revisit();
+                                }}
+                            />
                         </div>
                     {/if}
                 </div>
@@ -478,11 +495,8 @@
                                 done="Invite counts reset"
                                 description="Every member's invites and bonus invites go back to 0. This can't be undone."
                                 label="Reset counts"
-                                reset={() => settings.resetInviteCounts(guild)}
-                                apply={(next) => {
-                                    savedQuery.set(next);
-                                    boardQuery.refresh();
-                                }}
+                                reset={() => settings.resetInviteCounts(guild).updates(boardQuery)}
+                                apply={(next) => savedQuery.set(next)}
                             />
                         </SettingRow>
                     </SettingGroup>

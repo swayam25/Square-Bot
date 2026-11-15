@@ -22,8 +22,6 @@ log = logging.getLogger(__name__)
 
 PAGE_SIZE = 25
 PEOPLE_SHOWN = 100
-# A transcript of a ticket that's still there is read again once the saved one is this old
-FRESH_FOR_MS = 60_000
 Number = Annotated[int, Parameter(ge=1, le=10_000_000)]
 STATUSES = {"open": ["open"], "closed": ["closed"], "deleted": ["deleted"], "all": ["open", "closed", "deleted"]}
 
@@ -223,15 +221,10 @@ async def ticket_transcript(
     client: Client, guild: discord.Guild, member: discord.Member, number: Number
 ) -> TicketTranscript:
     ticket = await _readable(guild, member, number)
-    saved = await snapshot.load(ticket)
-    channel = _channel(guild, ticket)
-    stale_before = round(discord.utils.utcnow().timestamp() * 1000) - FRESH_FOR_MS
-    if channel and (saved is None or saved[1] < stale_before):
-        if await actions.save_transcript(guild, channel, ticket, unless_saved_after=stale_before):
-            saved = await snapshot.load(ticket)
+    saved = await snapshot.load(ticket) if ticket.status != "open" else None
     return TicketTranscript(
         ticket=await _detail(client, guild, ticket),
-        live=channel is not None,
+        live=_channel(guild, ticket) is not None,
         transcript=saved[0] if saved else None,
     )
 

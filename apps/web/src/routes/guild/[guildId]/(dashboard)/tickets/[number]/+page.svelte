@@ -10,15 +10,16 @@
     import PersonRow from "#lib/components/ui/PersonRow.svelte";
     import { fullTime } from "#lib/discord/markdown.ts";
     import { dateTime, plural } from "#lib/format.ts";
+    import { refetch } from "#lib/refetch.ts";
     import * as tickets from "#lib/tickets.remote.ts";
     import { statusName, statusTone } from "#lib/tickets.ts";
+    import { afterNavigate } from "$app/navigation";
     import { page } from "$app/state";
     import type { TranscriptFile } from "@square/api-client";
     import MaterialSymbolsArrowBackRounded from "~icons/material-symbols/arrow-back-rounded";
     import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
     import MaterialSymbolsDescriptionRounded from "~icons/material-symbols/description-rounded";
     import MaterialSymbolsOpenInNewRounded from "~icons/material-symbols/open-in-new-rounded";
-    import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
     import type { PageProps } from "./$types";
     import TranscriptSkeleton from "./TranscriptSkeleton.svelte";
 
@@ -28,6 +29,7 @@
     const number = $derived(Number(page.params.number));
     const valid = $derived(Number.isInteger(number) && number >= 1 && number <= 10_000_000);
     const query = $derived(valid ? tickets.ticketTranscript({ guild, number }) : null);
+    afterNavigate(() => refetch(() => query));
     const loaded = $derived(query?.current);
     const ticket = $derived(loaded?.ticket);
     const transcript = $derived(loaded?.transcript);
@@ -45,16 +47,6 @@
     function fileUrl(file: TranscriptFile) {
         if (file.stored && file.id) return `/guild/${guild}/tickets/${number}/files/${file.id}`;
         return loaded?.live || !EXPIRING.test(file.url) ? file.url : null;
-    }
-
-    let refreshing = $state(false);
-    async function refresh() {
-        refreshing = true;
-        try {
-            await query?.refresh();
-        } finally {
-            refreshing = false;
-        }
     }
 </script>
 
@@ -122,28 +114,22 @@
             <DiscordTranscript {transcript} topic={ticket.reason} {fileUrl} footer={people}>
                 {#snippet aside()}
                     <Chip tone={statusTone[ticket.status]} size="sm">{statusName[ticket.status]}</Chip>
-                    {#if loaded?.live}
-                        <DiscordTooltip content="Load new messages">
-                            <button
-                                type="button"
-                                disabled={refreshing}
-                                class="flex size-8 cursor-pointer items-center justify-center rounded-full text-dc-icon hover:bg-white/10 hover:text-dc-strong disabled:opacity-50"
-                                onclick={refresh}
-                            >
-                                <MaterialSymbolsRefreshRounded class={["size-5", refreshing && "animate-spin"]} />
-                            </button>
-                        </DiscordTooltip>
-                    {/if}
                 {/snippet}
             </DiscordTranscript>
         {:else}
-            {#if loaded?.live}
+            {#if ticket.status === "open"}
                 <EmptyState
-                    tone="danger"
                     card
-                    title="Couldn't read the messages"
-                    text="Discord didn't hand this ticket's messages over just now."
-                    retry={() => query?.refresh()}
+                    icon={MaterialSymbolsDescriptionRounded}
+                    title="No transcript yet"
+                    text="The transcript is saved when the ticket closes."
+                />
+            {:else if loaded?.live}
+                <EmptyState
+                    card
+                    icon={MaterialSymbolsDescriptionRounded}
+                    title="No transcript"
+                    text="Discord didn't hand the messages over when this ticket closed. Reopen and close it to try again."
                 />
             {:else}
                 <EmptyState

@@ -219,6 +219,7 @@ class _Builder:
     def user(self, user: discord.User | discord.Member) -> str:
         key = str(user.id)
         if key not in self.users:
+            user = self.guild.get_member(user.id) or user
             self.users[key] = TranscriptUser(
                 name=user.display_name,
                 avatar=user.display_avatar.replace(size=128, static_format="webp").url,
@@ -452,21 +453,11 @@ async def _previews(
     return previews
 
 
-async def save(
-    guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable, *, unless_saved_after: int | None = None
-) -> None:
-    """Reads the channel and saves it as the ticket's transcript, replacing the one saved before.
-
-    With `unless_saved_after` (Unix ms), a save that finished after then counts, so viewers who asked at the same
-    moment share one read of the channel instead of each reading thousands of messages.
-    """
+async def save(guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable) -> None:
+    """Reads the channel and saves it as the ticket's transcript, replacing the one saved before."""
     # Held in a local, so the weak dict keeps the lock for as long as anyone is using or waiting on it
     lock = _locks.get(ticket.id) or _locks.setdefault(ticket.id, asyncio.Lock())
     async with lock:
-        if unless_saved_after is not None:
-            row = await db.fetch_transcript(ticket)
-            if row is not None and _ms(row.saved_at) > unless_saved_after:
-                return
         messages = [message async for message in channel.history(limit=MESSAGE_LIMIT)]
         messages.sort(key=lambda message: message.id)
         builder = _Builder(guild, await files.copy(guild.id, ticket.id, messages), await _previews(channel, messages))

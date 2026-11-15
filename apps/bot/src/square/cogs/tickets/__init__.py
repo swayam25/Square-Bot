@@ -52,12 +52,6 @@ class Tickets(
         else:
             await interaction.response.send_message(view=view, ephemeral=True)
 
-    @staticmethod
-    async def _saved(guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable) -> DesignerView:
-        if await actions.save_transcript(guild, channel, ticket):
-            return cards.transcript_reply(ticket, guild.id)
-        return error_view("I couldn't read this channel's messages. Try again in a moment.")
-
     async def _with_loading(
         self,
         interaction: discord.Interaction,
@@ -180,20 +174,6 @@ class Tickets(
                     await interaction.edit_original_response(view=success_view(f"Closed ticket {cards.label(ticket)}."))
 
                 await self._with_loading(interaction, confirm_close, "Closing...", close_confirmed)
-            return
-        if action == "transcript":
-            if not support and member.id != ticket.opener_id:
-                await self._reply(interaction, error_view("Only staff or the opener can get the transcript."))
-                return
-            if ticket.status == "open":
-                await self._reply(interaction, error_view("Close the ticket first to get its transcript."))
-                return
-
-            async def send_transcript() -> None:
-                await self._reply(interaction, await self._saved(guild, channel, ticket))
-                await interaction.edit_original_response(view=card())
-
-            await self._with_loading(interaction, card, "Saving...", send_transcript)
             return
         if not support:
             await self._reply(interaction, error_view("Only staff can do that."))
@@ -394,15 +374,6 @@ class Tickets(
         if found := await self._ticket_here(ctx, staff=True, still_open="Reopen the ticket first to remove members."):
             _, by, channel, ticket = found
             await ctx.respond(view=success_view(await actions.remove_members(ticket, channel, [member], by)))
-
-    @ticket.command(name="transcript")
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    async def transcript_ticket(self, ctx: discord.ApplicationContext):
-        """Saves this closed ticket's transcript and links to it on the dashboard."""
-        if found := await self._ticket_here(ctx, staff=False, closed="Close the ticket first to get its transcript."):
-            guild, _, channel, ticket = found
-            await ctx.defer(ephemeral=True)
-            await ctx.respond(view=await self._saved(guild, channel, ticket), ephemeral=True)
 
 
 def setup(client: Client):

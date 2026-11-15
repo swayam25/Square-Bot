@@ -18,11 +18,14 @@
     import { getDetails } from "#lib/details.svelte.ts";
     import { errorMessage } from "#lib/errors.ts";
     import { dateTime, day, formatCount, plural } from "#lib/format.ts";
+    import { refetch } from "#lib/refetch.ts";
     import * as tickets from "#lib/tickets.remote.ts";
     import { statusName, statusTone } from "#lib/tickets.ts";
     import { toast } from "#lib/toast.svelte.ts";
+    import { afterNavigate } from "$app/navigation";
     import type { TicketDetail, TicketEntry } from "@square/api-client";
     import { renderSnippet, type SortingState } from "@tanstack/svelte-table";
+    import { untrack } from "svelte";
     import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
     import MaterialSymbolsDeleteForeverRounded from "~icons/material-symbols/delete-forever-rounded";
     import MaterialSymbolsDeleteRounded from "~icons/material-symbols/delete-rounded";
@@ -48,13 +51,16 @@
     let sorting = $state<SortingState>([{ id: "number", desc: true }]);
     const order = $derived(sorting[0]?.desc === false ? "asc" : "desc");
 
-    $effect.pre(() => {
-        void q;
-        page = 1;
-    });
-
     const listQuery = $derived(tickets.ticketList({ guild, status, q, order, page }));
     const list = $derived(listQuery.current);
+    const revisit = () => refetch(() => listQuery);
+
+    let searched: string | undefined;
+    $effect.pre(() => {
+        page = 1;
+        if (searched !== undefined && searched !== q) untrack(revisit);
+        searched = q;
+    });
 
     $effect(() => {
         if (list) open = list.open;
@@ -118,19 +124,25 @@
     const openNumber = $derived(details.key?.startsWith(KEY_PREFIX) ? Number(details.key.slice(KEY_PREFIX.length)) : null);
     const detailQuery = $derived(openNumber ? tickets.ticketDetail({ guild, number: openNumber }) : null);
     const detail = $derived(detailQuery?.current);
+    afterNavigate(() => {
+        refetch(() => listQuery);
+        refetch(() => detailQuery);
+    });
 
-    const show = (entry: TicketEntry) => details.show(`Ticket ${entry.label}`, ticketPanel, `${KEY_PREFIX}${entry.number}`);
+    function show(entry: TicketEntry) {
+        details.show(`Ticket ${entry.label}`, ticketPanel, `${KEY_PREFIX}${entry.number}`);
+        refetch(() => detailQuery);
+    }
 
     function applied(next: TicketDetail) {
         detailQuery?.set(next);
-        listQuery.refresh();
     }
 
     let reopening = $state(false);
     async function reopen(number: number) {
         reopening = true;
         try {
-            applied(await tickets.reopenTicket({ guild, number }));
+            applied(await tickets.reopenTicket({ guild, number }).updates(listQuery));
             toast.success("Ticket reopened");
         } catch (err) {
             toast.error(errorMessage(err, "Square couldn't reopen it. Try again."));
@@ -154,7 +166,7 @@
             description: "Its transcript and saved pictures go with it. This can't be undone.",
             label: "Remove for good",
             done: `Ticket ${entry.label} removed`,
-            run: () => tickets.purgeTicket({ guild, number: entry.number }),
+            run: () => tickets.purgeTicket({ guild, number: entry.number }).updates(listQuery),
             number: entry.number,
         });
 
@@ -164,12 +176,11 @@
             description: "Every deleted ticket goes, with its transcript and saved pictures. This can't be undone.",
             label: "Remove all",
             done: "Deleted tickets removed",
-            run: () => tickets.purgeDeletedTickets(guild),
+            run: () => tickets.purgeDeletedTickets(guild).updates(listQuery),
         });
 
     function purged() {
         if (purge.number === undefined || purge.number === openNumber) details.close();
-        listQuery.refresh();
     }
 </script>
 
@@ -297,11 +308,9 @@
             {/if}
 
             <div class="flex flex-col gap-2">
-                {#if detail.messages !== null || detail.channelId}
+                {#if detail.status !== "open" && detail.messages !== null}
                     <Button href="/guild/{guild}/tickets/{detail.number}">
-                        <MaterialSymbolsDescriptionRounded />Show transcript{#if detail.messages !== null}<span class="text-gray-400"
-                                >· {plural(detail.messages, "message")}</span
-                            >{/if}
+                        <MaterialSymbolsDescriptionRounded />Show transcript<span class="text-gray-400">· {plural(detail.messages, "message")}</span>
                     </Button>
                 {/if}
                 {#if detail.channelId}
@@ -321,7 +330,7 @@
                             busy="Closing…"
                             done="Ticket closed"
                             icon={MaterialSymbolsLockRounded}
-                            reset={() => tickets.closeTicket({ guild, number: detail.number })}
+                            reset={() => tickets.closeTicket({ guild, number: detail.number }).updates(listQuery)}
                             apply={applied}
                         />
                     {:else}
@@ -337,7 +346,7 @@
                         done="Ticket deleted"
                         variant="danger"
                         icon={MaterialSymbolsDeleteRounded}
-                        reset={() => tickets.deleteTicket({ guild, number: detail.number })}
+                        reset={() => tickets.deleteTicket({ guild, number: detail.number }).updates(listQuery)}
                         apply={applied}
                     />
                 </div>
@@ -361,6 +370,7 @@
                 (next) => {
                     status = next;
                     page = 1;
+                    revisit();
                 }
             }
         />
@@ -411,6 +421,7 @@
                 (next) => {
                     sorting = next;
                     page = 1;
+                    revisit();
                 }
             }
             active={openNumber ? String(openNumber) : null}
@@ -418,7 +429,14 @@
         />
         <div class="flex items-center justify-end gap-2">
             <span class="text-sm text-gray-400">{formatCount(list.total)} {list.total === 1 ? "ticket" : "tickets"}</span>
-            <Pager page={list.page} pages={list.pages} onpage={(next) => (page = next)} />
+            <Pager
+                page={list.page}
+                pages={list.pages}
+                onpage={(next) => {
+                    page = next;
+                    revisit();
+                }}
+            />
         </div>
     {/if}
 </div>

@@ -1,5 +1,6 @@
+import { inviteLeaderboard } from "#lib/invites.remote.ts";
 import { forGuild, read } from "#lib/server/bot.ts";
-import { command, query } from "$app/server";
+import { command, query, requested } from "$app/server";
 import * as sdk from "@square/api-client";
 import * as schema from "@square/api-client/zod";
 import { z } from "zod";
@@ -36,7 +37,11 @@ export const updateInvites = command(schema.zInvitePatch.extend({ guild: guildId
 });
 
 export const resetInvites = command(guildId, (guild) => read(sdk.resetInviteSettings(forGuild(guild))));
-export const resetInviteCounts = command(guildId, (guild) => read(sdk.resetInviteCounts(forGuild(guild))));
+export const resetInviteCounts = command(guildId, async (guild) => {
+    const reset = await read(sdk.resetInviteCounts(forGuild(guild)));
+    await requested(inviteLeaderboard, 1).refreshAll();
+    return reset;
+});
 
 export const musicSettings = query(guildId, (guild) => read(sdk.getMusicSettings(forGuild(guild))));
 
@@ -52,11 +57,13 @@ export const createRequestChannel = command(guildId, async (guild) => {
 // These run from a confirm dialog, so they return the fresh settings instead of setting the query (see ResetButton)
 export const removeRequestChannel = command(guildId, async (guild) => {
     const { notes } = await read(sdk.removeRequestChannel(forGuild(guild)));
+    await guildChannels(guild).refresh();
     return { notes, settings: await read(sdk.getMusicSettings(forGuild(guild))) };
 });
 
 export const resetMusic = command(guildId, async (guild) => {
     const { notes } = await read(sdk.resetMusicSettings(forGuild(guild)));
+    await guildChannels(guild).refresh();
     return { notes, settings: await read(sdk.getMusicSettings(forGuild(guild))) };
 });
 
@@ -73,11 +80,13 @@ export const createTicketPanel = command(guildId, async (guild) => {
 
 export const removeTicketPanel = command(guildId, async (guild) => {
     const { notes } = await read(sdk.removeTicketPanel(forGuild(guild)));
+    await guildChannels(guild).refresh();
     return { notes, settings: await read(sdk.getTicketSettings(forGuild(guild))) };
 });
 
 export const resetTickets = command(guildId, async (guild) => {
     const { notes } = await read(sdk.resetTicketSettings(forGuild(guild)));
+    await guildChannels(guild).refresh();
     return { notes, settings: await read(sdk.getTicketSettings(forGuild(guild))) };
 });
 

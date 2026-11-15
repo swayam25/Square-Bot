@@ -156,12 +156,10 @@ async def remove_members(
     return f"Removed {', '.join(member.mention for member in removable)} from this ticket."
 
 
-async def save_transcript(
-    guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable, *, unless_saved_after: int | None = None
-) -> bool:
+async def save_transcript(guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable) -> bool:
     """Saves what's in the channel right now. False when Discord wouldn't hand the messages over."""
     try:
-        await snapshot.save(guild, channel, ticket, unless_saved_after=unless_saved_after)
+        await snapshot.save(guild, channel, ticket)
     except discord.HTTPException:
         log.warning("Couldn't save the transcript of ticket %s in guild %s", ticket.number, guild.id)
         return False

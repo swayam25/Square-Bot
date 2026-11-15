@@ -14,8 +14,10 @@
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { errorMessage } from "#lib/errors.ts";
     import { channelOptions, OFF, off, picked, roleOptions } from "#lib/options.ts";
+    import { refetch } from "#lib/refetch.ts";
     import * as settings from "#lib/settings.remote.ts";
     import { toast } from "#lib/toast.svelte.ts";
+    import { afterNavigate } from "$app/navigation";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
     import MaterialSymbolsAllInclusiveRounded from "~icons/material-symbols/all-inclusive-rounded";
     import MaterialSymbolsDeleteRounded from "~icons/material-symbols/delete-rounded";
@@ -32,6 +34,7 @@
     const MAX_DJ_ROLES = 5;
 
     const savedQuery = $derived(settings.musicSettings(guild));
+    afterNavigate(() => refetch(() => savedQuery));
     const rolesQuery = $derived(settings.guildRoles(guild));
     const channelsQuery = $derived(settings.guildChannels(guild));
 
@@ -104,7 +107,6 @@
                     apply={(next) => {
                         warn(next.notes);
                         savedQuery.set(next.settings);
-                        channelsQuery.refresh();
                     }}
                 />
             {/snippet}
@@ -133,7 +135,6 @@
                                 apply={(next) => {
                                     warn(next.notes);
                                     savedQuery.set(next.settings);
-                                    channelsQuery.refresh();
                                 }}
                             />
                         </Tooltip>

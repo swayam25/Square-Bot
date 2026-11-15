@@ -16,8 +16,10 @@
     import { getDetails } from "#lib/details.svelte.ts";
     import { errorMessage } from "#lib/errors.ts";
     import { channelOptions, OFF, picked, roleOptions } from "#lib/options.ts";
+    import { refetch } from "#lib/refetch.ts";
     import * as settings from "#lib/settings.remote.ts";
     import { toast } from "#lib/toast.svelte.ts";
+    import { afterNavigate } from "$app/navigation";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
     import MaterialSymbolsAutoAwesomeRounded from "~icons/material-symbols/auto-awesome-rounded";
     import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
@@ -42,6 +44,7 @@
 
     const guild = $derived(data.guild.id);
     const savedQuery = $derived(settings.ticketSettings(guild));
+    afterNavigate(() => refetch(() => savedQuery));
     const rolesQuery = $derived(settings.guildRoles(guild));
     const channelsQuery = $derived(settings.guildChannels(guild));
 
@@ -137,7 +140,6 @@
                                 apply={(next) => {
                                     warn(next.notes);
                                     savedQuery.set(next.settings);
-                                    channelsQuery.refresh();
                                 }}
                             />
                         {/snippet}
@@ -161,7 +163,6 @@
                                             apply={(next) => {
                                                 warn(next.notes);
                                                 savedQuery.set(next.settings);
-                                                channelsQuery.refresh();
                                             }}
                                         />
                                     </Tooltip>

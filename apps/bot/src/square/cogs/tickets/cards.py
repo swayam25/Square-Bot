@@ -81,7 +81,6 @@ def controls(ticket: TicketTable, guild: discord.Guild) -> DesignerView:
         ),
         ui.ActionRow(
             _button("reopen", "Reopen", emoji.unlock_white),
-            _button("transcript", "Transcript", emoji.transcript_white),
             _button("delete", "Delete", emoji.bin_white, discord.ButtonStyle.red),
         ),
         timeout=None,
@@ -162,13 +161,4 @@ def confirm(action: str, text: str) -> DesignerView:
         ui.ActionRow(_button(f"confirm-{action}", f"Yes, {action}", emoji.bin_white, discord.ButtonStyle.red)),
         timeout=None,
         store=False,
-    )
-
-
-def transcript_reply(ticket: TicketTable, guild_id: int) -> DesignerView:
-    return DesignerView(
-        ui.Container(
-            ui.TextDisplay(f"{emoji.success} Saved the transcript of ticket {label(ticket)}."), color=config.color.green
-        ),
-        _transcript_button(guild_id, ticket),
     )

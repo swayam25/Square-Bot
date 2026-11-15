@@ -1,5 +1,5 @@
 import { forGuild, read } from "#lib/server/bot.ts";
-import { command, query } from "$app/server";
+import { command, query, requested } from "$app/server";
 import * as sdk from "@square/api-client";
 import { z } from "zod";
 
@@ -19,9 +19,16 @@ export const ticketList = query(
 );
 
 export const ticketDetail = query(ticket, (args) => read(sdk.getTicket(path(args))));
-export const closeTicket = command(ticket, (args) => read(sdk.closeTicket(path(args))));
-export const reopenTicket = command(ticket, (args) => read(sdk.reopenTicket(path(args))));
-export const deleteTicket = command(ticket, (args) => read(sdk.deleteTicket(path(args))));
-export const purgeTicket = command(ticket, (args) => read(sdk.purgeTicket(path(args))));
-export const purgeDeletedTickets = command(snowflake, (guild) => read(sdk.purgeDeletedTickets(forGuild(guild))));
+// Each action answers the client's `.updates(listQuery)` with that list, so the page needs no second round trip
+async function withList<T>(result: Promise<T>) {
+    const done = await result;
+    await requested(ticketList, 1).refreshAll();
+    return done;
+}
+
+export const closeTicket = command(ticket, (args) => withList(read(sdk.closeTicket(path(args)))));
+export const reopenTicket = command(ticket, (args) => withList(read(sdk.reopenTicket(path(args)))));
+export const deleteTicket = command(ticket, (args) => withList(read(sdk.deleteTicket(path(args)))));
+export const purgeTicket = command(ticket, (args) => withList(read(sdk.purgeTicket(path(args)))));
+export const purgeDeletedTickets = command(snowflake, (guild) => withList(read(sdk.purgeDeletedTickets(forGuild(guild)))));
 export const ticketTranscript = query(ticket, (args) => read(sdk.ticketTranscript(path(args))));
