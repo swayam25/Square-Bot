@@ -12,7 +12,9 @@ from rich.text import Text
 
 LIBRARY_LEVELS = {
     "aerich": logging.WARNING,
+    "aiobotocore": logging.WARNING,
     "asyncio": logging.WARNING,
+    "botocore": logging.WARNING,
     "discord": logging.WARNING,
     "fontTools": logging.WARNING,
     "PIL": logging.WARNING,

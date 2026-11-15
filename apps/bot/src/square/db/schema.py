@@ -164,20 +164,3 @@ class TicketTranscriptTable(Model):
 
     class Meta:
         table = "ticket_transcript"
-
-
-class TicketFileTable(Model):
-    """A copy of a ticket's picture, since Discord's attachment links stop working after about a day."""
-
-    id = fields.IntField(primary_key=True)
-    ticket: fields.ForeignKeyRelation[TicketTable] = fields.ForeignKeyField(
-        "models.TicketTable", related_name="files", on_delete=fields.CASCADE
-    )
-    attachment_id = fields.BigIntField()
-    content_type = fields.CharField(max_length=32)
-    size = fields.IntField()
-    data = fields.BinaryField()
-
-    class Meta:
-        table = "ticket_file"
-        unique_together = (("ticket", "attachment_id"),)

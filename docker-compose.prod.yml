@@ -60,6 +60,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      storage:
+        condition: service_healthy
     volumes:
       - ./apps/bot/.cache:/square/.cache
       - ./apps/bot/config.toml:/square/config.toml:ro
@@ -95,6 +97,32 @@ services:
       retries: 5
     logging: *logging
 
+  storage:
+    image: rustfs/rustfs:1.0.4@sha256:ed9210d6411d77ffceb70d94b964a3cb7d225983368bc25bebe01e995293dcc2
+    container_name: square-storage
+    restart: unless-stopped
+    environment:
+      RUSTFS_ACCESS_KEY: square
+      RUSTFS_SECRET_KEY: youcannotpass
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_OBS_LOG_DIRECTORY: ""
+    expose:
+      - "9001"
+    networks: [default, edge]
+    volumes:
+      - storage_data:/data
+    ulimits:
+      nofile: 65536
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *logging
+
   gateway:
     image: ghcr.io/drizzle-team/gateway:latest@sha256:3f09490584ad97cb5fa6d2a7335b405b8ac96e3b17a427830930f4ff70fe3993
     container_name: square-gateway
@@ -118,6 +146,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  storage_data:
 
 networks:
   edge:

@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { chmod, readFile, writeFile } from "node:fs/promises";
-import { cancel, confirm, intro, isCancel, log, multiselect, note, outro, password, select, text } from "@clack/prompts";
 import type { CANCEL_SYMBOL } from "@clack/prompts";
+import { cancel, confirm, intro, isCancel, log, multiselect, note, outro, password, select, text } from "@clack/prompts";
 import { parse, stringify } from "smol-toml";
 
 const dev = process.argv.includes("--dev");
@@ -115,7 +115,8 @@ const extras = answer(
 config["log-file"] = extras.includes("log-file");
 
 const secret = randomBytes(32).toString("hex");
-config.api = { ...config.api, secret, docs: extras.includes("docs") };
+const { colors, api, storage, lavalink, ...keys } = config;
+const ordered = { ...keys, colors, api: { ...api, secret, docs: extras.includes("docs") }, storage, lavalink };
 const env = {
     ...(dev && { BOT_API_URL: "http://127.0.0.1:8080" }),
     BOT_API_SECRET: secret,
@@ -124,7 +125,7 @@ const env = {
     DISCORD_CLIENT_SECRET: clientSecret,
 };
 
-await writePrivate(files.bot, `${stringify(config).trimEnd()}\n`);
+await writePrivate(files.bot, `${stringify(ordered).trimEnd()}\n`);
 await writePrivate(
     files.env,
     Object.entries(env)

@@ -2825,6 +2825,7 @@ export type TicketFileData = {
          * The signed-in Discord user the dashboard is acting for
          */
         "x-actor-id": string;
+        range?: string | null;
     };
     path: {
         /**
@@ -2853,6 +2854,10 @@ export type TicketFileErrors = {
             | Array<unknown>;
     };
     /**
+     * The range starts past the end of the file
+     */
+    416: unknown;
+    /**
      * The bot refused the change
      */
     422: Problem;
@@ -2862,12 +2867,14 @@ export type TicketFileError = TicketFileErrors[keyof TicketFileErrors];
 
 export type TicketFileResponses = {
     /**
-     * Request fulfilled, document follows
+     * Stream Response
      */
-    200: Blob | File;
+    200: unknown;
+    /**
+     * The requested part of the file
+     */
+    206: unknown;
 };
-
-export type TicketFileResponse = TicketFileResponses[keyof TicketFileResponses];
 
 export type MusicPlayerData = {
     body?: never;

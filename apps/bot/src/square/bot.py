@@ -5,10 +5,12 @@ import sys
 from importlib.metadata import metadata, version
 from square import api
 from square.cogs import extensions
+from square.cogs.tickets import files as ticket_files
 from square.core import Client
 from square.db import DB
+from square.db.funcs.guild import fetch_guild_ids
 from square.imaging import assets
-from square.utils import config, invites
+from square.utils import config, invites, storage
 
 log = logging.getLogger("square")
 
@@ -77,6 +79,7 @@ async def shutdown() -> None:
     # The API stops first, so no request is mid-way when the database closes
     await api.stop()
     await DB().close()
+    await storage.close()
     await assets.close()
     if not client.is_closed():
         await client.close()
@@ -86,6 +89,9 @@ async def shutdown() -> None:
 async def main() -> None:
     try:
         await DB().init()
+        await storage.init()
+        await storage.sweep_guilds(set(await fetch_guild_ids()))
+        await ticket_files.sweep()
         load_cogs()
         api.start(client)
         async with client:

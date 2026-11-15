@@ -10,9 +10,12 @@ const QUICK = 5_000;
 const PATIENT = 30_000;
 
 const SLOW_READS = ["/music/search", "/transcript"];
+// Long file streams outlast any fixed timeout, so `streamFile` times only the wait for headers
+const STREAMED = /\/files\/[^/]+$/;
 
 bot.interceptors.request.use((request) => {
     const { pathname } = new URL(request.url);
+    if (STREAMED.test(pathname)) return request;
     const quick = request.method === "GET" && !SLOW_READS.some((path) => pathname.endsWith(path));
     return new Request(request, { signal: AbortSignal.any([request.signal, AbortSignal.timeout(quick ? QUICK : PATIENT)]) });
 });

@@ -16,16 +16,22 @@ green = "#2ECC71"
 red = "#E74C3C"
 orange = "#E67E22"
 
+# Uncomment to serve the API the dashboard uses. The secret needs 32+ characters, e.g. `openssl rand -hex 32`
+# [api]
+# host = "127.0.0.1"
+# port = 8080
+# secret = ""
+# docs = false
+
+[storage]
+endpoint = "http://storage:9000"
+bucket = "square"
+access-key = "square"
+secret-key = "youcannotpass"
+
 [[lavalink]]
 host = ""
 port = 0
 password = ""
 secure = true
 regions = []
-
-# Uncomment to serve the API the dashboard uses. The secret needs 32+ characters, e.g. `openssl rand -hex 32`
-# [api]
-# secret = ""
-# host = "127.0.0.1"
-# port = 8080
-# docs = false

@@ -4207,7 +4207,7 @@
         "tags": [
           "Tickets"
         ],
-        "summary": "A picture copied from a ticket",
+        "summary": "A file copied from a ticket, streamed with range support",
         "operationId": "ticket_file",
         "parameters": [
           {
@@ -4254,17 +4254,31 @@
             },
             "required": true,
             "deprecated": false
+          },
+          {
+            "name": "range",
+            "in": "header",
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "required": false,
+            "deprecated": false
           }
         ],
         "responses": {
           "200": {
-            "description": "Request fulfilled, document follows",
+            "description": "Stream Response",
             "headers": {},
             "content": {
               "application/octet-stream": {
-                "schema": {
-                  "type": "string"
-                }
+                "schema": {}
               }
             }
           },
@@ -4315,6 +4329,12 @@
                 }
               }
             }
+          },
+          "206": {
+            "description": "The requested part of the file"
+          },
+          "416": {
+            "description": "The range starts past the end of the file"
           }
         },
         "deprecated": false,

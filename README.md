@@ -52,15 +52,27 @@ Advanced multipurpose discord bot for all your needs.
     just up
     ```
 
-4. Point your reverse proxy at `square:80` on the `edge` Docker network. It handles TLS, Square handles the rest. `just up` creates the network if it doesn't exist yet. `just down` stops everything.
+4. Point your reverse proxy at the services in [reverse proxy](#-reverse-proxy). `just up` creates the `edge` network if it doesn't exist yet, and `just down` stops everything.
 
-5. Optionally, point it at `square-gateway:4983` too, for [Drizzle Gateway](https://gateway.drizzle.team), a browser and editor for the database.
+## 🌐 Reverse proxy
+
+Square publishes no ports. The services a browser needs join the `edge` Docker network, and your reverse proxy gives each one a hostname and handles TLS.
+
+| Container        | Port   | What it is                                                                             | Who should reach it | Its own login                     |
+| ---------------- | ------ | -------------------------------------------------------------------------------------- | ------------------- | --------------------------------- |
+| `square`         | `80`   | The dashboard                                                                          | Everyone            | Discord                           |
+| `square-gateway` | `4983` | [Drizzle Gateway](https://gateway.drizzle.team), a browser and editor for the database | Admins, behind SSO  | None                              |
+| `square-storage` | `9001` | [RustFS](https://rustfs.com) console, a browser for stored files                       | Admins, behind SSO  | The storage access and secret key |
+
+Route nothing else. The bot's API, Postgres and Redis stay on the stack's private network, and RustFS's S3 API on `9000` is only for the bot.
 
 > [!WARNING]
-> Drizzle Gateway has no login of its own. Put it behind your proxy's SSO, or anyone who finds the hostname can read and change every table.
+> Drizzle Gateway has no login of its own, so anyone who finds its hostname can read and change every table. The RustFS console signs in with the storage keys from `docker-compose.prod.yml`, which default to `square` / `youcannotpass`. Put both behind SSO.
 
-> [!NOTE]
-> Only `square` (Caddy) and `square-gateway` join `edge`. The dashboard, the bot's API, Postgres and Redis stay on the stack's private network and publish no ports.
+Any proxy that can put a login in front of a hostname works, for example:
+
+- [Pangolin](https://docs.pangolin.net/manage/resources/understanding-resources), a tunneled reverse proxy with sign-in built into each resource.
+- [Traefik](https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/forwardauth/) or [Caddy](https://caddyserver.com/docs/caddyfile/directives/forward_auth) with forward auth, backed by an identity provider such as [Authelia](https://www.authelia.com/integration/proxies/introduction/) or [authentik](https://docs.goauthentik.io/docs/add-secure-apps/providers/proxy/).
 
 ## 🧭 How it fits together
 
@@ -73,8 +85,10 @@ flowchart LR
     web --> redis[(Redis<br/>sessions, caches)]
     web -- "API +<br/>WebSocket" --> bot[bot<br/>Pycord + Litestar]
     bot --> db[(Postgres)]
+    bot --> storage[(RustFS<br/>files)]
     proxy -- "edge network<br/>behind SSO" --> gateway[square-gateway<br/>Drizzle Gateway]
     gateway --> db
+    proxy -- "edge network<br/>behind SSO" --> storage
     bot --> lavalink[Lavalink nodes]
     bot <--> discord([Discord])
 ```
@@ -126,17 +140,23 @@ The bot reads `apps/bot/config.toml` and the dashboard reads `apps/web/.env` (`.
 | `database-url`          |                         | `str`         | The URL for the PostgreSQL database.                                                                                                            |
 | `log-level`             |                         | `str`         | *Optional.* `DEBUG`, `INFO` (default), `WARNING` or `ERROR`. The `SQUARE_LOG_LEVEL` environment variable overrides it.                          |
 | `log-file`              |                         | `bool`        | *Optional.* Also write logs to `.cache/logs/square.log`, rotated at 5 × 5 MB. Defaults to `false`.                                              |
-| `[api]`                 |                         | `table`       | *Optional.* Turns on the API the dashboard uses. Leave it out to run the bot alone.                                                             |
-| `api.secret`            | `BOT_API_SECRET`        | `str`         | The same secret on both sides, so only the dashboard can call the bot's API. At least 32 characters.                                            |
-| `api.host` / `api.port` | `BOT_API_URL`           | `str` / `int` | *Optional.* Where the API listens (`127.0.0.1:8080` by default) and the URL the dashboard calls it at.                                          |
-| `api.docs`              |                         | `bool`        | *Optional.* Serves API docs at `/docs`. Keep it off in production.                                                                              |
-|                         | `REDIS_URL`             | `str`         | Redis for logins, sessions and caches.                                                                                                          |
-|                         | `DISCORD_CLIENT_ID`     | `str`         | The application ID from the Developer Portal, the same app as `bot-token`. Under **OAuth2**, add `<dashboard-url>/auth/callback` as a redirect. |
-|                         | `DISCORD_CLIENT_SECRET` | `str`         | The OAuth2 client secret from the Developer Portal, under **OAuth2**.                                                                           |
 | `colors.theme`          |                         | `str`         | The color theme for the bot's view containers.                                                                                                  |
 | `colors.green`          |                         | `str`         | The color code for green color in view containers.                                                                                              |
 | `colors.red`            |                         | `str`         | The color code for red color in view containers.                                                                                                |
 | `colors.orange`         |                         | `str`         | The color code for orange color in view containers.                                                                                             |
+| `[api]`                 |                         | `table`       | *Optional.* Turns on the API the dashboard uses. Leave it out to run the bot alone.                                                             |
+| `api.host` / `api.port` | `BOT_API_URL`           | `str` / `int` | *Optional.* Where the API listens (`127.0.0.1:8080` by default) and the URL the dashboard calls it at.                                          |
+| `api.secret`            | `BOT_API_SECRET`        | `str`         | The same secret on both sides, so only the dashboard can call the bot's API. At least 32 characters.                                            |
+| `api.docs`              |                         | `bool`        | *Optional.* Serves API docs at `/docs`. Keep it off in production.                                                                              |
+|                         | `REDIS_URL`             | `str`         | Redis for logins, sessions and caches.                                                                                                          |
+|                         | `DISCORD_CLIENT_ID`     | `str`         | The application ID from the Developer Portal, the same app as `bot-token`. Under **OAuth2**, add `<dashboard-url>/auth/callback` as a redirect. |
+|                         | `DISCORD_CLIENT_SECRET` | `str`         | The OAuth2 client secret from the Developer Portal, under **OAuth2**.                                                                           |
+| `[storage]`             |                         | `table`       | S3-compatible storage for files the bot keeps, like ticket attachments. The defaults match the bundled RustFS.                                  |
+| `storage.endpoint`      |                         | `str`         | The S3 API URL.                                                                                                                                 |
+| `storage.bucket`        |                         | `str`         | The bucket's name. The bot creates it on startup if it's missing.                                                                               |
+| `storage.access-key`    |                         | `str`         | The access key, the same as `RUSTFS_ACCESS_KEY` in the compose files.                                                                           |
+| `storage.secret-key`    |                         | `str`         | The secret key, the same as `RUSTFS_SECRET_KEY` in the compose files.                                                                           |
+| `storage.region`        |                         | `str`         | *Optional.* The bucket's region. Leave it out for RustFS, which accepts any.                                                                    |
 | `[[lavalink]]`          |                         | `table`       | A Lavalink node. Multiple `[[lavalink]]` tables can be configured, players fail over to another node if one dies.                               |
 | `lavalink.host`         |                         | `str`         | The host of the Lavalink server.                                                                                                                |
 | `lavalink.port`         |                         | `int`         | The port of the Lavalink server.                                                                                                                |

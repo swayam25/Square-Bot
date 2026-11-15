@@ -762,7 +762,7 @@ export const ticketTranscript = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * A picture copied from a ticket
+ * A file copied from a ticket, streamed with range support
  */
 export const ticketFile = <ThrowOnError extends boolean = false>(
     options: Options<TicketFileData, ThrowOnError>,

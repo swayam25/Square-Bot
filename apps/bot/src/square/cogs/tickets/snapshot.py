@@ -1,10 +1,3 @@
-"""
-Saves a ticket channel as data. The dashboard draws the transcript from it, so nothing here makes HTML.
-
-Text is stored as the raw Discord markdown people typed. Names behind mentions are saved next to it, since the
-members, roles and channels may be gone by the time someone reads the transcript.
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -29,6 +22,7 @@ from discord.components import (
     _component_factory,
 )
 from discord.components import Component as DiscordComponent
+from square.cogs.tickets import files
 from square.db.funcs import tickets as db
 from square.db.schema import TicketTable
 from typing import Literal
@@ -36,10 +30,6 @@ from typing import Literal
 log = logging.getLogger(__name__)
 
 MESSAGE_LIMIT = 5000
-# Discord's attachment links expire after about a day, so pictures are copied into the database up to this many bytes
-IMAGE_BUDGET = 8 * 1024 * 1024
-# No SVG: these are served back from the dashboard's own address, and an SVG can carry scripts
-IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/webp"}
 PREVIEW_LENGTH = 200
 
 _USER = re.compile(r"<@!?(\d{17,20})>")
@@ -304,7 +294,7 @@ class _Builder:
             case FileComponent():
                 name = component.name or component.file.url.rsplit("/", 1)[-1].split("?")[0]
                 file = self.media(component.file, drawn, name)
-                file.kind, file.size, file.stored = "file", component.size or 0, False
+                file.kind, file.size = "file", component.size or 0
                 return TranscriptComponent(kind="file", files=[file])
             case Separator():
                 return TranscriptComponent(
@@ -444,41 +434,6 @@ def _system(message: discord.Message) -> Literal["", "join", "pin", "boost", "ot
     return "other"
 
 
-async def _copy_images(ticket: TicketTable, messages: Sequence[discord.Message]) -> set[int]:
-    """Copies the ticket's pictures that aren't saved yet, and drops the ones whose message is gone."""
-    have = await db.stored_file_sizes(ticket)
-    wanted = [
-        attachment
-        for message in messages
-        for attachment in message.attachments
-        if (attachment.content_type or "").split(";", 1)[0].strip() in IMAGE_TYPES
-    ]
-    wanted_ids = {attachment.id for attachment in wanted}
-    if gone := set(have) - wanted_ids:
-        await db.delete_files(ticket, gone)
-    kept = set(have) & wanted_ids
-    budget = IMAGE_BUDGET - sum(have[attachment_id] for attachment_id in kept)
-    picked: list[discord.Attachment] = []
-    for attachment in wanted:
-        if attachment.id not in kept and attachment.size <= budget:
-            picked.append(attachment)
-            budget -= attachment.size
-    semaphore = asyncio.Semaphore(4)
-
-    async def copy(attachment: discord.Attachment) -> int | None:
-        async with semaphore:
-            try:
-                data = await attachment.read()
-            except discord.HTTPException:
-                return None
-        content_type = (attachment.content_type or "").split(";", 1)[0].strip()
-        await db.add_file(ticket, attachment.id, content_type, data)
-        return attachment.id
-
-    copied = await asyncio.gather(*(copy(attachment) for attachment in picked))
-    return kept | {attachment_id for attachment_id in copied if attachment_id}
-
-
 async def _previews(
     channel: discord.TextChannel, messages: Sequence[discord.Message]
 ) -> dict[int, list[list[DiscordComponent]]]:
@@ -514,7 +469,7 @@ async def save(
                 return
         messages = [message async for message in channel.history(limit=MESSAGE_LIMIT)]
         messages.sort(key=lambda message: message.id)
-        builder = _Builder(guild, await _copy_images(ticket, messages), await _previews(channel, messages))
+        builder = _Builder(guild, await files.copy(guild.id, ticket.id, messages), await _previews(channel, messages))
         saved: list[TranscriptMessage] = []
         for index, message in enumerate(messages):
             saved.append(builder.message(message))

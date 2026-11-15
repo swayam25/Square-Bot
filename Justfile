@@ -55,6 +55,7 @@ down *args:
 
 # Run the bot and the website together with debug logs (starts services first, Ctrl-C stops both apps)
 dev:
+    @docker compose up -d --wait
     @pnpm run dev
 
 # Lint and format the code

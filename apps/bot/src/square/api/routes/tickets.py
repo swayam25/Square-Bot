@@ -1,15 +1,17 @@
 import discord
 import logging
 from itertools import islice
-from litestar import Response, Router, delete, get, post
+from litestar import Router, delete, get, post
 from litestar.di import Provide
 from litestar.params import Parameter
+from litestar.response import Stream
+from square.api import files as stored
 from square.api.auth import provide_guild, provide_member, provide_member_guild
 from square.api.resolve import SettingError
 from square.api.routes.settings import REFUSED, refused
 from square.api.schemas import Purged, TicketDetail, TicketEntry, TicketPage, TicketTranscript
 from square.api.users import people_of
-from square.cogs.tickets import actions, cards, snapshot
+from square.cogs.tickets import actions, cards, files, snapshot
 from square.core import Client
 from square.db.funcs import tickets as tickets_db
 from square.db.schema import TicketTable
@@ -181,6 +183,7 @@ async def purge_ticket(guild: discord.Guild, member: discord.Member, number: Num
     if _channel(guild, ticket):
         raise SettingError("That ticket still has its channel. Delete the ticket first.")
     await tickets_db.purge_ticket(ticket)
+    await files.purge(guild.id, [ticket.id])
     _audit(member, "permanently removed", ticket)
     return Purged(removed=1)
 
@@ -188,8 +191,11 @@ async def purge_ticket(guild: discord.Guild, member: discord.Member, number: Num
 @delete("/deleted", summary="Remove every deleted ticket for good, with their transcripts", status_code=200)
 async def purge_deleted_tickets(guild: discord.Guild, member: discord.Member) -> Purged:
     removed = await tickets_db.purge_deleted_tickets(guild.id)
-    log.info("Dashboard: %s (%s) permanently removed %s deleted tickets in %s", member, member.id, removed, guild.id)
-    return Purged(removed=removed)
+    await files.purge(guild.id, removed)
+    log.info(
+        "Dashboard: %s (%s) permanently removed %s deleted tickets in %s", member, member.id, len(removed), guild.id
+    )
+    return Purged(removed=len(removed))
 
 
 async def _readable(guild: discord.Guild, member: discord.Member, number: int) -> TicketTable:
@@ -232,22 +238,20 @@ async def ticket_transcript(
 
 @get(
     "/{number:int}/files/{attachment_id:str}",
-    summary="A picture copied from a ticket",
+    summary="A file copied from a ticket, streamed with range support",
     dependencies=MEMBERS,
     media_type="application/octet-stream",
-    responses=REFUSED,
+    responses={**REFUSED, **stored.RESPONSES},
 )
 async def ticket_file(
     guild: discord.Guild,
     member: discord.Member,
     number: Number,
     attachment_id: Annotated[str, Parameter(pattern=r"^\d{17,20}$")],
-) -> Response[bytes]:
+    byte_range: stored.Range = None,
+) -> Stream:
     ticket = await _readable(guild, member, number)
-    if (file := await tickets_db.fetch_file(ticket, int(attachment_id))) is None:
-        raise SettingError("That picture wasn't kept.")
-    content_type, data = file
-    return Response(data, media_type=content_type)
+    return await stored.serve(files.key(guild.id, ticket.id, int(attachment_id)), byte_range, "That file wasn't kept.")
 
 
 router = Router(

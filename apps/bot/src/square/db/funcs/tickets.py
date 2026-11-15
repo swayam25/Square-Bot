@@ -2,8 +2,7 @@ import discord
 from datetime import datetime
 from square.db import cache
 from square.db.funcs.guild import fetch_guild_settings
-from square.db.schema import GuildTable, TicketFileTable, TicketMemberTable, TicketTable, TicketTranscriptTable
-from tortoise.exceptions import IntegrityError
+from square.db.schema import GuildTable, TicketMemberTable, TicketTable, TicketTranscriptTable
 from tortoise.expressions import Q
 from tortoise.functions import Count
 from tortoise.transactions import in_transaction
@@ -138,36 +137,17 @@ async def fetch_transcript(ticket: TicketTable) -> TicketTranscriptTable | None:
     return await TicketTranscriptTable.filter(ticket=ticket).first()
 
 
-async def stored_file_sizes(ticket: TicketTable) -> dict[int, int]:
-    rows = await TicketFileTable.filter(ticket=ticket).values("attachment_id", "size")
-    return {row["attachment_id"]: row["size"] for row in rows}
-
-
-async def add_file(ticket: TicketTable, attachment_id: int, content_type: str, data: bytes) -> None:
-    try:
-        await TicketFileTable.create(
-            ticket=ticket, attachment_id=attachment_id, content_type=content_type, size=len(data), data=data
-        )
-    except IntegrityError:
-        pass  # two saves raced, and the other one stored it
-
-
-async def delete_files(ticket: TicketTable, attachment_ids: set[int]) -> None:
-    await TicketFileTable.filter(ticket=ticket, attachment_id__in=list(attachment_ids)).delete()
-
-
-async def fetch_file(ticket: TicketTable, attachment_id: int) -> tuple[str, bytes] | None:
-    row = await TicketFileTable.filter(ticket=ticket, attachment_id=attachment_id).first()
-    return (row.content_type, bytes(row.data)) if row else None
-
-
 async def purge_ticket(ticket: TicketTable) -> None:
     await ticket.delete()
 
 
-async def purge_deleted_tickets(guild_id: int) -> int:
+async def purge_deleted_tickets(guild_id: int) -> list[int]:
     guild = await fetch_guild_settings(guild_id)
-    return await TicketTable.filter(guild=guild, status="deleted").delete()
+    async with in_transaction() as conn:
+        deleted = TicketTable.filter(guild=guild, status="deleted").using_db(conn)
+        ids = list(await deleted.select_for_update().values_list("id", flat=True))
+        await TicketTable.filter(id__in=ids).using_db(conn).delete()
+    return ids
 
 
 async def ticket_times_since(guild_id: int, since: datetime) -> tuple[list[datetime], list[datetime]]:

@@ -240,15 +240,15 @@ async def fetch_node_info(node: sonolink.Node) -> tuple[sonolink.models.ServerIn
 
 def register_nodes(client: Client) -> None:
     for node in config.lavalink:
-        if client.sonolink.get_node(node["host"]) is not None:
+        if client.sonolink.get_node(node.host) is not None:
             continue
         client.sonolink.create_node(
-            host=node["host"],
-            port=node["port"],
-            secure=node["secure"],
-            password=node["password"],
-            id=node["host"],
-            regions=node.get("regions"),
+            host=node.host,
+            port=node.port,
+            secure=node.secure,
+            password=node.password,
+            id=node.host,
+            regions=node.regions,
             auto_reconnect=True,
             retries=None,
             inactivity_settings=InactivitySettings(timeout=INACTIVITY_TIMEOUT, mode=sonolink.InactivityMode.ALL_BOTS),

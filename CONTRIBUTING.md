@@ -35,7 +35,7 @@ Everything in the [README's prerequisites](./README.md#-prerequisites), plus a c
     ```
 
 > [!TIP]
-> Drizzle Gateway starts with the other services, at http://localhost:4983.
+> Drizzle Gateway starts with the other services, at http://localhost:4983. So does RustFS, with its console at http://localhost:9001/rustfs/console/ (`square` / `youcannotpass`).
 
 1. Stop it when done
 

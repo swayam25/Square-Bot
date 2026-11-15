@@ -1331,6 +1331,7 @@ export const zTicketTranscriptResponse = zTicketTranscript;
 
 export const zTicketFileHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),
+    range: z.string().nullish(),
 });
 
 export const zTicketFilePath = z.object({
@@ -1338,11 +1339,6 @@ export const zTicketFilePath = z.object({
     number: z.int().gte(1).lte(10000000),
     attachment_id: z.string().regex(/^\d{17,20}$/),
 });
-
-/**
- * Request fulfilled, document follows
- */
-export const zTicketFileResponse = z.string();
 
 export const zMusicPlayerHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

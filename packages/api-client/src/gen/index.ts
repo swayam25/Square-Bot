@@ -430,7 +430,6 @@ export type {
     TicketFileData,
     TicketFileError,
     TicketFileErrors,
-    TicketFileResponse,
     TicketFileResponses,
     TicketPage,
     TicketPatch,
