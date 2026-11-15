@@ -40,6 +40,7 @@ services:
       REDIS_URL: redis://redis:6379
       PROTOCOL_HEADER: x-forwarded-proto
       HOST_HEADER: x-forwarded-host
+      BODY_SIZE_LIMIT: 24M
     depends_on:
       redis:
         condition: service_healthy

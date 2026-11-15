@@ -393,6 +393,40 @@ class TicketPatch(Schema):
     confirm_close: bool | UnsetType = UNSET
 
 
+NICK_MAX = 32
+BIO_MAX = 190
+IMAGE_MAX_BYTES = 8 * 1024 * 1024
+IMAGE_DATA_MAX = len("data:image/jpeg;base64,") + -(-IMAGE_MAX_BYTES // 3) * 4
+ImageData = Annotated[
+    str,
+    msgspec.Meta(
+        max_length=IMAGE_DATA_MAX,
+        pattern=r"^data:image/(png|jpeg|gif);base64,",
+        description="A PNG, JPEG or GIF as a base64 data URI",
+    ),
+]
+
+
+class BotProfile(Schema):
+    name: str
+    nick: str | None
+    bio: str | None
+    avatar_url: str | None
+    banner_url: str | None
+    global_bio: str | None
+    global_avatar_url: str
+    global_banner_url: str | None
+    banner_color: str | None
+    can_nick: bool
+
+
+class BotProfilePatch(Schema):
+    nick: Annotated[str, msgspec.Meta(min_length=1, max_length=NICK_MAX)] | None | UnsetType = UNSET
+    bio: Annotated[str, msgspec.Meta(min_length=1, max_length=BIO_MAX)] | None | UnsetType = UNSET
+    avatar: ImageData | None | UnsetType = UNSET
+    banner: ImageData | None | UnsetType = UNSET
+
+
 class ModuleSettings(Schema):
     logs: bool
     tickets: bool

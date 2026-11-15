@@ -63,6 +63,38 @@ export type BonusChange = {
 };
 
 /**
+ * BotProfile
+ */
+export type BotProfile = {
+    name: string;
+    nick: string | null;
+    bio: string | null;
+    avatarUrl: string | null;
+    bannerUrl: string | null;
+    globalBio: string | null;
+    globalAvatarUrl: string;
+    globalBannerUrl: string | null;
+    bannerColor: string | null;
+    canNick: boolean;
+};
+
+/**
+ * BotProfilePatch
+ */
+export type BotProfilePatch = {
+    nick?: string | null;
+    bio?: string | null;
+    /**
+     * A PNG, JPEG or GIF as a base64 data URI
+     */
+    avatar?: string | null;
+    /**
+     * A PNG, JPEG or GIF as a base64 data URI
+     */
+    banner?: string | null;
+};
+
+/**
  * Channel
  */
 export type Channel = {
@@ -2278,6 +2310,149 @@ export type ResetAllSettingsResponses = {
 };
 
 export type ResetAllSettingsResponse = ResetAllSettingsResponses[keyof ResetAllSettingsResponses];
+
+export type ResetBotProfileData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/profile";
+};
+
+export type ResetBotProfileErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type ResetBotProfileError = ResetBotProfileErrors[keyof ResetBotProfileErrors];
+
+export type ResetBotProfileResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: BotProfile;
+};
+
+export type ResetBotProfileResponse = ResetBotProfileResponses[keyof ResetBotProfileResponses];
+
+export type GetBotProfileData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/profile";
+};
+
+export type GetBotProfileErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GetBotProfileError = GetBotProfileErrors[keyof GetBotProfileErrors];
+
+export type GetBotProfileResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: BotProfile;
+};
+
+export type GetBotProfileResponse = GetBotProfileResponses[keyof GetBotProfileResponses];
+
+export type UpdateBotProfileData = {
+    body: BotProfilePatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/profile";
+};
+
+export type UpdateBotProfileErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type UpdateBotProfileError = UpdateBotProfileErrors[keyof UpdateBotProfileErrors];
+
+export type UpdateBotProfileResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: BotProfile;
+};
+
+export type UpdateBotProfileResponse = UpdateBotProfileResponses[keyof UpdateBotProfileResponses];
 
 export type InviteLeaderboardData = {
     body?: never;

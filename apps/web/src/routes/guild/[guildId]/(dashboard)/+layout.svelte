@@ -24,6 +24,7 @@
     import MaterialSymbolsCheckRounded from "~icons/material-symbols/check-rounded";
     import MaterialSymbolsCloseRounded from "~icons/material-symbols/close-rounded";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
+    import MaterialSymbolsFormatPaintRounded from "~icons/material-symbols/format-paint-rounded";
     import MaterialSymbolsHomeRounded from "~icons/material-symbols/home-rounded";
     import MaterialSymbolsMusicNoteRounded from "~icons/material-symbols/music-note-rounded";
     import MaterialSymbolsPlayCircleRounded from "~icons/material-symbols/play-circle-rounded";
@@ -113,7 +114,11 @@
             ? [
                   {
                       label: "Server",
-                      items: [moduleLink("logs"), { href: `${base}/general`, label: "General", icon: MaterialSymbolsTuneRounded }],
+                      items: [
+                          moduleLink("logs"),
+                          { href: `${base}/general`, label: "General", icon: MaterialSymbolsTuneRounded },
+                          { href: `${base}/customize`, label: "Customize", icon: MaterialSymbolsFormatPaintRounded },
+                      ],
                   },
               ]
             : []),

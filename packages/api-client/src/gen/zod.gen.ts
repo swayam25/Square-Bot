@@ -46,6 +46,32 @@ export const zBonusChange = z.object({
 });
 
 /**
+ * BotProfile
+ */
+export const zBotProfile = z.object({
+    name: z.string(),
+    nick: z.string().nullable(),
+    bio: z.string().nullable(),
+    avatarUrl: z.string().nullable(),
+    bannerUrl: z.string().nullable(),
+    globalBio: z.string().nullable(),
+    globalAvatarUrl: z.string(),
+    globalBannerUrl: z.string().nullable(),
+    bannerColor: z.string().nullable(),
+    canNick: z.boolean(),
+});
+
+/**
+ * BotProfilePatch
+ */
+export const zBotProfilePatch = z.object({
+    nick: z.string().nullish(),
+    bio: z.string().nullish(),
+    avatar: z.string().nullish(),
+    banner: z.string().nullish(),
+});
+
+/**
  * Channel
  */
 export const zChannel = z.object({
@@ -1163,6 +1189,47 @@ export const zResetAllSettingsPath = z.object({
  * Request fulfilled, document follows
  */
 export const zResetAllSettingsResponse = zNotes;
+
+export const zResetBotProfileHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zResetBotProfilePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zResetBotProfileResponse = zBotProfile;
+
+export const zGetBotProfileHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGetBotProfilePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGetBotProfileResponse = zBotProfile;
+
+export const zUpdateBotProfileBody = zBotProfilePatch;
+
+export const zUpdateBotProfileHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateBotProfilePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateBotProfileResponse = zBotProfile;
 
 export const zInviteLeaderboardHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

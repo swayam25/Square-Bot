@@ -2917,6 +2917,308 @@
         ]
       }
     },
+    "/guilds/{guild_id}/profile": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "The bot's profile in this server",
+        "operationId": "get_bot_profile",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Go back to the bot's global profile in this server",
+        "operationId": "reset_bot_profile",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Change the bot's nickname, avatar, banner or bio in this server",
+        "operationId": "update_bot_profile",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BotProfilePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
     "/guilds/{guild_id}/invites/leaderboard": {
       "get": {
         "tags": [
@@ -7468,6 +7770,160 @@
           "userIds"
         ],
         "title": "BonusChange"
+      },
+      "BotProfile": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "nick": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "bio": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "avatarUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "bannerUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "globalBio": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "globalAvatarUrl": {
+            "type": "string"
+          },
+          "globalBannerUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "bannerColor": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canNick": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "avatarUrl",
+          "bannerColor",
+          "bannerUrl",
+          "bio",
+          "canNick",
+          "globalAvatarUrl",
+          "globalBannerUrl",
+          "globalBio",
+          "name",
+          "nick"
+        ],
+        "title": "BotProfile"
+      },
+      "BotProfilePatch": {
+        "properties": {
+          "nick": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maxLength": 32,
+            "minLength": 1
+          },
+          "bio": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maxLength": 190,
+            "minLength": 1
+          },
+          "avatar": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maxLength": 11184835,
+            "pattern": "^data:image/(png|jpeg|gif);base64,",
+            "description": "A PNG, JPEG or GIF as a base64 data URI"
+          },
+          "banner": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maxLength": 11184835,
+            "pattern": "^data:image/(png|jpeg|gif);base64,",
+            "description": "A PNG, JPEG or GIF as a base64 data URI"
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "BotProfilePatch"
       },
       "Channel": {
         "properties": {

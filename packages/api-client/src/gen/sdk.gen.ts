@@ -30,6 +30,9 @@ import type {
     EqPresetsData,
     EqPresetsErrors,
     EqPresetsResponses,
+    GetBotProfileData,
+    GetBotProfileErrors,
+    GetBotProfileResponses,
     GetGeneralSettingsData,
     GetGeneralSettingsErrors,
     GetGeneralSettingsResponses,
@@ -125,6 +128,9 @@ import type {
     ResetAllSettingsData,
     ResetAllSettingsErrors,
     ResetAllSettingsResponses,
+    ResetBotProfileData,
+    ResetBotProfileErrors,
+    ResetBotProfileResponses,
     ResetEqData,
     ResetEqErrors,
     ResetEqResponses,
@@ -191,6 +197,9 @@ import type {
     TicketTranscriptData,
     TicketTranscriptErrors,
     TicketTranscriptResponses,
+    UpdateBotProfileData,
+    UpdateBotProfileErrors,
+    UpdateBotProfileResponses,
     UpdateGeneralSettingsData,
     UpdateGeneralSettingsErrors,
     UpdateGeneralSettingsResponses,
@@ -623,6 +632,46 @@ export const resetAllSettings = <ThrowOnError extends boolean = false>(
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/settings",
         ...options,
+    });
+
+/**
+ * Go back to the bot's global profile in this server
+ */
+export const resetBotProfile = <ThrowOnError extends boolean = false>(
+    options: Options<ResetBotProfileData, ThrowOnError>,
+): RequestResult<ResetBotProfileResponses, ResetBotProfileErrors, ThrowOnError> =>
+    (options.client ?? client).delete<ResetBotProfileResponses, ResetBotProfileErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/profile",
+        ...options,
+    });
+
+/**
+ * The bot's profile in this server
+ */
+export const getBotProfile = <ThrowOnError extends boolean = false>(
+    options: Options<GetBotProfileData, ThrowOnError>,
+): RequestResult<GetBotProfileResponses, GetBotProfileErrors, ThrowOnError> =>
+    (options.client ?? client).get<GetBotProfileResponses, GetBotProfileErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/profile",
+        ...options,
+    });
+
+/**
+ * Change the bot's nickname, avatar, banner or bio in this server
+ */
+export const updateBotProfile = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateBotProfileData, ThrowOnError>,
+): RequestResult<UpdateBotProfileResponses, UpdateBotProfileErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateBotProfileResponses, UpdateBotProfileErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/profile",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
     });
 
 /**
