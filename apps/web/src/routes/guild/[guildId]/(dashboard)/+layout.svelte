@@ -11,10 +11,12 @@
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { Details, setDetails } from "#lib/details.svelte.ts";
     import { edgeFade } from "#lib/edge-fade.ts";
+    import { guildEmojis } from "#lib/emoji.remote.ts";
     import { plural } from "#lib/format.ts";
     import { mobile } from "#lib/media.ts";
     import { MODULES, type ModuleKey } from "#lib/modules.ts";
     import { ripple } from "#lib/motion.ts";
+    import { refetch } from "#lib/refetch.ts";
     import { guildChannels, guildRoles, moduleSettings } from "#lib/settings.remote.ts";
     import { load, save } from "#lib/storage.ts";
     import { toast } from "#lib/toast.svelte.ts";
@@ -147,8 +149,12 @@
     async function refreshServer() {
         refreshing = true;
         try {
-            await Promise.all([guildChannels(data.guild.id).refresh(), guildRoles(data.guild.id).refresh()]);
-            toast.success("Channels and roles synced");
+            await Promise.all([
+                guildChannels(data.guild.id).refresh(),
+                guildRoles(data.guild.id).refresh(),
+                refetch(() => guildEmojis(data.guild.id)),
+            ]);
+            toast.success("Server synced");
         } catch {
             toast.error("Square couldn't sync the server. Try again.");
         } finally {
@@ -295,7 +301,7 @@
         {#if data.guild.canManage}
             <div class={expanded ? "px-4" : "flex justify-center px-2"}>
                 <Tooltip
-                    content="Fetch new channels and roles from Discord"
+                    content="Get the latest server info from Discord"
                     placement={expanded ? "top" : "right"}
                     class={expanded ? "w-full" : undefined}
                 >

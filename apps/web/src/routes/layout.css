@@ -27,6 +27,12 @@
         U+1FAEF-1FAF8, U+E0062-E0063, U+E0065, U+E0067, U+E006C, U+E006E, U+E0073-E0074, U+E0077, U+E007F;
 }
 
+@font-face {
+    font-family: "Twemoji Full";
+    src: url("../lib/assets/fonts/Twemoji.woff2") format("woff2");
+    font-display: block;
+}
+
 @theme {
     --color-accent: #1fceec;
 
@@ -74,6 +80,7 @@
 
     --font-display: "Twemoji", "Saira Variable", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif;
     --font-sans: "Twemoji", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", sans-serif;
+    --font-emoji: "Twemoji Full", sans-serif;
     --font-mono: "Twemoji", "JetBrains Mono Variable", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", monospace;
 
     --text-2xs: 10px;

@@ -4,24 +4,26 @@
     import DiscordTooltip from "#lib/components/discord/DiscordTooltip.svelte";
     import Mention from "#lib/components/discord/Mention.svelte";
     import { getDiscord } from "#lib/discord/context.ts";
-    import { fullTime, inline as inlineNodes, jumbo, parse, timestamp, type Inline } from "#lib/discord/markdown.ts";
+    import { fullTime, inline as inlineNodes, jumbo as isJumbo, parse, timestamp, type Inline } from "#lib/discord/markdown.ts";
     import type { ClassValue } from "svelte/elements";
 
     let {
         text,
         edited = false,
         inline = false,
+        jumbo = true,
         class: className,
     }: {
         text: string;
         edited?: boolean;
         inline?: boolean;
+        jumbo?: boolean;
         class?: ClassValue;
     } = $props();
 
     const discord = getDiscord();
     const blocks = $derived(inline ? [] : parse(text));
-    const large = $derived(!inline && jumbo(blocks));
+    const large = $derived(!inline && jumbo && isJumbo(blocks));
 </script>
 
 {#snippet nodes(children: Inline[])}

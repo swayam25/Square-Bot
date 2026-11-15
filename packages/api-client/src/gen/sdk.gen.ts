@@ -57,6 +57,9 @@ import type {
     GuildChannelsData,
     GuildChannelsErrors,
     GuildChannelsResponses,
+    GuildEmojisData,
+    GuildEmojisErrors,
+    GuildEmojisResponses,
     GuildRolesData,
     GuildRolesErrors,
     GuildRolesResponses,
@@ -283,6 +286,18 @@ export const guildRoles = <ThrowOnError extends boolean = false>(
     (options.client ?? client).get<GuildRolesResponses, GuildRolesErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/roles",
+        ...options,
+    });
+
+/**
+ * A server's custom emojis, for pickers
+ */
+export const guildEmojis = <ThrowOnError extends boolean = false>(
+    options: Options<GuildEmojisData, ThrowOnError>,
+): RequestResult<GuildEmojisResponses, GuildEmojisErrors, ThrowOnError> =>
+    (options.client ?? client).get<GuildEmojisResponses, GuildEmojisErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/emojis",
         ...options,
     });
 

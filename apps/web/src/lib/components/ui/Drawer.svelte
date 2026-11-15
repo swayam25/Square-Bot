@@ -17,6 +17,7 @@
         plain = false,
         disabled = false,
         class: className,
+        finalFocus,
     }: {
         open?: boolean;
         title: string;
@@ -29,6 +30,7 @@
         plain?: boolean;
         disabled?: boolean;
         class?: ClassValue;
+        finalFocus?: () => HTMLElement | null;
     } = $props();
 
     let content = $state<HTMLElement | null>(null);
@@ -43,7 +45,13 @@
 </script>
 
 <!-- A plain sheet focuses itself, not its first field, so a phone keyboard doesn't jump up while it slides in -->
-<Drawer.Root bind:open closeOnEscape={dismissable} closeOnInteractOutside={dismissable} initialFocusEl={plain ? () => content : undefined}>
+<Drawer.Root
+    bind:open
+    closeOnEscape={dismissable}
+    closeOnInteractOutside={dismissable}
+    initialFocusEl={plain ? () => content : undefined}
+    finalFocusEl={finalFocus}
+>
     {#if trigger}
         <Drawer.Trigger class={triggerClass} {disabled}>{@render trigger()}</Drawer.Trigger>
     {/if}

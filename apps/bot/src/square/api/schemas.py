@@ -70,6 +70,13 @@ class Role(Schema):
     assignable: bool
 
 
+class Emoji(Schema):
+    id: Snowflake
+    name: str
+    animated: bool
+    usable: bool
+
+
 class JoinDay(Schema):
     date: str  # UTC day, YYYY-MM-DD
     count: int
@@ -470,6 +477,13 @@ def channels_out(guild: discord.Guild) -> list[Channel]:
         )
         for channel in sorted(guild.channels, key=lambda channel: channel.position)
         if (kind := str(channel.type)) in _CHANNEL_KINDS
+    ]
+
+
+def emojis_out(guild: discord.Guild) -> list[Emoji]:
+    return [
+        Emoji(id=str(emoji.id), name=emoji.name, animated=emoji.animated, usable=emoji.is_usable())
+        for emoji in guild.emojis
     ]
 
 

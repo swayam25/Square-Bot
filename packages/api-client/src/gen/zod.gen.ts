@@ -91,6 +91,16 @@ export const zDone = z.object({
 });
 
 /**
+ * Emoji
+ */
+export const zEmoji = z.object({
+    id: z.string().regex(/^\d{17,20}$/),
+    name: z.string(),
+    animated: z.boolean(),
+    usable: z.boolean(),
+});
+
+/**
  * EqPreset
  */
 export const zEqPreset = z.object({
@@ -822,6 +832,19 @@ export const zGuildRolesPath = z.object({
  * Request fulfilled, document follows
  */
 export const zGuildRolesResponse = z.array(zRole);
+
+export const zGuildEmojisHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGuildEmojisPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGuildEmojisResponse = z.array(zEmoji);
 
 export const zSearchMembersHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

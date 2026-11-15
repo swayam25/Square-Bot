@@ -9,6 +9,7 @@ from square.api.schemas import (
     Activity,
     ActivityDay,
     Channel,
+    Emoji,
     Guild,
     JoinDay,
     MemberJoins,
@@ -16,6 +17,7 @@ from square.api.schemas import (
     ServerStats,
     UserMatch,
     channels_out,
+    emojis_out,
     guild_out,
     roles_out,
     user_match,
@@ -40,6 +42,11 @@ async def guild_channels(guild: discord.Guild) -> list[Channel]:
 @get("/roles", summary="A server's roles, highest first, for pickers")
 async def guild_roles(guild: discord.Guild) -> list[Role]:
     return roles_out(guild)
+
+
+@get("/emojis", summary="A server's custom emojis, for pickers")
+async def guild_emojis(guild: discord.Guild) -> list[Emoji]:
+    return emojis_out(guild)
 
 
 SEARCH_LIMIT = 25
@@ -133,5 +140,5 @@ router = Router(
     "/guilds/{guild_id:str}",
     tags=["Guilds"],
     dependencies={"guild": Provide(provide_guild, sync_to_thread=False)},
-    route_handlers=[guild_channels, guild_roles, search_members, member_joins, activity, server_stats],
+    route_handlers=[guild_channels, guild_roles, guild_emojis, search_members, member_joins, activity, server_stats],
 )

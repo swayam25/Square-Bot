@@ -33,7 +33,7 @@
             <span class="shrink-0 rounded bg-dc-blurple px-1 text-2xs leading-3.75 font-semibold text-white">APP</span>
         </div>
         {#if bio}
-            <DiscordMarkdown text={bio} />
+            <DiscordMarkdown text={bio} jumbo={false} />
         {/if}
     </div>
 </div>

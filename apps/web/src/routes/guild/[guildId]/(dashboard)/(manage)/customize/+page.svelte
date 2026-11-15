@@ -87,6 +87,7 @@
                         placeholder={saved.globalBio ?? "What Square does in this server"}
                         maxlength={BIO_MAX}
                         rows={3}
+                        emojis={data.guild}
                         bind:value={bio}
                     />
                 </SettingRow>

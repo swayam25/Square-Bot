@@ -120,6 +120,19 @@ export type Done = {
 };
 
 /**
+ * Emoji
+ */
+export type Emoji = {
+    /**
+     * A Discord ID
+     */
+    id: string;
+    name: string;
+    animated: boolean;
+    usable: boolean;
+};
+
+/**
  * EqPreset
  */
 export type EqPreset = {
@@ -1062,6 +1075,51 @@ export type GuildRolesResponses = {
 };
 
 export type GuildRolesResponse = GuildRolesResponses[keyof GuildRolesResponses];
+
+export type GuildEmojisData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/emojis";
+};
+
+export type GuildEmojisErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GuildEmojisError = GuildEmojisErrors[keyof GuildEmojisErrors];
+
+export type GuildEmojisResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Array<Emoji>;
+};
+
+export type GuildEmojisResponse = GuildEmojisResponses[keyof GuildEmojisResponses];
 
 export type SearchMembersData = {
     body?: never;

@@ -51,6 +51,7 @@
         "@square/api-client": "workspace:*",
         "@tanstack/svelte-table": "9.3.1",
         "discord-api-types": "^0.38.58",
+        "emojibase-data": "18.0.0",
         "layerchart": "^2.9.2",
         "oauth4webapi": "^3.8.8",
         "ws": "^8.22.2",
