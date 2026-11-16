@@ -55,19 +55,10 @@ services:
       timeout: 5s
       retries: 5
 
-  gateway-init:
-    image: postgres:16-alpine
-    container_name: square_gateway_init
-    command: chown 65532:65532 /app
-    network_mode: none
-    volumes:
-      - gateway_data:/app
-
   gateway:
     image: ghcr.io/drizzle-team/gateway:latest@sha256:3f09490584ad97cb5fa6d2a7335b405b8ac96e3b17a427830930f4ff70fe3993
     container_name: square_gateway
     restart: unless-stopped
-    user: "65532:65532"
     environment:
       DATABASE_URL_Square: postgresql://postgres:youcannotpass@db:5432/square
     ports:
@@ -75,13 +66,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      gateway-init:
-        condition: service_completed_successfully
-    read_only: true
     volumes:
       - gateway_data:/app
-    tmpfs:
-      - /tmp
 
 volumes:
   postgres_data:
