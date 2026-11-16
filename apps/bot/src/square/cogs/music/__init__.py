@@ -244,7 +244,7 @@ class Music(
         await self._control(ctx, controls.stop(ctx.guild, ctx.author))
 
     @slash_command(name="seek")
-    @option("duration", description="How far to jump, forwards or backwards. Ex: 10s, +1m, -30s, -1m20s etc....")
+    @option("duration", description="How far to jump, forwards or backwards. Ex: 10s, +1min, -30s, -1min20s etc....")
     async def seek(self, ctx: discord.ApplicationContext, duration: str):
         """Seeks forwards or backwards in the current track."""
         offset_ms = int(parse_duration(duration, signed=True).total_seconds() * 1000)

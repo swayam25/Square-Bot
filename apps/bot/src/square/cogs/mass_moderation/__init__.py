@@ -145,7 +145,7 @@ class MassModeration(
     @option("users", description='Mention the users whom you want to ban. Use " " to separate users.', required=True)
     @option(
         "delete_messages",
-        description="Enter the duration of messages to delete. Ex: 1m, 2h, 7d (default), 0 (disable) etc...",
+        description="Enter the duration of messages to delete. Ex: 1min, 2h, 7d (default), 0 (disable) etc...",
         required=False,
     )
     @option("reason", description="Enter the reason for banning the user", required=False)

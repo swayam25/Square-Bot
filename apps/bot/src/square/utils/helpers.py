@@ -6,26 +6,22 @@ from babel.numbers import format_compact_decimal
 from babel.units import format_unit
 
 
-def parse_duration(duration: str, max_duration: str | None = None, *, signed: bool = False) -> datetime.timedelta:
-    duration = duration.strip()
-    sign = 1
-    if signed and duration[:1] in ("+", "-"):
-        sign = -1 if duration[0] == "-" else 1
-        duration = duration[1:]
-    pattern = re.compile(r"(?P<value>\d+)(?P<unit>[wdhms])")
+def _sum_duration(duration: str) -> datetime.timedelta:
+    pattern = re.compile(r"(?P<value>\d+)(?P<unit>min|[mwdhs])")
     matches = pattern.findall(duration)
 
     if not matches:
         raise ValueError(
-            "Invalid duration format.\n-# Use `w` for weeks, `d` for days, `h` for hours, `m` for minutes, and `s` for seconds."
+            "Invalid duration format.\n-# Use `m` for months, `w` for weeks, `d` for days, `h` for hours, `min` for minutes, and `s` for seconds."
         )
 
     total_duration = datetime.timedelta()
     funcs = {
+        "m": lambda x: datetime.timedelta(days=30 * x),
         "w": lambda x: datetime.timedelta(weeks=x),
         "d": lambda x: datetime.timedelta(days=x),
         "h": lambda x: datetime.timedelta(hours=x),
-        "m": lambda x: datetime.timedelta(minutes=x),
+        "min": lambda x: datetime.timedelta(minutes=x),
         "s": lambda x: datetime.timedelta(seconds=x),
     }
 
@@ -38,9 +34,20 @@ def parse_duration(duration: str, max_duration: str | None = None, *, signed: bo
     if total_duration.total_seconds() <= 0:
         raise ValueError("Total duration must be positive.")
 
+    return total_duration
+
+
+def parse_duration(duration: str, max_duration: str | None = None, *, signed: bool = False) -> datetime.timedelta:
+    duration = duration.strip()
+    sign = 1
+    if signed and duration[:1] in ("+", "-"):
+        sign = -1 if duration[0] == "-" else 1
+        duration = duration[1:]
+
+    total_duration = _sum_duration(duration)
+
     if max_duration is not None:
-        max_td = parse_duration(max_duration)
-        if total_duration > max_td:
+        if total_duration > _sum_duration(max_duration):
             raise ValueError(f"Total duration must not exceed `{max_duration}`.")
 
     elif total_duration.days > 28:
