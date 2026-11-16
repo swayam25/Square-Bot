@@ -5,6 +5,7 @@ import sys
 from importlib.metadata import metadata, version
 from square import api
 from square.cogs import extensions
+from square.cogs.giveaways import files as giveaway_files
 from square.cogs.tickets import files as ticket_files
 from square.core import Client
 from square.db import DB
@@ -92,6 +93,7 @@ async def main() -> None:
         await storage.init()
         await storage.sweep_guilds(set(await fetch_guild_ids()))
         await ticket_files.sweep()
+        await giveaway_files.sweep()
         load_cogs()
         api.start(client)
         async with client:

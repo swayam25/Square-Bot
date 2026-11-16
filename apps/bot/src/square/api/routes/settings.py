@@ -2,13 +2,14 @@ import asyncio
 import discord
 from collections import defaultdict
 from collections.abc import Mapping
-from litestar import Request, Response, Router, delete, get, patch, post
+from litestar import Router, delete, get, patch, post
 from litestar.di import Provide
-from litestar.openapi import ResponseSpec
 from msgspec import UNSET
 from square.api import resolve
 from square.api.auth import provide_guild, provide_member
+from square.api.refusals import REFUSED, refused
 from square.api.resolve import SettingError
+from square.api.routes.profile import reset_profile
 from square.api.schemas import (
     AutoroleUser,
     GeneralPatch,
@@ -23,13 +24,13 @@ from square.api.schemas import (
     MusicPatch,
     MusicSettings,
     Notes,
-    Problem,
     TicketPatch,
     TicketSettings,
     id_of,
     person_of,
 )
 from square.api.users import find_user
+from square.cogs.giveaways import actions as giveaway_actions
 from square.cogs.tickets import cards
 from square.cogs.tickets.panel import post as post_panel
 from square.cogs.tickets.panel import unbind as unbind_panel
@@ -40,7 +41,8 @@ from square.db.funcs import guild as guild_db
 from square.db.funcs import invites as invites_db
 from square.db.funcs import logs as logs_db
 from square.db.funcs import tickets as tickets_db
-from square.db.funcs.guild import remove_guild
+from square.db.funcs.guild import add_guild
+from square.forget import forget_guild
 from square.modules import Module
 from square.music import request, stay
 from square.music.core import can_play_in, get_player
@@ -48,8 +50,6 @@ from square.music.player import release_guild, render_player, stop_player
 from square.music.utils import delete_quietly
 from square.utils.invites import refresh as refresh_invites
 from square.utils.server_log import LogType
-
-REFUSED = {422: ResponseSpec(data_container=Problem, description="The bot refused the change", generate_examples=False)}
 
 
 def _notes(guild: discord.Guild, *notes: str | None) -> Notes:
@@ -502,33 +502,37 @@ async def get_module_settings(guild: discord.Guild) -> ModuleSettings:
 
 
 @patch("/modules", summary="Turn modules on or off")
-async def update_module_settings(guild: discord.Guild, data: ModulePatch) -> ModuleSettings:
+async def update_module_settings(client: Client, guild: discord.Guild, data: ModulePatch) -> ModuleSettings:
+    invites_were_on = cache.enabled(guild.id, Module.INVITES)
+    giveaways_were_on = cache.enabled(guild.id, Module.GIVEAWAYS)
     for module in Module:
         if (on := getattr(data, module.value)) is not UNSET:
             await guild_db.set_module(guild.id, module, on)
     await refresh_invites(guild)
+    if cache.enabled(guild.id, Module.INVITES) != invites_were_on:
+        await giveaway_actions.redraw_invite_rules(client, guild.id)
+    if cache.enabled(guild.id, Module.GIVEAWAYS) and not giveaways_were_on:
+        giveaway_actions.wake()
     return _modules(guild)
 
 
-@delete("/", summary="Reset every setting", status_code=200)
+@delete("/", summary="Reset everything, as if Square just joined", status_code=200)
 async def reset_all_settings(client: Client, guild: discord.Guild, member: discord.Member) -> Notes:
-    """Resets every setting and drops the server's row."""
-    await _reset_general(guild)
-    await _reset_logs(client, guild)
-    notes = [await _reset_music(client, guild, member), await _reset_tickets(guild, member)]
-    await _reset_invites(guild)
-    await remove_guild(guild.id)
+    """Old messages, ticket channels and giveaway posts stay, since deleting them one by one would hit rate limits."""
+    notes = [await _remove_request_channel(client, guild, member), await _remove_ticket_panel(guild, member)]
+    await _clear_stay_channel(client, guild)
+    if (player := get_player(client, guild.id)) is not None:
+        await stop_player(player, guild, force=True)
+    try:
+        await reset_profile(client, guild, member)
+    except SettingError as exc:
+        notes.append(str(exc))
+    await forget_guild(client, guild)
+    await add_guild(guild.id)
     await refresh_invites(guild)
-    request.forget(guild.id)
-    stay.forget(guild.id)
     client.dispatch("log_channels_update", guild.id)
+    client.dispatch("music_update", guild.id)
     return _notes(guild, *notes)
-
-
-def refused(request: Request, exc: SettingError) -> Response[Problem]:
-    client: Client | None = request.app.state.client
-    guild = client.get_guild(int(request.path_params["guild_id"])) if client else None
-    return Response(Problem(detail=resolve.plain(guild, str(exc)) if guild else str(exc)), status_code=422)
 
 
 router = Router(

@@ -548,16 +548,192 @@ class MessageSent(Schema):
     url: str
 
 
+GiveawayStatus = Literal["scheduled", "running", "ended"]
+EntryButtonStyle = Literal["blurple", "green", "grey", "red"]
+MAX_GIVEAWAY_WINNERS = 50
+MAX_GIVEAWAY_ROLES = 10
+MAX_GIVEAWAY_ENTRIES = 100
+MAX_GIVEAWAY_DAYS = 3650
+MAX_GIVEAWAY_INVITES = 10_000
+MAX_ENTRANT_CHANGES = 100
+Prize = Annotated[str, msgspec.Meta(min_length=1, max_length=256)]
+GiveawayText = Annotated[str, msgspec.Meta(max_length=2000)]
+WinnerCount = Annotated[int, msgspec.Meta(ge=1, le=MAX_GIVEAWAY_WINNERS)]
+Days = Annotated[int, msgspec.Meta(ge=0, le=MAX_GIVEAWAY_DAYS)]
+InviteCount = Annotated[int, msgspec.Meta(ge=0, le=MAX_GIVEAWAY_INVITES)]
+GiveawayRoles = Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_GIVEAWAY_ROLES)]
+ButtonLabel = Annotated[str, msgspec.Meta(max_length=40)]
+EmojiText = Annotated[str, msgspec.Meta(min_length=1, max_length=100)]
+UnixMs = Annotated[int, msgspec.Meta(ge=0, description="Unix ms")]
+GIVEAWAY_IMAGE_MAX_BYTES = 8 * 1024 * 1024
+GIVEAWAY_IMAGE_DATA_MAX = len("data:image/jpeg;base64,") + -(-GIVEAWAY_IMAGE_MAX_BYTES // 3) * 4
+GiveawayImage = Annotated[
+    str,
+    msgspec.Meta(
+        max_length=GIVEAWAY_IMAGE_DATA_MAX,
+        pattern=r"^data:image/(png|jpeg|gif|webp);base64,",
+        description="A PNG, JPEG, GIF or WebP as a base64 data URI",
+    ),
+]
+
+
+class BonusRole(Schema):
+    role_id: Snowflake
+    entries: Annotated[int, msgspec.Meta(ge=1, le=MAX_GIVEAWAY_ENTRIES)]
+
+
+BonusRoles = Annotated[list[BonusRole], msgspec.Meta(max_length=MAX_GIVEAWAY_ROLES)]
+
+
+class GiveawayCreate(Schema, kw_only=True):
+    channel_id: Snowflake
+    prize: Prize
+    description: GiveawayText = ""
+    winner_count: WinnerCount = 1
+    starts_at: UnixMs | None = None  # None starts it now
+    ends_at: UnixMs
+    host_id: Snowflake | None = None  # None is whoever creates it
+    required_role_ids: GiveawayRoles = []
+    require_all_roles: bool = False
+    blocked_role_ids: GiveawayRoles = []
+    min_account_days: Days = 0
+    min_member_days: Days = 0
+    min_invites: InviteCount = 0
+    bonus_roles: BonusRoles = []
+    ping_role_id: Snowflake | None = None
+    winner_role_id: Snowflake | None = None
+    color: HexColor | None = None
+    image_url: HttpsUrl | None = None
+    image_data: GiveawayImage | None = None
+    button_label: ButtonLabel = "Enter"
+    button_emoji: EmojiText | None = None
+    button_style: EntryButtonStyle = "blurple"
+
+
+class GiveawayPatch(Schema):
+    channel_id: Snowflake | UnsetType = UNSET
+    prize: Prize | UnsetType = UNSET
+    description: GiveawayText | UnsetType = UNSET
+    winner_count: WinnerCount | UnsetType = UNSET
+    starts_at: UnixMs | UnsetType = UNSET
+    ends_at: UnixMs | UnsetType = UNSET
+    host_id: Snowflake | UnsetType = UNSET
+    required_role_ids: GiveawayRoles | UnsetType = UNSET
+    require_all_roles: bool | UnsetType = UNSET
+    blocked_role_ids: GiveawayRoles | UnsetType = UNSET
+    min_account_days: Days | UnsetType = UNSET
+    min_member_days: Days | UnsetType = UNSET
+    min_invites: InviteCount | UnsetType = UNSET
+    bonus_roles: BonusRoles | UnsetType = UNSET
+    ping_role_id: Snowflake | None | UnsetType = UNSET
+    winner_role_id: Snowflake | None | UnsetType = UNSET
+    color: HexColor | None | UnsetType = UNSET
+    image_url: HttpsUrl | None | UnsetType = UNSET
+    image_data: GiveawayImage | UnsetType = UNSET
+    button_label: ButtonLabel | UnsetType = UNSET
+    button_emoji: EmojiText | None | UnsetType = UNSET
+    button_style: EntryButtonStyle | UnsetType = UNSET
+
+
+class GiveawaySummary(Schema):
+    id: int
+    status: GiveawayStatus
+    prize: str
+    channel_id: Snowflake
+    entries: int
+    winner_count: int
+    starts_at: int  # Unix ms
+    ends_at: int  # Unix ms
+    ended_at: int | None  # Unix ms
+    posted: bool
+
+
+class GiveawayPage(Schema):
+    items: list[GiveawaySummary]
+    page: int
+    pages: int
+    total: int
+    scheduled: int
+    running: int
+    ended: int
+
+
+class Giveaway(GiveawaySummary):
+    description: str
+    message_url: str | None
+    host: Person
+    winners: list[Person]
+    required_role_ids: list[Snowflake]
+    require_all_roles: bool
+    blocked_role_ids: list[Snowflake]
+    min_account_days: int
+    min_member_days: int
+    min_invites: int
+    bonus_roles: list[BonusRole]
+    ping_role_id: Snowflake | None
+    winner_role_id: Snowflake | None
+    color: str | None
+    image_url: str | None
+    image_file: str | None
+    image_src: str | None  # Uploaded image on Discord, once posted
+    button_label: str
+    button_emoji: str | None
+    button_style: EntryButtonStyle
+    created_at: int  # Unix ms
+
+
+class Entrant(Schema):
+    user: Person
+    member: bool
+    eligible: bool
+    entries: int
+    bonus: int
+    role_bonus: int
+    chance: float  # 0..1 of all eligible entries
+    entered_at: int  # Unix ms
+    winner: bool
+
+
+class EntrantPage(Schema):
+    items: list[Entrant]
+    page: int
+    pages: int
+    total: int
+    people: int
+    eligible: int
+    tickets: int
+
+
+EntrantIds = Annotated[list[Snowflake], msgspec.Meta(min_length=1, max_length=MAX_ENTRANT_CHANGES)]
+
+
+class EntrantBonus(Schema):
+    user_ids: EntrantIds
+    bonus: Annotated[int, msgspec.Meta(ge=0, le=MAX_GIVEAWAY_ENTRIES)]
+
+
+class EntrantRemove(Schema):
+    user_ids: EntrantIds
+
+
+class Reroll(Schema):
+    user_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_GIVEAWAY_WINNERS)] | None = (
+        None  # None rerolls all
+    )
+
+
 class ModuleSettings(Schema):
     logs: bool
     tickets: bool
     invites: bool
+    giveaways: bool
 
 
 class ModulePatch(Schema):
     logs: bool | UnsetType = UNSET
     tickets: bool | UnsetType = UNSET
     invites: bool | UnsetType = UNSET
+    giveaways: bool | UnsetType = UNSET
 
 
 # A new `Module` needs a field in both structs above, so the bot refuses to start until it has one

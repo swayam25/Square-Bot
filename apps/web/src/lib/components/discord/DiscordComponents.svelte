@@ -61,7 +61,7 @@
         </DiscordActionRow>
     {:else if component.kind === "button"}
         <DiscordButton style={component.style || "secondary"} href={component.url || undefined} disabled={component.disabled}>
-            {#if component.emoji}<DiscordEmoji {...component.emoji} class="size-4.5" />{/if}
+            {#if component.emoji}<DiscordEmoji {...component.emoji} tooltip={false} />{/if}
             {#if component.label}<span>{component.label}</span>{/if}
         </DiscordButton>
     {:else if component.kind === "select"}

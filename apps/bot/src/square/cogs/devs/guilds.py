@@ -6,11 +6,11 @@ from discord.ext import commands
 from discord.ui import ActionRow
 from square.core import Client
 from square.core.view import DesignerView, error_view, success_view
-from square.db.funcs.guild import add_guild, remove_guild
-from square.utils import check, config, storage
+from square.db.funcs.guild import add_guild
+from square.forget import forget_guild
+from square.utils import check, config
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count, member_counts
-from square.utils.server_log import cleanup_guild
 
 
 class GuildContainer(ui.Container):
@@ -92,9 +92,7 @@ class Guilds:
     @commands.Cog.listener("on_guild_remove")
     async def when_removed_from_guild(self, guild: discord.Guild):
         total, humans, bots = member_counts(guild)
-        await remove_guild(guild.id)
-        await storage.purge_guild(guild.id)
-        await cleanup_guild(guild.id, {c.id for c in guild.channels})
+        await forget_guild(self.client, guild)
         leave_log_ch = self.client.get_channel(config.system_channel_id) or await self.client.fetch_channel(
             config.system_channel_id
         )

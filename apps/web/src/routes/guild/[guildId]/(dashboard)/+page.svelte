@@ -1,4 +1,5 @@
 <script module lang="ts">
+    import Mention from "#lib/components/discord/Mention.svelte";
     import type { ActivityDay, JoinDay } from "@square/api-client";
     import type { Series } from "./DailyChart.svelte";
 
@@ -15,7 +16,10 @@
 
 <script lang="ts">
     import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
+    import ResetButton from "#lib/components/dashboard/ResetButton.svelte";
     import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
+    import SettingGroup from "#lib/components/dashboard/SettingGroup.svelte";
+    import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
     import NowPlayingBanner from "#lib/components/music/NowPlayingBanner.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
@@ -24,6 +28,8 @@
     import { formatCount, monthYear, plural } from "#lib/format.ts";
     import { MODULES, type ModuleKey } from "#lib/settings/modules.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
+    import { toast } from "#lib/toast.svelte.ts";
+    import { refreshAll } from "$app/navigation";
     import type { Snippet } from "svelte";
     import MaterialSymbolsArrowForwardRounded from "~icons/material-symbols/arrow-forward-rounded";
     import MaterialSymbolsCakeRounded from "~icons/material-symbols/cake-rounded";
@@ -33,6 +39,7 @@
     import MaterialSymbolsPlayCircleRounded from "~icons/material-symbols/play-circle-rounded";
     import MaterialSymbolsRocketLaunchRounded from "~icons/material-symbols/rocket-launch-rounded";
     import MaterialSymbolsShieldPersonRounded from "~icons/material-symbols/shield-person-rounded";
+    import MaterialSymbolsSkull from "~icons/material-symbols/skull";
     import MaterialSymbolsTagRounded from "~icons/material-symbols/tag-rounded";
     import type { PageProps } from "./$types";
     import DailyChart from "./DailyChart.svelte";
@@ -93,7 +100,7 @@
                   {
                       label: "Roles",
                       value: formatCount(stats.roles),
-                      detail: "Not counting @everyone",
+                      detail: notEveryone,
                       icon: MaterialSymbolsShieldPersonRounded,
                       tone: "text-violet-300",
                   },
@@ -157,7 +164,9 @@
                             ><tile.icon class={["size-5 shrink-0", tile.tone]} />{tile.label}</span
                         >
                         <span class="truncate font-mono text-2xl font-semibold">{tile.value}</span>
-                        <span class="truncate text-xs text-gray-400">{tile.detail}</span>
+                        <span class="truncate text-xs text-gray-400"
+                            >{#if typeof tile.detail === "string"}{tile.detail}{:else}{@render tile.detail()}{/if}</span
+                        >
                     </div>
                 {/each}
             {:else if statsQuery.error}
@@ -304,6 +313,40 @@
             {/if}
         </div>
     {/if}
+
+    {#if data.guild.canManage}
+        <section aria-labelledby="danger" class="flex flex-col gap-4">
+            <h2 id="danger" class="font-display text-xl font-semibold">Danger zone</h2>
+            <SettingGroup>
+                <SettingRow
+                    label="Reset everything"
+                    description="Square forgets {data.guild
+                        .name} as if it just joined: every setting, module, ticket, giveaway, invite count and its profile here. Old messages, ticket channels and giveaway posts stay."
+                    tone="danger"
+                    icon={MaterialSymbolsSkull}
+                >
+                    <div class="flex @2xl:justify-end">
+                        <ResetButton
+                            variant="danger"
+                            label="Reset everything"
+                            busy="Resetting…"
+                            icon={MaterialSymbolsSkull}
+                            title="Reset everything?"
+                            description="This can't be undone. Square deletes the request channel and ticket panel, stops the music, and forgets everything it knows about {data
+                                .guild.name}."
+                            confirmText={data.guild.name}
+                            done="Everything reset"
+                            reset={() => settings.resetEverything(data.guild.id)}
+                            apply={async (notes) => {
+                                if (notes.length) toast.warning(notes.join(" "));
+                                await refreshAll();
+                            }}
+                        />
+                    </div>
+                </SettingRow>
+            </SettingGroup>
+        </section>
+    {/if}
 </div>
 
 <SaveBar
@@ -311,3 +354,5 @@
     onsave={() => settings.updateModules({ guild: data.guild.id, ...moduleChanges })}
     ondiscard={() => (drafts = modules ? { ...modules } : null)}
 />
+
+{#snippet notEveryone()}Not counting <Mention kind="role" name="everyone" />{/snippet}

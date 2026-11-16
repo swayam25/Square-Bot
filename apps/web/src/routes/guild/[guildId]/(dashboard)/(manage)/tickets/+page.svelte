@@ -7,6 +7,7 @@
     import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
     import SettingGroup from "#lib/components/dashboard/SettingGroup.svelte";
     import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
+    import Mention from "#lib/components/discord/Mention.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Input from "#lib/components/ui/Input.svelte";
     import ReadonlyField from "#lib/components/ui/ReadonlyField.svelte";
@@ -168,7 +169,7 @@
                                     </Tooltip>
                                 </div>
                             {:else}
-                                <Tooltip content={dirty ? "Save or discard your changes first" : "Square creates #tickets for it"} class="w-full">
+                                <Tooltip content={dirty ? "Save or discard your changes first" : createsChannel} class="w-full">
                                     <Button variant="primary" class="w-full" loading={creating} disabled={dirty} onclick={createPanel}>
                                         {#if !creating}<MaterialSymbolsAddRounded />{/if}{creating ? "Creating…" : "Create panel"}
                                     </Button>
@@ -231,3 +232,5 @@
         ondiscard={discard}
     />
 </QueryGate>
+
+{#snippet createsChannel()}Square creates <Mention name="tickets" /> for it{/snippet}

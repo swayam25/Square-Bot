@@ -46,6 +46,14 @@ export const zBonusChange = z.object({
 });
 
 /**
+ * BonusRole
+ */
+export const zBonusRole = z.object({
+    roleId: z.string().regex(/^\d{17,20}$/),
+    entries: z.int().gte(1).lte(100),
+});
+
+/**
  * BotProfile
  */
 export const zBotProfile = z.object({
@@ -101,6 +109,21 @@ export const zEmoji = z.object({
 });
 
 /**
+ * EntrantBonus
+ */
+export const zEntrantBonus = z.object({
+    userIds: z.array(z.string()).min(1).max(100),
+    bonus: z.int().gte(0).lte(100),
+});
+
+/**
+ * EntrantRemove
+ */
+export const zEntrantRemove = z.object({
+    userIds: z.array(z.string()).min(1).max(100),
+});
+
+/**
  * EqPreset
  */
 export const zEqPreset = z.object({
@@ -127,6 +150,101 @@ export const zGeneralPatch = z.object({
     autoroleSplit: z.boolean().optional(),
     autoroleUsers: z.array(zAutoroleUserPatch).max(50).optional(),
     mediaOnlyChannelId: z.string().nullish(),
+});
+
+/**
+ * GiveawayCreate
+ */
+export const zGiveawayCreate = z.object({
+    channelId: z.string().regex(/^\d{17,20}$/),
+    prize: z.string().min(1).max(256),
+    description: z.string().max(2000).optional().default(""),
+    winnerCount: z.int().gte(1).lte(50).optional().default(1),
+    startsAt: z.int().nullish(),
+    endsAt: z.int().gte(0),
+    hostId: z.string().nullish(),
+    requiredRoleIds: z.array(z.string()).max(10).optional(),
+    requireAllRoles: z.boolean().optional().default(false),
+    blockedRoleIds: z.array(z.string()).max(10).optional(),
+    minAccountDays: z.int().gte(0).lte(3650).optional().default(0),
+    minMemberDays: z.int().gte(0).lte(3650).optional().default(0),
+    minInvites: z.int().gte(0).lte(10000).optional().default(0),
+    bonusRoles: z.array(zBonusRole).max(10).optional(),
+    pingRoleId: z.string().nullish(),
+    winnerRoleId: z.string().nullish(),
+    color: z.string().nullish(),
+    imageUrl: z.string().nullish(),
+    imageData: z.string().nullish(),
+    buttonLabel: z.string().max(40).optional().default("Enter"),
+    buttonEmoji: z.string().nullish(),
+    buttonStyle: z.enum(["blurple", "green", "grey", "red"]).optional().default("blurple"),
+});
+
+/**
+ * GiveawayPatch
+ */
+export const zGiveawayPatch = z.object({
+    channelId: z
+        .string()
+        .regex(/^\d{17,20}$/)
+        .optional(),
+    prize: z.string().min(1).max(256).optional(),
+    description: z.string().max(2000).optional(),
+    winnerCount: z.int().gte(1).lte(50).optional(),
+    startsAt: z.int().optional(),
+    endsAt: z.int().optional(),
+    hostId: z
+        .string()
+        .regex(/^\d{17,20}$/)
+        .optional(),
+    requiredRoleIds: z.array(z.string()).max(10).optional(),
+    requireAllRoles: z.boolean().optional(),
+    blockedRoleIds: z.array(z.string()).max(10).optional(),
+    minAccountDays: z.int().lte(3650).optional(),
+    minMemberDays: z.int().lte(3650).optional(),
+    minInvites: z.int().lte(10000).optional(),
+    bonusRoles: z.array(zBonusRole).max(10).optional(),
+    pingRoleId: z.string().nullish(),
+    winnerRoleId: z.string().nullish(),
+    color: z.string().nullish(),
+    imageUrl: z.string().nullish(),
+    imageData: z
+        .string()
+        .max(11184835)
+        .regex(/^data:image\/(png|jpeg|gif|webp);base64,/)
+        .optional(),
+    buttonLabel: z.string().max(40).optional(),
+    buttonEmoji: z.string().nullish(),
+    buttonStyle: z.union([z.literal("blurple"), z.literal("green"), z.literal("grey"), z.literal("red")]).optional(),
+});
+
+/**
+ * GiveawaySummary
+ */
+export const zGiveawaySummary = z.object({
+    id: z.int(),
+    status: z.enum(["scheduled", "running", "ended"]),
+    prize: z.string(),
+    channelId: z.string().regex(/^\d{17,20}$/),
+    entries: z.int(),
+    winnerCount: z.int(),
+    startsAt: z.int(),
+    endsAt: z.int(),
+    endedAt: z.int().nullable(),
+    posted: z.boolean(),
+});
+
+/**
+ * GiveawayPage
+ */
+export const zGiveawayPage = z.object({
+    items: z.array(zGiveawaySummary),
+    page: z.int(),
+    pages: z.int(),
+    total: z.int(),
+    scheduled: z.int(),
+    running: z.int(),
+    ended: z.int(),
 });
 
 /**
@@ -380,6 +498,7 @@ export const zModulePatch = z.object({
     logs: z.boolean().optional(),
     tickets: z.boolean().optional(),
     invites: z.boolean().optional(),
+    giveaways: z.boolean().optional(),
 });
 
 /**
@@ -389,6 +508,7 @@ export const zModuleSettings = z.object({
     logs: z.boolean(),
     tickets: z.boolean(),
     invites: z.boolean(),
+    giveaways: z.boolean(),
 });
 
 /**
@@ -443,6 +563,34 @@ export const zAutoroleUser = z.object({
 });
 
 /**
+ * Entrant
+ */
+export const zEntrant = z.object({
+    user: zPerson,
+    member: z.boolean(),
+    eligible: z.boolean(),
+    entries: z.int(),
+    bonus: z.int(),
+    roleBonus: z.int(),
+    chance: z.number(),
+    enteredAt: z.int(),
+    winner: z.boolean(),
+});
+
+/**
+ * EntrantPage
+ */
+export const zEntrantPage = z.object({
+    items: z.array(zEntrant),
+    page: z.int(),
+    pages: z.int(),
+    total: z.int(),
+    people: z.int(),
+    eligible: z.int(),
+    tickets: z.int(),
+});
+
+/**
  * GeneralSettings
  */
 export const zGeneralSettings = z.object({
@@ -451,6 +599,43 @@ export const zGeneralSettings = z.object({
     autoroleSplit: z.boolean(),
     autoroleUsers: z.array(zAutoroleUser),
     mediaOnlyChannelId: z.string().nullable(),
+});
+
+/**
+ * Giveaway
+ */
+export const zGiveaway = z.object({
+    id: z.int(),
+    status: z.enum(["scheduled", "running", "ended"]),
+    prize: z.string(),
+    channelId: z.string().regex(/^\d{17,20}$/),
+    entries: z.int(),
+    winnerCount: z.int(),
+    startsAt: z.int(),
+    endsAt: z.int(),
+    endedAt: z.int().nullable(),
+    posted: z.boolean(),
+    description: z.string(),
+    messageUrl: z.string().nullable(),
+    host: zPerson,
+    winners: z.array(zPerson),
+    requiredRoleIds: z.array(z.string()),
+    requireAllRoles: z.boolean(),
+    blockedRoleIds: z.array(z.string()),
+    minAccountDays: z.int(),
+    minMemberDays: z.int(),
+    minInvites: z.int(),
+    bonusRoles: z.array(zBonusRole),
+    pingRoleId: z.string().nullable(),
+    winnerRoleId: z.string().nullable(),
+    color: z.string().nullable(),
+    imageUrl: z.string().nullable(),
+    imageFile: z.string().nullable(),
+    imageSrc: z.string().nullable(),
+    buttonLabel: z.string(),
+    buttonEmoji: z.string().nullable(),
+    buttonStyle: z.enum(["blurple", "green", "grey", "red"]),
+    createdAt: z.int(),
 });
 
 /**
@@ -553,6 +738,13 @@ export const zQueuedTrack = z.object({
  */
 export const zRequester = z.object({
     userId: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Reroll
+ */
+export const zReroll = z.object({
+    userIds: z.array(z.string()).nullish(),
 });
 
 /**
@@ -1598,6 +1790,192 @@ export const zTicketFilePath = z.object({
     number: z.int().gte(1).lte(10000000),
     attachment_id: z.string().regex(/^\d{17,20}$/),
 });
+
+export const zListGiveawaysHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zListGiveawaysPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+export const zListGiveawaysQuery = z.object({
+    status: z.enum(["scheduled", "running", "ended", "all"]).optional().default("all"),
+    q: z.string().nullish(),
+    order: z.enum(["asc", "desc"]).optional().default("desc"),
+    page: z.int().gte(1).lte(100000).optional().default(1),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zListGiveawaysResponse = zGiveawayPage;
+
+export const zCreateGiveawayBody = zGiveawayCreate;
+
+export const zCreateGiveawayHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zCreateGiveawayPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zCreateGiveawayResponse = zGiveaway;
+
+export const zDeleteGiveawayHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zDeleteGiveawayPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    giveaway_id: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Request fulfilled, nothing follows
+ */
+export const zDeleteGiveawayResponse = z.void();
+
+export const zGetGiveawayHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGetGiveawayPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    giveaway_id: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGetGiveawayResponse = zGiveaway;
+
+export const zUpdateGiveawayBody = zGiveawayPatch;
+
+export const zUpdateGiveawayHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateGiveawayPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    giveaway_id: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateGiveawayResponse = zGiveaway;
+
+export const zGiveawayImageHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+    range: z.string().nullish(),
+});
+
+export const zGiveawayImagePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    giveaway_id: z.int().gte(1).lte(2147483647),
+});
+
+export const zStartGiveawayHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zStartGiveawayPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    giveaway_id: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zStartGiveawayResponse = zGiveaway;
+
+export const zEndGiveawayHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zEndGiveawayPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    giveaway_id: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zEndGiveawayResponse = zGiveaway;
+
+export const zRerollGiveawayBody = zReroll;
+
+export const zRerollGiveawayHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zRerollGiveawayPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    giveaway_id: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zRerollGiveawayResponse = zGiveaway;
+
+export const zListEntrantsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zListEntrantsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    giveaway_id: z.int().gte(1).lte(2147483647),
+});
+
+export const zListEntrantsQuery = z.object({
+    q: z.string().nullish(),
+    sort: z.enum(["entered", "entries"]).optional().default("entered"),
+    order: z.enum(["asc", "desc"]).optional().default("desc"),
+    page: z.int().gte(1).lte(100000).optional().default(1),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zListEntrantsResponse = zEntrantPage;
+
+export const zSetEntrantBonusBody = zEntrantBonus;
+
+export const zSetEntrantBonusHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSetEntrantBonusPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    giveaway_id: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Request fulfilled, nothing follows
+ */
+export const zSetEntrantBonusResponse = z.void();
+
+export const zRemoveEntrantsBody = zEntrantRemove;
+
+export const zRemoveEntrantsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zRemoveEntrantsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    giveaway_id: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Request fulfilled, nothing follows
+ */
+export const zRemoveEntrantsResponse = z.void();
 
 export const zMusicPlayerHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

@@ -90,6 +90,8 @@ export const resetTickets = command(guildId, async (guild) => {
     return { notes, settings: await read(sdk.getTicketSettings(forGuild(guild))) };
 });
 
+export const resetEverything = command(guildId, async (guild) => (await read(sdk.resetAllSettings(forGuild(guild)))).notes);
+
 export const moduleSettings = query(guildId, (guild) => read(sdk.getModuleSettings(forGuild(guild))));
 
 export const updateModules = command(schema.zModulePatch.extend({ guild: guildId }), async ({ guild, ...body }) => {

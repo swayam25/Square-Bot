@@ -2925,7 +2925,7 @@
         "tags": [
           "Settings"
         ],
-        "summary": "Reset every setting",
+        "summary": "Reset everything, as if Square just joined",
         "operationId": "reset_all_settings",
         "parameters": [
           {
@@ -4936,6 +4936,1475 @@
           },
           "416": {
             "description": "The range starts past the end of the file"
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/giveaways": {
+      "get": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "This server's giveaways, newest end first",
+        "operationId": "list_giveaways",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "scheduled",
+                "running",
+                "ended",
+                "all"
+              ],
+              "default": "all"
+            },
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "maxLength": 100
+            },
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            },
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "maximum": 100000.0,
+              "minimum": 1.0,
+              "default": 1
+            },
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiveawayPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "Start or schedule a giveaway",
+        "operationId": "create_giveaway",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GiveawayCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Giveaway"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/giveaways/{giveaway_id}": {
+      "get": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "One giveaway with everything about it",
+        "operationId": "get_giveaway",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "giveaway_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Giveaway"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "Delete a giveaway and its message",
+        "operationId": "delete_giveaway",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "giveaway_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Request fulfilled, nothing follows",
+            "headers": {}
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "Change a giveaway and redraw its message",
+        "operationId": "update_giveaway",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "giveaway_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GiveawayPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Giveaway"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/giveaways/{giveaway_id}/image": {
+      "get": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "A scheduled giveaway's uploaded image, before it's posted",
+        "operationId": "giveaway_image",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "giveaway_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "range",
+            "in": "header",
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "required": false,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stream Response",
+            "headers": {},
+            "content": {
+              "application/octet-stream": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "206": {
+            "description": "The requested part of the file"
+          },
+          "416": {
+            "description": "The range starts past the end of the file"
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/giveaways/{giveaway_id}/start": {
+      "post": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "Start a scheduled giveaway now",
+        "operationId": "start_giveaway",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "giveaway_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Giveaway"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/giveaways/{giveaway_id}/end": {
+      "post": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "End a running giveaway now and pick its winners",
+        "operationId": "end_giveaway",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "giveaway_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Giveaway"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/giveaways/{giveaway_id}/reroll": {
+      "post": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "Pick new winners for an ended giveaway",
+        "operationId": "reroll_giveaway",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "giveaway_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Reroll"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Giveaway"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/giveaways/{giveaway_id}/entrants": {
+      "get": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "Everyone in a giveaway, with their entries and odds",
+        "operationId": "list_entrants",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "giveaway_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "maxLength": 100
+            },
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "entered",
+                "entries"
+              ],
+              "default": "entered"
+            },
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "desc"
+            },
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "maximum": 100000.0,
+              "minimum": 1.0,
+              "default": 1
+            },
+            "required": false,
+            "deprecated": false,
+            "allowEmptyValue": false,
+            "allowReserved": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntrantPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/giveaways/{giveaway_id}/entrants/bonus": {
+      "post": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "Give entrants extra entries",
+        "operationId": "set_entrant_bonus",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "giveaway_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntrantBonus"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Request fulfilled, nothing follows",
+            "headers": {}
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/giveaways/{giveaway_id}/entrants/remove": {
+      "post": {
+        "tags": [
+          "Giveaways"
+        ],
+        "summary": "Take people out of a giveaway",
+        "operationId": "remove_entrants",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "giveaway_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntrantRemove"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Request fulfilled, nothing follows",
+            "headers": {}
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
           }
         },
         "deprecated": false,
@@ -8070,6 +9539,26 @@
         ],
         "title": "BonusChange"
       },
+      "BonusRole": {
+        "properties": {
+          "roleId": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "entries": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "entries",
+          "roleId"
+        ],
+        "title": "BonusRole"
+      },
       "BotProfile": {
         "properties": {
           "name": {
@@ -8320,6 +9809,129 @@
         ],
         "title": "Emoji"
       },
+      "Entrant": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "member": {
+            "type": "boolean"
+          },
+          "eligible": {
+            "type": "boolean"
+          },
+          "entries": {
+            "type": "integer"
+          },
+          "bonus": {
+            "type": "integer"
+          },
+          "roleBonus": {
+            "type": "integer"
+          },
+          "chance": {
+            "type": "number"
+          },
+          "enteredAt": {
+            "type": "integer"
+          },
+          "winner": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bonus",
+          "chance",
+          "eligible",
+          "enteredAt",
+          "entries",
+          "member",
+          "roleBonus",
+          "user",
+          "winner"
+        ],
+        "title": "Entrant"
+      },
+      "EntrantBonus": {
+        "properties": {
+          "userIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1
+          },
+          "bonus": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "bonus",
+          "userIds"
+        ],
+        "title": "EntrantBonus"
+      },
+      "EntrantPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Entrant"
+            },
+            "type": "array"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "pages": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "people": {
+            "type": "integer"
+          },
+          "eligible": {
+            "type": "integer"
+          },
+          "tickets": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "eligible",
+          "items",
+          "page",
+          "pages",
+          "people",
+          "tickets",
+          "total"
+        ],
+        "title": "EntrantPage"
+      },
+      "EntrantRemove": {
+        "properties": {
+          "userIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "userIds"
+        ],
+        "title": "EntrantRemove"
+      },
       "EqPreset": {
         "properties": {
           "name": {
@@ -8464,6 +10076,742 @@
           "mediaOnlyChannelId"
         ],
         "title": "GeneralSettings"
+      },
+      "Giveaway": {
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "running",
+              "ended"
+            ]
+          },
+          "prize": {
+            "type": "string"
+          },
+          "channelId": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "entries": {
+            "type": "integer"
+          },
+          "winnerCount": {
+            "type": "integer"
+          },
+          "startsAt": {
+            "type": "integer"
+          },
+          "endsAt": {
+            "type": "integer"
+          },
+          "endedAt": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "posted": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "messageUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "host": {
+            "$ref": "#/components/schemas/Person"
+          },
+          "winners": {
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            },
+            "type": "array"
+          },
+          "requiredRoleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "requireAllRoles": {
+            "type": "boolean"
+          },
+          "blockedRoleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "minAccountDays": {
+            "type": "integer"
+          },
+          "minMemberDays": {
+            "type": "integer"
+          },
+          "minInvites": {
+            "type": "integer"
+          },
+          "bonusRoles": {
+            "items": {
+              "$ref": "#/components/schemas/BonusRole"
+            },
+            "type": "array"
+          },
+          "pingRoleId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "winnerRoleId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "color": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "imageUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "imageFile": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "imageSrc": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "buttonLabel": {
+            "type": "string"
+          },
+          "buttonEmoji": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "buttonStyle": {
+            "type": "string",
+            "enum": [
+              "blurple",
+              "green",
+              "grey",
+              "red"
+            ]
+          },
+          "createdAt": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "blockedRoleIds",
+          "bonusRoles",
+          "buttonEmoji",
+          "buttonLabel",
+          "buttonStyle",
+          "channelId",
+          "color",
+          "createdAt",
+          "description",
+          "endedAt",
+          "endsAt",
+          "entries",
+          "host",
+          "id",
+          "imageFile",
+          "imageSrc",
+          "imageUrl",
+          "messageUrl",
+          "minAccountDays",
+          "minInvites",
+          "minMemberDays",
+          "pingRoleId",
+          "posted",
+          "prize",
+          "requireAllRoles",
+          "requiredRoleIds",
+          "startsAt",
+          "status",
+          "winnerCount",
+          "winnerRoleId",
+          "winners"
+        ],
+        "title": "Giveaway"
+      },
+      "GiveawayCreate": {
+        "properties": {
+          "channelId": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "prize": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "default": ""
+          },
+          "winnerCount": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "default": 1
+          },
+          "startsAt": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Unix ms"
+          },
+          "endsAt": {
+            "type": "integer",
+            "minimum": 0.0,
+            "description": "Unix ms"
+          },
+          "hostId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "requiredRoleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10
+          },
+          "requireAllRoles": {
+            "type": "boolean",
+            "default": false
+          },
+          "blockedRoleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10
+          },
+          "minAccountDays": {
+            "type": "integer",
+            "maximum": 3650.0,
+            "minimum": 0.0,
+            "default": 0
+          },
+          "minMemberDays": {
+            "type": "integer",
+            "maximum": 3650.0,
+            "minimum": 0.0,
+            "default": 0
+          },
+          "minInvites": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "default": 0
+          },
+          "bonusRoles": {
+            "items": {
+              "$ref": "#/components/schemas/BonusRole"
+            },
+            "type": "array",
+            "maxItems": 10
+          },
+          "pingRoleId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "winnerRoleId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "color": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "imageUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maxLength": 2048,
+            "pattern": "^https://\\S+$"
+          },
+          "imageData": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maxLength": 11184835,
+            "pattern": "^data:image/(png|jpeg|gif|webp);base64,",
+            "description": "A PNG, JPEG, GIF or WebP as a base64 data URI"
+          },
+          "buttonLabel": {
+            "type": "string",
+            "maxLength": 40,
+            "default": "Enter"
+          },
+          "buttonEmoji": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "buttonStyle": {
+            "type": "string",
+            "enum": [
+              "blurple",
+              "green",
+              "grey",
+              "red"
+            ],
+            "default": "blurple"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channelId",
+          "endsAt",
+          "prize"
+        ],
+        "title": "GiveawayCreate"
+      },
+      "GiveawayPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GiveawaySummary"
+            },
+            "type": "array"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "pages": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "scheduled": {
+            "type": "integer"
+          },
+          "running": {
+            "type": "integer"
+          },
+          "ended": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ended",
+          "items",
+          "page",
+          "pages",
+          "running",
+          "scheduled",
+          "total"
+        ],
+        "title": "GiveawayPage"
+      },
+      "GiveawayPatch": {
+        "properties": {
+          "channelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "prize": {
+            "oneOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "maxLength": 256,
+            "minLength": 1
+          },
+          "description": {
+            "oneOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "maxLength": 2000
+          },
+          "winnerCount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              }
+            ],
+            "maximum": 50,
+            "minimum": 1
+          },
+          "startsAt": {
+            "oneOf": [
+              {
+                "type": "integer"
+              }
+            ],
+            "description": "Unix ms"
+          },
+          "endsAt": {
+            "oneOf": [
+              {
+                "type": "integer"
+              }
+            ],
+            "description": "Unix ms"
+          },
+          "hostId": {
+            "oneOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "requiredRoleIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 10
+          },
+          "requireAllRoles": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "blockedRoleIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 10
+          },
+          "minAccountDays": {
+            "oneOf": [
+              {
+                "type": "integer"
+              }
+            ],
+            "maximum": 3650
+          },
+          "minMemberDays": {
+            "oneOf": [
+              {
+                "type": "integer"
+              }
+            ],
+            "maximum": 3650
+          },
+          "minInvites": {
+            "oneOf": [
+              {
+                "type": "integer"
+              }
+            ],
+            "maximum": 10000
+          },
+          "bonusRoles": {
+            "oneOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/BonusRole"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 10
+          },
+          "pingRoleId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "winnerRoleId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "color": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "imageUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maxLength": 2048,
+            "pattern": "^https://\\S+$"
+          },
+          "imageData": {
+            "oneOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "maxLength": 11184835,
+            "pattern": "^data:image/(png|jpeg|gif|webp);base64,",
+            "description": "A PNG, JPEG, GIF or WebP as a base64 data URI"
+          },
+          "buttonLabel": {
+            "oneOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "maxLength": 40
+          },
+          "buttonEmoji": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "buttonStyle": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "blurple",
+                  "green",
+                  "grey",
+                  "red"
+                ]
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "GiveawayPatch"
+      },
+      "GiveawaySummary": {
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "running",
+              "ended"
+            ]
+          },
+          "prize": {
+            "type": "string"
+          },
+          "channelId": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "entries": {
+            "type": "integer"
+          },
+          "winnerCount": {
+            "type": "integer"
+          },
+          "startsAt": {
+            "type": "integer"
+          },
+          "endsAt": {
+            "type": "integer"
+          },
+          "endedAt": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "posted": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channelId",
+          "endedAt",
+          "endsAt",
+          "entries",
+          "id",
+          "posted",
+          "prize",
+          "startsAt",
+          "status",
+          "winnerCount"
+        ],
+        "title": "GiveawaySummary"
       },
       "Guild": {
         "properties": {
@@ -9490,6 +11838,13 @@
                 "type": "boolean"
               }
             ]
+          },
+          "giveaways": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
           }
         },
         "type": "object",
@@ -9506,10 +11861,14 @@
           },
           "invites": {
             "type": "boolean"
+          },
+          "giveaways": {
+            "type": "boolean"
           }
         },
         "type": "object",
         "required": [
+          "giveaways",
           "invites",
           "logs",
           "tickets"
@@ -9884,6 +12243,27 @@
           "userId"
         ],
         "title": "Requester"
+      },
+      "Reroll": {
+        "properties": {
+          "userIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maxItems": 50
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "Reroll"
       },
       "Role": {
         "properties": {

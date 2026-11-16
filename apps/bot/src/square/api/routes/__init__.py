@@ -1,5 +1,5 @@
 from square.api import live
-from square.api.routes import guilds, invites, messages, music, profile, settings, system, tickets
+from square.api.routes import giveaways, guilds, invites, messages, music, profile, settings, system, tickets
 
 handlers = [
     system.health,
@@ -10,6 +10,7 @@ handlers = [
     messages.router,
     invites.router,
     tickets.router,
+    giveaways.router,
     music.router,
     live.live,
 ]

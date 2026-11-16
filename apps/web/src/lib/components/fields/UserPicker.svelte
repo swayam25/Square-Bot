@@ -7,6 +7,7 @@
     import Input from "#lib/components/ui/Input.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Portal from "#lib/components/ui/Portal.svelte";
+    import { passPress } from "#lib/components/ui/press.ts";
     import { field, fieldText, menuItem, menuNote, menuPanel, sheetItem } from "#lib/components/ui/styles.ts";
     import { mobile } from "#lib/media.ts";
     import { Debounced } from "#lib/reactive/debounced.svelte.ts";
@@ -38,6 +39,7 @@
     } = $props();
 
     let open = $state(false);
+    let input = $state<HTMLInputElement | null>(null);
     let menu = $state<HTMLElement | null>(null);
     let typed = $state("");
     const debounced = new Debounced(() => typed.trim(), 250);
@@ -124,9 +126,15 @@
         {disabled}
         class={className}
     >
-        <Combobox.Control class={[field, "pr-2"]}>
+        <Combobox.Control
+            class={[field, "pr-2"]}
+            {@attach passPress(
+                () => input,
+                () => (open = true),
+            )}
+        >
             <MaterialSymbolsSearchRounded />
-            <Combobox.Input aria-label={title} {placeholder} class={[fieldText, "h-full"]} />
+            <Combobox.Input bind:ref={input} aria-label={title} {placeholder} class={[fieldText, "h-full"]} />
         </Combobox.Control>
         <Portal>
             <Combobox.Positioner class="z-50">

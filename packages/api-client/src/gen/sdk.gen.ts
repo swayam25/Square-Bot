@@ -15,6 +15,9 @@ import type {
     CloseTicketData,
     CloseTicketErrors,
     CloseTicketResponses,
+    CreateGiveawayData,
+    CreateGiveawayErrors,
+    CreateGiveawayResponses,
     CreateRequestChannelData,
     CreateRequestChannelErrors,
     CreateRequestChannelResponses,
@@ -24,9 +27,15 @@ import type {
     DedupeQueueData,
     DedupeQueueErrors,
     DedupeQueueResponses,
+    DeleteGiveawayData,
+    DeleteGiveawayErrors,
+    DeleteGiveawayResponses,
     DeleteTicketData,
     DeleteTicketErrors,
     DeleteTicketResponses,
+    EndGiveawayData,
+    EndGiveawayErrors,
+    EndGiveawayResponses,
     EqPresetsData,
     EqPresetsErrors,
     EqPresetsResponses,
@@ -36,6 +45,9 @@ import type {
     GetGeneralSettingsData,
     GetGeneralSettingsErrors,
     GetGeneralSettingsResponses,
+    GetGiveawayData,
+    GetGiveawayErrors,
+    GetGiveawayResponses,
     GetInviteSettingsData,
     GetInviteSettingsErrors,
     GetInviteSettingsResponses,
@@ -54,6 +66,9 @@ import type {
     GetTicketSettingsData,
     GetTicketSettingsErrors,
     GetTicketSettingsResponses,
+    GiveawayImageData,
+    GiveawayImageErrors,
+    GiveawayImageResponses,
     GuildChannelsData,
     GuildChannelsErrors,
     GuildChannelsResponses,
@@ -74,6 +89,12 @@ import type {
     JumpToTrackData,
     JumpToTrackErrors,
     JumpToTrackResponses,
+    ListEntrantsData,
+    ListEntrantsErrors,
+    ListEntrantsResponses,
+    ListGiveawaysData,
+    ListGiveawaysErrors,
+    ListGiveawaysResponses,
     ListTicketsData,
     ListTicketsErrors,
     ListTicketsResponses,
@@ -113,6 +134,9 @@ import type {
     PurgeTicketData,
     PurgeTicketErrors,
     PurgeTicketResponses,
+    RemoveEntrantsData,
+    RemoveEntrantsErrors,
+    RemoveEntrantsResponses,
     RemoveRequestChannelData,
     RemoveRequestChannelErrors,
     RemoveRequestChannelResponses,
@@ -131,6 +155,9 @@ import type {
     ReplayTrackData,
     ReplayTrackErrors,
     ReplayTrackResponses,
+    RerollGiveawayData,
+    RerollGiveawayErrors,
+    RerollGiveawayResponses,
     ResetAllSettingsData,
     ResetAllSettingsErrors,
     ResetAllSettingsResponses,
@@ -179,6 +206,9 @@ import type {
     SetAutoplayData,
     SetAutoplayErrors,
     SetAutoplayResponses,
+    SetEntrantBonusData,
+    SetEntrantBonusErrors,
+    SetEntrantBonusResponses,
     SetEqData,
     SetEqErrors,
     SetEqResponses,
@@ -197,6 +227,9 @@ import type {
     SortQueueData,
     SortQueueErrors,
     SortQueueResponses,
+    StartGiveawayData,
+    StartGiveawayErrors,
+    StartGiveawayResponses,
     StopPlayerData,
     StopPlayerErrors,
     StopPlayerResponses,
@@ -212,6 +245,9 @@ import type {
     UpdateGeneralSettingsData,
     UpdateGeneralSettingsErrors,
     UpdateGeneralSettingsResponses,
+    UpdateGiveawayData,
+    UpdateGiveawayErrors,
+    UpdateGiveawayResponses,
     UpdateInviteSettingsData,
     UpdateInviteSettingsErrors,
     UpdateInviteSettingsResponses,
@@ -644,7 +680,7 @@ export const updateModuleSettings = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Reset every setting
+ * Reset everything, as if Square just joined
  */
 export const resetAllSettings = <ThrowOnError extends boolean = false>(
     options: Options<ResetAllSettingsData, ThrowOnError>,
@@ -869,6 +905,170 @@ export const ticketFile = <ThrowOnError extends boolean = false>(
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/tickets/{number}/files/{attachment_id}",
         ...options,
+    });
+
+/**
+ * This server's giveaways, newest end first
+ */
+export const listGiveaways = <ThrowOnError extends boolean = false>(
+    options: Options<ListGiveawaysData, ThrowOnError>,
+): RequestResult<ListGiveawaysResponses, ListGiveawaysErrors, ThrowOnError> =>
+    (options.client ?? client).get<ListGiveawaysResponses, ListGiveawaysErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways",
+        ...options,
+    });
+
+/**
+ * Start or schedule a giveaway
+ */
+export const createGiveaway = <ThrowOnError extends boolean = false>(
+    options: Options<CreateGiveawayData, ThrowOnError>,
+): RequestResult<CreateGiveawayResponses, CreateGiveawayErrors, ThrowOnError> =>
+    (options.client ?? client).post<CreateGiveawayResponses, CreateGiveawayErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Delete a giveaway and its message
+ */
+export const deleteGiveaway = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteGiveawayData, ThrowOnError>,
+): RequestResult<DeleteGiveawayResponses, DeleteGiveawayErrors, ThrowOnError> =>
+    (options.client ?? client).delete<DeleteGiveawayResponses, DeleteGiveawayErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways/{giveaway_id}",
+        ...options,
+    });
+
+/**
+ * One giveaway with everything about it
+ */
+export const getGiveaway = <ThrowOnError extends boolean = false>(
+    options: Options<GetGiveawayData, ThrowOnError>,
+): RequestResult<GetGiveawayResponses, GetGiveawayErrors, ThrowOnError> =>
+    (options.client ?? client).get<GetGiveawayResponses, GetGiveawayErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways/{giveaway_id}",
+        ...options,
+    });
+
+/**
+ * Change a giveaway and redraw its message
+ */
+export const updateGiveaway = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateGiveawayData, ThrowOnError>,
+): RequestResult<UpdateGiveawayResponses, UpdateGiveawayErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateGiveawayResponses, UpdateGiveawayErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways/{giveaway_id}",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * A scheduled giveaway's uploaded image, before it's posted
+ */
+export const giveawayImage = <ThrowOnError extends boolean = false>(
+    options: Options<GiveawayImageData, ThrowOnError>,
+): RequestResult<GiveawayImageResponses, GiveawayImageErrors, ThrowOnError> =>
+    (options.client ?? client).get<GiveawayImageResponses, GiveawayImageErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways/{giveaway_id}/image",
+        ...options,
+    });
+
+/**
+ * Start a scheduled giveaway now
+ */
+export const startGiveaway = <ThrowOnError extends boolean = false>(
+    options: Options<StartGiveawayData, ThrowOnError>,
+): RequestResult<StartGiveawayResponses, StartGiveawayErrors, ThrowOnError> =>
+    (options.client ?? client).post<StartGiveawayResponses, StartGiveawayErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways/{giveaway_id}/start",
+        ...options,
+    });
+
+/**
+ * End a running giveaway now and pick its winners
+ */
+export const endGiveaway = <ThrowOnError extends boolean = false>(
+    options: Options<EndGiveawayData, ThrowOnError>,
+): RequestResult<EndGiveawayResponses, EndGiveawayErrors, ThrowOnError> =>
+    (options.client ?? client).post<EndGiveawayResponses, EndGiveawayErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways/{giveaway_id}/end",
+        ...options,
+    });
+
+/**
+ * Pick new winners for an ended giveaway
+ */
+export const rerollGiveaway = <ThrowOnError extends boolean = false>(
+    options: Options<RerollGiveawayData, ThrowOnError>,
+): RequestResult<RerollGiveawayResponses, RerollGiveawayErrors, ThrowOnError> =>
+    (options.client ?? client).post<RerollGiveawayResponses, RerollGiveawayErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways/{giveaway_id}/reroll",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Everyone in a giveaway, with their entries and odds
+ */
+export const listEntrants = <ThrowOnError extends boolean = false>(
+    options: Options<ListEntrantsData, ThrowOnError>,
+): RequestResult<ListEntrantsResponses, ListEntrantsErrors, ThrowOnError> =>
+    (options.client ?? client).get<ListEntrantsResponses, ListEntrantsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways/{giveaway_id}/entrants",
+        ...options,
+    });
+
+/**
+ * Give entrants extra entries
+ */
+export const setEntrantBonus = <ThrowOnError extends boolean = false>(
+    options: Options<SetEntrantBonusData, ThrowOnError>,
+): RequestResult<SetEntrantBonusResponses, SetEntrantBonusErrors, ThrowOnError> =>
+    (options.client ?? client).post<SetEntrantBonusResponses, SetEntrantBonusErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways/{giveaway_id}/entrants/bonus",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Take people out of a giveaway
+ */
+export const removeEntrants = <ThrowOnError extends boolean = false>(
+    options: Options<RemoveEntrantsData, ThrowOnError>,
+): RequestResult<RemoveEntrantsResponses, RemoveEntrantsErrors, ThrowOnError> =>
+    (options.client ?? client).post<RemoveEntrantsResponses, RemoveEntrantsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/giveaways/{giveaway_id}/entrants/remove",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
     });
 
 /**

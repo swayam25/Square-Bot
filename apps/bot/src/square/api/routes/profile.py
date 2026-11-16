@@ -6,8 +6,8 @@ from litestar import Router, delete, get, patch
 from litestar.di import Provide
 from msgspec import UNSET
 from square.api.auth import provide_guild, provide_member
+from square.api.refusals import REFUSED, refused
 from square.api.resolve import SettingError
-from square.api.routes.settings import REFUSED, refused
 from square.api.schemas import IMAGE_DATA_MAX, IMAGE_MAX_BYTES, BotProfile, BotProfilePatch
 from square.core import Client
 from typing import Any
@@ -109,14 +109,17 @@ async def update_bot_profile(
     return await _out(client, guild, me)
 
 
-@delete("/", summary="Go back to the bot's global profile in this server", status_code=200, responses=REFUSED)
-async def reset_bot_profile(client: Client, guild: discord.Guild, member: discord.Member) -> BotProfile:
+async def reset_profile(client: Client, guild: discord.Guild, actor: discord.Member) -> discord.Member:
     fields: dict[str, str | None] = {"avatar": None, "banner": None, "bio": ""}
     if guild.me.nick:
         _check_nick(guild)
         fields["nick"] = ""
-    me = await _edit(client, guild, _reason(member), **fields)
-    return await _out(client, guild, me)
+    return await _edit(client, guild, _reason(actor), **fields)
+
+
+@delete("/", summary="Go back to the bot's global profile in this server", status_code=200, responses=REFUSED)
+async def reset_bot_profile(client: Client, guild: discord.Guild, member: discord.Member) -> BotProfile:
+    return await _out(client, guild, await reset_profile(client, guild, member))
 
 
 router = Router(

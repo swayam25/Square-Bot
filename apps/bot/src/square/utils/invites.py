@@ -115,9 +115,6 @@ def setup(client: Client) -> None:
     async def on_guild_join(guild: discord.Guild):
         await refresh(guild)
 
-    async def on_guild_remove(guild: discord.Guild):
-        forget(guild.id)
-
     async def on_invite_create(invite: discord.Invite):
         if invite.guild and (invites := _cache.get(invite.guild.id)) is not None:
             invites[invite.code] = InviteUse.from_invite(invite)
@@ -126,5 +123,5 @@ def setup(client: Client) -> None:
         if guild := client.get_guild(guild_id):
             await refresh(guild)
 
-    for listener in (on_ready, on_guild_join, on_guild_remove, on_invite_create, on_log_channels_update):
+    for listener in (on_ready, on_guild_join, on_invite_create, on_log_channels_update):
         client.add_listener(listener)

@@ -1,4 +1,5 @@
 <script module lang="ts">
+    import { passPress } from "#lib/components/ui/press.ts";
     import type { Component } from "svelte";
 
     export type Option = { value: string; label: string; icon?: Component; color?: string; hint?: string };
@@ -48,6 +49,7 @@
 
     const errorId = $props.id();
     let open = $state(false);
+    let input = $state<HTMLInputElement | null>(null);
     let menu = $state<HTMLElement | null>(null);
     let search = $state("");
 
@@ -156,9 +158,16 @@
                 {disabled}
                 invalid={!!error}
             >
-                <Combobox.Control class={[field, "cursor-pointer pr-2"]}>
+                <Combobox.Control
+                    class={[field, "cursor-pointer pr-2"]}
+                    {@attach passPress(
+                        () => input,
+                        () => (open = !open),
+                    )}
+                >
                     {#if selected && !open}{@render marker(selected)}{/if}
                     <Combobox.Input
+                        bind:ref={input}
                         aria-label={title}
                         aria-describedby={error ? errorId : undefined}
                         placeholder={open && selected ? selected.label : placeholder}

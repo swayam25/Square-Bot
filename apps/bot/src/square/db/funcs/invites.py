@@ -68,6 +68,22 @@ async def fetch_counts(guild_id: int, user_id: int) -> InviteCounts:
     )
 
 
+async def fetch_totals(guild_id: int, user_ids: list[int]) -> dict[int, int]:
+    """Regular plus bonus invites per user, in one query."""
+    regular = await (
+        InviteJoinTable.filter(_REGULAR, guild__guild_id=guild_id, inviter_id__in=user_ids)
+        .annotate(n=Count("id"))
+        .group_by("inviter_id")
+        .values_list("inviter_id", "n")
+    )
+    totals = dict(regular)
+    for user_id, amount in await InviteBonusTable.filter(guild__guild_id=guild_id, user_id__in=user_ids).values_list(
+        "user_id", "amount"
+    ):
+        totals[user_id] = totals.get(user_id, 0) + amount
+    return totals
+
+
 async def fetch_leaderboard(guild_id: int) -> list[tuple[int, InviteCounts]]:
     rows = (
         await InviteJoinTable.filter(guild__guild_id=guild_id, inviter_id__isnull=False)

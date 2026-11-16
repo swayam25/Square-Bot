@@ -44,6 +44,7 @@ class Emoji:
     copy_white = Icon("📋")
 
     settings = Icon("⚙️")
+    settings_white = Icon("⚙️")
     info = Icon("ℹ️")
     mod = Icon("🔨")
     mod_red = Icon("🔨")
@@ -60,6 +61,9 @@ class Emoji:
     transcript_white = Icon("📄")
     messages_red = Icon("💬")
     support_red = Icon("🛟")
+    giveaway = Icon("🎉")
+    giveaway_white = Icon("🎉")
+    giveaway_green = Icon("🎉")
 
     mention = Icon("🔔")
     id = Icon("🆔")

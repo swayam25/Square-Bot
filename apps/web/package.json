@@ -47,6 +47,7 @@
         "@fontsource/noto-sans-math": "^5.3.0",
         "@fontsource/noto-sans-symbols": "^5.3.0",
         "@fontsource/noto-sans-symbols-2": "^5.3.0",
+        "@internationalized/date": "^3.12.4",
         "@redis/client": "^6.3.1",
         "@square/api-client": "workspace:*",
         "@tanstack/svelte-table": "9.3.1",

@@ -13,6 +13,7 @@
         done,
         icon: Icon = MaterialSymbolsReplayRounded,
         disabled = false,
+        confirmText,
         reset,
         apply,
     }: {
@@ -24,6 +25,7 @@
         done: string;
         icon?: Component;
         disabled?: boolean;
+        confirmText?: string;
         reset: () => Promise<T>;
         apply?: (result: T) => void;
     } = $props();
@@ -32,4 +34,4 @@
 </script>
 
 <Button {variant} {disabled} onclick={() => (open = true)}><Icon />{label}</Button>
-<ConfirmDialog bind:open {title} {description} {label} {busy} {done} run={reset} {apply} />
+<ConfirmDialog bind:open {title} {description} {label} {busy} {done} {confirmText} run={reset} {apply} />

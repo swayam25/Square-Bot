@@ -1,5 +1,6 @@
 import type { ModuleSettings } from "@square/api-client";
 import type { Component } from "svelte";
+import MaterialSymbolsCelebrationRounded from "~icons/material-symbols/celebration-rounded";
 import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
 import MaterialSymbolsDescriptionRounded from "~icons/material-symbols/description-rounded";
 import MaterialSymbolsPersonAddRounded from "~icons/material-symbols/person-add-rounded";
@@ -20,6 +21,13 @@ export const MODULES: { key: ModuleKey; label: string; description: string; path
         description: "Private help channels between members and your staff.",
         path: "tickets",
         icon: MaterialSymbolsConfirmationNumberRounded,
+    },
+    {
+        key: "giveaways",
+        label: "Giveaways",
+        description: "Run giveaways with requirements, bonus entries and fair, weighted draws.",
+        path: "giveaways",
+        icon: MaterialSymbolsCelebrationRounded,
     },
     {
         key: "logs",

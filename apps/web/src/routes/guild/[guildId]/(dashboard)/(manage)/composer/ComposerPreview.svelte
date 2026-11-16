@@ -57,7 +57,7 @@
 {#snippet button(entry: LinkButton)}
     {@const emoji = entry.emoji ? parseEmoji(entry.emoji) : null}
     <DiscordButton href={entry.url.trim() || ""} disabled={entry.disabled}>
-        {#if emoji}<DiscordEmoji {...emoji} class="size-4.5" />{/if}
+        {#if emoji}<DiscordEmoji {...emoji} tooltip={false} />{/if}
         {#if entry.label.trim()}<span>{entry.label}</span>{/if}
     </DiscordButton>
 {/snippet}

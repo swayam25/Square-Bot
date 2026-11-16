@@ -299,12 +299,6 @@ class Listeners:
                 await discard_stale(self.client, guild)
 
     @commands.Cog.listener()
-    async def on_guild_remove(self, guild: discord.Guild):
-        request.forget(guild.id)
-        stay.forget(guild.id)
-        cleanup_guild(self.client, guild.id)
-
-    @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
         if (
             after.guild

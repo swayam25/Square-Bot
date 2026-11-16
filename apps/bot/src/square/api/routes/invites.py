@@ -4,8 +4,8 @@ from litestar import Router, get, post
 from litestar.di import Provide
 from litestar.params import Parameter
 from square.api.auth import provide_guild, provide_member
+from square.api.refusals import REFUSED, refused
 from square.api.resolve import SettingError
-from square.api.routes.settings import REFUSED, refused
 from square.api.schemas import (
     Bonus,
     BonusChange,

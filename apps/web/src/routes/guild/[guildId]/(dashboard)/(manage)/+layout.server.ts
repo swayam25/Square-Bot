@@ -8,7 +8,7 @@ export const load: LayoutServerLoad = async ({ parent, route }) => {
     const { guild } = await parent();
     if (!guild.canManage) error(403, "Changing Square's settings here needs the Manage Server permission.");
 
-    const module = moduleAt(route.id.split("/").at(-1) ?? "");
+    const module = moduleAt(route.id.split("/(manage)/")[1]?.split("/")[0] ?? "");
     if (module && !(await read(sdk.getModuleSettings(forGuild(guild.id))))[module.key]) {
         error(MODULE_OFF, `${module.label} is turned off in ${guild.name}. Turn it on from the Overview page to use it.`);
     }

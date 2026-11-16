@@ -6,6 +6,7 @@
     import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
     import SettingGroup from "#lib/components/dashboard/SettingGroup.svelte";
     import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
+    import Mention from "#lib/components/discord/Mention.svelte";
     import NowPlayingBanner from "#lib/components/music/NowPlayingBanner.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import ReadonlyField from "#lib/components/ui/ReadonlyField.svelte";
@@ -140,7 +141,7 @@
                         </Tooltip>
                     </div>
                 {:else}
-                    <Tooltip content={dirty ? "Save or discard your changes first" : "Square creates #music-requests for it"} class="w-full">
+                    <Tooltip content={dirty ? "Save or discard your changes first" : createsChannel} class="w-full">
                         <Button variant="primary" class="w-full" loading={creating} disabled={dirty} onclick={createRequestChannel}>
                             {#if !creating}<MaterialSymbolsAddRounded />{/if}{creating ? "Creating…" : "Create channel"}
                         </Button>
@@ -173,3 +174,5 @@
 
     <SaveBar {dirty} onsave={() => settings.updateMusic({ guild, ...changes })} ondiscard={discard} />
 </QueryGate>
+
+{#snippet createsChannel()}Square creates <Mention name="music-requests" /> for it{/snippet}

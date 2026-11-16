@@ -1,6 +1,7 @@
 <script lang="ts">
     import EmojiPicker from "#lib/components/fields/EmojiPicker.svelte";
     import FieldError from "#lib/components/ui/FieldError.svelte";
+    import { passPress } from "#lib/components/ui/press.ts";
     import { fieldText } from "#lib/components/ui/styles.ts";
     import type { ClassValue, HTMLTextareaAttributes } from "svelte/elements";
 
@@ -34,6 +35,7 @@
         "has-[textarea:disabled]:pointer-events-none has-[textarea:disabled]:opacity-50",
         className,
     ]}
+    {@attach passPress(() => area)}
 >
     <textarea
         bind:this={area}

@@ -63,6 +63,17 @@ export type BonusChange = {
 };
 
 /**
+ * BonusRole
+ */
+export type BonusRole = {
+    /**
+     * A Discord ID
+     */
+    roleId: string;
+    entries: number;
+};
+
+/**
  * BotProfile
  */
 export type BotProfile = {
@@ -133,6 +144,49 @@ export type Emoji = {
 };
 
 /**
+ * Entrant
+ */
+export type Entrant = {
+    user: Person;
+    member: boolean;
+    eligible: boolean;
+    entries: number;
+    bonus: number;
+    roleBonus: number;
+    chance: number;
+    enteredAt: number;
+    winner: boolean;
+};
+
+/**
+ * EntrantBonus
+ */
+export type EntrantBonus = {
+    userIds: Array<string>;
+    bonus: number;
+};
+
+/**
+ * EntrantPage
+ */
+export type EntrantPage = {
+    items: Array<Entrant>;
+    page: number;
+    pages: number;
+    total: number;
+    people: number;
+    eligible: number;
+    tickets: number;
+};
+
+/**
+ * EntrantRemove
+ */
+export type EntrantRemove = {
+    userIds: Array<string>;
+};
+
+/**
  * EqPreset
  */
 export type EqPreset = {
@@ -176,6 +230,182 @@ export type GeneralSettings = {
      * A Discord ID
      */
     mediaOnlyChannelId: string | null;
+};
+
+/**
+ * Giveaway
+ */
+export type Giveaway = {
+    id: number;
+    status: "scheduled" | "running" | "ended";
+    prize: string;
+    /**
+     * A Discord ID
+     */
+    channelId: string;
+    entries: number;
+    winnerCount: number;
+    startsAt: number;
+    endsAt: number;
+    endedAt: number | null;
+    posted: boolean;
+    description: string;
+    messageUrl: string | null;
+    host: Person;
+    winners: Array<Person>;
+    requiredRoleIds: Array<string>;
+    requireAllRoles: boolean;
+    blockedRoleIds: Array<string>;
+    minAccountDays: number;
+    minMemberDays: number;
+    minInvites: number;
+    bonusRoles: Array<BonusRole>;
+    /**
+     * A Discord ID
+     */
+    pingRoleId: string | null;
+    /**
+     * A Discord ID
+     */
+    winnerRoleId: string | null;
+    color: string | null;
+    imageUrl: string | null;
+    imageFile: string | null;
+    imageSrc: string | null;
+    buttonLabel: string;
+    buttonEmoji: string | null;
+    buttonStyle: "blurple" | "green" | "grey" | "red";
+    createdAt: number;
+};
+
+/**
+ * GiveawayCreate
+ */
+export type GiveawayCreate = {
+    /**
+     * A Discord ID
+     */
+    channelId: string;
+    prize: string;
+    description?: string;
+    winnerCount?: number;
+    /**
+     * Unix ms
+     */
+    startsAt?: number | null;
+    /**
+     * Unix ms
+     */
+    endsAt: number;
+    /**
+     * A Discord ID
+     */
+    hostId?: string | null;
+    requiredRoleIds?: Array<string>;
+    requireAllRoles?: boolean;
+    blockedRoleIds?: Array<string>;
+    minAccountDays?: number;
+    minMemberDays?: number;
+    minInvites?: number;
+    bonusRoles?: Array<BonusRole>;
+    /**
+     * A Discord ID
+     */
+    pingRoleId?: string | null;
+    /**
+     * A Discord ID
+     */
+    winnerRoleId?: string | null;
+    color?: string | null;
+    imageUrl?: string | null;
+    /**
+     * A PNG, JPEG, GIF or WebP as a base64 data URI
+     */
+    imageData?: string | null;
+    buttonLabel?: string;
+    buttonEmoji?: string | null;
+    buttonStyle?: "blurple" | "green" | "grey" | "red";
+};
+
+/**
+ * GiveawayPage
+ */
+export type GiveawayPage = {
+    items: Array<GiveawaySummary>;
+    page: number;
+    pages: number;
+    total: number;
+    scheduled: number;
+    running: number;
+    ended: number;
+};
+
+/**
+ * GiveawayPatch
+ */
+export type GiveawayPatch = {
+    /**
+     * A Discord ID
+     */
+    channelId?: string;
+    prize?: string;
+    description?: string;
+    winnerCount?: number;
+    /**
+     * Unix ms
+     */
+    startsAt?: number;
+    /**
+     * Unix ms
+     */
+    endsAt?: number;
+    /**
+     * A Discord ID
+     */
+    hostId?: string;
+    requiredRoleIds?: Array<string>;
+    requireAllRoles?: boolean;
+    blockedRoleIds?: Array<string>;
+    minAccountDays?: number;
+    minMemberDays?: number;
+    minInvites?: number;
+    bonusRoles?: Array<BonusRole>;
+    /**
+     * A Discord ID
+     */
+    pingRoleId?: string | null;
+    /**
+     * A Discord ID
+     */
+    winnerRoleId?: string | null;
+    color?: string | null;
+    imageUrl?: string | null;
+    /**
+     * A PNG, JPEG, GIF or WebP as a base64 data URI
+     */
+    imageData?: string;
+    buttonLabel?: string;
+    buttonEmoji?: string | null;
+    buttonStyle?: "blurple" | "green" | "grey" | "red";
+};
+
+/**
+ * GiveawaySummary
+ */
+export type GiveawaySummary = {
+    id: number;
+    status: "scheduled" | "running" | "ended";
+    prize: string;
+    /**
+     * A Discord ID
+     */
+    channelId: string;
+    entries: number;
+    winnerCount: number;
+    startsAt: number;
+    endsAt: number;
+    endedAt: number | null;
+    posted: boolean;
 };
 
 /**
@@ -544,6 +774,7 @@ export type ModulePatch = {
     logs?: boolean;
     tickets?: boolean;
     invites?: boolean;
+    giveaways?: boolean;
 };
 
 /**
@@ -553,6 +784,7 @@ export type ModuleSettings = {
     logs: boolean;
     tickets: boolean;
     invites: boolean;
+    giveaways: boolean;
 };
 
 /**
@@ -695,6 +927,13 @@ export type Requester = {
      * A Discord ID
      */
     userId: string;
+};
+
+/**
+ * Reroll
+ */
+export type Reroll = {
+    userIds?: Array<string> | null;
 };
 
 /**
@@ -3346,6 +3585,605 @@ export type TicketFileResponses = {
      */
     206: unknown;
 };
+
+export type ListGiveawaysData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: {
+        status?: "scheduled" | "running" | "ended" | "all";
+        q?: string | null;
+        order?: "asc" | "desc";
+        page?: number;
+    };
+    url: "/guilds/{guild_id}/giveaways";
+};
+
+export type ListGiveawaysErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ListGiveawaysError = ListGiveawaysErrors[keyof ListGiveawaysErrors];
+
+export type ListGiveawaysResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: GiveawayPage;
+};
+
+export type ListGiveawaysResponse = ListGiveawaysResponses[keyof ListGiveawaysResponses];
+
+export type CreateGiveawayData = {
+    body: GiveawayCreate;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/giveaways";
+};
+
+export type CreateGiveawayErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type CreateGiveawayError = CreateGiveawayErrors[keyof CreateGiveawayErrors];
+
+export type CreateGiveawayResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Giveaway;
+};
+
+export type CreateGiveawayResponse = CreateGiveawayResponses[keyof CreateGiveawayResponses];
+
+export type DeleteGiveawayData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        giveaway_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/giveaways/{giveaway_id}";
+};
+
+export type DeleteGiveawayErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type DeleteGiveawayError = DeleteGiveawayErrors[keyof DeleteGiveawayErrors];
+
+export type DeleteGiveawayResponses = {
+    /**
+     * Request fulfilled, nothing follows
+     */
+    204: void;
+};
+
+export type DeleteGiveawayResponse = DeleteGiveawayResponses[keyof DeleteGiveawayResponses];
+
+export type GetGiveawayData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        giveaway_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/giveaways/{giveaway_id}";
+};
+
+export type GetGiveawayErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GetGiveawayError = GetGiveawayErrors[keyof GetGiveawayErrors];
+
+export type GetGiveawayResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Giveaway;
+};
+
+export type GetGiveawayResponse = GetGiveawayResponses[keyof GetGiveawayResponses];
+
+export type UpdateGiveawayData = {
+    body: GiveawayPatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        giveaway_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/giveaways/{giveaway_id}";
+};
+
+export type UpdateGiveawayErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type UpdateGiveawayError = UpdateGiveawayErrors[keyof UpdateGiveawayErrors];
+
+export type UpdateGiveawayResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Giveaway;
+};
+
+export type UpdateGiveawayResponse = UpdateGiveawayResponses[keyof UpdateGiveawayResponses];
+
+export type GiveawayImageData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+        range?: string | null;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        giveaway_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/giveaways/{giveaway_id}/image";
+};
+
+export type GiveawayImageErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The range starts past the end of the file
+     */
+    416: unknown;
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type GiveawayImageError = GiveawayImageErrors[keyof GiveawayImageErrors];
+
+export type GiveawayImageResponses = {
+    /**
+     * Stream Response
+     */
+    200: unknown;
+    /**
+     * The requested part of the file
+     */
+    206: unknown;
+};
+
+export type StartGiveawayData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        giveaway_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/giveaways/{giveaway_id}/start";
+};
+
+export type StartGiveawayErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type StartGiveawayError = StartGiveawayErrors[keyof StartGiveawayErrors];
+
+export type StartGiveawayResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Giveaway;
+};
+
+export type StartGiveawayResponse = StartGiveawayResponses[keyof StartGiveawayResponses];
+
+export type EndGiveawayData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        giveaway_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/giveaways/{giveaway_id}/end";
+};
+
+export type EndGiveawayErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type EndGiveawayError = EndGiveawayErrors[keyof EndGiveawayErrors];
+
+export type EndGiveawayResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Giveaway;
+};
+
+export type EndGiveawayResponse = EndGiveawayResponses[keyof EndGiveawayResponses];
+
+export type RerollGiveawayData = {
+    body: Reroll;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        giveaway_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/giveaways/{giveaway_id}/reroll";
+};
+
+export type RerollGiveawayErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type RerollGiveawayError = RerollGiveawayErrors[keyof RerollGiveawayErrors];
+
+export type RerollGiveawayResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Giveaway;
+};
+
+export type RerollGiveawayResponse = RerollGiveawayResponses[keyof RerollGiveawayResponses];
+
+export type ListEntrantsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        giveaway_id: number;
+    };
+    query?: {
+        q?: string | null;
+        sort?: "entered" | "entries";
+        order?: "asc" | "desc";
+        page?: number;
+    };
+    url: "/guilds/{guild_id}/giveaways/{giveaway_id}/entrants";
+};
+
+export type ListEntrantsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ListEntrantsError = ListEntrantsErrors[keyof ListEntrantsErrors];
+
+export type ListEntrantsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: EntrantPage;
+};
+
+export type ListEntrantsResponse = ListEntrantsResponses[keyof ListEntrantsResponses];
+
+export type SetEntrantBonusData = {
+    body: EntrantBonus;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        giveaway_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/giveaways/{giveaway_id}/entrants/bonus";
+};
+
+export type SetEntrantBonusErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type SetEntrantBonusError = SetEntrantBonusErrors[keyof SetEntrantBonusErrors];
+
+export type SetEntrantBonusResponses = {
+    /**
+     * Request fulfilled, nothing follows
+     */
+    204: void;
+};
+
+export type SetEntrantBonusResponse = SetEntrantBonusResponses[keyof SetEntrantBonusResponses];
+
+export type RemoveEntrantsData = {
+    body: EntrantRemove;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        giveaway_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/giveaways/{giveaway_id}/entrants/remove";
+};
+
+export type RemoveEntrantsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type RemoveEntrantsError = RemoveEntrantsErrors[keyof RemoveEntrantsErrors];
+
+export type RemoveEntrantsResponses = {
+    /**
+     * Request fulfilled, nothing follows
+     */
+    204: void;
+};
+
+export type RemoveEntrantsResponse = RemoveEntrantsResponses[keyof RemoveEntrantsResponses];
 
 export type MusicPlayerData = {
     body?: never;

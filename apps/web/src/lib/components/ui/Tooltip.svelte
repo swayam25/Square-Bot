@@ -14,7 +14,7 @@
         contentClass = "max-w-64 rounded-xl bg-gray-700 px-4 py-2 text-xs font-medium text-gray-100 shadow-xl shadow-black/50",
         children,
     }: {
-        content: string | null | undefined;
+        content: string | Snippet | null | undefined;
         placement?: "top" | "bottom" | "left" | "right";
         // For plain text in long lists, like a transcript's timestamps: the tooltip is built on first hover, since
         // thousands of them cost seconds to mount. That redraws the content, so never use it around a control
@@ -29,7 +29,7 @@
 
     // Frozen once closing starts: a click closes the tooltip and often changes its text, which would flash mid fade
     let open = $state(false);
-    let label = $state<string | null | undefined>(null);
+    let label = $state<string | Snippet | null | undefined>(null);
     $effect.pre(() => {
         if (open && content) label = content;
     });
@@ -39,7 +39,7 @@
     const named: Attachment<HTMLElement> = (node) => {
         const control = node.querySelector<HTMLElement>(INTERACTIVE);
         if (!control || control.textContent?.trim() || (control.hasAttribute("aria-label") && !control.dataset.tooltipLabel)) return;
-        if (content) {
+        if (typeof content === "string" && content) {
             control.setAttribute("aria-label", content);
             control.dataset.tooltipLabel = "";
         } else {
@@ -61,28 +61,31 @@
         positioning={{ placement, gutter: 8 }}
         onOpenChange={(details) => (open = details.open)}
     >
-        <!-- A span, not Ark's button, so the tooltip still opens over a disabled button, which gets no pointer events -->
+        <!-- A span, not Ark's button, so the tooltip still opens over a disabled button, which gets no pointer events.
+             The Portal sits inside it: Root renders no element, so a sibling Portal leaves a space beside inline triggers -->
         <Tooltip.Trigger>
             {#snippet asChild(props)}
-                <span {...props()} {@attach named} class={["inline-flex", className]}>{@render children()}</span>
+                <span {...props()} {@attach named} class={["inline-flex", className]}>
+                    {@render children()}
+                    <Portal>
+                        <Tooltip.Positioner class="z-200">
+                            <Tooltip.Content
+                                class={[
+                                    "origin-(--transform-origin) wrap-anywhere data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
+                                    contentClass,
+                                ]}
+                            >
+                                {#if arrow}
+                                    <Tooltip.Arrow class="[--arrow-background:var(--tooltip-bg)] [--arrow-size:10px]">
+                                        <Tooltip.ArrowTip class="border-t border-l border-(--tooltip-border)" />
+                                    </Tooltip.Arrow>
+                                {/if}
+                                {#if typeof label === "function"}{@render label()}{:else}{label}{/if}
+                            </Tooltip.Content>
+                        </Tooltip.Positioner>
+                    </Portal>
+                </span>
             {/snippet}
         </Tooltip.Trigger>
-        <Portal>
-            <Tooltip.Positioner class="z-200">
-                <Tooltip.Content
-                    class={[
-                        "origin-(--transform-origin) wrap-anywhere data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in",
-                        contentClass,
-                    ]}
-                >
-                    {#if arrow}
-                        <Tooltip.Arrow class="[--arrow-background:var(--tooltip-bg)] [--arrow-size:10px]">
-                            <Tooltip.ArrowTip class="border-t border-l border-(--tooltip-border)" />
-                        </Tooltip.Arrow>
-                    {/if}
-                    {label}
-                </Tooltip.Content>
-            </Tooltip.Positioner>
-        </Portal>
     </Tooltip.Root>
 {/if}

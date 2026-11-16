@@ -17,6 +17,7 @@ Advanced multipurpose discord bot for all your needs.
 
 - Music with player controls, DJ roles with vote skip, multi-node failover, smart autoplay, audio filters and much more!
 - Auto-mod, mass moderation, tickets & detailed logging.
+- Giveaways with requirements, bonus entries, scheduling and rerolls, all restart-safe.
 - A web dashboard with a live music player, settings, invite leaderboards and ticket transcripts.
 - Custom emojis synced from a simple `.zip` upload.
 - Fully dockerized, deploys with a single `just up` command.

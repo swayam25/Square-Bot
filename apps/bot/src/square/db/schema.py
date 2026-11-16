@@ -39,6 +39,7 @@ class GuildTable(Model):
     invite_joins: fields.ReverseRelation[InviteJoinTable]
     invite_bonuses: fields.ReverseRelation[InviteBonusTable]
     tickets: fields.ReverseRelation[TicketTable]
+    giveaways: fields.ReverseRelation[GiveawayTable]
 
     class Meta:
         table = "guild"
@@ -164,3 +165,59 @@ class TicketTranscriptTable(Model):
 
     class Meta:
         table = "ticket_transcript"
+
+
+class GiveawayTable(Model):
+    id = fields.IntField(primary_key=True)
+    guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
+        "models.GuildTable", related_name="giveaways", on_delete=fields.CASCADE
+    )
+    status = fields.CharField(max_length=10, default="scheduled")  # scheduled, running or ended
+    channel_id = fields.BigIntField()
+    message_id = fields.BigIntField(null=True, unique=True)
+    host_id = fields.BigIntField()
+    prize = fields.CharField(max_length=256)
+    description = fields.TextField(default="")
+    winner_count = fields.IntField(default=1)
+    starts_at = fields.DatetimeField()
+    ends_at = fields.DatetimeField()
+    ended_at = fields.DatetimeField(null=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    required_role_ids: list[int] = fields.JSONField(default=list)
+    require_all_roles = fields.BooleanField(default=False)
+    blocked_role_ids: list[int] = fields.JSONField(default=list)
+    min_account_days = fields.IntField(default=0)
+    min_member_days = fields.IntField(default=0)
+    min_invites = fields.IntField(default=0)
+    bonus_roles: list[list[int]] = fields.JSONField(default=list)  # [role_id, extra entries] pairs
+    ping_role_id = fields.BigIntField(null=True)
+    winner_role_id = fields.BigIntField(null=True)
+    color = fields.CharField(max_length=7, null=True)
+    image_url = fields.TextField(null=True)
+    image_file = fields.CharField(max_length=64, null=True)  # Uploaded image's file name
+    button_label = fields.CharField(max_length=40, default="Enter")
+    button_emoji = fields.CharField(max_length=100, null=True)
+    button_style = fields.CharField(max_length=8, default="blurple")
+    entry_count = fields.IntField(default=0)
+    winner_ids: list[int] = fields.JSONField(default=list)
+    drawn_ids: list[int] = fields.JSONField(default=list)  # Everyone ever drawn, so rerolls never pick them again
+
+    entries: fields.ReverseRelation[GiveawayEntryTable]
+
+    class Meta:
+        table = "giveaway"
+        indexes = (("guild", "status"), ("status", "starts_at"), ("status", "ends_at"))
+
+
+class GiveawayEntryTable(Model):
+    id = fields.IntField(primary_key=True)
+    giveaway: fields.ForeignKeyRelation[GiveawayTable] = fields.ForeignKeyField(
+        "models.GiveawayTable", related_name="entries", on_delete=fields.CASCADE
+    )
+    user_id = fields.BigIntField()
+    bonus = fields.IntField(default=0)
+    entered_at = fields.DatetimeField(auto_now_add=True)
+
+    class Meta:
+        table = "giveaway_entry"
+        unique_together = (("giveaway", "user_id"),)

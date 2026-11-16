@@ -6,13 +6,14 @@ class Module(enum.StrEnum):
     LOGS = "logs"
     TICKETS = "tickets"
     INVITES = "invites"
+    GIVEAWAYS = "giveaways"
 
     @property
     def label(self) -> str:
         return self.value.capitalize()
 
 
-DEFAULT_MODULES = [Module.LOGS.value]
+DEFAULT_MODULES = [Module.LOGS.value, Module.GIVEAWAYS.value]
 
 
 class ModuleOff(discord.CheckFailure):

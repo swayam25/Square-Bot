@@ -17,6 +17,7 @@
     import SiteFooter from "#lib/components/site/SiteFooter.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Shape from "#lib/components/ui/Shape.svelte";
+    import { EMOJI } from "#lib/discord/markdown.ts";
     import { formatCount } from "#lib/format.ts";
     import { demo, time, TRACKS } from "#lib/music/demo.svelte.ts";
     import MaterialSymbolsCheckCircleRounded from "~icons/material-symbols/check-circle-rounded";
@@ -32,8 +33,6 @@
     import type { PageProps } from "./$types";
 
     let { data }: PageProps = $props();
-
-    const discordEmoji = "mr-[0.05em] ml-[0.1em] inline size-[1.375em] align-bottom";
 
     const features = [
         {
@@ -228,7 +227,7 @@
                         <DiscordAccessories>
                             <DiscordContainer color="var(--color-embed-red)">
                                 <p>
-                                    <BrandIcon brand="youtube" class={discordEmoji} /> Added
+                                    <BrandIcon brand="youtube" class={EMOJI} /> Added
                                     <span class="text-dc-link"><strong>{demo.track.title}</strong> by <strong>{demo.track.author}</strong></span>
                                     [{time(demo.track.duration)}].
                                 </p>
@@ -265,7 +264,7 @@
                                 </DiscordMedia>
                             </DiscordContainer>
                             <DiscordActionRow>
-                                <DiscordButton href=""><BrandIcon brand="youtube" class="size-4.5" />Open on YouTube</DiscordButton>
+                                <DiscordButton href=""><BrandIcon brand="youtube" class="size-[1.375em]" />Open on YouTube</DiscordButton>
                             </DiscordActionRow>
                         </DiscordAccessories>
                     </DiscordMessage>
@@ -336,7 +335,7 @@
                             </DiscordContainer>
                             <DiscordActionRow>
                                 <DiscordButton style="primary"
-                                    ><MaterialSymbolsConfirmationNumberRounded class="size-4.5" />Open a ticket</DiscordButton
+                                    ><MaterialSymbolsConfirmationNumberRounded class="size-[1.375em]" />Open a ticket</DiscordButton
                                 >
                             </DiscordActionRow>
                         </DiscordAccessories>

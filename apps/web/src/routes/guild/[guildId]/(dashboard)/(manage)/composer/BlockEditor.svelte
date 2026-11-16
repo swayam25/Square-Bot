@@ -1,7 +1,7 @@
 <script lang="ts">
     import { sortable } from "#lib/attachments/sortable.ts";
+    import ColorField from "#lib/components/fields/ColorField.svelte";
     import Button from "#lib/components/ui/Button.svelte";
-    import Input from "#lib/components/ui/Input.svelte";
     import Popup from "#lib/components/ui/Popup.svelte";
     import Segmented from "#lib/components/ui/Segmented.svelte";
     import { focusRing } from "#lib/components/ui/styles.ts";
@@ -68,15 +68,6 @@
     let touched = $state<Record<string, boolean>>({});
     const emptyError = (id: string, text: string) => (touched[id] && !text.trim() ? "Text can't be empty" : null);
 
-    const COLORS = [
-        { name: "Square", value: "#1fceec" },
-        { name: "Blurple", value: "#5865f2" },
-        { name: "Green", value: "#57f287" },
-        { name: "Yellow", value: "#fee75c" },
-        { name: "Red", value: "#ed4245" },
-        { name: "Fuchsia", value: "#eb459e" },
-    ];
-
     const firstLine = (text: string) => text.trim().split("\n")[0] ?? "";
 
     const summary = $derived.by(() => {
@@ -105,15 +96,6 @@
                 const [moved] = list.splice(from, 1);
                 if (moved !== undefined) list.splice(to, 0, moved);
             });
-    }
-
-    let hex = $derived(block.kind === "container" ? (block.color ?? "") : "");
-    function setHex(value: string) {
-        if (block.kind !== "container") return;
-        hex = value;
-        const clean = value.trim().replace(/^#?/, "#").toLowerCase();
-        if (!value.trim()) block.color = null;
-        else if (/^#[0-9a-f]{6}$/.test(clean)) block.color = clean;
     }
 
     async function uploadMany() {
@@ -228,48 +210,7 @@
         <div transition:slide={{ duration: 200 }} class="flex flex-col gap-4 px-4 pb-4">
             {#if block.kind === "container"}
                 <div class="flex flex-wrap items-center gap-2">
-                    <label
-                        class={[
-                            "relative size-12 shrink-0 cursor-pointer overflow-hidden rounded-full bg-gray-800 md:size-10",
-                            "has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent",
-                        ]}
-                        style:background-color={block.color ?? undefined}
-                    >
-                        <input
-                            type="color"
-                            aria-label="Accent color"
-                            class="absolute inset-0 size-full cursor-pointer opacity-0"
-                            value={block.color ?? "#1fceec"}
-                            oninput={(event) => setHex(event.currentTarget.value)}
-                        />
-                    </label>
-                    <Input
-                        aria-label="Accent color hex"
-                        placeholder="No color"
-                        maxlength={7}
-                        class="w-32!"
-                        error={hex.trim() && hex.trim().replace(/^#?/, "#").toLowerCase() !== block.color ? "Use a hex color like #1FCEEC" : null}
-                        bind:value={() => hex, setHex}
-                    />
-                    {#each COLORS as color (color.value)}
-                        <Tooltip content={color.name}>
-                            <button
-                                type="button"
-                                aria-pressed={block.color === color.value}
-                                class={[
-                                    "size-8 shrink-0 cursor-pointer rounded-full transition-transform hover:scale-110 aria-pressed:scale-110",
-                                    focusRing,
-                                ]}
-                                style:background-color={color.value}
-                                onclick={() => setHex(color.value)}
-                            >
-                                <span class="sr-only">{color.name}</span>
-                            </button>
-                        </Tooltip>
-                    {/each}
-                    {#if block.color}
-                        {@render remove("No color", () => setHex(""), true)}
-                    {/if}
+                    <ColorField label="Accent color" bind:value={block.color} />
                     <span class="ml-auto"
                         ><OptionChip icon={MaterialSymbolsVisibilityOffRounded} bind:pressed={block.spoiler}>Spoiler</OptionChip></span
                     >

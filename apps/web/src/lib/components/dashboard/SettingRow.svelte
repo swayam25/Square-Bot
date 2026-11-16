@@ -6,12 +6,14 @@
         description,
         icon: Icon,
         layout = "side",
+        tone = "accent",
         children,
     }: {
         label: string;
         description?: string;
         icon?: Component;
         layout?: "side" | "inline" | "below";
+        tone?: "accent" | "danger";
         children?: Snippet;
     } = $props();
 </script>
@@ -26,7 +28,12 @@
 >
     <div class="flex min-w-0 flex-1 items-center gap-4">
         {#if Icon}
-            <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-800 text-accent"><Icon class="size-5" /></span>
+            <span
+                class={[
+                    "flex size-10 shrink-0 items-center justify-center rounded-xl",
+                    tone === "danger" ? "bg-red-400/10 text-red-400" : "bg-gray-800 text-accent",
+                ]}><Icon class="size-5" /></span
+            >
         {/if}
         <div class="flex min-w-0 flex-col">
             <span class="text-sm font-medium">{label}</span>

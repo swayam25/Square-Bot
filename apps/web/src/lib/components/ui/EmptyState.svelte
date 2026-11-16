@@ -1,6 +1,6 @@
 <script lang="ts">
     import Button from "#lib/components/ui/Button.svelte";
-    import type { Component } from "svelte";
+    import type { Component, Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
     import MaterialSymbolsErrorRounded from "~icons/material-symbols/error-rounded";
     import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
@@ -14,6 +14,7 @@
         compact = false,
         card = false,
         class: className,
+        children,
     }: {
         icon?: Component;
         title: string;
@@ -23,6 +24,7 @@
         compact?: boolean;
         card?: boolean;
         class?: ClassValue;
+        children?: Snippet;
     } = $props();
 
     const Icon = $derived(icon ?? MaterialSymbolsErrorRounded);
@@ -58,7 +60,9 @@
         <Icon class={compact ? "size-5" : "size-7"} />
     </span>
     <p class={["font-display font-semibold", compact ? "text-base" : "text-lg"]}>{title}</p>
-    {#if text}<p class="max-w-sm text-sm text-gray-400">{text}</p>{/if}
+    {#if children || text}<p class="max-w-sm text-sm text-gray-400">
+            {#if children}{@render children()}{:else}{text}{/if}
+        </p>{/if}
     {#if retry}
         <Button size="sm" class="mt-2" loading={retrying} onclick={again}>
             {#if !retrying}<MaterialSymbolsRefreshRounded />{/if}{retrying ? "Trying…" : "Try again"}

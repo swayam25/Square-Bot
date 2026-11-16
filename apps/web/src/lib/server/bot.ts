@@ -11,7 +11,7 @@ const PATIENT = 30_000;
 
 const SLOW_READS = ["/music/search", "/transcript"];
 // Long file streams outlast any fixed timeout, so `streamFile` times only the wait for headers
-const STREAMED = /\/files\/[^/]+$/;
+const STREAMED = /\/(files\/[^/]+|giveaways\/\d+\/image)$/;
 
 bot.interceptors.request.use((request) => {
     const { pathname } = new URL(request.url);

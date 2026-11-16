@@ -394,7 +394,7 @@
                 <div
                     bind:this={scroller}
                     role="presentation"
-                    class="relative h-full scroll-pt-8 overflow-y-auto overscroll-contain"
+                    class={["relative h-full scroll-pt-8 overflow-y-auto overscroll-contain", !mobile.current && "-mr-2 pr-3"]}
                     onscroll={spy}
                     onkeydown={navigate}
                     onpointerleave={() => (hovered = null)}

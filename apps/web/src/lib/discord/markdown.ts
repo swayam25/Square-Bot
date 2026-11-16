@@ -166,6 +166,8 @@ function relative(at: number) {
     return RELATIVE.format(Math.round(seconds / size), unit);
 }
 
+export const EMOJI = "mr-[0.05em] ml-[0.1em] inline size-[1.375em] align-bottom";
+
 export const timestamp = (at: number, style: string) => (style === "R" ? relative(at) : (STYLES[style] ?? STYLES.f).format(at));
 export const clock = (at: number) => CLOCK.format(at);
 export const fullTime = (at: number) => FULL.format(at);

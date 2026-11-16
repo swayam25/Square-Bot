@@ -109,6 +109,7 @@
                           { href: `${base}/music`, label: "Music", icon: MaterialSymbolsMusicNoteRounded },
                           moduleLink("invites"),
                           moduleLink("tickets"),
+                          moduleLink("giveaways"),
                       ],
                   },
               ]
