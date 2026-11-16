@@ -351,6 +351,18 @@ export const zMemberJoins = z.object({
 });
 
 /**
+ * MentionedChannel
+ */
+export const zMentionedChannel = z.object({
+    id: z.string().regex(/^\d{17,20}$/),
+    name: z.string(),
+    type: z.enum(["text", "news", "voice", "stage_voice", "category", "forum", "media"]),
+    guildId: z.string().regex(/^\d{17,20}$/),
+    guildName: z.string(),
+    guildIconUrl: z.string().nullable(),
+});
+
+/**
  * MessageButton
  */
 export const zMessageButton = z.object({
@@ -1195,6 +1207,40 @@ export const zSearchMembersQuery = z.object({
  * Request fulfilled, document follows
  */
 export const zSearchMembersResponse = z.array(zUserMatch);
+
+export const zMentionedUsersHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zMentionedUsersPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+export const zMentionedUsersQuery = z.object({
+    ids: z.array(z.string()).min(1).max(100),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zMentionedUsersResponse = z.array(zUserMatch);
+
+export const zMentionedChannelsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zMentionedChannelsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+export const zMentionedChannelsQuery = z.object({
+    ids: z.array(z.string()).min(1).max(100),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zMentionedChannelsResponse = z.array(zMentionedChannel);
 
 export const zMemberJoinsHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

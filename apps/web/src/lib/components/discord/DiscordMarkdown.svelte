@@ -4,6 +4,7 @@
     import DiscordTooltip from "#lib/components/discord/DiscordTooltip.svelte";
     import Mention from "#lib/components/discord/Mention.svelte";
     import { getDiscord } from "#lib/discord/context.ts";
+    import { highlight, highlighter, loadHighlighter } from "#lib/discord/highlight.svelte.ts";
     import { fullTime, inline as inlineNodes, jumbo as isJumbo, parse, timestamp, type Inline } from "#lib/discord/markdown.ts";
     import type { ClassValue } from "svelte/elements";
 
@@ -24,6 +25,10 @@
     const discord = getDiscord();
     const blocks = $derived(inline ? [] : parse(text));
     const large = $derived(!inline && jumbo && isJumbo(blocks));
+
+    $effect(() => {
+        if (!highlighter.ready && blocks.some((block) => block.type === "codeblock" && block.language)) void loadHighlighter();
+    });
 </script>
 
 {#snippet nodes(children: Inline[])}
@@ -35,7 +40,7 @@
             >{:else if node.type === "strike"}<s>{@render nodes(node.children)}</s>{:else if node.type === "spoiler"}<DiscordSpoiler
                 >{@render nodes(node.children)}</DiscordSpoiler
             >{:else if node.type === "code"}<code
-                class="rounded-sm border border-dc-code-border bg-dc-code p-[0.2em] font-mono text-[85%] leading-4.5 whitespace-pre-wrap"
+                class="rounded-sm border border-dc-code-border bg-dc-code p-[0.2em] font-mono text-[85%] leading-4.5 whitespace-pre-wrap [font-variant-ligatures:none]"
                 >{node.text}</code
             >{:else if node.type === "link"}<a href={node.href} target="_blank" rel="noopener noreferrer" class="text-dc-link hover:underline"
                 >{@render nodes(node.children)}</a
@@ -46,14 +51,16 @@
                 class={["mr-[0.05em] ml-[0.1em]", large ? "size-12" : inline ? "size-[1.2em]" : "size-[1.375em]"]}
             />{:else if node.type === "user"}<Mention
                 kind="user"
-                name={discord.users[node.id]?.name ?? "unknown-user"}
-            />{:else if node.type === "role"}<Mention
+                name={discord.user(node.id)?.name ?? "unknown-user"}
+            />{:else if node.type === "role"}{@const role = discord.role(node.id)}<Mention
                 kind="role"
-                name={discord.roles[node.id]?.name ?? "unknown-role"}
-                color={discord.roles[node.id]?.color || null}
-            />{:else if node.type === "channel"}<Mention
-                kind="channel"
-                name={discord.channels[node.id] ?? "unknown-channel"}
+                name={role?.name ?? "unknown-role"}
+                color={role?.color || null}
+            />{:else if node.type === "everyone"}<Mention kind="role" name={node.name} />{:else if node.type === "channel"}{@const channel =
+                discord.channel(node.id)}<Mention
+                kind={channel?.voice ? "voice" : "channel"}
+                name={channel?.name ?? "unknown-channel"}
+                guild={channel?.guild}
             />{:else if node.type === "command"}<Mention kind="command" name={node.name} />{:else if node.type === "time"}<DiscordTooltip
                 lazy
                 content={fullTime(node.at)}
@@ -90,8 +97,11 @@
             {:else if block.type === "item"}
                 <p class="relative pl-5 before:absolute before:left-1.5 before:content-['•']">{@render nodes(block.children)}</p>
             {:else if block.type === "codeblock"}
+                {@const tokens = highlighter.ready ? highlight(block.text, block.language) : null}
                 <pre
-                    class="mt-1.5 max-w-[90%] rounded-sm border border-dc-code-border bg-dc-code p-2 font-mono text-sm leading-4.5 wrap-break-word whitespace-pre-wrap">{block.text}</pre>
+                    class="mt-1.5 max-w-[90%] rounded-sm border border-dc-code-border bg-dc-code p-2 font-mono text-sm leading-4.5 wrap-break-word whitespace-pre-wrap [font-variant-ligatures:none]">{#if tokens}{#each tokens as token, at (at)}<span
+                                class={token.scope}>{token.text}</span
+                            >{/each}{:else}{block.text}{/if}</pre>
             {:else}
                 <div class="h-5.5"></div>
             {/if}

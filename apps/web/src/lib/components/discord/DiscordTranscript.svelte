@@ -38,15 +38,9 @@
 
     let viewing = $state<Viewing | null>(null);
     setDiscord({
-        get users() {
-            return transcript.users ?? {};
-        },
-        get roles() {
-            return transcript.roles ?? {};
-        },
-        get channels() {
-            return transcript.channels ?? {};
-        },
+        user: (id) => transcript.users?.[id],
+        role: (id) => transcript.roles?.[id],
+        channel: (id) => (transcript.channels?.[id] ? { name: transcript.channels[id] } : null),
         fileUrl: (file) => fileUrl(file),
         view: (next) => (viewing = next),
     });

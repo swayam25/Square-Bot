@@ -5,6 +5,7 @@
 @import "@fontsource/noto-sans-math";
 @import "@fontsource/noto-sans-symbols";
 @import "@fontsource/noto-sans-symbols-2";
+@import "highlight.js/styles/atom-one-dark.css";
 
 /* Same Twemoji build and range as the bot (`fonts.py`): text-style characters like ™ ‼ ↔ ↩ are left out */
 @font-face {

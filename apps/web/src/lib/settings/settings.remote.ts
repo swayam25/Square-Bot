@@ -14,6 +14,34 @@ export const searchMembers = query(z.object({ guild: guildId, q: z.string().trim
     read(sdk.searchMembers({ ...forGuild(guild), query: { q } })),
 );
 
+const BATCH = 100;
+const mention = z.object({ guild: guildId, id: guildId });
+
+// Mentions drawn together reach the bot as one request per server
+function byGuild<T extends { id: string }>(load: (guild: string, ids: string[]) => Promise<T[]>) {
+    return async (wanted: z.infer<typeof mention>[]) => {
+        const found = new Map<string, T>();
+        await Promise.all(
+            [...Map.groupBy(wanted, (entry) => entry.guild)].flatMap(([guild, entries]) => {
+                const ids = [...new Set(entries.map((entry) => entry.id))];
+                return Array.from({ length: Math.ceil(ids.length / BATCH) }, async (_, index) => {
+                    for (const item of await load(guild, ids.slice(index * BATCH, (index + 1) * BATCH))) found.set(`${guild}:${item.id}`, item);
+                });
+            }),
+        );
+        return ({ guild, id }: z.infer<typeof mention>) => found.get(`${guild}:${id}`) ?? null;
+    };
+}
+
+export const mentionedUser = query.batch(
+    mention,
+    byGuild((guild, ids) => read(sdk.mentionedUsers({ ...forGuild(guild), query: { ids } }))),
+);
+export const mentionedChannel = query.batch(
+    mention,
+    byGuild((guild, ids) => read(sdk.mentionedChannels({ ...forGuild(guild), query: { ids } }))),
+);
+
 export const generalSettings = query(guildId, (guild) => read(sdk.getGeneralSettings(forGuild(guild))));
 
 export const updateGeneral = command(schema.zGeneralPatch.extend({ guild: guildId }), async ({ guild, ...body }) => {

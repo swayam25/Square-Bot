@@ -3,7 +3,8 @@ import { forGuild, read } from "#lib/server/bot.ts";
 import { prerender, query } from "$app/server";
 import * as sdk from "@square/api-client";
 import data from "emojibase-data/en/data.json";
-import shortcodes from "emojibase-data/en/shortcodes/iamcal.json";
+import github from "emojibase-data/en/shortcodes/github.json";
+import iamcal from "emojibase-data/en/shortcodes/iamcal.json";
 import { z } from "zod";
 
 // Twemoji.woff2 is built from Twemoji 17, so newer emoji would draw as empty boxes
@@ -31,14 +32,15 @@ export const emojiData = prerender((): EmojiData => {
         const group = emoji.group === undefined ? undefined : keys.get(emoji.group);
         if (!group || emoji.version > FONT_EMOJI_VERSION) continue;
 
-        const codes = [shortcodes[emoji.hexcode] ?? []].flat();
+        // Discord's names are mostly Slack's (iamcal) plus GitHub's aliases, like rofl
+        const codes = [...new Set([iamcal[emoji.hexcode] ?? [], github[emoji.hexcode] ?? []].flat())];
         const terms = [emoji.label, ...(emoji.tags ?? []), ...codes].join(" ").toLowerCase();
         const skins = (emoji.skins ?? [])
             .filter((skin) => typeof skin.tone === "number" && skin.version <= FONT_EMOJI_VERSION)
             .toSorted((a, b) => Number(a.tone) - Number(b.tone))
             .map((skin) => skin.emoji);
 
-        const entry: UnicodeEmoji = [emoji.emoji, emoji.label, codes[0] ?? emoji.label.toLowerCase().replaceAll(/\W+/g, "_"), terms];
+        const entry: UnicodeEmoji = [emoji.emoji, emoji.label, codes.join(" ") || emoji.label.toLowerCase().replaceAll(/\W+/g, "_"), terms];
         if (skins.length === 5) entry.push(skins);
         groups[group].push(entry);
     }

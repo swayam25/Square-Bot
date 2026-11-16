@@ -8,10 +8,10 @@
     import DiscordMarkdown from "#lib/components/discord/DiscordMarkdown.svelte";
     import DiscordMessage from "#lib/components/discord/DiscordMessage.svelte";
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
-    import { setDiscord } from "#lib/discord/context.ts";
+    import { setGuildDiscord } from "#lib/discord/guild.svelte.ts";
     import { EMOJI } from "#lib/discord/markdown.ts";
     import { formatCount } from "#lib/format.ts";
-    import type { Channel, Person, Role } from "@square/api-client";
+    import type { Channel, Person } from "@square/api-client";
     import type { Component } from "svelte";
     import MaterialSymbolsAdd2Rounded from "~icons/material-symbols/add-2-rounded";
     import MaterialSymbolsBookmarkRounded from "~icons/material-symbols/bookmark-rounded";
@@ -31,7 +31,6 @@
         invites = true,
         you,
         channels,
-        roles,
         entries = 0,
         winners = [],
         endedAt = null,
@@ -43,7 +42,6 @@
         invites?: boolean;
         you: Person;
         channels: Channel[];
-        roles: Role[];
         entries?: number;
         winners?: Person[];
         endedAt?: number | null;
@@ -59,18 +57,10 @@
     const host = $derived(draft.host ?? you);
     const ended = $derived(status === "ended");
 
-    setDiscord({
-        get users() {
-            return Object.fromEntries([host, ...winners].map((person) => [person.id, { name: person.name, avatar: person.avatarUrl }]));
-        },
-        get roles() {
-            return Object.fromEntries(roles.map((role) => [role.id, { name: role.name, color: role.color ?? undefined }]));
-        },
-        get channels() {
-            return Object.fromEntries(channels.map((entry) => [entry.id, entry.name]));
-        },
-        fileUrl: (file) => file.url,
-    });
+    setGuildDiscord(
+        () => guild,
+        () => [host, ...winners],
+    );
 
     const role = (id: string) => (id === guild ? "@everyone" : `<@&${id}>`);
     const roleList = (ids: string[]) => ids.map(role).join(", ");

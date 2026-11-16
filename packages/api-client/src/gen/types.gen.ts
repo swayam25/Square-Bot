@@ -624,6 +624,24 @@ export type MemberJoins = {
 };
 
 /**
+ * MentionedChannel
+ */
+export type MentionedChannel = {
+    /**
+     * A Discord ID
+     */
+    id: string;
+    name: string;
+    type: "text" | "news" | "voice" | "stage_voice" | "category" | "forum" | "media";
+    /**
+     * A Discord ID
+     */
+    guildId: string;
+    guildName: string;
+    guildIconUrl: string | null;
+};
+
+/**
  * MessageButton
  */
 export type MessageButton = {
@@ -1553,6 +1571,106 @@ export type SearchMembersResponses = {
 };
 
 export type SearchMembersResponse = SearchMembersResponses[keyof SearchMembersResponses];
+
+export type MentionedUsersData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query: {
+        /**
+         * Discord IDs
+         */
+        ids: Array<string>;
+    };
+    url: "/guilds/{guild_id}/mentions/users";
+};
+
+export type MentionedUsersErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type MentionedUsersError = MentionedUsersErrors[keyof MentionedUsersErrors];
+
+export type MentionedUsersResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Array<UserMatch>;
+};
+
+export type MentionedUsersResponse = MentionedUsersResponses[keyof MentionedUsersResponses];
+
+export type MentionedChannelsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query: {
+        /**
+         * Discord IDs
+         */
+        ids: Array<string>;
+    };
+    url: "/guilds/{guild_id}/mentions/channels";
+};
+
+export type MentionedChannelsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type MentionedChannelsError = MentionedChannelsErrors[keyof MentionedChannelsErrors];
+
+export type MentionedChannelsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Array<MentionedChannel>;
+};
+
+export type MentionedChannelsResponse = MentionedChannelsResponses[keyof MentionedChannelsResponses];
 
 export type MemberJoinsData = {
     body?: never;

@@ -1,3 +1,4 @@
+import asyncio
 import discord
 from collections import Counter
 from datetime import UTC, datetime, timedelta
@@ -13,16 +14,19 @@ from square.api.schemas import (
     Guild,
     JoinDay,
     MemberJoins,
+    MentionedChannel,
     Role,
     ServerStats,
+    Snowflake,
     UserMatch,
     channels_out,
     emojis_out,
     guild_out,
+    mentioned_channel_out,
     roles_out,
     user_match,
 )
-from square.api.users import find_user
+from square.api.users import find_user, known_user
 from square.core import Client
 from square.db.funcs import invites as invites_db
 from square.db.funcs import tickets as tickets_db
@@ -78,6 +82,47 @@ async def search_members(
         contains, key=lambda m: m.display_name.casefold()
     )
     return [user_match(member, True) for member in found[:SEARCH_LIMIT]]
+
+
+MENTION_LIMIT = 100
+MENTION_FETCHES = 25
+
+
+@get("/mentions/users", summary="Users mentioned in a server's text, whether or not they share a server with Square")
+async def mentioned_users(
+    client: Client,
+    guild: discord.Guild,
+    ids: Annotated[list[Snowflake], Parameter(min_items=1, max_items=MENTION_LIMIT, description="Discord IDs")],
+) -> list[UserMatch]:
+    # Fetches are capped per request and cached for hours, so pasted IDs can't burst Discord calls
+    wanted = list(dict.fromkeys(map(int, ids)))
+    unknown = [user_id for user_id in wanted if not known_user(client, guild, user_id)[0]]
+    await asyncio.gather(*(find_user(client, guild, user_id) for user_id in unknown[:MENTION_FETCHES]))
+    users: list[UserMatch] = []
+    for user_id in wanted:
+        _, user = known_user(client, guild, user_id)
+        if user:
+            users.append(user_match(user, isinstance(user, discord.Member)))
+    return users
+
+
+@get("/mentions/channels", summary="Channels mentioned in a server's text that the signed-in user can open")
+async def mentioned_channels(
+    client: Client,
+    guild: discord.Guild,
+    actor: int,
+    ids: Annotated[list[Snowflake], Parameter(min_items=1, max_items=MENTION_LIMIT, description="Discord IDs")],
+) -> list[MentionedChannel]:
+    # Only channels the user can view, or other servers' private channel names would leak
+    channels: list[MentionedChannel] = []
+    for channel_id in dict.fromkeys(map(int, ids)):
+        channel = client.get_channel(channel_id)
+        if not isinstance(channel, discord.abc.GuildChannel) or isinstance(channel, discord.Thread):
+            continue
+        member = channel.guild.get_member(actor)
+        if member and channel.permissions_for(member).view_channel and (found := mentioned_channel_out(channel)):
+            channels.append(found)
+    return channels
 
 
 JOIN_DAYS = 30
@@ -140,5 +185,15 @@ router = Router(
     "/guilds/{guild_id:str}",
     tags=["Guilds"],
     dependencies={"guild": Provide(provide_guild, sync_to_thread=False)},
-    route_handlers=[guild_channels, guild_roles, guild_emojis, search_members, member_joins, activity, server_stats],
+    route_handlers=[
+        guild_channels,
+        guild_roles,
+        guild_emojis,
+        search_members,
+        mentioned_users,
+        mentioned_channels,
+        member_joins,
+        activity,
+        server_stats,
+    ],
 )

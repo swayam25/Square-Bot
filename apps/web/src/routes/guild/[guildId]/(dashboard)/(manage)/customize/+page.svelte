@@ -9,9 +9,10 @@
     import DiscordMessage from "#lib/components/discord/DiscordMessage.svelte";
     import DiscordProfile from "#lib/components/discord/DiscordProfile.svelte";
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
+    import DiscordTextField from "#lib/components/fields/DiscordTextField.svelte";
     import Input from "#lib/components/ui/Input.svelte";
-    import Textarea from "#lib/components/ui/Textarea.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { setGuildDiscord } from "#lib/discord/guild.svelte.ts";
     import MaterialSymbolsBadgeRounded from "~icons/material-symbols/badge-rounded";
     import MaterialSymbolsImageRounded from "~icons/material-symbols/image-rounded";
     import MaterialSymbolsNotesRounded from "~icons/material-symbols/notes-rounded";
@@ -24,6 +25,7 @@
     let { data }: PageProps = $props();
 
     const guild = $derived(data.guild.id);
+    setGuildDiscord(() => guild);
     const savedQuery = $derived(profile.botProfile(guild));
     const saved = $derived(savedQuery.current!);
 
@@ -82,12 +84,11 @@
                     icon={MaterialSymbolsNotesRounded}
                     layout="below"
                 >
-                    <Textarea
+                    <DiscordTextField
                         aria-label="Bio"
                         placeholder={saved.globalBio ?? "What Square does in this server"}
                         maxlength={BIO_MAX}
-                        rows={3}
-                        emojis={data.guild}
+                        guild={data.guild}
                         bind:value={bio}
                     />
                 </SettingRow>

@@ -1,11 +1,11 @@
 <script lang="ts">
     import { sortable } from "#lib/attachments/sortable.ts";
     import ColorField from "#lib/components/fields/ColorField.svelte";
+    import DiscordTextField from "#lib/components/fields/DiscordTextField.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Popup from "#lib/components/ui/Popup.svelte";
     import Segmented from "#lib/components/ui/Segmented.svelte";
     import { focusRing } from "#lib/components/ui/styles.ts";
-    import Textarea from "#lib/components/ui/Textarea.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { plural } from "#lib/format.ts";
     import { mobile } from "#lib/media.ts";
@@ -232,11 +232,11 @@
                     onadd={(kind) => block.kind === "container" && block.children.push(create(kind, composer.mediaRoom > 0) as Piece)}
                 />
             {:else if block.kind === "text"}
-                <Textarea
+                <DiscordTextField
                     aria-label="Text"
                     placeholder="Markdown, mentions and emojis work here"
                     maxlength={LIMITS.text}
-                    emojis={composer.guild}
+                    guild={composer.guild}
                     error={emptyError(block.id, block.text)}
                     onblur={() => (touched[block.id] = true)}
                     bind:value={block.text}
@@ -246,11 +246,11 @@
                     {#each block.texts as entry, at (entry.id)}
                         <li data-sortable-index={at} class={["flex items-start gap-1", sortableItem]}>
                             {#if block.texts.length > 1}<span class="pt-1">{@render dragHandle("Drag to reorder")}</span>{/if}
-                            <Textarea
+                            <DiscordTextField
                                 aria-label="Text {at + 1}"
                                 placeholder="Text {at + 1}"
                                 maxlength={LIMITS.text}
-                                emojis={composer.guild}
+                                guild={composer.guild}
                                 error={emptyError(entry.id, entry.text)}
                                 onblur={() => (touched[entry.id] = true)}
                                 bind:value={entry.text}

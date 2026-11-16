@@ -12,10 +12,12 @@
         addRecent,
         customToken,
         customUrl,
+        emojiScore,
         GROUPS,
         loadRecent,
         loadTone,
         saveTone,
+        shortcodeOf,
         TONE_NAMES,
         toned,
         TONES,
@@ -128,24 +130,17 @@
 
     const query = $derived(search.trim().toLowerCase().replaceAll(":", ""));
 
-    function score(name: string, label: string, terms: string) {
-        if (name === query || label === query) return 0;
-        if (name.startsWith(query) || label.startsWith(query)) return 1;
-        if (` ${terms}`.includes(` ${query}`)) return 2;
-        return terms.includes(query) ? 3 : -1;
-    }
-
     const results = $derived.by<Cell[]>(() => {
         if (!query) return [];
         const ranked: [number, Cell][] = [];
         for (const cell of customCells) {
             const name = cell.emoji.name.toLowerCase();
-            const rank = score(name, name, name);
+            const rank = emojiScore(query, name, name, name);
             if (rank >= 0) ranked.push([rank, cell]);
         }
         for (const cell of unicodeCells.values()) {
-            const [, label, shortcode, terms] = cell.emoji;
-            const rank = score(shortcode, label.toLowerCase(), terms);
+            const [, label, shortcodes, terms] = cell.emoji;
+            const rank = emojiScore(query, shortcodes, label.toLowerCase(), terms);
             if (rank >= 0) ranked.push([rank, cell]);
         }
         return ranked.sort((a, b) => a[0] - b[0]).map(([, cell]) => cell);
@@ -489,7 +484,7 @@
                         {@render glyph(preview, true)}
                         <span class="flex min-w-0 flex-1 flex-col">
                             <span class="truncate text-sm font-medium">
-                                :{preview.kind === "custom" ? preview.emoji.name : preview.emoji[2]}:
+                                :{preview.kind === "custom" ? preview.emoji.name : shortcodeOf(preview.emoji)}:
                             </span>
                             <span class="truncate text-xs text-gray-400">
                                 {#if preview.kind === "unicode"}

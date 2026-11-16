@@ -10,31 +10,14 @@
     import DiscordMessage from "#lib/components/discord/DiscordMessage.svelte";
     import DiscordSpoilerCover from "#lib/components/discord/DiscordSpoilerCover.svelte";
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
-    import { setDiscord } from "#lib/discord/context.ts";
-    import type { Channel, Role } from "@square/api-client";
+    import { setGuildDiscord } from "#lib/discord/guild.svelte.ts";
     import { getComposer, isVideo, parseEmoji, validUrl, type Block, type LinkButton, type Media } from "./composer.svelte.ts";
 
-    let {
-        blocks,
-        name,
-        avatar,
-        channel,
-        channels,
-        roles,
-    }: { blocks: Block[]; name: string; avatar: string; channel: string; channels: Channel[]; roles: Role[] } = $props();
+    let { blocks, name, avatar, channel }: { blocks: Block[]; name: string; avatar: string; channel: string } = $props();
 
     const composer = getComposer();
 
-    setDiscord({
-        users: {},
-        get roles() {
-            return Object.fromEntries(roles.map((role) => [role.id, { name: role.name, color: role.color ?? undefined }]));
-        },
-        get channels() {
-            return Object.fromEntries(channels.map((entry) => [entry.id, entry.name]));
-        },
-        fileUrl: (file) => file.url,
-    });
+    setGuildDiscord(() => composer.guild.id);
 
     function fileOf(url: string) {
         const upload = composer.uploads.of(url);

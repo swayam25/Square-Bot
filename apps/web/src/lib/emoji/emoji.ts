@@ -3,7 +3,8 @@ import type { Emoji as GuildEmoji } from "@square/api-client";
 
 export type { GuildEmoji };
 
-export type UnicodeEmoji = [emoji: string, label: string, shortcode: string, terms: string, skins?: string[]];
+// Shortcodes are space separated, the first being the one shown
+export type UnicodeEmoji = [emoji: string, label: string, shortcodes: string, terms: string, skins?: string[]];
 
 export const GROUPS = [
     { key: "smileys", name: "Smileys & emotion" },
@@ -25,6 +26,17 @@ export const TONE_NAMES = ["Default", "Light", "Medium-light", "Medium", "Medium
 
 export function toned(emoji: UnicodeEmoji, tone: number) {
     return (tone && emoji[4]?.[tone - 1]) || emoji[0];
+}
+
+export const shortcodeOf = (emoji: UnicodeEmoji) => emoji[2].split(" ", 1)[0];
+
+// Lower is better, -1 is no match
+export function emojiScore(query: string, names: string, label: string, terms: string) {
+    const each = names.split(" ");
+    if (each.includes(query) || label === query) return 0;
+    if (each.some((name) => name.startsWith(query)) || label.startsWith(query)) return 1;
+    if (` ${terms}`.includes(` ${query}`)) return 2;
+    return terms.includes(query) ? 3 : -1;
 }
 
 export function customToken(emoji: Pick<GuildEmoji, "id" | "name" | "animated">) {

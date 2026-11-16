@@ -8,12 +8,13 @@ export type Inline =
     | { type: "link"; href: string; children: Inline[] }
     | { type: "emoji"; name: string; id: string; animated: boolean }
     | { type: "user" | "role" | "channel"; id: string }
+    | { type: "everyone"; name: string }
     | { type: "command"; name: string }
     | { type: "time"; at: number; style: string };
 
 export type Block =
     | { type: "paragraph" | "heading1" | "heading2" | "heading3" | "subtext" | "quote" | "item"; children: Inline[] }
-    | { type: "codeblock"; text: string }
+    | { type: "codeblock"; text: string; language?: string }
     | { type: "gap" };
 
 type Rule = { pattern: RegExp; node: (found: RegExpExecArray) => Inline | null };
@@ -31,6 +32,7 @@ const RULES: Rule[] = [
     { pattern: /<(a?):(\w+):(\d+)>/g, node: (found) => ({ type: "emoji", name: found[2], id: found[3], animated: found[1] === "a" }) },
     { pattern: /<@&(\d+)>/g, node: (found) => ({ type: "role", id: found[1] }) },
     { pattern: /<@!?(\d+)>/g, node: (found) => ({ type: "user", id: found[1] }) },
+    { pattern: /@(everyone|here)\b/g, node: (found) => ({ type: "everyone", name: found[1] }) },
     { pattern: /<#(\d+)>/g, node: (found) => ({ type: "channel", id: found[1] }) },
     { pattern: /<\/([\w-]+(?: [\w-]+){0,2}):\d+>/g, node: (found) => ({ type: "command", name: found[1] }) },
     { pattern: /<t:(-?\d+)(?::([tTdDfFsSR]))?>/g, node: (found) => ({ type: "time", at: Number(found[1]) * 1000, style: found[2] ?? "f" }) },
@@ -72,8 +74,36 @@ export function inline(text: string): Inline[] {
     return nodes;
 }
 
-const CODE_BLOCK = /```(?:[\w+-]+\n)?([\s\S]*?)```/g;
-const LINES: [RegExp, Exclude<Block["type"], "codeblock" | "gap" | "paragraph">][] = [
+// Source positions of inline nodes for the editor. Keep in step with inline()
+export type Span = { type: Exclude<Inline["type"], "text" | "break">; from: number; to: number; inner: number; found: RegExpExecArray };
+
+const WRAPS = new Set<Inline["type"]>(["bold", "italic", "underline", "strike", "spoiler", "code"]);
+
+export function spans(text: string, offset = 0, out: Span[] = []): Span[] {
+    let position = 0;
+    while (position < text.length) {
+        let first: { found: RegExpExecArray; rule: Rule } | null = null;
+        for (const rule of RULES) {
+            rule.pattern.lastIndex = position;
+            const found = rule.pattern.exec(text);
+            if (found && (!first || found.index < first.found.index)) first = { found, rule };
+        }
+        if (!first) break;
+        const { found } = first;
+        const node = first.rule.node(found);
+        if (node && node.type !== "text" && node.type !== "break") {
+            const inner = WRAPS.has(node.type) ? (found[0].length - found[1].length) / 2 : 0;
+            const from = offset + found.index;
+            out.push({ type: node.type, from, to: from + found[0].length, inner, found });
+            if (inner && node.type !== "code") spans(found[1], from + inner, out);
+        }
+        position = found.index + found[0].length;
+    }
+    return out;
+}
+
+export const CODE_BLOCK = /```(?:([\w+-]+)\n)?([\s\S]*?)```/g;
+export const LINES: [RegExp, Exclude<Block["type"], "codeblock" | "gap" | "paragraph">][] = [
     [/^# (.+)/, "heading1"],
     [/^## (.+)/, "heading2"],
     [/^### (.+)/, "heading3"],
@@ -110,7 +140,7 @@ export function parse(content: string): Block[] {
     for (const found of content.matchAll(CODE_BLOCK)) {
         const before = content.slice(position, found.index).replace(/\n$/, "");
         if (before) lines(before, blocks);
-        blocks.push({ type: "codeblock", text: found[1].replace(/^\n+|\n+$/g, "") });
+        blocks.push({ type: "codeblock", text: found[2].replace(/^\n+|\n+$/g, ""), language: found[1]?.toLowerCase() });
         position = found.index + found[0].length;
     }
     const rest = content.slice(position).replace(/^\n/, "");

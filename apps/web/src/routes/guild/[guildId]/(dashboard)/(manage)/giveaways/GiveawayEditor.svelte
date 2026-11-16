@@ -3,6 +3,7 @@
     import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
     import ColorField from "#lib/components/fields/ColorField.svelte";
     import DateTimeField, { type Preset } from "#lib/components/fields/DateTimeField.svelte";
+    import DiscordTextField from "#lib/components/fields/DiscordTextField.svelte";
     import EmojiPicker from "#lib/components/fields/EmojiPicker.svelte";
     import UserPicker from "#lib/components/fields/UserPicker.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
@@ -13,7 +14,6 @@
     import Segmented from "#lib/components/ui/Segmented.svelte";
     import Select from "#lib/components/ui/Select.svelte";
     import { focusRing } from "#lib/components/ui/styles.ts";
-    import Textarea from "#lib/components/ui/Textarea.svelte";
     import Toggle from "#lib/components/ui/Toggle.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { customUrl } from "#lib/emoji/emoji.ts";
@@ -140,12 +140,11 @@
                 <Input aria-label="Prize" placeholder="Discord Nitro" maxlength={LIMITS.prize} error={error("prize")} bind:value={draft.prize} />
             </SettingRow>
             <SettingRow label="Description" description="A few words under the title. Discord markdown works." layout="below">
-                <Textarea
+                <DiscordTextField
                     aria-label="Description"
                     placeholder="What it is, who it's from, anything else"
                     maxlength={LIMITS.description}
-                    rows={3}
-                    emojis={guild}
+                    {guild}
                     error={error("description")}
                     bind:value={draft.description}
                 />
@@ -478,18 +477,6 @@
 
     <aside class={["flex min-w-0 flex-col gap-4 xl:sticky xl:top-0", !wide.current && tab !== "preview" && "hidden"]}>
         <h2 class="px-2 font-display text-lg font-semibold">Preview</h2>
-        <GiveawayPreview
-            {draft}
-            {status}
-            guild={guild.id}
-            invites={!invitesOff}
-            {you}
-            {channels}
-            {roles}
-            {entries}
-            {winners}
-            {endedAt}
-            {storedImage}
-        />
+        <GiveawayPreview {draft} {status} guild={guild.id} invites={!invitesOff} {you} {channels} {entries} {winners} {endedAt} {storedImage} />
     </aside>
 </div>

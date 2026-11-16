@@ -9,11 +9,19 @@ _MAX = 2000
 _fetched: dict[int, tuple[float, discord.User | None]] = {}
 
 
-async def find_user(client: Client, guild: discord.Guild, user_id: int) -> discord.User | discord.Member | None:
+def known_user(client: Client, guild: discord.Guild, user_id: int) -> tuple[bool, discord.User | discord.Member | None]:
+    """(answered without Discord, user). The user is None for an ID that doesn't exist."""
     if user := guild.get_member(user_id) or client.get_user(user_id):
-        return user
+        return True, user
     if (hit := _fetched.get(user_id)) and time.monotonic() - hit[0] < _TTL:
-        return hit[1]
+        return True, hit[1]
+    return False, None
+
+
+async def find_user(client: Client, guild: discord.Guild, user_id: int) -> discord.User | discord.Member | None:
+    known, user = known_user(client, guild, user_id)
+    if known:
+        return user
     try:
         user = await client.fetch_user(user_id)
     except discord.NotFound:

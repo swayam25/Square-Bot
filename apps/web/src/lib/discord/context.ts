@@ -5,10 +5,12 @@ export type ViewerMedia = { src: string; kind: "image" | "video" | "gif"; name?:
 export type ViewerAuthor = { name: string; avatar?: string | null; time: string };
 export type Viewing = { media: ViewerMedia[]; index: number; author?: ViewerAuthor };
 
+export type ChannelName = { name: string; voice?: boolean; guild?: { name: string; iconUrl: string | null } };
+
 export type DiscordContext = {
-    users: Record<string, TranscriptUser>;
-    roles: Record<string, TranscriptRole>;
-    channels: Record<string, string>;
+    user: (id: string) => Pick<TranscriptUser, "name"> | null | undefined;
+    role: (id: string) => TranscriptRole | null | undefined;
+    channel: (id: string) => ChannelName | null | undefined;
     fileUrl: (file: TranscriptFile) => string | null;
     // Opens a message's media large. Left out where there's no viewer, and media then doesn't react to clicks
     view?: (viewing: Viewing) => void;
@@ -16,7 +18,7 @@ export type DiscordContext = {
 
 const KEY = Symbol("discord");
 const MESSAGE = Symbol("discord-message");
-const PLAIN: DiscordContext = { users: {}, roles: {}, channels: {}, fileUrl: (file) => file.url };
+const PLAIN: DiscordContext = { user: () => null, role: () => null, channel: () => null, fileUrl: (file) => file.url };
 
 // Pass getters, so the components keep up when the data changes
 export const setDiscord = (context: DiscordContext) => setContext(KEY, context);

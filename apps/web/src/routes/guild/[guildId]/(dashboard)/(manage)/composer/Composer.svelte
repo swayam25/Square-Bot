@@ -391,8 +391,6 @@
                     name={draft.username.trim() || sender?.name || "Square"}
                     avatar={draft.avatarUrl.trim() && !avatarError ? draft.avatarUrl.trim() : (sender?.avatarUrl ?? "")}
                     channel={channelName}
-                    {channels}
-                    roles={rolesQuery.current ?? []}
                 />
             </aside>
         </div>

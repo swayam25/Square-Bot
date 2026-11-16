@@ -61,6 +61,15 @@ class Channel(Schema):
     position: int
 
 
+class MentionedChannel(Schema):
+    id: Snowflake
+    name: str
+    type: ChannelKind
+    guild_id: Snowflake
+    guild_name: str
+    guild_icon_url: str | None
+
+
 class Role(Schema):
     id: Snowflake
     name: str
@@ -768,6 +777,20 @@ def channels_out(guild: discord.Guild) -> list[Channel]:
         for channel in sorted(guild.channels, key=lambda channel: channel.position)
         if (kind := str(channel.type)) in _CHANNEL_KINDS
     ]
+
+
+def mentioned_channel_out(channel: discord.abc.GuildChannel) -> MentionedChannel | None:
+    if (kind := str(channel.type)) not in _CHANNEL_KINDS:
+        return None
+    icon = channel.guild.icon
+    return MentionedChannel(
+        id=str(channel.id),
+        name=channel.name,
+        type=kind,
+        guild_id=str(channel.guild.id),
+        guild_name=channel.guild.name,
+        guild_icon_url=icon.replace(size=64, static_format="webp").url if icon else None,
+    )
 
 
 def emojis_out(guild: discord.Guild) -> list[Emoji]:

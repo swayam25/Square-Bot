@@ -101,6 +101,12 @@ import type {
     MemberJoinsData,
     MemberJoinsErrors,
     MemberJoinsResponses,
+    MentionedChannelsData,
+    MentionedChannelsErrors,
+    MentionedChannelsResponses,
+    MentionedUsersData,
+    MentionedUsersErrors,
+    MentionedUsersResponses,
     MessageSenderData,
     MessageSenderErrors,
     MessageSenderResponses,
@@ -352,6 +358,30 @@ export const searchMembers = <ThrowOnError extends boolean = false>(
     (options.client ?? client).get<SearchMembersResponses, SearchMembersErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/members/search",
+        ...options,
+    });
+
+/**
+ * Users mentioned in a server's text, whether or not they share a server with Square
+ */
+export const mentionedUsers = <ThrowOnError extends boolean = false>(
+    options: Options<MentionedUsersData, ThrowOnError>,
+): RequestResult<MentionedUsersResponses, MentionedUsersErrors, ThrowOnError> =>
+    (options.client ?? client).get<MentionedUsersResponses, MentionedUsersErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/mentions/users",
+        ...options,
+    });
+
+/**
+ * Channels mentioned in a server's text that the signed-in user can open
+ */
+export const mentionedChannels = <ThrowOnError extends boolean = false>(
+    options: Options<MentionedChannelsData, ThrowOnError>,
+): RequestResult<MentionedChannelsResponses, MentionedChannelsErrors, ThrowOnError> =>
+    (options.client ?? client).get<MentionedChannelsResponses, MentionedChannelsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/mentions/channels",
         ...options,
     });
 
