@@ -1,8 +1,8 @@
 <script lang="ts">
     import Drawer from "#lib/components/ui/Drawer.svelte";
+    import { overlays } from "#lib/components/ui/overlays.svelte.ts";
     import Portal from "#lib/components/ui/Portal.svelte";
     import { mobile } from "#lib/media.ts";
-    import { overlays } from "#lib/overlays.svelte.ts";
     import { Dialog } from "@ark-ui/svelte/dialog";
     import type { Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";

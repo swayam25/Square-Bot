@@ -1,9 +1,9 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import Dialog from "#lib/components/ui/Dialog.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { ripple } from "#lib/motion.ts";
     import { page } from "$app/state";
     import type { Person } from "@square/api-client";
     import MaterialSymbolsHeadphonesRounded from "~icons/material-symbols/headphones-rounded";

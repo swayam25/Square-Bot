@@ -1,10 +1,12 @@
 <script lang="ts">
-    import ConfirmDialog from "#lib/components/ConfirmDialog.svelte";
-    import PageHeading from "#lib/components/PageHeading.svelte";
-    import PageSkeleton from "#lib/components/PageSkeleton.svelte";
-    import QueryGate from "#lib/components/QueryGate.svelte";
-    import SettingGroup from "#lib/components/SettingGroup.svelte";
-    import SettingRow from "#lib/components/SettingRow.svelte";
+    import { sortable } from "#lib/attachments/sortable.ts";
+    import ConfirmDialog from "#lib/components/dashboard/ConfirmDialog.svelte";
+    import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
+    import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
+    import QueryGate from "#lib/components/dashboard/QueryGate.svelte";
+    import SettingGroup from "#lib/components/dashboard/SettingGroup.svelte";
+    import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
+    import UserPicker from "#lib/components/fields/UserPicker.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
@@ -14,7 +16,24 @@
     import Select from "#lib/components/ui/Select.svelte";
     import { focusRing } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import UserPicker from "#lib/components/UserPicker.svelte";
+    import { errorMessage } from "#lib/errors.ts";
+    import { bytes, formatCount } from "#lib/format.ts";
+    import { textChannelOptions } from "#lib/settings/options.ts";
+    import * as settings from "#lib/settings/settings.remote.ts";
+    import { load, save } from "#lib/storage.ts";
+    import { toast } from "#lib/toast.svelte.ts";
+    import type { UserMatch } from "@square/api-client";
+    import { flushSync, onDestroy } from "svelte";
+    import { MediaQuery } from "svelte/reactivity";
+    import MaterialSymbolsBadgeRounded from "~icons/material-symbols/badge-rounded";
+    import MaterialSymbolsCloseRounded from "~icons/material-symbols/close-rounded";
+    import MaterialSymbolsGroupRounded from "~icons/material-symbols/group-rounded";
+    import MaterialSymbolsImageRounded from "~icons/material-symbols/image-rounded";
+    import MaterialSymbolsSendRounded from "~icons/material-symbols/send-rounded";
+    import MaterialSymbolsStackedEmailRounded from "~icons/material-symbols/stacked-email-rounded";
+    import MaterialSymbolsTagRounded from "~icons/material-symbols/tag-rounded";
+    import AddMenu from "./AddMenu.svelte";
+    import BlockEditor from "./BlockEditor.svelte";
     import {
         copy,
         countOf,
@@ -34,29 +53,10 @@
         type Container,
         type Draft,
         type Piece,
-    } from "#lib/composer.svelte.ts";
-    import { errorMessage } from "#lib/errors.ts";
-    import { bytes, formatCount } from "#lib/format.ts";
-    import * as messages from "#lib/messages.remote.ts";
-    import { textChannelOptions } from "#lib/options.ts";
-    import * as settings from "#lib/settings.remote.ts";
-    import { sortable } from "#lib/sortable.ts";
-    import { load, save } from "#lib/storage.ts";
-    import { toast } from "#lib/toast.svelte.ts";
-    import type { UserMatch } from "@square/api-client";
-    import { flushSync, onDestroy } from "svelte";
-    import { MediaQuery } from "svelte/reactivity";
-    import MaterialSymbolsBadgeRounded from "~icons/material-symbols/badge-rounded";
-    import MaterialSymbolsCloseRounded from "~icons/material-symbols/close-rounded";
-    import MaterialSymbolsGroupRounded from "~icons/material-symbols/group-rounded";
-    import MaterialSymbolsImageRounded from "~icons/material-symbols/image-rounded";
-    import MaterialSymbolsSendRounded from "~icons/material-symbols/send-rounded";
-    import MaterialSymbolsStackedEmailRounded from "~icons/material-symbols/stacked-email-rounded";
-    import MaterialSymbolsTagRounded from "~icons/material-symbols/tag-rounded";
-    import AddMenu from "./AddMenu.svelte";
-    import BlockEditor from "./BlockEditor.svelte";
+    } from "./composer.svelte.ts";
     import ComposerPreview from "./ComposerPreview.svelte";
     import { TOP_KINDS } from "./kinds.ts";
+    import * as messages from "./messages.remote.ts";
 
     let {
         guild,

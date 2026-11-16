@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import Drawer from "#lib/components/ui/Drawer.svelte";
@@ -7,10 +8,9 @@
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Portal from "#lib/components/ui/Portal.svelte";
     import { field, fieldText, menuItem, menuNote, menuPanel, sheetItem } from "#lib/components/ui/styles.ts";
-    import { Debounced } from "#lib/debounced.svelte.ts";
     import { mobile } from "#lib/media.ts";
-    import { ripple } from "#lib/motion.ts";
-    import * as settings from "#lib/settings.remote.ts";
+    import { Debounced } from "#lib/reactive/debounced.svelte.ts";
+    import * as settings from "#lib/settings/settings.remote.ts";
     import { createListCollection } from "@ark-ui/svelte/collection";
     import { Combobox } from "@ark-ui/svelte/combobox";
     import type { UserMatch } from "@square/api-client";

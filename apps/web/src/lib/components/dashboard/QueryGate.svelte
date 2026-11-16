@@ -1,6 +1,6 @@
 <script lang="ts">
-    import PageHeading from "#lib/components/PageHeading.svelte";
-    import PageSkeleton from "#lib/components/PageSkeleton.svelte";
+    import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
+    import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import type { Snippet } from "svelte";
 

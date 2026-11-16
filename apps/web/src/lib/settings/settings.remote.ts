@@ -1,4 +1,4 @@
-import { inviteLeaderboard } from "#lib/invites.remote.ts";
+import { inviteLeaderboard } from "#lib/invites/invites.remote.ts";
 import { forGuild, read } from "#lib/server/bot.ts";
 import { command, query, requested } from "$app/server";
 import * as sdk from "@square/api-client";

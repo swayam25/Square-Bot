@@ -1,12 +1,12 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Cover from "#lib/components/ui/Cover.svelte";
     import Shape from "#lib/components/ui/Shape.svelte";
     import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
     import { time } from "#lib/format.ts";
-    import { FrameClock } from "#lib/frame-clock.svelte.ts";
-    import { ripple } from "#lib/motion.ts";
-    import * as music from "#lib/music.remote.ts";
+    import * as music from "#lib/music/music.remote.ts";
+    import { FrameClock } from "#lib/reactive/frame-clock.svelte.ts";
     import MaterialSymbolsArrowForwardRounded from "~icons/material-symbols/arrow-forward-rounded";
 
     let { guild }: { guild: string } = $props();

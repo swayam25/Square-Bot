@@ -1,7 +1,7 @@
 <script lang="ts">
+    import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
     import DiscordTooltip from "#lib/components/discord/DiscordTooltip.svelte";
     import DiscordTranscript from "#lib/components/discord/DiscordTranscript.svelte";
-    import PageHeading from "#lib/components/PageHeading.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
@@ -11,8 +11,8 @@
     import { fullTime } from "#lib/discord/markdown.ts";
     import { dateTime, plural } from "#lib/format.ts";
     import { refetch } from "#lib/refetch.ts";
-    import * as tickets from "#lib/tickets.remote.ts";
-    import { statusName, statusTone } from "#lib/tickets.ts";
+    import * as tickets from "#lib/tickets/tickets.remote.ts";
+    import { statusName, statusTone } from "#lib/tickets/tickets.ts";
     import { afterNavigate } from "$app/navigation";
     import { page } from "$app/state";
     import type { TranscriptFile } from "@square/api-client";

@@ -1,11 +1,11 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Button from "#lib/components/ui/Button.svelte";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import Popup from "#lib/components/ui/Popup.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { mobile } from "#lib/media.ts";
-    import { ripple } from "#lib/motion.ts";
-    import * as music from "#lib/music.remote.ts";
+    import * as music from "#lib/music/music.remote.ts";
     import type { EqPreset, PlayerState } from "@square/api-client";
     import type { ClassValue } from "svelte/elements";
     import MaterialSymbolsEqualizerRounded from "~icons/material-symbols/equalizer-rounded";

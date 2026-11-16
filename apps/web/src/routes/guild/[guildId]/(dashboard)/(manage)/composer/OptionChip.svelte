@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import { focusRing } from "#lib/components/ui/styles.ts";
-    import { ripple } from "#lib/motion.ts";
     import type { Component, Snippet } from "svelte";
 
     let { pressed = $bindable(false), icon: Icon, children }: { pressed?: boolean; icon: Component; children: Snippet } = $props();

@@ -1,11 +1,14 @@
 <script lang="ts">
-    import PageHeading from "#lib/components/PageHeading.svelte";
-    import PageSkeleton from "#lib/components/PageSkeleton.svelte";
-    import QueryGate from "#lib/components/QueryGate.svelte";
-    import ResetButton from "#lib/components/ResetButton.svelte";
-    import SaveBar from "#lib/components/SaveBar.svelte";
-    import SettingGroup from "#lib/components/SettingGroup.svelte";
-    import SettingRow from "#lib/components/SettingRow.svelte";
+    import { ripple } from "#lib/attachments/ripple.ts";
+    import { getDetails } from "#lib/components/dashboard/details.svelte.ts";
+    import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
+    import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
+    import QueryGate from "#lib/components/dashboard/QueryGate.svelte";
+    import ResetButton from "#lib/components/dashboard/ResetButton.svelte";
+    import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
+    import SettingGroup from "#lib/components/dashboard/SettingGroup.svelte";
+    import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
+    import UserPicker from "#lib/components/fields/UserPicker.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
@@ -13,11 +16,8 @@
     import Tabs from "#lib/components/ui/Tabs.svelte";
     import Toggle from "#lib/components/ui/Toggle.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import UserPicker from "#lib/components/UserPicker.svelte";
-    import { getDetails } from "#lib/details.svelte.ts";
-    import { ripple } from "#lib/motion.ts";
-    import { OFF, off, picked, roleOptions, textChannelOptions } from "#lib/options.ts";
-    import * as settings from "#lib/settings.remote.ts";
+    import { OFF, off, picked, roleOptions, textChannelOptions } from "#lib/settings/options.ts";
+    import * as settings from "#lib/settings/settings.remote.ts";
     import type { AutoroleUser, UserMatch } from "@square/api-client";
     import MaterialSymbolsCallSplitRounded from "~icons/material-symbols/call-split-rounded";
     import MaterialSymbolsChevronRightRounded from "~icons/material-symbols/chevron-right-rounded";

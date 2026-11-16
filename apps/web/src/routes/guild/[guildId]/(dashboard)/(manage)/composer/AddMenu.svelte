@@ -1,9 +1,9 @@
 <script lang="ts">
     import Popup from "#lib/components/ui/Popup.svelte";
     import { focusRing } from "#lib/components/ui/styles.ts";
-    import { create, getComposer, LABELS, type Kind } from "#lib/composer.svelte.ts";
     import { mobile } from "#lib/media.ts";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
+    import { create, getComposer, LABELS, type Kind } from "./composer.svelte.ts";
     import { KINDS } from "./kinds.ts";
 
     let { kinds, label = "Add component", onadd }: { kinds: Kind[]; label?: string; onadd: (kind: Kind) => void } = $props();

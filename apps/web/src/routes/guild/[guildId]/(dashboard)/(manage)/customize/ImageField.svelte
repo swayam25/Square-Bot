@@ -4,11 +4,11 @@
     import Picture from "#lib/components/ui/Picture.svelte";
     import { focusRing } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { IMAGE_MAX_BYTES, IMAGE_TYPES } from "#lib/profile.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import { FileUpload, useFileUpload } from "@ark-ui/svelte/file-upload";
     import MaterialSymbolsDeleteRounded from "~icons/material-symbols/delete-rounded";
     import MaterialSymbolsUploadRounded from "~icons/material-symbols/upload-rounded";
+    import { IMAGE_MAX_BYTES, IMAGE_TYPES } from "./profile.ts";
 
     let {
         kind,

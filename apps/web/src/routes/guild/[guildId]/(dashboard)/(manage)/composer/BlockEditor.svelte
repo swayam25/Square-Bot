@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { sortable } from "#lib/attachments/sortable.ts";
     import Button from "#lib/components/ui/Button.svelte";
     import Input from "#lib/components/ui/Input.svelte";
     import Popup from "#lib/components/ui/Popup.svelte";
@@ -6,26 +7,8 @@
     import { focusRing } from "#lib/components/ui/styles.ts";
     import Textarea from "#lib/components/ui/Textarea.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import {
-        accepts,
-        copy,
-        create,
-        getComposer,
-        LABELS,
-        LIMITS,
-        linkButton,
-        media,
-        MEDIA_TYPES,
-        NO_ROOM,
-        pickFiles,
-        uid,
-        type Block,
-        type Container,
-        type Piece,
-    } from "#lib/composer.svelte.ts";
     import { plural } from "#lib/format.ts";
     import { mobile } from "#lib/media.ts";
-    import { sortable } from "#lib/sortable.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import { flushSync } from "svelte";
     import { slide } from "svelte/transition";
@@ -42,6 +25,23 @@
     import AddMenu from "./AddMenu.svelte";
     import BlockEditor from "./BlockEditor.svelte";
     import ButtonField from "./ButtonField.svelte";
+    import {
+        accepts,
+        copy,
+        create,
+        getComposer,
+        LABELS,
+        LIMITS,
+        linkButton,
+        media,
+        MEDIA_TYPES,
+        NO_ROOM,
+        pickFiles,
+        uid,
+        type Block,
+        type Container,
+        type Piece,
+    } from "./composer.svelte.ts";
     import { INNER_KINDS, KINDS } from "./kinds.ts";
     import MediaField from "./MediaField.svelte";
     import OptionChip from "./OptionChip.svelte";

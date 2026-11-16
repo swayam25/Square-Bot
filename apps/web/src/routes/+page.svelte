@@ -2,7 +2,6 @@
     import swayamAvatar from "#lib/assets/discord/swayam.webp";
     import square from "#lib/assets/square.svg";
     import { openLoginPopup } from "#lib/auth.ts";
-    import BrandIcon from "#lib/components/BrandIcon.svelte";
     import DiscordAccessories from "#lib/components/discord/DiscordAccessories.svelte";
     import DiscordActionRow from "#lib/components/discord/DiscordActionRow.svelte";
     import DiscordButton from "#lib/components/discord/DiscordButton.svelte";
@@ -13,12 +12,13 @@
     import InviteCard from "#lib/components/discord/InviteCard.svelte";
     import Mention from "#lib/components/discord/Mention.svelte";
     import NowPlayingCard from "#lib/components/discord/NowPlayingCard.svelte";
-    import PlayerPreview from "#lib/components/PlayerPreview.svelte";
-    import SiteFooter from "#lib/components/SiteFooter.svelte";
+    import BrandIcon from "#lib/components/music/BrandIcon.svelte";
+    import PlayerPreview from "#lib/components/music/PlayerPreview.svelte";
+    import SiteFooter from "#lib/components/site/SiteFooter.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Shape from "#lib/components/ui/Shape.svelte";
-    import { demo, time, TRACKS } from "#lib/demo.svelte.ts";
     import { formatCount } from "#lib/format.ts";
+    import { demo, time, TRACKS } from "#lib/music/demo.svelte.ts";
     import MaterialSymbolsCheckCircleRounded from "~icons/material-symbols/check-circle-rounded";
     import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";

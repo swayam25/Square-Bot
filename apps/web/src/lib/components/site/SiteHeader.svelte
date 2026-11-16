@@ -1,12 +1,12 @@
 <script lang="ts">
     import square from "#lib/assets/square.svg";
+    import { ripple } from "#lib/attachments/ripple.ts";
     import { openLoginPopup } from "#lib/auth.ts";
-    import AccountMenu from "#lib/components/AccountMenu.svelte";
+    import AccountMenu from "#lib/components/site/AccountMenu.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Popup from "#lib/components/ui/Popup.svelte";
     import { focusRing, menuRow } from "#lib/components/ui/styles.ts";
-    import { ripple } from "#lib/motion.ts";
     import { page } from "$app/state";
     import MaterialSymbolsLoginRounded from "~icons/material-symbols/login-rounded";
     import MaterialSymbolsPlayShapesRounded from "~icons/material-symbols/play-shapes-rounded";

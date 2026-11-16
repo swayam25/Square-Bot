@@ -1,7 +1,7 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import { menuRow } from "#lib/components/ui/styles.ts";
-    import { ripple } from "#lib/motion.ts";
     import type { Snippet } from "svelte";
     import MaterialSymbolsLogoutRounded from "~icons/material-symbols/logout-rounded";
 

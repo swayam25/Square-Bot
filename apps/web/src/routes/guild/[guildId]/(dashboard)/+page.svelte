@@ -1,6 +1,6 @@
 <script module lang="ts">
-    import type { Series } from "#lib/components/DailyChart.svelte";
     import type { ActivityDay, JoinDay } from "@square/api-client";
+    import type { Series } from "./DailyChart.svelte";
 
     const JOINED: Series<JoinDay> = [{ key: "count", label: "Joined", color: "var(--color-accent)" }];
     const TICKETS: Series<ActivityDay> = [
@@ -14,18 +14,16 @@
 </script>
 
 <script lang="ts">
-    import DailyChart from "#lib/components/DailyChart.svelte";
-    import NowPlayingBanner from "#lib/components/NowPlayingBanner.svelte";
-    import PageHeading from "#lib/components/PageHeading.svelte";
-    import SaveBar from "#lib/components/SaveBar.svelte";
+    import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
+    import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
+    import NowPlayingBanner from "#lib/components/music/NowPlayingBanner.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import Toggle from "#lib/components/ui/Toggle.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { formatCount, monthYear, plural } from "#lib/format.ts";
-    import { MODULES, type ModuleKey } from "#lib/modules.ts";
-    import * as settings from "#lib/settings.remote.ts";
-    import { activity, memberJoins, serverStats } from "#lib/stats.remote.ts";
+    import { MODULES, type ModuleKey } from "#lib/settings/modules.ts";
+    import * as settings from "#lib/settings/settings.remote.ts";
     import type { Snippet } from "svelte";
     import MaterialSymbolsArrowForwardRounded from "~icons/material-symbols/arrow-forward-rounded";
     import MaterialSymbolsCakeRounded from "~icons/material-symbols/cake-rounded";
@@ -37,6 +35,8 @@
     import MaterialSymbolsShieldPersonRounded from "~icons/material-symbols/shield-person-rounded";
     import MaterialSymbolsTagRounded from "~icons/material-symbols/tag-rounded";
     import type { PageProps } from "./$types";
+    import DailyChart from "./DailyChart.svelte";
+    import { activity, memberJoins, serverStats } from "./stats.remote.ts";
 
     let { data }: PageProps = $props();
 

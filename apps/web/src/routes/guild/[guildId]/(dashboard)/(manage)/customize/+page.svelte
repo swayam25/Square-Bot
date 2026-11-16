@@ -1,25 +1,25 @@
 <script lang="ts">
+    import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
+    import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
+    import QueryGate from "#lib/components/dashboard/QueryGate.svelte";
+    import ResetButton from "#lib/components/dashboard/ResetButton.svelte";
+    import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
+    import SettingGroup from "#lib/components/dashboard/SettingGroup.svelte";
+    import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
     import DiscordMessage from "#lib/components/discord/DiscordMessage.svelte";
     import DiscordProfile from "#lib/components/discord/DiscordProfile.svelte";
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
-    import ImageField from "#lib/components/ImageField.svelte";
-    import PageHeading from "#lib/components/PageHeading.svelte";
-    import PageSkeleton from "#lib/components/PageSkeleton.svelte";
-    import QueryGate from "#lib/components/QueryGate.svelte";
-    import ResetButton from "#lib/components/ResetButton.svelte";
-    import SaveBar from "#lib/components/SaveBar.svelte";
-    import SettingGroup from "#lib/components/SettingGroup.svelte";
-    import SettingRow from "#lib/components/SettingRow.svelte";
     import Input from "#lib/components/ui/Input.svelte";
     import Textarea from "#lib/components/ui/Textarea.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import * as profile from "#lib/profile.remote.ts";
-    import { BIO_MAX, IMAGE_MAX_BYTES, NICK_MAX } from "#lib/profile.ts";
     import MaterialSymbolsBadgeRounded from "~icons/material-symbols/badge-rounded";
     import MaterialSymbolsImageRounded from "~icons/material-symbols/image-rounded";
     import MaterialSymbolsNotesRounded from "~icons/material-symbols/notes-rounded";
     import MaterialSymbolsWallpaperRounded from "~icons/material-symbols/wallpaper-rounded";
     import type { PageProps } from "./$types";
+    import ImageField from "./ImageField.svelte";
+    import * as profile from "./profile.remote.ts";
+    import { BIO_MAX, IMAGE_MAX_BYTES, NICK_MAX } from "./profile.ts";
 
     let { data }: PageProps = $props();
 

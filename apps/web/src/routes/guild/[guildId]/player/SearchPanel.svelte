@@ -11,7 +11,8 @@
 </script>
 
 <script lang="ts">
-    import BrandIcon from "#lib/components/BrandIcon.svelte";
+    import { ripple } from "#lib/attachments/ripple.ts";
+    import BrandIcon from "#lib/components/music/BrandIcon.svelte";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import FilterChip from "#lib/components/ui/FilterChip.svelte";
     import Input from "#lib/components/ui/Input.svelte";
@@ -20,8 +21,7 @@
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { errorMessage } from "#lib/errors.ts";
     import { formatCount, time } from "#lib/format.ts";
-    import { ripple } from "#lib/motion.ts";
-    import * as music from "#lib/music.remote.ts";
+    import * as music from "#lib/music/music.remote.ts";
     import type { SearchResults } from "@square/api-client";
     import { SvelteSet } from "svelte/reactivity";
     import MaterialSymbolsPlaylistAddRounded from "~icons/material-symbols/playlist-add-rounded";

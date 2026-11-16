@@ -1,4 +1,4 @@
-import type { EmojiData, GroupKey, UnicodeEmoji } from "#lib/emoji.ts";
+import type { EmojiData, GroupKey, UnicodeEmoji } from "#lib/emoji/emoji.ts";
 import { forGuild, read } from "#lib/server/bot.ts";
 import { prerender, query } from "$app/server";
 import * as sdk from "@square/api-client";

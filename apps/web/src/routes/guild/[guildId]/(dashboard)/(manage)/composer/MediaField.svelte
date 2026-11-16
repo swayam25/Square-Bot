@@ -1,17 +1,17 @@
 <script lang="ts">
+    import { imageLoad } from "#lib/attachments/image-load.ts";
     import Button from "#lib/components/ui/Button.svelte";
     import Input from "#lib/components/ui/Input.svelte";
     import { field } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { accepts, ATTACHMENT, getComposer, isVideo, LIMITS, MEDIA_TYPES, pickFiles, validUrl } from "#lib/composer.svelte.ts";
     import { bytes } from "#lib/format.ts";
-    import { imageLoad } from "#lib/image-load.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import MaterialSymbolsAttachFileRounded from "~icons/material-symbols/attach-file-rounded";
     import MaterialSymbolsCloseRounded from "~icons/material-symbols/close-rounded";
     import MaterialSymbolsImageRounded from "~icons/material-symbols/image-rounded";
     import MaterialSymbolsUploadRounded from "~icons/material-symbols/upload-rounded";
     import MaterialSymbolsVisibilityOffRounded from "~icons/material-symbols/visibility-off-rounded";
+    import { accepts, ATTACHMENT, getComposer, isVideo, LIMITS, MEDIA_TYPES, pickFiles, validUrl } from "./composer.svelte.ts";
     import OptionChip from "./OptionChip.svelte";
 
     let {

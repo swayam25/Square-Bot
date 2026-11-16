@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { edgeFade } from "#lib/attachments/edge-fade.ts";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import GuildIcon from "#lib/components/ui/GuildIcon.svelte";
     import Input from "#lib/components/ui/Input.svelte";
@@ -6,8 +7,7 @@
     import Popup from "#lib/components/ui/Popup.svelte";
     import { focusRing } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { edgeFade } from "#lib/edge-fade.ts";
-    import { emojiData, guildEmojis } from "#lib/emoji.remote.ts";
+    import { emojiData, guildEmojis } from "#lib/emoji/emoji.remote.ts";
     import {
         addRecent,
         customToken,
@@ -22,7 +22,7 @@
         type GroupKey,
         type GuildEmoji,
         type UnicodeEmoji,
-    } from "#lib/emoji.ts";
+    } from "#lib/emoji/emoji.ts";
     import { mobile } from "#lib/media.ts";
     import { tick, untrack, type Component } from "svelte";
     import type { ClassValue } from "svelte/elements";

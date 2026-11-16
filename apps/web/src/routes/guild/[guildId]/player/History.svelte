@@ -2,7 +2,7 @@
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { time } from "#lib/format.ts";
-    import * as music from "#lib/music.remote.ts";
+    import * as music from "#lib/music/music.remote.ts";
     import { SvelteSet } from "svelte/reactivity";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";

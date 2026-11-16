@@ -1,5 +1,5 @@
 <script lang="ts">
-    import TableSkeleton from "#lib/components/TableSkeleton.svelte";
+    import TableSkeleton from "#lib/components/dashboard/TableSkeleton.svelte";
 
     let {
         tabs = false,

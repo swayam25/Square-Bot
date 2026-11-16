@@ -33,8 +33,8 @@
 </script>
 
 <script lang="ts">
-    import BrandIcon, { brandOf } from "#lib/components/BrandIcon.svelte";
     import CardFrame from "#lib/components/discord/CardFrame.svelte";
+    import BrandIcon, { brandOf } from "#lib/components/music/BrandIcon.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import WavyProgress from "#lib/components/ui/WavyProgress.svelte";

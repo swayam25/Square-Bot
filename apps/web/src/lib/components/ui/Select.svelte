@@ -5,6 +5,7 @@
 </script>
 
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Chip from "#lib/components/ui/Chip.svelte";
     import Drawer from "#lib/components/ui/Drawer.svelte";
     import FieldError from "#lib/components/ui/FieldError.svelte";
@@ -14,7 +15,6 @@
     import ScrollRow from "#lib/components/ui/ScrollRow.svelte";
     import { field, fieldText, menuItem, menuNote, menuPanel, sheetItem } from "#lib/components/ui/styles.ts";
     import { mobile } from "#lib/media.ts";
-    import { ripple } from "#lib/motion.ts";
     import { createListCollection } from "@ark-ui/svelte/collection";
     import { Combobox } from "@ark-ui/svelte/combobox";
     import type { ClassValue } from "svelte/elements";

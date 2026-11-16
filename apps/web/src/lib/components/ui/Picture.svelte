@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { frames } from "#lib/animated.ts";
-    import { imageLoad } from "#lib/image-load.ts";
+    import { imageLoad } from "#lib/attachments/image-load.ts";
+    import { frames } from "#lib/discord/animated.ts";
     import type { Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
 

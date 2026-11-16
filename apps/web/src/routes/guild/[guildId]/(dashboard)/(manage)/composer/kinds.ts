@@ -1,4 +1,3 @@
-import type { Kind } from "#lib/composer.svelte.ts";
 import type { Component } from "svelte";
 import MaterialSymbolsAttachFileRounded from "~icons/material-symbols/attach-file-rounded";
 import MaterialSymbolsCropSquareRounded from "~icons/material-symbols/crop-square-rounded";
@@ -7,6 +6,7 @@ import MaterialSymbolsNotesRounded from "~icons/material-symbols/notes-rounded";
 import MaterialSymbolsPhotoLibraryRounded from "~icons/material-symbols/photo-library-rounded";
 import MaterialSymbolsSmartButtonRounded from "~icons/material-symbols/smart-button-rounded";
 import MaterialSymbolsVerticalSplitRounded from "~icons/material-symbols/vertical-split-rounded";
+import type { Kind } from "./composer.svelte.ts";
 
 export const KINDS: Record<Kind, { icon: Component; hint: string }> = {
     container: { icon: MaterialSymbolsCropSquareRounded, hint: "A box with an accent color that holds other pieces" },

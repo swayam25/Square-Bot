@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { sortable } from "#lib/attachments/sortable.ts";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Cover from "#lib/components/ui/Cover.svelte";
@@ -7,10 +8,9 @@
     import Input from "#lib/components/ui/Input.svelte";
     import ScrollRow from "#lib/components/ui/ScrollRow.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { Debounced } from "#lib/debounced.svelte.ts";
     import { formatCount, plural, time } from "#lib/format.ts";
-    import * as music from "#lib/music.remote.ts";
-    import { sortable } from "#lib/sortable.ts";
+    import * as music from "#lib/music/music.remote.ts";
+    import { Debounced } from "#lib/reactive/debounced.svelte.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import type { Person, QueueState, Track } from "@square/api-client";
     import { flushSync } from "svelte";

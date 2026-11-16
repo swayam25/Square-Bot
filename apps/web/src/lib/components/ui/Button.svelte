@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import { focusRing } from "#lib/components/ui/styles.ts";
-    import { ripple } from "#lib/motion.ts";
     import type { ClassValue, HTMLAnchorAttributes, HTMLButtonAttributes } from "svelte/elements";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
 

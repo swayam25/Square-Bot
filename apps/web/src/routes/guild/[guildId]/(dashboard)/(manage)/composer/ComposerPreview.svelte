@@ -10,9 +10,9 @@
     import DiscordMessage from "#lib/components/discord/DiscordMessage.svelte";
     import DiscordSpoilerCover from "#lib/components/discord/DiscordSpoilerCover.svelte";
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
-    import { getComposer, isVideo, parseEmoji, validUrl, type Block, type LinkButton, type Media } from "#lib/composer.svelte.ts";
     import { setDiscord } from "#lib/discord/context.ts";
     import type { Channel, Role } from "@square/api-client";
+    import { getComposer, isVideo, parseEmoji, validUrl, type Block, type LinkButton, type Media } from "./composer.svelte.ts";
 
     let {
         blocks,

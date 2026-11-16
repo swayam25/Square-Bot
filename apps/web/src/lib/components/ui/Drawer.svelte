@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { overlays } from "#lib/components/ui/overlays.svelte.ts";
     import Portal from "#lib/components/ui/Portal.svelte";
-    import { overlays } from "#lib/overlays.svelte.ts";
     import { Drawer } from "@ark-ui/svelte/drawer";
     import { untrack, type Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";

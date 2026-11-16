@@ -1,11 +1,11 @@
 <script lang="ts">
-    import BrandIcon, { brandOf, type Brand } from "#lib/components/BrandIcon.svelte";
+    import { ripple } from "#lib/attachments/ripple.ts";
+    import BrandIcon, { brandOf, type Brand } from "#lib/components/music/BrandIcon.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Cover from "#lib/components/ui/Cover.svelte";
     import GuildIcon from "#lib/components/ui/GuildIcon.svelte";
     import Segmented from "#lib/components/ui/Segmented.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { ripple } from "#lib/motion.ts";
     import type { PlayerState } from "@square/api-client";
     import { untrack } from "svelte";
     import MaterialSymbolsArrowBackRounded from "~icons/material-symbols/arrow-back-rounded";

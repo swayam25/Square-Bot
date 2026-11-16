@@ -1,5 +1,5 @@
 <script lang="ts">
-    import EmojiPicker from "#lib/components/EmojiPicker.svelte";
+    import EmojiPicker from "#lib/components/fields/EmojiPicker.svelte";
     import FieldError from "#lib/components/ui/FieldError.svelte";
     import { fieldText } from "#lib/components/ui/styles.ts";
     import type { ClassValue, HTMLTextareaAttributes } from "svelte/elements";

@@ -1,12 +1,14 @@
 <script lang="ts">
-    import PageHeading from "#lib/components/PageHeading.svelte";
-    import PageSkeleton from "#lib/components/PageSkeleton.svelte";
-    import QueryGate from "#lib/components/QueryGate.svelte";
-    import ResetButton from "#lib/components/ResetButton.svelte";
-    import SaveBar from "#lib/components/SaveBar.svelte";
-    import SettingGroup from "#lib/components/SettingGroup.svelte";
-    import SettingRow from "#lib/components/SettingRow.svelte";
-    import TableSkeleton from "#lib/components/TableSkeleton.svelte";
+    import { getDetails } from "#lib/components/dashboard/details.svelte.ts";
+    import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
+    import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
+    import QueryGate from "#lib/components/dashboard/QueryGate.svelte";
+    import ResetButton from "#lib/components/dashboard/ResetButton.svelte";
+    import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
+    import SettingGroup from "#lib/components/dashboard/SettingGroup.svelte";
+    import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
+    import TableSkeleton from "#lib/components/dashboard/TableSkeleton.svelte";
+    import UserPicker from "#lib/components/fields/UserPicker.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
@@ -19,13 +21,11 @@
     import DataTable from "#lib/components/ui/table/DataTable.svelte";
     import type { TableColumn } from "#lib/components/ui/table/features.ts";
     import Tabs from "#lib/components/ui/Tabs.svelte";
-    import UserPicker from "#lib/components/UserPicker.svelte";
-    import { getDetails } from "#lib/details.svelte.ts";
     import { errorMessage } from "#lib/errors.ts";
     import { day, formatCount } from "#lib/format.ts";
-    import * as invites from "#lib/invites.remote.ts";
+    import * as invites from "#lib/invites/invites.remote.ts";
     import { refetch } from "#lib/refetch.ts";
-    import * as settings from "#lib/settings.remote.ts";
+    import * as settings from "#lib/settings/settings.remote.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import { afterNavigate } from "$app/navigation";
     import type { InviteEntry, Person } from "@square/api-client";

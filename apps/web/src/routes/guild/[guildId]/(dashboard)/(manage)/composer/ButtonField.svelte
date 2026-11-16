@@ -1,12 +1,12 @@
 <script lang="ts">
-    import EmojiPicker from "#lib/components/EmojiPicker.svelte";
+    import EmojiPicker from "#lib/components/fields/EmojiPicker.svelte";
     import Input from "#lib/components/ui/Input.svelte";
     import { focusRing } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { getComposer, LIMITS, parseEmoji, validButtonUrl, type LinkButton } from "#lib/composer.svelte.ts";
-    import { customUrl } from "#lib/emoji.ts";
+    import { customUrl } from "#lib/emoji/emoji.ts";
     import MaterialSymbolsBlockRounded from "~icons/material-symbols/block-rounded";
     import MaterialSymbolsLinkRounded from "~icons/material-symbols/link-rounded";
+    import { getComposer, LIMITS, parseEmoji, validButtonUrl, type LinkButton } from "./composer.svelte.ts";
     import OptionChip from "./OptionChip.svelte";
 
     let { button }: { button: LinkButton } = $props();

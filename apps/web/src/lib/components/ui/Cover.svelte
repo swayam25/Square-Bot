@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { imageLoad } from "#lib/image-load.ts";
+    import { imageLoad } from "#lib/attachments/image-load.ts";
     import type { ClassValue } from "svelte/elements";
     import MaterialSymbolsMusicNoteRounded from "~icons/material-symbols/music-note-rounded";
 

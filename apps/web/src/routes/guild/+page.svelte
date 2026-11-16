@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { frames } from "#lib/animated.ts";
+    import { ripple } from "#lib/attachments/ripple.ts";
     import { openPopup } from "#lib/auth.ts";
     import Button from "#lib/components/ui/Button.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
@@ -7,8 +7,8 @@
     import Input from "#lib/components/ui/Input.svelte";
     import Shape from "#lib/components/ui/Shape.svelte";
     import { focusRing } from "#lib/components/ui/styles.ts";
+    import { frames } from "#lib/discord/animated.ts";
     import { plural } from "#lib/format.ts";
-    import { ripple } from "#lib/motion.ts";
     import { refreshAll } from "$app/navigation";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
     import MaterialSymbolsArrowForwardRounded from "~icons/material-symbols/arrow-forward-rounded";

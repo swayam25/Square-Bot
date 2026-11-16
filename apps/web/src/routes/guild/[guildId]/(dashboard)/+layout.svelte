@@ -1,6 +1,9 @@
 <script lang="ts">
-    import AccountMenu from "#lib/components/AccountMenu.svelte";
-    import Island from "#lib/components/Island.svelte";
+    import { edgeFade } from "#lib/attachments/edge-fade.ts";
+    import { ripple } from "#lib/attachments/ripple.ts";
+    import { Details, setDetails } from "#lib/components/dashboard/details.svelte.ts";
+    import AccountMenu from "#lib/components/site/AccountMenu.svelte";
+    import Island from "#lib/components/site/Island.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Drawer from "#lib/components/ui/Drawer.svelte";
@@ -9,15 +12,12 @@
     import Popup from "#lib/components/ui/Popup.svelte";
     import { focusRing, menuRow } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { Details, setDetails } from "#lib/details.svelte.ts";
-    import { edgeFade } from "#lib/edge-fade.ts";
-    import { guildEmojis } from "#lib/emoji.remote.ts";
+    import { guildEmojis } from "#lib/emoji/emoji.remote.ts";
     import { plural } from "#lib/format.ts";
     import { mobile } from "#lib/media.ts";
-    import { MODULES, type ModuleKey } from "#lib/modules.ts";
-    import { ripple } from "#lib/motion.ts";
     import { refetch } from "#lib/refetch.ts";
-    import { guildChannels, guildRoles, moduleSettings } from "#lib/settings.remote.ts";
+    import { MODULES, type ModuleKey } from "#lib/settings/modules.ts";
+    import { guildChannels, guildRoles, moduleSettings } from "#lib/settings/settings.remote.ts";
     import { load, save } from "#lib/storage.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import { afterNavigate } from "$app/navigation";

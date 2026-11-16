@@ -1,14 +1,14 @@
 <script lang="ts">
-    import PageHeading from "#lib/components/PageHeading.svelte";
-    import PageSkeleton from "#lib/components/PageSkeleton.svelte";
-    import QueryGate from "#lib/components/QueryGate.svelte";
-    import ResetButton from "#lib/components/ResetButton.svelte";
-    import SaveBar from "#lib/components/SaveBar.svelte";
-    import SettingGroup from "#lib/components/SettingGroup.svelte";
-    import SettingRow from "#lib/components/SettingRow.svelte";
+    import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
+    import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
+    import QueryGate from "#lib/components/dashboard/QueryGate.svelte";
+    import ResetButton from "#lib/components/dashboard/ResetButton.svelte";
+    import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
+    import SettingGroup from "#lib/components/dashboard/SettingGroup.svelte";
+    import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
     import Select from "#lib/components/ui/Select.svelte";
-    import { OFF, off, picked, textChannelOptions } from "#lib/options.ts";
-    import * as settings from "#lib/settings.remote.ts";
+    import { OFF, off, picked, textChannelOptions } from "#lib/settings/options.ts";
+    import * as settings from "#lib/settings/settings.remote.ts";
     import type { LogChannels } from "@square/api-client";
     import type { Component } from "svelte";
     import MaterialSymbolsAddModeratorRounded from "~icons/material-symbols/add-moderator-rounded";

@@ -2,7 +2,7 @@
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import * as music from "#lib/music.remote.ts";
+    import * as music from "#lib/music/music.remote.ts";
     import type { PlayerState, SkipVote } from "@square/api-client";
     import MaterialSymbolsSkipNextRounded from "~icons/material-symbols/skip-next-rounded";
     import { control, skipping, type Access } from "./player.ts";

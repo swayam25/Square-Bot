@@ -1,8 +1,8 @@
-import { BIO_MAX, IMAGE_MAX_BYTES, NICK_MAX } from "#lib/profile.ts";
 import { forGuild, read } from "#lib/server/bot.ts";
 import { command, query } from "$app/server";
 import * as sdk from "@square/api-client";
 import { z } from "zod";
+import { BIO_MAX, IMAGE_MAX_BYTES, NICK_MAX } from "./profile.ts";
 
 const snowflake = z.string().regex(/^\d{17,20}$/);
 const image = z

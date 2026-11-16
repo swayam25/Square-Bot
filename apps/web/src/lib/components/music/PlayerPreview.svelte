@@ -1,10 +1,10 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Chip from "#lib/components/ui/Chip.svelte";
     import ScrollRow from "#lib/components/ui/ScrollRow.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
-    import { demo, time } from "#lib/demo.svelte.ts";
-    import { ripple } from "#lib/motion.ts";
+    import { demo, time } from "#lib/music/demo.svelte.ts";
     import MaterialSymbolsPauseRounded from "~icons/material-symbols/pause-rounded";
     import MaterialSymbolsPlayArrowRounded from "~icons/material-symbols/play-arrow-rounded";
     import MaterialSymbolsSkipNextRounded from "~icons/material-symbols/skip-next-rounded";

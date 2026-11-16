@@ -1,10 +1,10 @@
 <script lang="ts">
     import favicon from "#lib/assets/square.svg";
     import { AUTH_CHANNEL } from "#lib/auth.ts";
-    import Island from "#lib/components/Island.svelte";
-    import Loader from "#lib/components/Loader.svelte";
-    import PageScrollbar from "#lib/components/PageScrollbar.svelte";
-    import SiteHeader from "#lib/components/SiteHeader.svelte";
+    import Island from "#lib/components/site/Island.svelte";
+    import Loader from "#lib/components/site/Loader.svelte";
+    import PageScrollbar from "#lib/components/site/PageScrollbar.svelte";
+    import SiteHeader from "#lib/components/site/SiteHeader.svelte";
     import { refreshAll } from "$app/navigation";
     import { page } from "$app/state";
     import mono from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url";

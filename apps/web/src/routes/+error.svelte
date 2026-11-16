@@ -1,6 +1,6 @@
 <script lang="ts">
     import Button from "#lib/components/ui/Button.svelte";
-    import { MODULE_OFF } from "#lib/modules.ts";
+    import { MODULE_OFF } from "#lib/settings/modules.ts";
     import { page } from "$app/state";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
     import MaterialSymbolsHomeRounded from "~icons/material-symbols/home-rounded";

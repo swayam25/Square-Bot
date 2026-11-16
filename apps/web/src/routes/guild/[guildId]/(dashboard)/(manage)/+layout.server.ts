@@ -1,5 +1,5 @@
-import { MODULE_OFF, moduleAt } from "#lib/modules.ts";
 import { forGuild, read } from "#lib/server/bot.ts";
+import { MODULE_OFF, moduleAt } from "#lib/settings/modules.ts";
 import * as sdk from "@square/api-client";
 import { error } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";

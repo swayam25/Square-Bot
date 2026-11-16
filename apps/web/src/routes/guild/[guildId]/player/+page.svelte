@@ -1,15 +1,14 @@
 <script lang="ts">
-    import Island from "#lib/components/Island.svelte";
+    import { ripple } from "#lib/attachments/ripple.ts";
+    import Island from "#lib/components/site/Island.svelte";
     import Drawer from "#lib/components/ui/Drawer.svelte";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { formatCount } from "#lib/format.ts";
-    import { FrameClock } from "#lib/frame-clock.svelte.ts";
-    import { trackLyrics } from "#lib/lyrics.remote.ts";
     import { mobile } from "#lib/media.ts";
-    import { ripple } from "#lib/motion.ts";
-    import * as music from "#lib/music.remote.ts";
+    import * as music from "#lib/music/music.remote.ts";
+    import { FrameClock } from "#lib/reactive/frame-clock.svelte.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import MaterialSymbolsHistoryRounded from "~icons/material-symbols/history-rounded";
     import MaterialSymbolsLyricsRounded from "~icons/material-symbols/lyrics-rounded";
@@ -18,6 +17,7 @@
     import type { PageProps } from "./$types";
     import ArtPanel from "./ArtPanel.svelte";
     import ControlsBar from "./ControlsBar.svelte";
+    import { trackLyrics } from "./lyrics.remote.ts";
     import { control, locked, type Access, type Tab } from "./player.ts";
     import SidePanel from "./SidePanel.svelte";
     import SkipVote from "./SkipVote.svelte";

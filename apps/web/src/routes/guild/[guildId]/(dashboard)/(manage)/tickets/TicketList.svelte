@@ -1,7 +1,8 @@
 <script lang="ts">
-    import ConfirmDialog from "#lib/components/ConfirmDialog.svelte";
-    import ResetButton from "#lib/components/ResetButton.svelte";
-    import TableSkeleton from "#lib/components/TableSkeleton.svelte";
+    import ConfirmDialog from "#lib/components/dashboard/ConfirmDialog.svelte";
+    import { getDetails } from "#lib/components/dashboard/details.svelte.ts";
+    import ResetButton from "#lib/components/dashboard/ResetButton.svelte";
+    import TableSkeleton from "#lib/components/dashboard/TableSkeleton.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
@@ -14,13 +15,12 @@
     import DataTable from "#lib/components/ui/table/DataTable.svelte";
     import type { TableColumn } from "#lib/components/ui/table/features.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { Debounced } from "#lib/debounced.svelte.ts";
-    import { getDetails } from "#lib/details.svelte.ts";
     import { errorMessage } from "#lib/errors.ts";
     import { dateTime, day, formatCount, plural } from "#lib/format.ts";
+    import { Debounced } from "#lib/reactive/debounced.svelte.ts";
     import { refetch } from "#lib/refetch.ts";
-    import * as tickets from "#lib/tickets.remote.ts";
-    import { statusName, statusTone } from "#lib/tickets.ts";
+    import * as tickets from "#lib/tickets/tickets.remote.ts";
+    import { statusName, statusTone } from "#lib/tickets/tickets.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import { afterNavigate } from "$app/navigation";
     import type { TicketDetail, TicketEntry } from "@square/api-client";

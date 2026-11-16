@@ -1,9 +1,9 @@
 <script lang="ts">
+    import { imageLoad } from "#lib/attachments/image-load.ts";
     import DiscordDownload from "#lib/components/discord/DiscordDownload.svelte";
     import DiscordSpoilerCover from "#lib/components/discord/DiscordSpoilerCover.svelte";
     import DiscordVideo from "#lib/components/discord/DiscordVideo.svelte";
     import { getDiscord, getMessageAuthor, type ViewerMedia } from "#lib/discord/context.ts";
-    import { imageLoad } from "#lib/image-load.ts";
     import type { TranscriptFile } from "@square/api-client";
     import MaterialSymbolsImageNotSupportedRounded from "~icons/material-symbols/image-not-supported-rounded";
     import MaterialSymbolsPlayArrowRounded from "~icons/material-symbols/play-arrow-rounded";

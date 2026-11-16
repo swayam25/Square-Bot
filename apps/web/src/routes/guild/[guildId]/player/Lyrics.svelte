@@ -3,9 +3,7 @@
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { trackLyrics } from "#lib/lyrics.remote.ts";
-    import { glyphsOf, linesAt, sungLines, type SungLine } from "#lib/lyrics.ts";
-    import * as music from "#lib/music.remote.ts";
+    import * as music from "#lib/music/music.remote.ts";
     import type { Track } from "@square/api-client";
     import { untrack } from "svelte";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
@@ -14,6 +12,8 @@
     import MaterialSymbolsMyLocationRounded from "~icons/material-symbols/my-location-rounded";
     import MaterialSymbolsRemoveRounded from "~icons/material-symbols/remove-rounded";
     import { lyricsSync, nudgeSync, SYNC_LIMIT_MS, SYNC_STEP_MS, syncLabel } from "./lyrics-sync.svelte.ts";
+    import { trackLyrics } from "./lyrics.remote.ts";
+    import { glyphsOf, linesAt, sungLines, type SungLine } from "./lyrics.ts";
     import { control } from "./player.ts";
 
     let {

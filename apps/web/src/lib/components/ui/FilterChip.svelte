@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import { focusRing } from "#lib/components/ui/styles.ts";
-    import { ripple } from "#lib/motion.ts";
     import type { Snippet } from "svelte";
     import type { ClassValue } from "svelte/elements";
 

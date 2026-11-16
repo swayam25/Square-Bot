@@ -1,5 +1,5 @@
 <script lang="ts" generics="T">
-    import ConfirmDialog from "#lib/components/ConfirmDialog.svelte";
+    import ConfirmDialog from "#lib/components/dashboard/ConfirmDialog.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import type { Component } from "svelte";
     import MaterialSymbolsReplayRounded from "~icons/material-symbols/replay-rounded";

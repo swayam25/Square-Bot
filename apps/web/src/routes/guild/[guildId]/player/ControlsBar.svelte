@@ -1,12 +1,12 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Drawer from "#lib/components/ui/Drawer.svelte";
     import Slider from "#lib/components/ui/Slider.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
     import { time } from "#lib/format.ts";
     import { mobile } from "#lib/media.ts";
-    import { ripple } from "#lib/motion.ts";
-    import * as music from "#lib/music.remote.ts";
+    import * as music from "#lib/music/music.remote.ts";
     import type { PlayerState } from "@square/api-client";
     import type { Snippet } from "svelte";
     import MaterialSymbolsAutoplayRounded from "~icons/material-symbols/autoplay-rounded";

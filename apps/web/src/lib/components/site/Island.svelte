@@ -1,7 +1,7 @@
 <script lang="ts">
     import Avatar from "#lib/components/ui/Avatar.svelte";
+    import { overlays } from "#lib/components/ui/overlays.svelte.ts";
     import { mobile } from "#lib/media.ts";
-    import { overlays } from "#lib/overlays.svelte.ts";
     import { toasts, type Toast, type Tone } from "#lib/toast.svelte.ts";
     import type { Component } from "svelte";
     import { blur } from "svelte/transition";
