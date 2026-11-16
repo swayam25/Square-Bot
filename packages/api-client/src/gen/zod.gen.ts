@@ -233,6 +233,147 @@ export const zMemberJoins = z.object({
 });
 
 /**
+ * MessageButton
+ */
+export const zMessageButton = z.object({
+    url: z
+        .string()
+        .max(512)
+        .regex(/^(https?|discord):\/\/\S+$/),
+    label: z.string().nullish(),
+    emoji: z.string().nullish(),
+    disabled: z.boolean().optional().default(false),
+    kind: z.literal("button"),
+});
+
+/**
+ * MessageFile
+ */
+export const zMessageFile = z.object({
+    url: z.string().regex(/^attachment:\/\/[\w.-]{1,100}$/),
+    spoiler: z.boolean().optional().default(false),
+    kind: z.literal("file"),
+});
+
+/**
+ * MessageMedia
+ */
+export const zMessageMedia = z.object({
+    url: z
+        .string()
+        .max(2048)
+        .regex(/^(https:\/\/\S+|attachment:\/\/[\w.-]{1,100})$/),
+    description: z.string().nullish(),
+    spoiler: z.boolean().optional().default(false),
+});
+
+/**
+ * MessageGallery
+ */
+export const zMessageGallery = z.object({
+    items: z.array(zMessageMedia).min(1).max(10),
+    kind: z.literal("gallery"),
+});
+
+/**
+ * MessageRow
+ */
+export const zMessageRow = z.object({
+    buttons: z.array(zMessageButton).min(1).max(5),
+    kind: z.literal("row"),
+});
+
+/**
+ * MessageSender
+ */
+export const zMessageSender = z.object({
+    name: z.string(),
+    avatarUrl: z.string(),
+    uploadLimit: z.int(),
+});
+
+/**
+ * MessageSent
+ */
+export const zMessageSent = z.object({
+    channelId: z.string().regex(/^\d{17,20}$/),
+    messageId: z.string().regex(/^\d{17,20}$/),
+    url: z.string(),
+});
+
+/**
+ * MessageSeparator
+ */
+export const zMessageSeparator = z.object({
+    divider: z.boolean().optional().default(true),
+    large: z.boolean().optional().default(false),
+    kind: z.literal("separator"),
+});
+
+/**
+ * MessageTextDisplay
+ */
+export const zMessageTextDisplay = z.object({
+    text: z.string().min(1).max(4000),
+    kind: z.literal("text"),
+});
+
+/**
+ * MessageThumbnail
+ */
+export const zMessageThumbnail = z.object({
+    media: zMessageMedia,
+    kind: z.literal("thumbnail"),
+});
+
+/**
+ * MessageSection
+ */
+export const zMessageSection = z.object({
+    texts: z.array(z.string()).min(1).max(3),
+    accessory: z.union([zMessageThumbnail, zMessageButton]),
+    kind: z.literal("section"),
+});
+
+/**
+ * MessageContainer
+ */
+export const zMessageContainer = z.object({
+    children: z
+        .array(z.union([zMessageTextDisplay, zMessageSection, zMessageGallery, zMessageFile, zMessageSeparator, zMessageRow]))
+        .min(1)
+        .max(40),
+    color: z.string().nullish(),
+    spoiler: z.boolean().optional().default(false),
+    kind: z.literal("container"),
+});
+
+/**
+ * MessageUpload
+ */
+export const zMessageUpload = z.object({
+    name: z.string().regex(/^[\w.-]{1,100}$/),
+    data: z
+        .string()
+        .max(22369752)
+        .regex(/^data:[\w.+-]+\/[\w.+-]+;base64,/),
+});
+
+/**
+ * MessageSend
+ */
+export const zMessageSend = z.object({
+    channelId: z.string().regex(/^\d{17,20}$/),
+    components: z
+        .array(z.union([zMessageContainer, zMessageTextDisplay, zMessageSection, zMessageGallery, zMessageFile, zMessageSeparator, zMessageRow]))
+        .min(1)
+        .max(40),
+    username: z.string().nullish(),
+    avatarUrl: z.string().nullish(),
+    files: z.array(zMessageUpload).max(10).optional(),
+});
+
+/**
  * ModulePatch
  */
 export const zModulePatch = z.object({
@@ -1253,6 +1394,34 @@ export const zUpdateBotProfilePath = z.object({
  * Request fulfilled, document follows
  */
 export const zUpdateBotProfileResponse = zBotProfile;
+
+export const zMessageSenderHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zMessageSenderPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zMessageSenderResponse = zMessageSender;
+
+export const zSendMessageBody = zMessageSend;
+
+export const zSendMessageHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSendMessagePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zSendMessageResponse = zMessageSent;
 
 export const zInviteLeaderboardHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

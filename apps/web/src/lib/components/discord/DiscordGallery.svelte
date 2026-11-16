@@ -1,5 +1,6 @@
 <script lang="ts">
     import DiscordDownload from "#lib/components/discord/DiscordDownload.svelte";
+    import DiscordSpoilerCover from "#lib/components/discord/DiscordSpoilerCover.svelte";
     import DiscordVideo from "#lib/components/discord/DiscordVideo.svelte";
     import { getDiscord, getMessageAuthor, type ViewerMedia } from "#lib/discord/context.ts";
     import { imageLoad } from "#lib/image-load.ts";
@@ -7,7 +8,9 @@
     import MaterialSymbolsImageNotSupportedRounded from "~icons/material-symbols/image-not-supported-rounded";
     import MaterialSymbolsPlayArrowRounded from "~icons/material-symbols/play-arrow-rounded";
 
-    let { files }: { files: TranscriptFile[] } = $props();
+    type GalleryFile = TranscriptFile & { spoiler?: boolean };
+
+    let { files, missing = "No longer on Discord" }: { files: GalleryFile[]; missing?: string } = $props();
 
     const discord = getDiscord();
     const author = getMessageAuthor();
@@ -40,13 +43,17 @@
         if (count === 3) return index === 0 ? "row-span-2" : "aspect-square";
         const leftover = count % 3;
         if (index >= leftover) return "col-span-2 aspect-square";
-        return leftover === 1 ? "col-span-6 aspect-video" : "col-span-3 aspect-square";
+        return leftover === 1 ? "col-span-6 aspect-[13/6]" : "col-span-3 aspect-square";
     }
 </script>
 
-{#snippet media(file: TranscriptFile, index: number, tile: boolean)}
+{#snippet media(file: GalleryFile, index: number, tile: boolean)}
     {@const src = discord.fileUrl(file)}
-    {@const shape = tile ? "size-full rounded-xs object-cover" : "max-h-87.5 w-auto max-w-full rounded-lg object-contain"}
+    <!-- Measured on Discord: a lone wide top tile is 13:6 and crops from 20% down, not the middle -->
+    {@const wide = tile && count > 4 && count % 3 === 1 && index === 0}
+    {@const shape = tile
+        ? ["size-full rounded-xs object-cover", wide && "object-[50%_20%]"]
+        : "max-h-87.5 w-auto max-w-full rounded-lg object-contain"}
     {#if !src || broken[index]}
         <div
             class={[
@@ -56,53 +63,57 @@
         >
             <MaterialSymbolsImageNotSupportedRounded class="size-6" />
             <span class="max-w-full truncate">{file.name || "Picture"}</span>
-            <span>No longer on Discord</span>
+            <span>{missing}</span>
         </div>
     {:else if file.kind === "video" && !tile}
-        <DiscordVideo {src} name={file.name} width={file.width} height={file.height} class="max-h-87.5 w-fit max-w-full" />
+        <DiscordSpoilerCover spoiler={file.spoiler} class="w-fit max-w-full rounded-lg">
+            <DiscordVideo {src} name={file.name} width={file.width} height={file.height} class="max-h-87.5 w-fit max-w-full" />
+        </DiscordSpoilerCover>
     {:else}
         <div class={["group/media relative", tile ? span(index) : "w-fit max-w-full"]}>
-            {#if discord.view}
-                <button
-                    type="button"
-                    class={["block cursor-pointer overflow-hidden", tile ? "size-full rounded-xs" : "max-w-full rounded-lg"]}
-                    onclick={() => open(index)}
-                >
-                    {#if file.kind === "video"}
-                        <video {src} preload="metadata" muted playsinline class={[shape, "bg-black"]}></video>
-                        <span class="absolute inset-0 flex items-center justify-center">
-                            <span class="flex size-12 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm">
-                                <MaterialSymbolsPlayArrowRounded class="size-7" />
+            <DiscordSpoilerCover spoiler={file.spoiler} class={tile ? "size-full rounded-xs" : "rounded-lg"}>
+                {#if discord.view}
+                    <button
+                        type="button"
+                        class={["block cursor-pointer overflow-hidden", tile ? "size-full rounded-xs" : "max-w-full rounded-lg"]}
+                        onclick={() => open(index)}
+                    >
+                        {#if file.kind === "video"}
+                            <video {src} preload="metadata" muted playsinline class={[shape, "bg-black"]}></video>
+                            <span class="absolute inset-0 flex items-center justify-center">
+                                <span class="flex size-12 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm">
+                                    <MaterialSymbolsPlayArrowRounded class="size-7" />
+                                </span>
                             </span>
-                        </span>
-                        <span class="sr-only">{file.name || "Video"}</span>
-                    {:else}
-                        <img
-                            {src}
-                            alt={file.name || "View full size"}
-                            width={file.width}
-                            height={file.height}
-                            loading="lazy"
-                            class={[shape, "bg-dc-surface"]}
-                            {@attach imageLoad(undefined, () => (broken[index] = true))}
-                        />
-                    {/if}
-                </button>
-            {:else if file.kind === "video"}
-                <!-- svelte-ignore a11y_media_has_caption -->
-                <video {src} controls preload="metadata" class={[shape, "bg-black"]}></video>
-            {:else}
-                <img
-                    {src}
-                    alt={file.name || "Picture"}
-                    width={file.width}
-                    height={file.height}
-                    loading="lazy"
-                    class={[shape, "bg-dc-surface"]}
-                    {@attach imageLoad(undefined, () => (broken[index] = true))}
-                />
-            {/if}
-            <DiscordDownload {src} name={file.name} />
+                            <span class="sr-only">{file.name || "Video"}</span>
+                        {:else}
+                            <img
+                                {src}
+                                alt={file.name || "View full size"}
+                                width={file.width}
+                                height={file.height}
+                                loading="lazy"
+                                class={shape}
+                                {@attach imageLoad(undefined, () => (broken[index] = true))}
+                            />
+                        {/if}
+                    </button>
+                {:else if file.kind === "video"}
+                    <!-- svelte-ignore a11y_media_has_caption -->
+                    <video {src} controls preload="metadata" class={[shape, "bg-black"]}></video>
+                {:else}
+                    <img
+                        {src}
+                        alt={file.name || "Picture"}
+                        width={file.width}
+                        height={file.height}
+                        loading="lazy"
+                        class={shape}
+                        {@attach imageLoad(undefined, () => (broken[index] = true))}
+                    />
+                {/if}
+                <DiscordDownload {src} name={file.name} />
+            </DiscordSpoilerCover>
         </div>
     {/if}
 {/snippet}

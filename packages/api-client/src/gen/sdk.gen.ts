@@ -80,6 +80,9 @@ import type {
     MemberJoinsData,
     MemberJoinsErrors,
     MemberJoinsResponses,
+    MessageSenderData,
+    MessageSenderErrors,
+    MessageSenderResponses,
     MoveTrackData,
     MoveTrackErrors,
     MoveTrackResponses,
@@ -167,6 +170,9 @@ import type {
     SeekTrackData,
     SeekTrackErrors,
     SeekTrackResponses,
+    SendMessageData,
+    SendMessageErrors,
+    SendMessageResponses,
     ServerStatsData,
     ServerStatsErrors,
     ServerStatsResponses,
@@ -682,6 +688,34 @@ export const updateBotProfile = <ThrowOnError extends boolean = false>(
     (options.client ?? client).patch<UpdateBotProfileResponses, UpdateBotProfileErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/profile",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * The name and avatar a message has when none are given, and the upload limit
+ */
+export const messageSender = <ThrowOnError extends boolean = false>(
+    options: Options<MessageSenderData, ThrowOnError>,
+): RequestResult<MessageSenderResponses, MessageSenderErrors, ThrowOnError> =>
+    (options.client ?? client).get<MessageSenderResponses, MessageSenderErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/messages/sender",
+        ...options,
+    });
+
+/**
+ * Send a Components V2 message through the bot's webhook
+ */
+export const sendMessage = <ThrowOnError extends boolean = false>(
+    options: Options<SendMessageData, ThrowOnError>,
+): RequestResult<SendMessageResponses, SendMessageErrors, ThrowOnError> =>
+    (options.client ?? client).post<SendMessageResponses, SendMessageErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/messages",
         ...options,
         headers: {
             "Content-Type": "application/json",

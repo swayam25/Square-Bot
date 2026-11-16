@@ -110,6 +110,10 @@
 
     const validAmount = (amount: number | null, mode: Mode) =>
         Number.isInteger(amount) && Math.abs(amount!) <= MAX_BONUS && (mode === "set" || amount !== 0);
+    const amountError = (amount: number, mode: Mode) =>
+        mode === "add" && amount === 0
+            ? "Adding 0 changes nothing."
+            : `Pick a whole number from ${formatCount(-MAX_BONUS)} to ${formatCount(MAX_BONUS)}.`;
 
     async function giveBonus(userIds: string[], amount: number, mode: Mode) {
         await invites.changeBonus({ guild, userIds, amount, mode }).updates(boardQuery, ...(profileQuery ? [profileQuery] : []));
@@ -197,7 +201,7 @@
             step={1}
             placeholder={mode === "add" ? "Amount, negative takes away" : "New bonus"}
             aria-label="Bonus amount"
-            invalid={amount !== null && !validAmount(amount, mode)}
+            error={amount === null || validAmount(amount, mode) ? null : amountError(amount, mode)}
             bind:value={() => amount, setAmount}
         />
     </div>
@@ -477,7 +481,7 @@
                                 max={MAX_FAKE_DAYS}
                                 step={1}
                                 aria-label="Fake account age in days"
-                                invalid={!validDays}
+                                error={validDays ? null : `Pick a whole number from 0 to ${MAX_FAKE_DAYS}.`}
                                 bind:value={fakeDays}
                             />
                         </SettingRow>

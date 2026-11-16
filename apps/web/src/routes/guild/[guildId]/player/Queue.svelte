@@ -18,7 +18,6 @@
     import { SvelteSet } from "svelte/reactivity";
     import { fade } from "svelte/transition";
     import MaterialSymbolsAutoplayRounded from "~icons/material-symbols/autoplay-rounded";
-    import MaterialSymbolsClearAllRounded from "~icons/material-symbols/clear-all-rounded";
     import MaterialSymbolsCloseRounded from "~icons/material-symbols/close-rounded";
     import MaterialSymbolsDragIndicator from "~icons/material-symbols/drag-indicator";
     import MaterialSymbolsPersonRemoveRounded from "~icons/material-symbols/person-remove-rounded";
@@ -175,7 +174,7 @@
                 </Tooltip>
                 <Tooltip content={lock ?? "Clear the queue"}>
                     <Button variant="ghost" icon disabled={!!lock} onclick={() => askWhole("clear")}>
-                        <MaterialSymbolsClearAllRounded />
+                        <MaterialSymbolsCloseRounded />
                     </Button>
                 </Tooltip>
             </div>

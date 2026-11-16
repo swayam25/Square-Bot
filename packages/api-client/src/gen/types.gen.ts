@@ -394,6 +394,150 @@ export type MemberJoins = {
 };
 
 /**
+ * MessageButton
+ */
+export type MessageButton = {
+    url: string;
+    label?: string | null;
+    emoji?: string | null;
+    disabled?: boolean;
+    kind: "button";
+};
+
+/**
+ * MessageContainer
+ */
+export type MessageContainer = {
+    children: Array<MessageTextDisplay | MessageSection | MessageGallery | MessageFile | MessageSeparator | MessageRow>;
+    color?: string | null;
+    spoiler?: boolean;
+    kind: "container";
+};
+
+/**
+ * MessageFile
+ */
+export type MessageFile = {
+    url: string;
+    spoiler?: boolean;
+    kind: "file";
+};
+
+/**
+ * MessageGallery
+ */
+export type MessageGallery = {
+    items: Array<MessageMedia>;
+    kind: "gallery";
+};
+
+/**
+ * MessageMedia
+ */
+export type MessageMedia = {
+    /**
+     * An https URL, or attachment://<name> for an uploaded file
+     */
+    url: string;
+    description?: string | null;
+    spoiler?: boolean;
+};
+
+/**
+ * MessageRow
+ */
+export type MessageRow = {
+    buttons: Array<MessageButton>;
+    kind: "row";
+};
+
+/**
+ * MessageSection
+ */
+export type MessageSection = {
+    texts: Array<string>;
+    accessory: MessageThumbnail | MessageButton;
+    kind: "section";
+};
+
+/**
+ * MessageSend
+ */
+export type MessageSend = {
+    /**
+     * A Discord ID
+     */
+    channelId: string;
+    components: Array<MessageContainer | MessageTextDisplay | MessageSection | MessageGallery | MessageFile | MessageSeparator | MessageRow>;
+    username?: string | null;
+    avatarUrl?: string | null;
+    files?: Array<MessageUpload>;
+};
+
+/**
+ * MessageSender
+ */
+export type MessageSender = {
+    name: string;
+    avatarUrl: string;
+    uploadLimit: number;
+};
+
+/**
+ * MessageSent
+ */
+export type MessageSent = {
+    /**
+     * A Discord ID
+     */
+    channelId: string;
+    /**
+     * A Discord ID
+     */
+    messageId: string;
+    url: string;
+};
+
+/**
+ * MessageSeparator
+ */
+export type MessageSeparator = {
+    divider?: boolean;
+    large?: boolean;
+    kind: "separator";
+};
+
+/**
+ * MessageTextDisplay
+ */
+export type MessageTextDisplay = {
+    text: string;
+    kind: "text";
+};
+
+/**
+ * MessageThumbnail
+ */
+export type MessageThumbnail = {
+    media: MessageMedia;
+    kind: "thumbnail";
+};
+
+/**
+ * MessageUpload
+ */
+export type MessageUpload = {
+    /**
+     * An uploaded file's name
+     */
+    name: string;
+    /**
+     * The file as a base64 data URI
+     */
+    data: string;
+};
+
+/**
  * ModulePatch
  */
 export type ModulePatch = {
@@ -2511,6 +2655,100 @@ export type UpdateBotProfileResponses = {
 };
 
 export type UpdateBotProfileResponse = UpdateBotProfileResponses[keyof UpdateBotProfileResponses];
+
+export type MessageSenderData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/messages/sender";
+};
+
+export type MessageSenderErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type MessageSenderError = MessageSenderErrors[keyof MessageSenderErrors];
+
+export type MessageSenderResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: MessageSender;
+};
+
+export type MessageSenderResponse = MessageSenderResponses[keyof MessageSenderResponses];
+
+export type SendMessageData = {
+    body: MessageSend;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/messages";
+};
+
+export type SendMessageErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type SendMessageError = SendMessageErrors[keyof SendMessageErrors];
+
+export type SendMessageResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: MessageSent;
+};
+
+export type SendMessageResponse = SendMessageResponses[keyof SendMessageResponses];
 
 export type InviteLeaderboardData = {
     body?: never;

@@ -434,6 +434,120 @@ class BotProfilePatch(Schema):
     banner: ImageData | None | UnsetType = UNSET
 
 
+MESSAGE_COMPONENTS_MAX = 40
+MESSAGE_TEXT_MAX = 4000
+MESSAGE_MEDIA_MAX = 40
+MESSAGE_FILES_MAX = 10
+MESSAGE_FILES_MAX_BYTES = 16 * 1024 * 1024
+MESSAGE_FILE_DATA_MAX = 128 + -(-MESSAGE_FILES_MAX_BYTES // 3) * 4
+WEBHOOK_NAME_MAX = 80
+BUTTON_LABEL_MAX = 80
+MEDIA_DESCRIPTION_MAX = 1024
+SECTION_TEXTS_MAX = 3
+ROW_BUTTONS_MAX = 5
+GALLERY_ITEMS_MAX = 10
+
+HexColor = Annotated[str, msgspec.Meta(pattern=r"^#[0-9a-fA-F]{6}$")]
+HttpsUrl = Annotated[str, msgspec.Meta(pattern=r"^https://\S+$", max_length=2048)]
+FileName = Annotated[str, msgspec.Meta(pattern=r"^[\w.-]{1,100}$", description="An uploaded file's name")]
+MediaUrl = Annotated[
+    str,
+    msgspec.Meta(
+        pattern=r"^(https://\S+|attachment://[\w.-]{1,100})$",
+        max_length=2048,
+        description="An https URL, or attachment://<name> for an uploaded file",
+    ),
+]
+MessageText = Annotated[str, msgspec.Meta(min_length=1, max_length=MESSAGE_TEXT_MAX)]
+
+
+class MessageMedia(Schema):
+    url: MediaUrl
+    description: Annotated[str, msgspec.Meta(max_length=MEDIA_DESCRIPTION_MAX)] | None = None
+    spoiler: bool = False
+
+
+class MessageButton(Schema, tag="button", tag_field="kind"):
+    url: Annotated[str, msgspec.Meta(pattern=r"^(https?|discord)://\S+$", max_length=512)]
+    label: Annotated[str, msgspec.Meta(min_length=1, max_length=BUTTON_LABEL_MAX)] | None = None
+    emoji: Annotated[str, msgspec.Meta(min_length=1, max_length=100)] | None = None
+    disabled: bool = False
+
+
+class MessageThumbnail(Schema, tag="thumbnail", tag_field="kind"):
+    media: MessageMedia
+
+
+class MessageTextDisplay(Schema, tag="text", tag_field="kind"):
+    text: MessageText
+
+
+class MessageSection(Schema, tag="section", tag_field="kind"):
+    texts: Annotated[list[MessageText], msgspec.Meta(min_length=1, max_length=SECTION_TEXTS_MAX)]
+    accessory: MessageThumbnail | MessageButton
+
+
+class MessageGallery(Schema, tag="gallery", tag_field="kind"):
+    items: Annotated[list[MessageMedia], msgspec.Meta(min_length=1, max_length=GALLERY_ITEMS_MAX)]
+
+
+class MessageFile(Schema, tag="file", tag_field="kind"):
+    url: Annotated[str, msgspec.Meta(pattern=r"^attachment://[\w.-]{1,100}$")]
+    spoiler: bool = False
+
+
+class MessageSeparator(Schema, tag="separator", tag_field="kind"):
+    divider: bool = True
+    large: bool = False
+
+
+class MessageRow(Schema, tag="row", tag_field="kind"):
+    buttons: Annotated[list[MessageButton], msgspec.Meta(min_length=1, max_length=ROW_BUTTONS_MAX)]
+
+
+MessagePiece = MessageTextDisplay | MessageSection | MessageGallery | MessageFile | MessageSeparator | MessageRow
+
+
+class MessageContainer(Schema, tag="container", tag_field="kind"):
+    children: Annotated[list[MessagePiece], msgspec.Meta(min_length=1, max_length=MESSAGE_COMPONENTS_MAX)]
+    color: HexColor | None = None
+    spoiler: bool = False
+
+
+class MessageUpload(Schema):
+    name: FileName
+    data: Annotated[
+        str,
+        msgspec.Meta(
+            max_length=MESSAGE_FILE_DATA_MAX,
+            pattern=r"^data:[\w.+-]+/[\w.+-]+;base64,",
+            description="The file as a base64 data URI",
+        ),
+    ]
+
+
+class MessageSend(Schema):
+    channel_id: Snowflake
+    components: Annotated[
+        list[MessageContainer | MessagePiece], msgspec.Meta(min_length=1, max_length=MESSAGE_COMPONENTS_MAX)
+    ]
+    username: Annotated[str, msgspec.Meta(min_length=1, max_length=WEBHOOK_NAME_MAX)] | None = None
+    avatar_url: HttpsUrl | None = None
+    files: Annotated[list[MessageUpload], msgspec.Meta(max_length=MESSAGE_FILES_MAX)] = []
+
+
+class MessageSender(Schema):
+    name: str
+    avatar_url: str
+    upload_limit: int
+
+
+class MessageSent(Schema):
+    channel_id: Snowflake
+    message_id: Snowflake
+    url: str
+
+
 class ModuleSettings(Schema):
     logs: bool
     tickets: bool

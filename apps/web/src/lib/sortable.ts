@@ -26,6 +26,8 @@ export function sortable({ onmove, disabled }: Options): Attachment<HTMLElement>
             items: HTMLElement[];
             scroller: HTMLElement;
             mids: number[];
+            tops: number[];
+            bottoms: number[];
             from: number;
             to: number;
             step: number;
@@ -40,11 +42,13 @@ export function sortable({ onmove, disabled }: Options): Attachment<HTMLElement>
             if (!drag) return;
             const dy = contentY(drag.scroller, drag.clientY) - drag.startY;
             drag.item.style.transform = `translateY(${dy}px)`;
-            const center = drag.mids[drag.from]! + dy;
+            // The leading edge decides, so items of any height swap once they cover half of a neighbour
+            const top = drag.tops[drag.from]! + dy;
+            const bottom = drag.bottoms[drag.from]! + dy;
             let to = drag.from;
             for (let i = 0; i < drag.items.length; i += 1) {
-                if (i > drag.from && center > drag.mids[i]!) to = i;
-                if (i < drag.from && center < drag.mids[i]! && to === drag.from) to = i;
+                if (i > drag.from && bottom > drag.mids[i]!) to = i;
+                if (i < drag.from && top < drag.mids[i]! && to === drag.from) to = i;
             }
             drag.to = to;
             drag.items.forEach((el, i) => {
@@ -75,7 +79,8 @@ export function sortable({ onmove, disabled }: Options): Attachment<HTMLElement>
             if (drag || event.button !== 0 || disabled?.()) return;
             const handle = (event.target as Element).closest<HTMLElement>("[data-drag-handle]");
             const item = handle?.closest<HTMLElement>("[data-sortable-index]");
-            if (!handle || !item || !list.contains(item)) return;
+            // Nested lists each have their own sortable: only react to items that belong to this one
+            if (!handle || !item || item.parentElement !== list) return;
             event.preventDefault();
             const items = [...list.children].filter((el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute("data-sortable-index"));
             const rects = items.map((el) => el.getBoundingClientRect());
@@ -90,6 +95,8 @@ export function sortable({ onmove, disabled }: Options): Attachment<HTMLElement>
                 items,
                 scroller,
                 mids: rects.map((r) => contentY(scroller, r.top) + r.height / 2),
+                tops: rects.map((r) => contentY(scroller, r.top)),
+                bottoms: rects.map((r) => contentY(scroller, r.bottom)),
                 from,
                 to: from,
                 step: rects[from]!.height + gap,
@@ -147,9 +154,9 @@ export function sortable({ onmove, disabled }: Options): Attachment<HTMLElement>
 
         function key(event: KeyboardEvent) {
             const item = (event.target as Element).closest<HTMLElement>("[data-drag-handle]")?.closest<HTMLElement>("[data-sortable-index]");
-            if (!item || disabled?.()) return;
+            if (!item || item.parentElement !== list || disabled?.()) return;
             const from = Number(item.dataset.sortableIndex);
-            const count = list.querySelectorAll("[data-sortable-index]").length;
+            const count = list.querySelectorAll(":scope > [data-sortable-index]").length;
             const to = event.key === "ArrowUp" ? from - 1 : event.key === "ArrowDown" ? from + 1 : -1;
             if (to < 0 || to >= count) return;
             event.preventDefault();

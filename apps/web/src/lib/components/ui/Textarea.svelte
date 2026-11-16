@@ -1,16 +1,18 @@
 <script lang="ts">
     import EmojiPicker from "#lib/components/EmojiPicker.svelte";
+    import FieldError from "#lib/components/ui/FieldError.svelte";
     import { fieldText } from "#lib/components/ui/styles.ts";
     import type { ClassValue, HTMLTextareaAttributes } from "svelte/elements";
 
     type Props = Omit<HTMLTextareaAttributes, "class"> & {
-        invalid?: boolean;
+        error?: string | null;
         emojis?: { id: string; name: string; iconUrl: string | null };
         class?: ClassValue;
     };
 
-    let { value = $bindable(), invalid = false, emojis, maxlength, class: className, ...rest }: Props = $props();
+    let { value = $bindable(), error, emojis, maxlength, class: className, ...rest }: Props = $props();
 
+    const errorId = $props.id();
     let area = $state<HTMLTextAreaElement | null>(null);
     const length = $derived(typeof value === "string" ? value.length : 0);
 
@@ -25,7 +27,7 @@
 
 <div
     class={[
-        "flex w-full min-w-0 flex-col rounded-3xl bg-gray-800 text-sm",
+        "group/field relative flex w-full min-w-0 flex-col rounded-3xl bg-gray-800 text-sm",
         "ring-0 ring-accent/60 transition-[background-color,box-shadow] duration-200 ease-out ring-inset",
         "focus-within:ring-2 hover:bg-gray-700",
         "has-aria-invalid:bg-red-400/10 has-aria-invalid:ring-red-400/40",
@@ -37,7 +39,8 @@
         bind:this={area}
         bind:value
         {maxlength}
-        aria-invalid={invalid || undefined}
+        aria-invalid={!!error || undefined}
+        aria-describedby={error ? errorId : undefined}
         class={[fieldText, "field-sizing-content min-h-24 resize-none px-4 pt-3", !(emojis || maxlength) && "pb-3"]}
         {...rest}></textarea>
     {#if emojis || maxlength}
@@ -57,4 +60,5 @@
             {/if}
         </div>
     {/if}
+    <FieldError id={errorId} {error} />
 </div>

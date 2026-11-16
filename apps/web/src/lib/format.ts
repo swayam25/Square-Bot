@@ -17,3 +17,9 @@ export function time(ms: number) {
 export const day = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
 export const dateTime = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" });
 export const monthYear = new Intl.DateTimeFormat("en", { month: "short", year: "numeric" });
+
+export function bytes(size: number) {
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
+    return `${(size / 1024 / 1024).toFixed(1).replace(/\.0$/, "")} MB`;
+}

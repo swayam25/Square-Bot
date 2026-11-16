@@ -1,4 +1,5 @@
 <script lang="ts">
+    import FieldError from "#lib/components/ui/FieldError.svelte";
     import { field, fieldText } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import type { Component } from "svelte";
@@ -10,12 +11,15 @@
     type Props = Omit<HTMLInputAttributes, "class" | "type"> & {
         type?: "text" | "search" | "number" | "email" | "url";
         icon?: Component;
-        invalid?: boolean;
+        // Turns the field red and explains why while it is hovered or focused
+        error?: string | null;
         ref?: HTMLInputElement | null;
         class?: ClassValue;
     };
 
-    let { value = $bindable(), ref = $bindable(null), type = "text", icon: Icon, invalid = false, class: className, ...rest }: Props = $props();
+    let { value = $bindable(), ref = $bindable(null), type = "text", icon: Icon, error, class: className, ...rest }: Props = $props();
+
+    const errorId = $props.id();
 
     const iconButton =
         "flex size-8 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-white/10 hover:text-gray-100 disabled:opacity-50 md:size-6 [&_svg]:size-4";
@@ -29,13 +33,14 @@
     }
 </script>
 
-<label class={[field, (type === "number" || type === "search") && "pr-2", className]}>
+<label class={[field, "group/field relative", (type === "number" || type === "search") && "pr-2", className]}>
     {#if Icon}<Icon class="size-4 shrink-0 text-gray-400" />{/if}
     <input
         bind:this={ref}
         bind:value
         {type}
-        aria-invalid={invalid || undefined}
+        aria-invalid={!!error || undefined}
+        aria-describedby={error ? errorId : undefined}
         class={[
             fieldText,
             "h-full",
@@ -83,4 +88,5 @@
             </button>
         </Tooltip>
     {/if}
+    <FieldError id={errorId} {error} />
 </label>

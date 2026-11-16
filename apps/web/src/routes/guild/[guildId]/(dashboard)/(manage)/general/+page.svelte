@@ -124,7 +124,7 @@
                     options={roleChoices}
                     multiple
                     max={MAX_ROLES}
-                    invalid={!entry.roleIds.length}
+                    error={entry.roleIds.length ? null : "Pick at least one role."}
                     bind:values={() => entry.roleIds, (next) => setUserRoles(entry.user.id, next)}
                 />
             </div>

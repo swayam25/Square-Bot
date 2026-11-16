@@ -186,7 +186,7 @@
                                 max={MAX_OPEN}
                                 step={1}
                                 aria-label="Open tickets per member"
-                                invalid={!validMaxOpen}
+                                error={validMaxOpen ? null : `Pick a whole number from 1 to ${MAX_OPEN}.`}
                                 bind:value={maxOpen}
                             />
                         </SettingRow>
