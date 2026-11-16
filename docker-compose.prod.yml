@@ -124,6 +124,15 @@ services:
       retries: 5
     logging: *logging
 
+  gateway-init:
+    image: postgres:16-alpine@sha256:f377d590e5474681d4d7838635031a2b50647923b7abfa803ce9b5ff35d5c663
+    container_name: square-gateway-init
+    command: chown 65532:65532 /app
+    network_mode: none
+    volumes:
+      - gateway_data:/app
+    logging: *logging
+
   gateway:
     image: ghcr.io/drizzle-team/gateway:latest@sha256:3f09490584ad97cb5fa6d2a7335b405b8ac96e3b17a427830930f4ff70fe3993
     container_name: square-gateway
@@ -137,10 +146,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      gateway-init:
+        condition: service_completed_successfully
     read_only: true
-    # Connections are only read from the environment while /app is empty, so it never persists
+    volumes:
+      - gateway_data:/app
     tmpfs:
-      - /app:uid=65532,gid=65532
       - /tmp
     logging: *logging
 
@@ -148,6 +159,7 @@ volumes:
   postgres_data:
   redis_data:
   storage_data:
+  gateway_data:
 
 networks:
   edge:
