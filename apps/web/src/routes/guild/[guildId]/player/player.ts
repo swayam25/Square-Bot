@@ -7,7 +7,7 @@ export type Tab = "search" | "queue" | "history" | "lyrics";
 export type Access = { dj: boolean; inChannel: boolean; queueLock: string | null; me: string | null };
 
 export function locked(access: Access, { own = false } = {}): string | null {
-    if (!access.inChannel) return "Join the bot's voice channel first";
+    if (!access.inChannel) return "Join Square's voice channel first";
     if (!access.dj && !own) return "Only a DJ can do that";
     return null;
 }

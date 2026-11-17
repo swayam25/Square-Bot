@@ -7,7 +7,7 @@ from square.utils.emoji import Icon
 
 class Cog(commands.Cog):
     """
-    Base cog for Square.
+    Base class for every cog.
 
     py-cord's own class keywords set the name & description (`name=`, `description=` or the docstring). This adds
     the help menu details: a cog with an `emoji` is a help category, the rest stay out of the menu. A cog with a

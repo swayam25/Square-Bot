@@ -236,9 +236,9 @@ def usable_emojis(
     client: discord.Client, channel: discord.abc.GuildChannel | discord.Thread, *, webhook: bool
 ) -> Callable[[int], bool]:
     """
-    Whether a custom emoji shows in a message Square sends here. Discord turns the rest into plain `:name:` text.
+    Whether a custom emoji shows in a message the bot sends here. Discord turns the rest into plain `:name:` text.
 
-    Only emojis Square can see work: its own, and ones from servers it's in. Those from other servers also need
+    Only emojis the bot can see work: its own, and ones from servers it's in. Those from other servers also need
     Use External Emojis, which webhooks and interaction replies take from @everyone.
     """
     guild = channel.guild

@@ -99,7 +99,7 @@ def score(board: StarboardTable, message: discord.Message, votes: list[tuple[int
 
 
 async def sync_votes(message: discord.Message, keys: set[str]) -> list[tuple[int, str]]:
-    """Votes added while Square was away only show as a count mismatch, so those emojis get read again."""
+    """Votes added while the bot was away only show as a count mismatch, so those emojis get read again."""
     assert message.guild is not None
     stored = await starboard_db.message_votes(message.id)
     counts = Counter(key for _, key in stored)

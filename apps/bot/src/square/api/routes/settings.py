@@ -86,7 +86,7 @@ def _givable(guild: discord.Guild, role_ids: list[str]) -> list[int]:
     roles = resolve.roles(guild, role_ids)
     for role in roles:
         if role.managed or role >= guild.me.top_role:
-            raise SettingError(f"I can't give out {role.mention}, it's above my role or managed.")
+            raise SettingError(f"Square can't give out {role.mention}, it's above Square's role or managed.")
     return [role.id for role in roles]
 
 
@@ -118,7 +118,7 @@ async def update_general_settings(client: Client, guild: discord.Guild, data: Ge
     if channel:
         perms = channel.permissions_for(guild.me)
         if not (perms.send_messages and perms.manage_messages):
-            raise SettingError(f"I need `Send Messages` and `Manage Messages` in {channel.mention}.")
+            raise SettingError(f"Square needs `Send Messages` and `Manage Messages` in {channel.mention}.")
 
     if humans is not None or bots is not None or split is not None:
         await guild_db.set_autoroles(guild.id, humans=humans, bots=bots, split=split)
@@ -154,7 +154,7 @@ async def _set_log_channels(
     for channel in {channel for channel in changes.values() if channel}:
         perms = channel.permissions_for(guild.me)
         if not (perms.send_messages and perms.manage_webhooks):
-            raise SettingError(f"I need `Send Messages` and `Manage Webhooks` in {channel.mention}.")
+            raise SettingError(f"Square needs `Send Messages` and `Manage Webhooks` in {channel.mention}.")
 
     by_channel: defaultdict[discord.TextChannel, list[str]] = defaultdict(list)
     for log_type, channel in changes.items():
@@ -253,7 +253,7 @@ async def _remove_request_channel(client: Client, guild: discord.Guild, actor: d
         try:
             await channel.delete(reason=f"Music channel removed by {actor}")
         except discord.HTTPException:
-            note = f"I couldn't delete {channel.mention}, so it's yours to remove."
+            note = f"Square couldn't delete {channel.mention}, so it's yours to remove."
     await release_guild(client, guild.id)
     return note
 
@@ -291,7 +291,7 @@ async def update_music_settings(client: Client, guild: discord.Guild, data: Musi
     stay_channel = resolve.voice_channel(guild, data.stay_channel_id) if data.stay_channel_id is not UNSET else UNSET
     dj_roles = resolve.roles(guild, data.dj_role_ids) if data.dj_role_ids is not UNSET else UNSET
     if stay_channel and not can_play_in(stay_channel):
-        raise SettingError(f"I need the `Connect` and `Speak` permissions in {stay_channel.mention}.")
+        raise SettingError(f"Square needs the `Connect` and `Speak` permissions in {stay_channel.mention}.")
 
     if dj_roles is not UNSET:
         await dj_db.set_dj_roles(guild.id, [role.id for role in dj_roles])
@@ -325,7 +325,7 @@ async def create_request_channel(client: Client, guild: discord.Guild) -> MusicS
     if channel := _channel(guild, request.channel_id(guild.id)):
         raise SettingError(f"{channel.mention} is already the music request channel.")
     if not guild.me.guild_permissions.manage_channels:
-        raise SettingError("I need the `Manage Channels` permission to create the channel.")
+        raise SettingError("Square needs the `Manage Channels` permission to create the channel.")
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(
             view_channel=True,
@@ -353,7 +353,7 @@ async def create_request_channel(client: Client, guild: discord.Guild) -> MusicS
             "music-requests", overwrites=overwrites, topic="Send a track name or a link here to queue it."
         )
     except discord.HTTPException as exc:
-        raise SettingError(f"I couldn't create the music channel: {exc.text or exc}") from exc
+        raise SettingError(f"Square couldn't create the music channel: {exc.text or exc}") from exc
     await request.bind(guild.id, channel.id)
     request.prime(client, guild.id)
     await render_player(client, guild.id, wait=True)
@@ -400,7 +400,7 @@ async def _remove_ticket_panel(guild: discord.Guild, actor: discord.abc.User) ->
             await channel.delete(reason=f"Ticket panel removed by {actor}")
             return None
         except discord.HTTPException:
-            return f"I couldn't delete {channel.mention}, so it's yours to remove."
+            return f"Square couldn't delete {channel.mention}, so it's yours to remove."
     if message_id:
         await delete_quietly(channel.get_partial_message(message_id))
     return f"I removed the panel but kept {channel.mention}, since it has other messages."
@@ -458,7 +458,7 @@ async def create_ticket_panel(guild: discord.Guild) -> TicketSettings:
     if channel := _ticket_panel_channel(guild):
         raise SettingError(f"{channel.mention} already holds the ticket panel.")
     if not guild.me.guild_permissions.manage_channels:
-        raise SettingError("I need the `Manage Channels` permission to create the channel.")
+        raise SettingError("Square needs the `Manage Channels` permission to create the channel.")
     overwrites = {
         guild.default_role: discord.PermissionOverwrite(
             view_channel=True,
@@ -482,7 +482,7 @@ async def create_ticket_panel(guild: discord.Guild) -> TicketSettings:
         )
         await post_panel(channel)
     except discord.HTTPException as exc:
-        raise SettingError(f"I couldn't create the ticket channel: {exc.text or exc}") from exc
+        raise SettingError(f"Square couldn't create the ticket channel: {exc.text or exc}") from exc
     return _tickets(guild)
 
 

@@ -230,7 +230,7 @@ async def send_message(client: Client, guild: discord.Guild, member: discord.Mem
         raise SettingError("Pick a text channel to send to.")
     mine = channel.permissions_for(guild.me)
     if not (mine.view_channel and mine.send_messages and mine.manage_webhooks):
-        raise SettingError(f"I need `Send Messages` and `Manage Webhooks` in {channel.mention}.")
+        raise SettingError(f"Square needs `Send Messages` and `Manage Webhooks` in {channel.mention}.")
     theirs = channel.permissions_for(member)
     if not (theirs.view_channel and theirs.send_messages):
         raise SettingError(f"You can't send messages in {channel.mention}.")
@@ -245,7 +245,7 @@ async def send_message(client: Client, guild: discord.Guild, member: discord.Mem
     async def deliver(retry: bool) -> discord.WebhookMessage:
         hook = await webhook.get_webhook(client, channel)
         if hook is None:
-            raise SettingError(f"I couldn't set up a webhook in {channel.mention}.")
+            raise SettingError(f"Square couldn't set up a webhook in {channel.mention}.")
         try:
             return await hook.send(
                 view=ui.DesignerView(*(_build(component) for component in data.components), timeout=None, store=False),
@@ -260,7 +260,7 @@ async def send_message(client: Client, guild: discord.Guild, member: discord.Mem
             webhook.invalidate(channel.id)
             if retry:
                 return await deliver(False)
-            raise SettingError(f"I couldn't set up a webhook in {channel.mention}.") from exc
+            raise SettingError(f"Square couldn't set up a webhook in {channel.mention}.") from exc
         except discord.HTTPException as exc:
             raise SettingError(_refusal(exc)) from exc
         except ValueError as exc:

@@ -75,7 +75,7 @@ def _reason(member: discord.Member) -> str:
 
 def _check_nick(guild: discord.Guild) -> None:
     if not guild.me.guild_permissions.change_nickname:
-        raise SettingError("I need the `Change Nickname` permission to change my nickname here.")
+        raise SettingError("Square needs the `Change Nickname` permission to change its nickname here.")
 
 
 @get("/", summary="The bot's profile in this server")

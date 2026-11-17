@@ -13,8 +13,8 @@
         403: ["Not for you", "You don't have access to this. Ask a server manager if you think you should."],
         404: ["Page not found", "This page doesn't exist, or it moved."],
         [MODULE_OFF]: ["Module turned off", "A server manager turned this part of Square off."],
-        503: ["Square is offline", "The bot isn't answering right now. It's usually back in a minute."],
-        504: ["Square is slow right now", "The bot took too long to answer. Try again in a moment."],
+        503: ["Square is offline", "Square isn't answering right now. It's usually back in a minute."],
+        504: ["Square is slow right now", "Square took too long to answer. Try again in a moment."],
     };
 
     const status = $derived(page.status);
