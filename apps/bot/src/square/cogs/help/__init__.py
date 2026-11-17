@@ -1,6 +1,7 @@
 import discord
+import inspect
 from discord import ui
-from discord.commands import SlashCommand, SlashCommandGroup, slash_command
+from discord.commands import MessageCommand, SlashCommand, SlashCommandGroup, UserCommand, slash_command
 from discord.ext import commands
 from square.core import Client
 from square.core.cog import Cog
@@ -116,6 +117,10 @@ class HelpView(DesignerView):
                 cmds += (
                     f"</{full_path}:{command.id}>" if command.id else f"`/{full_path}`"
                 ) + f"\n{emoji.bottom_right} {command.description}\n\n"
+            elif isinstance(command, MessageCommand | UserCommand):
+                target = "a message" if isinstance(command, MessageCommand) else "a member"
+                about = (inspect.getdoc(command.callback) or "No description provided.").splitlines()[0]
+                cmds += f"`{command.name}` · Right-click {target} › Apps\n{emoji.bottom_right} {about}\n\n"
             elif isinstance(command, commands.Command):
                 if getattr(command, "hidden", False):
                     continue
