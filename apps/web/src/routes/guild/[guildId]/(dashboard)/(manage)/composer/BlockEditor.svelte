@@ -137,7 +137,7 @@
 <li
     data-sortable-index={index}
     class={[
-        "flex flex-col rounded-3xl data-dragging:z-10 data-dragging:shadow-2xl data-dragging:shadow-black/60",
+        "flex flex-col rounded-card data-dragging:z-10 data-dragging:shadow-2xl data-dragging:shadow-black/60",
         parent ? "bg-gray-950 data-dragging:bg-gray-900" : "bg-gray-900 data-dragging:bg-gray-800",
     ]}
     style:box-shadow={block.kind === "container" && block.color ? `inset 4px 0 ${block.color}` : undefined}
@@ -161,7 +161,7 @@
                     placement="bottom-end"
                     contentClass="w-64"
                     triggerClass={[
-                        "flex size-12 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-800 hover:text-gray-100 md:size-10",
+                        "flex size-12 shrink-0 items-center justify-center rounded-control-lg text-gray-400 hover:bg-gray-800 hover:text-gray-100 md:size-10 md:rounded-2xl",
                         focusRing,
                     ]}
                 >

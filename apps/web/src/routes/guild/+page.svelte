@@ -67,12 +67,12 @@
                     <li>
                         <a
                             href="/guild/{guild.id}"
-                            class={["group ripple flex flex-col rounded-4xl bg-gray-900 p-2 hover:bg-gray-800", focusRing]}
+                            class={["group ripple flex flex-col rounded-card bg-gray-900 p-2 hover:bg-gray-800", focusRing]}
                             {@attach ripple}
                             onpointerenter={() => (hovered = guild.id)}
                             onpointerleave={() => hovered === guild.id && (hovered = null)}
                         >
-                            <div class="relative isolate flex h-32 items-center justify-center overflow-hidden rounded-3xl bg-gray-800">
+                            <div class="relative isolate flex h-32 items-center justify-center overflow-hidden rounded-control-lg bg-gray-800">
                                 {#if guild.iconUrl}
                                     <img
                                         src={frames(guild.iconUrl)?.still ?? guild.iconUrl}
@@ -86,7 +86,7 @@
                                     src={guild.iconUrl}
                                     name={guild.name}
                                     animate={hovered === guild.id}
-                                    class="size-16 rounded-2xl shadow-lg shadow-black/20"
+                                    class="size-16 rounded-3xl shadow-lg shadow-black/20"
                                 />
                                 {#if !guild.canManage}
                                     <Chip tone="muted" class="absolute top-2 right-2 backdrop-blur-xl">
@@ -142,7 +142,7 @@
                             class={["group ripple flex items-center gap-4 rounded-3xl bg-gray-900 p-2 pr-4 hover:bg-gray-800", focusRing]}
                             {@attach ripple}
                         >
-                            <GuildIcon src={guild.iconUrl} name={guild.name} class="size-12 rounded-xl" />
+                            <GuildIcon src={guild.iconUrl} name={guild.name} class="size-12 rounded-2xl" />
                             <span class="min-w-0 flex-1 truncate font-medium">{guild.name}</span>
                             <span class="flex items-center gap-1 text-sm font-medium text-gray-400 group-hover:text-accent">
                                 <MaterialSymbolsAddRounded class="size-5" />Add

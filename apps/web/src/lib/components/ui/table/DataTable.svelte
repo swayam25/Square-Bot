@@ -62,7 +62,7 @@
     const aligned = (align: "start" | "end" | undefined) => (align === "end" ? "text-right" : "text-left");
 </script>
 
-<div class="@container overflow-x-auto rounded-3xl bg-gray-900">
+<div class="@container overflow-x-auto rounded-card bg-gray-900">
     <table aria-label={label} class="w-full table-fixed border-collapse text-sm">
         <thead>
             {#each table.getHeaderGroups() as group (group.id)}

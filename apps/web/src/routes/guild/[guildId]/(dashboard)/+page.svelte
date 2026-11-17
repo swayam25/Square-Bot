@@ -117,13 +117,13 @@
 </script>
 
 {#snippet activityCard(id: string, title: string, summary: Snippet, series: Series<ActivityDay>)}
-    <section aria-labelledby={id} class="flex flex-col gap-4 rounded-3xl bg-gray-900 p-4">
+    <section aria-labelledby={id} class="flex flex-col gap-4 rounded-card bg-gray-900 p-4">
         <div class="flex flex-col gap-1">
             <h2 {id} class="font-display text-xl font-semibold">{title}</h2>
             {#if days}
                 <p class="text-sm text-gray-400">{@render summary()}</p>
             {:else if !activityQuery?.error}
-                <span aria-hidden="true" class="flex h-5 items-center"><span class="h-4 w-64 skeleton rounded-full"></span></span>
+                <span aria-hidden="true" class="flex h-5 items-center"><span class="h-4 w-64 skeleton rounded-md"></span></span>
             {/if}
         </div>
         <div class="h-48">
@@ -159,7 +159,7 @@
         <section aria-label="Server stats" class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
             {#if stats}
                 {#each tiles as tile (tile.label)}
-                    <div class="flex min-w-0 flex-col gap-2 rounded-3xl bg-gray-900 p-4">
+                    <div class="flex min-w-0 flex-col gap-2 rounded-card bg-gray-900 p-4">
                         <span class="flex items-center gap-2 text-sm text-gray-400"
                             ><tile.icon class={["size-5 shrink-0", tile.tone]} />{tile.label}</span
                         >
@@ -181,12 +181,12 @@
                 />
             {:else}
                 {#each { length: 6 }, i (i)}
-                    <div aria-hidden="true" class="flex flex-col gap-2 rounded-3xl bg-gray-900 p-4">
+                    <div aria-hidden="true" class="flex flex-col gap-2 rounded-card bg-gray-900 p-4">
                         <span class="flex h-5 items-center gap-2"
-                            ><span class="size-5 skeleton rounded-full"></span><span class="h-4 w-16 skeleton rounded-full"></span></span
+                            ><span class="size-5 skeleton rounded-md"></span><span class="h-4 w-16 skeleton rounded-md"></span></span
                         >
-                        <span class="flex h-8 items-center"><span class="h-6 w-12 skeleton rounded-full"></span></span>
-                        <span class="flex h-4 items-center"><span class="h-2 w-24 skeleton rounded-full"></span></span>
+                        <span class="flex h-8 items-center"><span class="h-6 w-12 skeleton rounded-xl"></span></span>
+                        <span class="flex h-4 items-center"><span class="h-2 w-24 skeleton rounded-sm"></span></span>
                     </div>
                 {/each}
             {/if}
@@ -198,11 +198,11 @@
             <h2 id="modules" class="font-display text-xl font-semibold">Modules</h2>
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {#each MODULES as module (module.key)}
-                    <div class="flex flex-col gap-4 rounded-3xl bg-gray-900 p-4">
+                    <div class="flex flex-col gap-4 rounded-card bg-gray-900 p-4">
                         <div class="flex items-start justify-between gap-4">
                             <span
                                 class={[
-                                    "flex size-12 shrink-0 items-center justify-center rounded-2xl transition-colors duration-200",
+                                    "flex size-12 shrink-0 items-center justify-center rounded-control-lg transition-colors duration-200",
                                     drafts[module.key] ? "bg-accent/10 text-accent" : "bg-gray-800 text-gray-400",
                                 ]}
                             >
@@ -238,16 +238,16 @@
     {:else if modulesQuery}
         <div aria-hidden="true" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {#each MODULES as module (module.key)}
-                <div class="flex flex-col gap-4 rounded-3xl bg-gray-900 p-4">
+                <div class="flex flex-col gap-4 rounded-card bg-gray-900 p-4">
                     <div class="flex items-start justify-between gap-4">
-                        <span class="size-12 skeleton rounded-2xl"></span>
-                        <span class="h-8 w-14 skeleton rounded-full"></span>
+                        <span class="size-12 skeleton rounded-control-lg"></span>
+                        <span class="h-8 w-14 skeleton rounded-xl"></span>
                     </div>
                     <div class="flex flex-1 flex-col gap-2">
-                        <span class="h-5 w-24 skeleton rounded-full"></span>
-                        <span class="h-4 w-4/5 skeleton rounded-full"></span>
+                        <span class="h-5 w-24 skeleton rounded-md"></span>
+                        <span class="h-4 w-4/5 skeleton rounded-md"></span>
                     </div>
-                    <span class="h-12 w-28 skeleton rounded-full md:h-10"></span>
+                    <span class="h-12 w-28 skeleton rounded-control-lg md:h-10 md:rounded-2xl"></span>
                 </div>
             {/each}
         </div>
@@ -256,7 +256,7 @@
     <NowPlayingBanner guild={data.guild.id} />
 
     {#if joinsQuery}
-        <section aria-labelledby="joins" class="flex flex-col gap-4 rounded-3xl bg-gray-900 p-4">
+        <section aria-labelledby="joins" class="flex flex-col gap-4 rounded-card bg-gray-900 p-4">
             <div class="flex flex-col gap-1">
                 <h2 id="joins" class="font-display text-xl font-semibold">Member joins</h2>
                 {#if joins}
@@ -265,7 +265,7 @@
                         · {plural(joins.members, "member")} now
                     </p>
                 {:else if !joinsQuery.error}
-                    <div aria-hidden="true" class="h-5 w-64 skeleton rounded-full"></div>
+                    <div aria-hidden="true" class="h-5 w-64 skeleton rounded-md"></div>
                 {/if}
             </div>
             <div class="h-56">

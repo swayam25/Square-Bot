@@ -62,7 +62,7 @@
 <div
     role="group"
     aria-label={files ? "File" : "Picture or video"}
-    class={["flex flex-col gap-2 rounded-3xl transition-colors", dragging && "bg-accent/10"]}
+    class={["flex flex-col gap-2 rounded-card transition-colors", dragging && "bg-accent/10"]}
     ondragover={(event) => {
         if (!event.dataTransfer?.types.includes("Files")) return;
         event.preventDefault();
@@ -75,7 +75,9 @@
 >
     <div class="flex items-center gap-2">
         {#if !files}
-            <span class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gray-800 text-gray-400 md:size-10">
+            <span
+                class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-control-lg bg-gray-800 text-gray-400 md:size-10 md:rounded-2xl"
+            >
                 {#if preview && !broken && video}
                     <video src={preview} muted preload="metadata" class="size-full object-cover"></video>
                 {:else if preview && !broken}

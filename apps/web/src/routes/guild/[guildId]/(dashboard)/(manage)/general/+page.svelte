@@ -226,7 +226,7 @@
                             <button
                                 type="button"
                                 aria-current={details.key === entry.user.id || undefined}
-                                class="ripple flex items-center gap-4 p-4 text-left first:rounded-t-3xl last:rounded-b-3xl hover:bg-white/5 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent aria-[current]:bg-white/5"
+                                class="ripple flex items-center gap-4 p-4 text-left first:rounded-t-card last:rounded-b-card hover:bg-white/5 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent aria-[current]:bg-white/5"
                                 {@attach ripple}
                                 onclick={() => open(entry)}
                             >

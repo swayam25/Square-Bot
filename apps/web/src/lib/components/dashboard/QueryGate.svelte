@@ -25,7 +25,7 @@
 </script>
 
 {#snippet actionsSkeleton()}
-    <span aria-hidden="true" class="h-12 w-28 skeleton rounded-full md:h-10"></span>
+    <span aria-hidden="true" class="h-12 w-28 skeleton rounded-control-lg md:h-10 md:rounded-2xl"></span>
 {/snippet}
 
 {#if ready}

@@ -128,7 +128,7 @@
 
 <section
     aria-label="Now playing"
-    class="relative isolate flex min-h-0 flex-1 flex-col items-center overflow-clip rounded-3xl bg-gray-900 p-4 md:min-h-112 md:p-6 lg:min-h-0"
+    class="relative isolate flex min-h-0 flex-1 flex-col items-center overflow-clip rounded-card bg-gray-900 p-4 md:min-h-112 md:p-6 lg:min-h-0"
 >
     {#if track?.artworkUrl}
         <img
@@ -144,10 +144,10 @@
     <div class="flex w-full items-center justify-between gap-4">
         <a
             href={server.href}
-            class="group flex min-w-0 items-center gap-2 rounded-full bg-black/30 py-1 pr-4 pl-1 backdrop-blur-xl transition-colors hover:bg-black/50 max-md:pr-3"
+            class="group flex min-w-0 items-center gap-2 rounded-2xl bg-black/30 py-1 pr-4 pl-1 backdrop-blur-xl transition-colors hover:bg-black/50 max-md:pr-3"
         >
             <span class="relative size-8 shrink-0">
-                <GuildIcon src={server.iconUrl} name={server.name} class="size-8 rounded-full transition-opacity group-hover:opacity-0" />
+                <GuildIcon src={server.iconUrl} name={server.name} class="size-8 rounded-xl transition-opacity group-hover:opacity-0" />
                 <MaterialSymbolsArrowBackRounded class="absolute inset-0 m-auto size-5 opacity-0 transition-opacity group-hover:opacity-100" />
             </span>
             <span class="truncate text-sm font-semibold max-md:sr-only">{server.name}</span>
@@ -196,7 +196,7 @@
                     {/key}
                 </div>
             {:else}
-                <Cover src={track?.artworkUrl} class="size-[min(100cqw,100cqh,20rem)] rounded-4xl text-accent shadow-2xl shadow-black/50" />
+                <Cover src={track?.artworkUrl} class="size-[min(100cqw,100cqh,20rem)] rounded-3xl text-accent shadow-2xl shadow-black/50" />
             {/if}
         </div>
 
@@ -215,7 +215,7 @@
         <div class="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-2">
             <div class="flex min-w-0">
                 {#if track?.requester}
-                    <span class="flex h-10 min-w-0 items-center gap-2 rounded-full bg-black/30 pr-4 pl-1 text-sm backdrop-blur-xl">
+                    <span class="flex h-10 min-w-0 items-center gap-2 rounded-2xl bg-black/30 pr-4 pl-1 text-sm backdrop-blur-xl">
                         <Avatar src={track.requester.avatarUrl} name={track.requester.name} class="size-8 text-xs" />
                         <span class="flex min-w-0 flex-col leading-tight">
                             <span class="text-2xs text-gray-400">Requested by</span>
@@ -228,7 +228,7 @@
             <div class="flex min-w-0 items-center justify-end gap-2">
                 {#if source}
                     <span
-                        class="flex h-10 items-center gap-2 rounded-full bg-black/30 px-4 text-sm font-semibold backdrop-blur-xl max-sm:w-10 max-sm:justify-center max-sm:px-0"
+                        class="flex h-10 items-center gap-2 rounded-2xl bg-black/30 px-4 text-sm font-semibold backdrop-blur-xl max-sm:w-10 max-sm:justify-center max-sm:px-0"
                     >
                         <BrandIcon brand={source.brand} class="size-5" /><span class="max-sm:sr-only">{source.label}</span>
                     </span>
@@ -238,7 +238,7 @@
                         <button
                             type="button"
                             aria-haspopup="dialog"
-                            class="ripple flex size-10 items-center justify-center rounded-full bg-black/30 backdrop-blur-xl transition-colors hover:bg-black/50"
+                            class="ripple flex size-10 items-center justify-center rounded-2xl bg-black/30 backdrop-blur-xl transition-colors hover:bg-black/50"
                             {@attach ripple}
                             onclick={onzen}
                         >

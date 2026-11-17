@@ -25,7 +25,7 @@
 </script>
 
 <!-- The real range input stays on top, invisible, so pointer, touch, keys and screen readers all work natively -->
-<div class={["slider relative h-6", className]} style:--p={progress}>
+<div data-no-drag="y" class={["slider relative h-6", className]} style:--p={progress}>
     <input type="range" {min} {max} {step} aria-label={label} {disabled} bind:value onchange={() => onchange?.(value)} />
     <span class="fill" aria-hidden="true"></span>
     <span class="rest" aria-hidden="true"></span>

@@ -416,7 +416,7 @@
                                 <button
                                     type="button"
                                     class={[
-                                        "flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 md:size-10",
+                                        "flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-control-lg bg-gray-800 hover:bg-gray-700 md:size-10 md:rounded-2xl",
                                         focusRing,
                                     ]}
                                     onclick={() => (draft.buttonEmoji = null)}

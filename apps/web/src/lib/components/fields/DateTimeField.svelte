@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { swipe } from "#lib/attachments/swipe.ts";
     import Button from "#lib/components/ui/Button.svelte";
     import FieldError from "#lib/components/ui/FieldError.svelte";
     import Popup from "#lib/components/ui/Popup.svelte";
@@ -7,7 +8,7 @@
     import { field, focusRing } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { DateInput } from "@ark-ui/svelte/date-input";
-    import { DatePicker, type DateValue } from "@ark-ui/svelte/date-picker";
+    import { DatePicker, type DateValue, type UseDatePickerContext } from "@ark-ui/svelte/date-picker";
     import { CalendarDateTime, toCalendarDate } from "@internationalized/date";
     import type { ClassValue } from "svelte/elements";
     import MaterialSymbolsCalendarMonthRounded from "~icons/material-symbols/calendar-month-rounded";
@@ -74,17 +75,26 @@
         "data-placeholder-shown:text-gray-400 focus:bg-accent focus:text-cyan-950",
     ];
     const cell = [
-        "flex cursor-pointer items-center justify-center rounded-full text-sm font-medium tabular-nums transition-colors outline-none",
+        "flex cursor-pointer items-center justify-center text-sm font-medium tabular-nums transition-colors outline-none",
         "hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-accent/60",
         "data-outside-range:text-gray-500 data-today:inset-ring-2 data-today:inset-ring-white/20",
         "data-selected:bg-accent data-selected:font-semibold data-selected:text-cyan-950 data-selected:inset-ring-0",
         "data-disabled:pointer-events-none data-disabled:opacity-30",
     ];
     const navButton = [
-        "ripple flex size-10 items-center justify-center rounded-full text-gray-400 hover:bg-white/10 hover:text-gray-100 disabled:opacity-30 md:size-8 [&>svg]:size-5",
+        "ripple flex size-10 items-center justify-center rounded-2xl text-gray-400 hover:bg-white/10 hover:text-gray-100 disabled:opacity-30 md:size-8 md:rounded-xl [&>svg]:size-5",
         focusRing,
     ];
-    const viewTrigger = ["cursor-pointer rounded-full px-3 py-1 text-sm font-semibold hover:bg-white/10", focusRing];
+    const turn = (picker: UseDatePickerContext) => (step: 1 | -1) => {
+        const api = picker();
+        const next = step === 1;
+        if ((next ? api.getNextTriggerProps({ view: api.view }) : api.getPrevTriggerProps({ view: api.view })).disabled) return false;
+        if (next) api.goToNext();
+        else api.goToPrev();
+        return true;
+    };
+
+    const viewTrigger = ["cursor-pointer rounded-xl px-3 py-1 text-sm font-semibold hover:bg-white/10", focusRing];
 </script>
 
 <div class={["group/field relative", className]}>
@@ -104,7 +114,7 @@
                 <DateInput.SegmentGroup
                     aria-label={title}
                     aria-describedby={error ? errorId : undefined}
-                    class="flex min-w-0 [scrollbar-width:none] items-center overflow-x-auto"
+                    class="flex min-w-0 scrollbar-none items-center overflow-x-auto"
                 >
                     <DateInput.SegmentContext>
                         {#snippet render(part)}<DateInput.Segment segment={part} class={segment} />{/snippet}
@@ -121,7 +131,7 @@
                 placement="bottom-end"
                 contentClass="w-80"
                 triggerClass={[
-                    "ripple flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-gray-400 hover:bg-white/10 hover:text-gray-100 disabled:pointer-events-none disabled:opacity-50 md:size-8 [&>svg]:size-5",
+                    "ripple flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl text-gray-400 hover:bg-white/10 hover:text-gray-100 disabled:pointer-events-none disabled:opacity-50 md:size-8 [&>svg]:size-5",
                     focusRing,
                 ]}
             >
@@ -145,7 +155,7 @@
                         onValueChange={(details) => setDay(details.value[0])}
                         class="flex justify-center"
                     >
-                        <DatePicker.View view="day" class="flex flex-col gap-2">
+                        <DatePicker.View view="day" class="flex w-full flex-col gap-2">
                             <DatePicker.Context>
                                 {#snippet render(picker)}
                                     <DatePicker.ViewControl class="flex items-center justify-between gap-2">
@@ -157,30 +167,33 @@
                                             <DatePicker.NextTrigger class={navButton}><MaterialSymbolsChevronRightRounded /></DatePicker.NextTrigger>
                                         </Tooltip>
                                     </DatePicker.ViewControl>
-                                    <DatePicker.Table class="border-separate border-spacing-0">
-                                        <DatePicker.TableHead>
-                                            <DatePicker.TableRow>
-                                                {#each picker().weekDays as weekDay (weekDay.long)}
-                                                    <DatePicker.TableHeader class="h-8 text-xs font-medium text-gray-400"
-                                                        >{weekDay.narrow}</DatePicker.TableHeader
-                                                    >
-                                                {/each}
-                                            </DatePicker.TableRow>
-                                        </DatePicker.TableHead>
-                                        <DatePicker.TableBody>
-                                            {#each picker().weeks as week, index (index)}
+                                    <div data-no-drag="y" class="touch-pan-y" {@attach swipe(turn(picker))}>
+                                        <DatePicker.Table class="w-full table-fixed border-separate border-spacing-1">
+                                            <DatePicker.TableHead>
                                                 <DatePicker.TableRow>
-                                                    {#each week as date (date.toString())}
-                                                        <DatePicker.TableCell value={date}>
-                                                            <DatePicker.TableCellTrigger class={[cell, "size-10"]}
-                                                                >{date.day}</DatePicker.TableCellTrigger
-                                                            >
-                                                        </DatePicker.TableCell>
+                                                    {#each picker().weekDays as weekDay (weekDay.long)}
+                                                        <DatePicker.TableHeader class="h-8 text-xs font-medium text-gray-400"
+                                                            >{weekDay.narrow}</DatePicker.TableHeader
+                                                        >
                                                     {/each}
                                                 </DatePicker.TableRow>
-                                            {/each}
-                                        </DatePicker.TableBody>
-                                    </DatePicker.Table>
+                                            </DatePicker.TableHead>
+                                            <DatePicker.TableBody>
+                                                {#each picker().weeks as week, index (index)}
+                                                    <DatePicker.TableRow>
+                                                        {#each week as date (date.toString())}
+                                                            <DatePicker.TableCell value={date}>
+                                                                <DatePicker.TableCellTrigger
+                                                                    class={[cell, "h-12 w-full rounded-control-lg md:h-10 md:rounded-2xl"]}
+                                                                    >{date.day}</DatePicker.TableCellTrigger
+                                                                >
+                                                            </DatePicker.TableCell>
+                                                        {/each}
+                                                    </DatePicker.TableRow>
+                                                {/each}
+                                            </DatePicker.TableBody>
+                                        </DatePicker.Table>
+                                    </div>
                                 {/snippet}
                             </DatePicker.Context>
                         </DatePicker.View>
@@ -197,21 +210,23 @@
                                             <DatePicker.NextTrigger class={navButton}><MaterialSymbolsChevronRightRounded /></DatePicker.NextTrigger>
                                         </Tooltip>
                                     </DatePicker.ViewControl>
-                                    <DatePicker.Table class="w-full border-separate border-spacing-1">
-                                        <DatePicker.TableBody>
-                                            {#each picker().getMonthsGrid({ columns: 3, format: "short" }) as months, index (index)}
-                                                <DatePicker.TableRow>
-                                                    {#each months as month (month.value)}
-                                                        <DatePicker.TableCell value={month.value}>
-                                                            <DatePicker.TableCellTrigger class={[cell, "h-12 w-full"]}
-                                                                >{month.label}</DatePicker.TableCellTrigger
-                                                            >
-                                                        </DatePicker.TableCell>
-                                                    {/each}
-                                                </DatePicker.TableRow>
-                                            {/each}
-                                        </DatePicker.TableBody>
-                                    </DatePicker.Table>
+                                    <div data-no-drag="y" class="touch-pan-y" {@attach swipe(turn(picker))}>
+                                        <DatePicker.Table class="w-full border-separate border-spacing-1">
+                                            <DatePicker.TableBody>
+                                                {#each picker().getMonthsGrid({ columns: 3, format: "short" }) as months, index (index)}
+                                                    <DatePicker.TableRow>
+                                                        {#each months as month (month.value)}
+                                                            <DatePicker.TableCell value={month.value}>
+                                                                <DatePicker.TableCellTrigger class={[cell, "h-12 w-full rounded-control-lg"]}
+                                                                    >{month.label}</DatePicker.TableCellTrigger
+                                                                >
+                                                            </DatePicker.TableCell>
+                                                        {/each}
+                                                    </DatePicker.TableRow>
+                                                {/each}
+                                            </DatePicker.TableBody>
+                                        </DatePicker.Table>
+                                    </div>
                                 {/snippet}
                             </DatePicker.Context>
                         </DatePicker.View>
@@ -228,21 +243,23 @@
                                             <DatePicker.NextTrigger class={navButton}><MaterialSymbolsChevronRightRounded /></DatePicker.NextTrigger>
                                         </Tooltip>
                                     </DatePicker.ViewControl>
-                                    <DatePicker.Table class="w-full border-separate border-spacing-1">
-                                        <DatePicker.TableBody>
-                                            {#each picker().getYearsGrid({ columns: 3 }) as years, index (index)}
-                                                <DatePicker.TableRow>
-                                                    {#each years as year (year.value)}
-                                                        <DatePicker.TableCell value={year.value}>
-                                                            <DatePicker.TableCellTrigger class={[cell, "h-12 w-full"]}
-                                                                >{year.label}</DatePicker.TableCellTrigger
-                                                            >
-                                                        </DatePicker.TableCell>
-                                                    {/each}
-                                                </DatePicker.TableRow>
-                                            {/each}
-                                        </DatePicker.TableBody>
-                                    </DatePicker.Table>
+                                    <div data-no-drag="y" class="touch-pan-y" {@attach swipe(turn(picker))}>
+                                        <DatePicker.Table class="w-full border-separate border-spacing-1">
+                                            <DatePicker.TableBody>
+                                                {#each picker().getYearsGrid({ columns: 3 }) as years, index (index)}
+                                                    <DatePicker.TableRow>
+                                                        {#each years as year (year.value)}
+                                                            <DatePicker.TableCell value={year.value}>
+                                                                <DatePicker.TableCellTrigger class={[cell, "h-12 w-full rounded-control-lg"]}
+                                                                    >{year.label}</DatePicker.TableCellTrigger
+                                                                >
+                                                            </DatePicker.TableCell>
+                                                        {/each}
+                                                    </DatePicker.TableRow>
+                                                {/each}
+                                            </DatePicker.TableBody>
+                                        </DatePicker.Table>
+                                    </div>
                                 {/snippet}
                             </DatePicker.Context>
                         </DatePicker.View>

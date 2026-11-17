@@ -84,9 +84,9 @@
 
 {#snippet marker(option: Option)}
     {#if option.icon}
-        <option.icon class="size-4 shrink-0 text-gray-400" />
+        <option.icon class="size-5 shrink-0 text-gray-400" />
     {:else if option.color}
-        <span class="size-4 shrink-0 p-0.5"><span class="block size-full rounded-full" style:background-color={option.color}></span></span>
+        <span class="size-5 shrink-0 p-1"><span class="block size-full rounded-full" style:background-color={option.color}></span></span>
     {/if}
 {/snippet}
 

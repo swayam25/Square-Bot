@@ -16,7 +16,7 @@
     $effect(() => demo.attach());
 </script>
 
-<section aria-label="Preview of the web player" class="flex w-full max-w-md flex-col gap-6 rounded-4xl bg-gray-900 p-6 shadow-2xl shadow-black/40">
+<section aria-label="Preview of the web player" class="flex w-full max-w-md flex-col gap-6 rounded-card bg-gray-900 p-6 shadow-2xl shadow-black/40">
     <div class="flex items-center gap-4">
         <img src={demo.track.artwork} alt="" class="size-20 shrink-0 rounded-2xl bg-gray-800 object-cover" />
         <div class="flex min-w-0 flex-col gap-1">
@@ -45,7 +45,7 @@
             <button
                 type="button"
                 onclick={() => demo.previous()}
-                class="ripple flex size-12 items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700"
+                class="ripple flex size-12 items-center justify-center rounded-control-lg bg-gray-800 hover:bg-gray-700"
                 {@attach ripple}
             >
                 <MaterialSymbolsSkipPreviousRounded class="size-5" />
@@ -59,7 +59,7 @@
                 class={[
                     "ripple flex h-14 w-20 items-center justify-center bg-accent text-cyan-950 hover:bg-cyan-300",
                     "transition-[border-radius] duration-400 ease-spring",
-                    demo.playing ? "rounded-4xl" : "rounded-2xl",
+                    demo.playing ? "rounded-3xl" : "rounded-2xl",
                 ]}
             >
                 {#if demo.playing}<MaterialSymbolsPauseRounded class="size-6" />{:else}<MaterialSymbolsPlayArrowRounded class="size-6" />{/if}
@@ -69,7 +69,7 @@
             <button
                 type="button"
                 onclick={() => demo.skip()}
-                class="ripple flex size-12 items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700"
+                class="ripple flex size-12 items-center justify-center rounded-control-lg bg-gray-800 hover:bg-gray-700"
                 {@attach ripple}
             >
                 <MaterialSymbolsSkipNextRounded class="size-5" />
@@ -83,7 +83,7 @@
             <button
                 type="button"
                 aria-pressed={demo.filters.includes(name)}
-                class="ripple rounded-full"
+                class="ripple rounded-xl"
                 onclick={() => demo.toggleFilter(name)}
                 {@attach ripple}
             >

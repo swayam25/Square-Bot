@@ -264,7 +264,7 @@
     }
 
     const railButton = [
-        "ripple flex h-8 min-w-8 flex-1 items-center justify-center rounded-full text-gray-400 hover:bg-white/10 hover:text-gray-100 [&>svg]:size-5",
+        "ripple flex h-8 min-w-8 flex-1 items-center justify-center rounded-xl text-gray-400 hover:bg-white/10 hover:text-gray-100 [&>svg]:size-5",
         focusRing,
     ];
     const surface = $derived(mobile.current ? "bg-gray-900" : "bg-gray-800");
@@ -294,7 +294,7 @@
         plain
         contentClass="w-104"
         triggerClass={[
-            "ripple flex size-10 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-white/10 hover:text-gray-100 disabled:opacity-50 md:size-8 [&>svg]:size-5",
+            "ripple flex size-10 shrink-0 items-center justify-center rounded-2xl text-gray-400 hover:bg-white/10 hover:text-gray-100 disabled:opacity-50 md:size-8 md:rounded-xl [&>svg]:size-5",
             focusRing,
             triggerClass,
         ]}
@@ -319,7 +319,10 @@
                     <button
                         type="button"
                         aria-expanded={toneOpen}
-                        class={["ripple flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-white/10 md:size-10", focusRing]}
+                        class={[
+                            "ripple flex size-12 shrink-0 items-center justify-center rounded-control-lg hover:bg-white/10 md:size-10 md:rounded-2xl",
+                            focusRing,
+                        ]}
                         onclick={() => (toneOpen = !toneOpen)}
                     >
                         <span class="font-emoji text-2xl/none">{TONES[tone]}</span>
@@ -331,7 +334,7 @@
                         tabindex="-1"
                         aria-label="Skin tone"
                         class={[
-                            "absolute inset-y-0 right-0 flex origin-right animate-pop-in items-center gap-1 rounded-full p-1 shadow-xl shadow-black/50",
+                            "absolute inset-y-0 right-0 flex origin-right animate-pop-in items-center gap-1 rounded-control-lg p-1 shadow-xl shadow-black/50 md:rounded-2xl",
                             mobile.current ? "bg-gray-800" : "bg-gray-900",
                         ]}
                         onkeydown={(event) => {
@@ -350,7 +353,7 @@
                                     type="button"
                                     aria-pressed={tone === index}
                                     class={[
-                                        "ripple flex size-10 items-center justify-center rounded-full hover:bg-white/10 aria-pressed:bg-accent/20 md:size-8",
+                                        "ripple flex size-10 items-center justify-center rounded-2xl hover:bg-white/10 aria-pressed:bg-accent/20 md:size-8 md:rounded-xl",
                                         focusRing,
                                     ]}
                                     onclick={() => setTone(index)}
@@ -404,7 +407,7 @@
                         />
                     {:else if !data || !customsSettled}
                         <div aria-hidden="true" class="flex flex-col gap-2">
-                            <div class="h-4 w-32 skeleton rounded-full"></div>
+                            <div class="h-4 w-32 skeleton rounded-md"></div>
                             <div class="grid gap-2" style:grid-template-columns="repeat({cols}, minmax(0, 1fr))">
                                 {#each { length: cols * 5 } as _, index (index)}
                                     <div class="aspect-square skeleton rounded-xl"></div>

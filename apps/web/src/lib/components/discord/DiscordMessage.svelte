@@ -82,6 +82,7 @@
 
 <div
     {id}
+    data-discord
     role="article"
     onpointerenter={() => (hovered = true)}
     onpointerleave={() => (hovered = false)}
@@ -99,7 +100,7 @@
         {#if command}
             <div class="relative mb-1 flex h-4.5 items-center gap-1 text-sm leading-4.5 whitespace-nowrap text-dc-command">
                 {@render spine()}
-                <Avatar src={commandUser.avatar} name={commandUser.name} class="size-4 cursor-pointer text-2xs" animate={hovered} />
+                <Avatar src={commandUser.avatar} name={commandUser.name} round class="size-4 cursor-pointer text-2xs" animate={hovered} />
                 <span class="mr-1 cursor-pointer font-medium text-dc-command-name hover:underline">{commandUser.name}</span>
                 used
                 <span class="flex cursor-pointer items-center gap-1 rounded bg-dc-blurple/24 px-0.5 text-xs text-dc-link">
@@ -113,7 +114,7 @@
                 {#if reply === "deleted"}
                     <span class="italic">Original message was deleted</span>
                 {:else}
-                    <Avatar src={reply.avatar} name={reply.name} class="size-4 text-2xs" animate={hovered} />
+                    <Avatar src={reply.avatar} name={reply.name} round class="size-4 text-2xs" animate={hovered} />
                     {#if reply.bot}
                         <span class="shrink-0 rounded bg-dc-blurple px-1 text-2xs leading-3.75 font-semibold text-white">APP</span>
                     {/if}
@@ -141,7 +142,7 @@
                     <img src={square} alt="" class="size-7" />
                 </span>
             {:else}
-                <Avatar src={avatar} {name} class="absolute! top-0 -left-14 size-10 cursor-pointer" animate={hovered} />
+                <Avatar src={avatar} {name} round class="absolute! top-0 -left-14 size-10 cursor-pointer" animate={hovered} />
             {/if}
             <span style:color={color || undefined} class="cursor-pointer font-medium text-dc-strong hover:underline">{name}</span>
             {#if bot}

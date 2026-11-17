@@ -23,7 +23,7 @@
 <span
     style:--role={role ? color : undefined}
     class={[
-        "cursor-pointer rounded-[3px] px-0.5 font-medium whitespace-nowrap transition-colors",
+        "cursor-pointer rounded-[3px] px-0.5 font-medium whitespace-nowrap transition-colors [corner-shape:round]",
         role
             ? "bg-[color-mix(in_srgb,var(--role)_10%,transparent)] text-(--role) hover:bg-[color-mix(in_srgb,var(--role)_30%,transparent)]"
             : "bg-dc-blurple/30 text-dc-mention hover:bg-dc-blurple hover:text-white",

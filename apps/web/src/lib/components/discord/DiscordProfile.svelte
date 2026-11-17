@@ -14,7 +14,10 @@
     }: { name: string; avatar: string | null; banner: string | null; color: string | null; bio: string | null; class?: ClassValue } = $props();
 </script>
 
-<div class={["w-full overflow-hidden rounded-2xl bg-dc-surface text-base leading-5.5 text-dc-text shadow-2xl shadow-black/40", className]}>
+<div
+    data-discord
+    class={["w-full overflow-hidden rounded-card bg-dc-surface text-base leading-5.5 text-dc-text shadow-2xl shadow-black/40", className]}
+>
     <div class="relative">
         {#if banner}
             <Picture src={banner} alt="" animate class="flex aspect-5/2 w-full">
@@ -24,7 +27,7 @@
             <div class="h-26 bg-dc-border" style:background-color={color ?? undefined}></div>
         {/if}
         <span class="absolute -bottom-10 left-4 flex rounded-full bg-dc-surface p-1.5">
-            <Avatar src={avatar} {name} animate class="size-20" />
+            <Avatar src={avatar} {name} animate round class="size-20" />
         </span>
     </div>
     <div class="flex flex-col gap-3 px-4 pt-14 pb-4">

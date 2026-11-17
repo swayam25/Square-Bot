@@ -45,7 +45,7 @@
             />
             <Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-6">
                 <Dialog.Content
-                    class="flex max-h-full w-full max-w-lg flex-col gap-6 rounded-4xl bg-gray-900 p-6 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
+                    class="flex max-h-full w-full max-w-lg flex-col gap-6 rounded-card bg-gray-900 p-6 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
                 >
                     <div class="flex flex-col gap-1">
                         <Dialog.Title class="font-display text-xl font-semibold">{title}</Dialog.Title>

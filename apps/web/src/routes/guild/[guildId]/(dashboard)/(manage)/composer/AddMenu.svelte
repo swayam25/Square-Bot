@@ -23,7 +23,7 @@
     placement="bottom-start"
     contentClass="w-80"
     triggerClass={[
-        "ripple inline-flex h-12 w-fit shrink-0 items-center gap-2 rounded-full bg-gray-800 px-6 text-sm font-medium hover:bg-gray-700 md:h-10 md:px-4",
+        "ripple inline-flex h-12 w-fit shrink-0 items-center gap-2 rounded-control-lg bg-gray-800 px-4 text-sm font-medium hover:bg-gray-700 md:h-10 md:rounded-2xl md:px-3",
         focusRing,
     ]}
 >
@@ -37,7 +37,7 @@
                 disabled={!!full}
                 class={[
                     "ripple flex w-full items-center gap-4 rounded-xl px-4 py-2 text-left hover:bg-white/10 disabled:pointer-events-none disabled:opacity-50",
-                    mobile.current && "min-h-12 rounded-2xl",
+                    mobile.current && "min-h-12 rounded-control-lg",
                 ]}
                 onclick={() => add(kind)}
             >

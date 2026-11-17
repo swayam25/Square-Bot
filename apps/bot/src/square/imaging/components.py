@@ -85,7 +85,7 @@ class Kit:
             Row(lead, Text(label, style, ink), gap=8),
             padding=(12, 0) if lead else (16, 0),
             fill=fill,
-            radius=Radius.FULL,
+            radius=Radius.XL,
             height=32,
         )
 
@@ -96,19 +96,20 @@ class Kit:
         return Box(Spacer(size), fill=color, radius=Radius.FULL, width=size, height=size)
 
     def avatar(self, image: Image.Image | None, name: str, size: float = 40, style: TextStyle | None = None) -> Node:
+        radius = size * 0.4
         if image is not None:
-            return Picture(image, size, radius=Radius.FULL)
+            return Picture(image, size, radius=radius)
         fill = AVATAR_FILLS[zlib.crc32(name.encode()) % len(AVATAR_FILLS)]
         style = style or (Type.XS_SEMIBOLD if size <= 32 else Type.XL_SEMIBOLD)
         return Box(
             Text(initial(name), style, GRAY_950, align="center"),
             fill=fill,
-            radius=Radius.FULL,
+            radius=radius,
             width=size,
             height=size,
         )
 
-    def guild_icon(self, image: Image.Image | None, name: str, size: float = 40, *, radius: float = Radius.XL) -> Node:
+    def guild_icon(self, image: Image.Image | None, name: str, size: float = 40, *, radius: float = Radius.XL2) -> Node:
         if image is not None:
             return Picture(image, size, radius=radius)
         letters = acronym(name) or "?"

@@ -28,7 +28,7 @@
 <a
     href="/guild/{guild}/player"
     aria-label={track ? `Open the player: ${track.title} by ${track.author}` : "Open the player"}
-    class="group ripple relative isolate flex flex-col gap-4 overflow-clip rounded-3xl bg-gray-900 p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+    class="group ripple relative isolate flex flex-col gap-4 overflow-clip rounded-card bg-gray-900 p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     {@attach ripple}
 >
     {#if track?.artworkUrl}
@@ -74,13 +74,13 @@
                 <span class="font-display text-xl font-semibold">Nothing is playing</span>
                 <span class="text-sm text-gray-400">Open the player to search and queue something.</span>
             {:else}
-                <span aria-hidden="true" class="h-7 w-48 skeleton rounded-full"></span>
-                <span aria-hidden="true" class="h-5 w-32 skeleton rounded-full"></span>
+                <span aria-hidden="true" class="h-7 w-48 skeleton rounded-lg"></span>
+                <span aria-hidden="true" class="h-5 w-32 skeleton rounded-md"></span>
             {/if}
         </span>
 
         <span
-            class="hidden shrink-0 items-center gap-2 rounded-full bg-gray-800 px-4 text-sm font-medium transition-colors group-hover:bg-gray-700 sm:flex sm:h-10"
+            class="hidden shrink-0 items-center gap-2 rounded-2xl bg-gray-800 px-3 text-sm font-medium transition-colors group-hover:bg-gray-700 sm:flex sm:h-10"
         >
             Open player<MaterialSymbolsArrowForwardRounded class="size-4" />
         </span>

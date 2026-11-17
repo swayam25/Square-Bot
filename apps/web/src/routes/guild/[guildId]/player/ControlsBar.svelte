@@ -89,15 +89,15 @@
     const LOOP_LABEL = { off: "Loop off", queue: "Looping the queue", track: "Looping this track" } as const;
 
     const icon = $derived([
-        "ripple flex shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-40",
-        mobile.current ? "size-12 [&_svg]:size-6" : "size-10 [&_svg]:size-5",
+        "ripple flex shrink-0 items-center justify-center transition-colors disabled:opacity-40",
+        mobile.current ? "size-12 rounded-control-lg [&_svg]:size-6" : "size-10 rounded-2xl [&_svg]:size-5",
     ]);
     const toggle = (on: boolean) => [
         icon,
         on ? "bg-accent/10 text-accent hover:bg-accent/20" : "text-gray-400 hover:bg-gray-800 hover:text-gray-100",
     ];
     const tile = (on: boolean) => [
-        "ripple flex h-14 w-full items-center gap-4 rounded-2xl px-4 text-sm font-medium transition-colors disabled:opacity-40 [&_svg]:size-6",
+        "ripple flex h-14 w-full items-center gap-4 rounded-3xl px-4 text-sm font-medium transition-colors disabled:opacity-40 [&_svg]:size-6",
         on ? "bg-accent/10 text-accent hover:bg-accent/20" : "bg-gray-800 hover:bg-gray-700",
     ];
     let options = $state(false);
@@ -155,7 +155,7 @@
                 "ripple flex items-center justify-center bg-accent text-cyan-950 hover:bg-cyan-300 disabled:opacity-40",
                 "transition-[border-radius] duration-400 ease-spring",
                 mobile.current ? "h-16 w-20" : "h-12 w-16",
-                playing ? "rounded-4xl" : "rounded-2xl",
+                mobile.current ? (playing ? "rounded-card" : "rounded-2xl") : playing ? "rounded-control-lg" : "rounded-xl",
             ]}
             {@attach ripple}
             onclick={() => act("pause", () => control(music.setPaused({ guild, paused: !player.paused })))}
@@ -184,7 +184,7 @@
             {#if player.vote}
                 <span
                     aria-hidden="true"
-                    class="pointer-events-none absolute -top-1 -right-2 rounded-full bg-accent px-1.5 font-mono text-2xs leading-4 font-semibold text-cyan-950"
+                    class="pointer-events-none absolute -top-1 -right-2 rounded-md bg-accent px-1.5 font-mono text-2xs leading-4 font-semibold text-cyan-950"
                 >
                     {player.vote.voterIds.length}/{player.vote.needed}
                 </span>
@@ -242,7 +242,7 @@
 {/snippet}
 
 {#if mobile.current}
-    <section aria-label="Player controls" class="flex shrink-0 flex-col gap-2 rounded-3xl bg-gray-900 px-4 pt-2 pb-4">
+    <section aria-label="Player controls" class="flex shrink-0 flex-col gap-2 rounded-card bg-gray-900 px-4 pt-2 pb-4">
         {@render progress()}
         <div class="flex justify-between font-mono text-xs text-gray-400">
             <span>{@render elapsed()}</span><span>{@render total()}</span>
@@ -256,7 +256,7 @@
         </div>
     </section>
 
-    <nav aria-label="Player" class="flex shrink-0 items-center justify-around rounded-full bg-gray-900 p-1">
+    <nav aria-label="Player" class="flex shrink-0 items-center justify-around rounded-3xl bg-gray-900 p-1">
         {@render dock?.()}
         <Tooltip content="More">
             <Drawer bind:open={options} title="More" triggerClass={[icon, "text-gray-400 hover:bg-gray-800 hover:text-gray-100"]}>
@@ -290,7 +290,7 @@
                                 type="button"
                                 aria-busy={busy === "stop"}
                                 disabled={!!lock || blocked("stop")}
-                                class="ripple flex h-12 w-full items-center justify-center gap-2 rounded-full bg-red-400/10 text-sm font-medium text-red-400 transition-colors hover:bg-red-400/20 disabled:opacity-40 [&_svg]:size-5"
+                                class="ripple flex h-12 w-full items-center justify-center gap-2 rounded-control-lg bg-red-400/10 text-sm font-medium text-red-400 transition-colors hover:bg-red-400/20 disabled:opacity-40 [&_svg]:size-5"
                                 {@attach ripple}
                                 onclick={() => act("stop", () => control(music.stopPlayer({ guild })))}
                             >
@@ -304,7 +304,7 @@
         </Tooltip>
     </nav>
 {:else}
-    <section aria-label="Player controls" class="flex flex-col gap-2 rounded-3xl bg-gray-900 px-6 pt-2 pb-4">
+    <section aria-label="Player controls" class="flex flex-col gap-2 rounded-card bg-gray-900 px-6 pt-2 pb-4">
         {@render progress()}
         <div class="flex items-center gap-4">
             <div class="flex shrink-0 items-center gap-2">

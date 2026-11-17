@@ -20,24 +20,31 @@
         "ghost-danger": "font-medium text-gray-400 hover:bg-red-400/10 hover:text-red-400",
     };
 
+    const shapes: Record<Size, string> = {
+        xs: "rounded-xl md:rounded-lg [&_svg]:size-4.5 md:[&_svg]:size-4",
+        sm: "rounded-2xl md:rounded-xl [&_svg]:size-5 md:[&_svg]:size-4.5",
+        md: "rounded-control-lg md:rounded-2xl [&_svg]:size-5.5 md:[&_svg]:size-5",
+        lg: "rounded-3xl md:rounded-control-lg [&_svg]:size-6",
+    };
     const iconSizes: Record<Size, string> = {
-        xs: "size-8 md:size-6 [&_svg]:size-4",
-        sm: "size-10 md:size-8 [&_svg]:size-5",
-        md: "size-12 md:size-10 [&_svg]:size-5",
-        lg: "size-12 [&_svg]:size-6",
+        xs: "size-8 md:size-6",
+        sm: "size-10 md:size-8",
+        md: "size-12 md:size-10",
+        lg: "size-14 md:size-12",
     };
     const textSizes: Record<Size, string> = {
-        xs: "h-8 px-3 text-xs md:h-6 [&_svg]:size-3",
-        sm: "h-10 px-4 text-xs md:h-8 md:px-3 [&_svg]:size-4",
-        md: "h-12 px-6 md:h-10 md:px-4 [&_svg]:size-4",
-        lg: "h-12 px-6 text-base [&_svg]:size-5",
+        xs: "h-8 gap-1.5 px-3 text-[13px] md:h-6 md:gap-1 md:px-2 md:text-xs",
+        sm: "h-10 px-3 md:h-8 md:gap-1.5 md:text-[13px]",
+        md: "h-12 px-4 text-[15px] md:h-10 md:px-3 md:text-sm",
+        lg: "h-14 px-4 text-base md:h-12",
     };
 
     const classes = $derived([
-        "ripple inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm whitespace-nowrap select-none",
+        "ripple inline-flex shrink-0 items-center justify-center gap-2 text-sm whitespace-nowrap select-none",
         focusRing,
         "disabled:pointer-events-none",
         !loading && "disabled:opacity-50",
+        shapes[size],
         icon ? iconSizes[size] : textSizes[size],
         variants[variant],
         className,

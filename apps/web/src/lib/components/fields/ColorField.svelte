@@ -29,7 +29,7 @@
     const color = $derived(parseColor(current ?? SWATCHES[0]!.value));
 
     const swatch = [
-        "ripple flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full transition-transform hover:scale-110 md:size-8 [&>svg]:size-5",
+        "ripple flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-2xl transition-transform hover:scale-110 md:size-8 md:rounded-xl [&>svg]:size-5",
         focusRing,
     ];
     const thumb =
@@ -70,7 +70,7 @@
     >
         {#snippet trigger()}
             <span
-                class={["size-8 shrink-0 rounded-full md:size-6", !custom && "border-2 border-dashed border-gray-500"]}
+                class={["size-8 shrink-0 rounded-xl md:size-6 md:rounded-lg", !custom && "border-2 border-dashed border-gray-500"]}
                 style:background-color={custom ? current : undefined}
             ></span>
             <span class={["min-w-0 flex-1 truncate", custom ? "font-mono" : "text-gray-400"]}>{custom ? current : "Custom"}</span>
@@ -96,7 +96,7 @@
                 <Tooltip content="Pick from the screen">
                     <ColorPicker.EyeDropperTrigger
                         class={[
-                            "ripple flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-gray-700 text-gray-100 hover:bg-gray-600 md:size-10 [&>svg]:size-5",
+                            "ripple flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-control-lg bg-gray-700 text-gray-100 hover:bg-gray-600 md:size-10 md:rounded-2xl [&>svg]:size-5",
                             focusRing,
                         ]}
                     >
@@ -104,7 +104,7 @@
                     </ColorPicker.EyeDropperTrigger>
                 </Tooltip>
                 <label class={[field, "flex-1 bg-gray-700 pl-2 hover:bg-gray-600"]}>
-                    <ColorPicker.ValueSwatch class="size-8 shrink-0 rounded-full md:size-6" />
+                    <ColorPicker.ValueSwatch class="size-8 shrink-0 rounded-xl md:size-6 md:rounded-lg" />
                     <ColorPicker.ChannelInput
                         channel="hex"
                         aria-label="{label} hex"

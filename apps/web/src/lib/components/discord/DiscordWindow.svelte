@@ -22,7 +22,7 @@
     } = $props();
 </script>
 
-<div class={["w-full overflow-hidden rounded-2xl bg-dc-bg text-base leading-5.5 text-dc-text shadow-2xl shadow-black/40", className]}>
+<div data-discord class={["w-full overflow-hidden rounded-card bg-dc-bg text-base leading-5.5 text-dc-text shadow-2xl shadow-black/40", className]}>
     <div class="flex h-12 items-center gap-2 border-b border-dc-line px-4">
         <MaterialSymbolsTagRounded aria-hidden="true" class="size-6 shrink-0 text-dc-muted" />
         <span class="truncate font-semibold text-dc-strong">{channel}</span>

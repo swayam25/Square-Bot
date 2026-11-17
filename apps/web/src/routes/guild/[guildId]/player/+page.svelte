@@ -132,7 +132,7 @@
                 type="button"
                 aria-haspopup="dialog"
                 disabled={!!off}
-                class="ripple flex size-12 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-100 disabled:opacity-40"
+                class="ripple flex size-12 items-center justify-center rounded-control-lg text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-100 disabled:opacity-40"
                 {@attach ripple}
                 onclick={() => openSheet(value)}
             >
@@ -141,7 +141,7 @@
             {#if count}
                 <span
                     aria-hidden="true"
-                    class="pointer-events-none absolute top-1 right-0 rounded-full bg-accent px-1.5 font-mono text-2xs leading-4 font-semibold text-cyan-950"
+                    class="pointer-events-none absolute top-1 right-0 rounded-md bg-accent px-1.5 font-mono text-2xs leading-4 font-semibold text-cyan-950"
                 >
                     {formatCount(count)}
                 </span>
@@ -158,7 +158,7 @@
 {/snippet}
 
 <div class="flex h-dvh overflow-hidden bg-gray-900 md:p-2">
-    <div class="relative min-h-0 min-w-0 flex-1 animate-shell-in overflow-hidden bg-gray-950 md:rounded-4xl">
+    <div class="relative min-h-0 min-w-0 flex-1 animate-shell-in overflow-hidden bg-gray-950 md:rounded-card">
         <main
             bind:this={scroller}
             class="flex size-full flex-col gap-2 overflow-y-auto overscroll-contain p-2 max-md:overflow-hidden max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:overflow-hidden"
@@ -190,10 +190,10 @@
                 />
             {:else}
                 <div aria-hidden="true" class="grid flex-1 gap-2 md:flex-none lg:min-h-0 lg:flex-1 lg:grid-cols-2">
-                    <div class="h-full skeleton rounded-3xl md:h-112 lg:h-auto"></div>
-                    <div class="hidden h-112 skeleton rounded-3xl md:block lg:h-auto"></div>
+                    <div class="h-full skeleton rounded-card md:h-112 lg:h-auto"></div>
+                    <div class="hidden h-112 skeleton rounded-card md:block lg:h-auto"></div>
                 </div>
-                <div aria-hidden="true" class="h-24 shrink-0 skeleton rounded-3xl"></div>
+                <div aria-hidden="true" class="h-24 shrink-0 skeleton rounded-card"></div>
             {/if}
         </main>
         <OverlayScrollbar viewport={scroller} inset={24} />

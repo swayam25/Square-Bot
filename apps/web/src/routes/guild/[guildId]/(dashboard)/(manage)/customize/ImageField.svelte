@@ -59,7 +59,7 @@
             class={[
                 "group relative flex shrink-0 cursor-pointer overflow-hidden bg-gray-800",
                 focusRing,
-                kind === "avatar" ? "size-20 rounded-full" : "aspect-5/2 w-full rounded-2xl",
+                kind === "avatar" ? "size-20 rounded-icon" : "aspect-5/2 w-full rounded-2xl",
             ]}
         >
             {#if kind === "avatar"}

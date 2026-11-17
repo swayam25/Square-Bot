@@ -85,6 +85,11 @@
     --font-emoji: "Twemoji Full", sans-serif;
     --font-mono: "Twemoji", "JetBrains Mono Variable", "Noto Sans Variable", "Noto Sans Math", "Noto Sans Symbols", "Noto Sans Symbols 2", monospace;
 
+    --radius-control-lg: 20px;
+    --radius-card: 28px;
+    --radius-sheet: 36px;
+    --radius-icon: 40%;
+
     --text-2xs: 10px;
     --text-2xs--line-height: 12px;
 
@@ -307,6 +312,23 @@
 }
 
 @layer base {
+    /* Inside Discord mockups only the outer frame is ours. The bot's image cards inside them are ours again */
+    :root {
+        --corner: superellipse(1.2);
+    }
+    :where(*, ::before, ::after) {
+        corner-shape: var(--corner);
+    }
+    :where([data-discord] *, [data-discord] ::before, [data-discord] ::after) {
+        corner-shape: round;
+    }
+    :where([data-card], [data-card] *, [data-card]::before, [data-card]::after, [data-card] ::before, [data-card] ::after) {
+        corner-shape: var(--corner);
+    }
+    :where(.rounded-full, .ripple-wave) {
+        corner-shape: round;
+    }
+
     html {
         color-scheme: dark;
         @apply bg-gray-950 font-sans text-gray-100 antialiased;

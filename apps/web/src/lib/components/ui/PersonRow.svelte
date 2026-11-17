@@ -19,7 +19,7 @@
     {#if person}
         <Avatar src={person.avatarUrl} name={person.name} class="size-8" />
     {:else}
-        <span class="size-8 shrink-0 rounded-full bg-white/5"></span>
+        <span class="size-8 shrink-0 rounded-icon bg-white/5"></span>
     {/if}
     <span class="flex min-w-0 flex-1 flex-col">
         {#if label}<span class="text-xs text-gray-400">{label}</span>{/if}

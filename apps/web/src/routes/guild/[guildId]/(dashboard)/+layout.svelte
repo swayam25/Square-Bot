@@ -165,7 +165,7 @@
         }
     }
 
-    const stacked = "h-14 flex-col justify-center gap-0.5 rounded-2xl text-2xs";
+    const stacked = "h-14 flex-col justify-center gap-0.5 rounded-3xl text-2xs";
 </script>
 
 {#snippet servers()}
@@ -174,11 +174,11 @@
             <a
                 href={switchHref(guild)}
                 aria-current={guild.id === data.guild.id ? "page" : undefined}
-                class="ripple flex h-12 shrink-0 items-center gap-4 rounded-xl px-2 text-sm font-medium hover:bg-white/10 aria-[current=page]:text-accent"
+                class="ripple flex h-12 shrink-0 items-center gap-4 rounded-control-lg px-2 text-sm font-medium hover:bg-white/10 aria-[current=page]:text-accent"
                 {@attach ripple}
                 onclick={closeSwitcher}
             >
-                <GuildIcon src={guild.iconUrl} name={guild.name} class="size-8 rounded-lg text-gray-100" />
+                <GuildIcon src={guild.iconUrl} name={guild.name} class="size-8 rounded-xl text-gray-100" />
                 <span class="min-w-0 flex-1 truncate">{guild.name}</span>
                 {#if guild.id === data.guild.id}<MaterialSymbolsCheckRounded class="size-5 shrink-0" />{/if}
             </a>
@@ -187,7 +187,7 @@
     <hr class="my-2 border-white/10" />
     <a
         href="/guild"
-        class="ripple flex h-12 items-center gap-4 rounded-xl px-4 text-sm font-medium hover:bg-white/10"
+        class="ripple flex h-12 items-center gap-4 rounded-control-lg px-4 text-sm font-medium hover:bg-white/10"
         {@attach ripple}
         onclick={closeSwitcher}
     >
@@ -223,7 +223,7 @@
                 aria-disabled="true"
                 class={[
                     "flex w-full shrink-0 cursor-not-allowed items-center font-medium text-gray-400 opacity-40",
-                    row ? "h-10 gap-2 rounded-full px-4 text-sm" : stacked,
+                    row ? "h-10 gap-2 rounded-2xl px-3 text-sm" : stacked,
                 ]}
             >
                 <item.icon class="size-6 shrink-0" />
@@ -236,7 +236,7 @@
             aria-current={isCurrent(item.href) ? "page" : undefined}
             class={[
                 "ripple flex shrink-0 items-center font-medium text-gray-400 hover:bg-white/10 hover:text-gray-100 aria-[current=page]:bg-accent/10 aria-[current=page]:text-accent",
-                row ? "h-10 gap-2 rounded-full px-4 text-sm" : [stacked, "w-full"],
+                row ? "h-10 gap-2 rounded-2xl px-3 text-sm" : [stacked, "w-full"],
                 focusRing,
             ]}
             {@attach ripple}
@@ -261,12 +261,16 @@
                 contentClass={expanded ? "w-(--reference-width)" : "w-72"}
                 triggerClass={[
                     "ripple flex items-center text-left",
-                    expanded ? "w-full gap-4 rounded-2xl bg-gray-800 p-2 pr-4 hover:bg-gray-700" : "rounded-2xl",
+                    expanded ? "w-full gap-4 rounded-control-lg bg-gray-800 p-2 pr-4 hover:bg-gray-700" : "rounded-control-lg",
                     focusRing,
                 ]}
             >
                 {#snippet trigger()}
-                    <GuildIcon src={data.guild.iconUrl} name={data.guild.name} class={expanded ? "size-10 rounded-xl" : "size-12 rounded-2xl"} />
+                    <GuildIcon
+                        src={data.guild.iconUrl}
+                        name={data.guild.name}
+                        class={expanded ? "size-10 rounded-xl" : "size-12 rounded-control-lg"}
+                    />
                     {#if expanded}
                         <span class="flex min-w-0 flex-1 flex-col">
                             <span class="truncate text-sm font-semibold">{data.guild.name}</span>
@@ -312,8 +316,8 @@
                         disabled={refreshing}
                         aria-busy={refreshing}
                         class={[
-                            "ripple flex items-center gap-4 rounded-full text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100",
-                            expanded ? "h-10 w-full px-4" : "size-12 justify-center",
+                            "ripple flex items-center gap-4 text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-100",
+                            expanded ? "h-10 w-full rounded-2xl px-3" : "size-12 justify-center rounded-control-lg",
                             focusRing,
                         ]}
                         {@attach ripple}
@@ -333,7 +337,7 @@
                     title="Your account"
                     placement={expanded ? "top-start" : "right-end"}
                     triggerClass={[
-                        "ripple flex items-center gap-4 rounded-full text-left hover:bg-gray-800",
+                        "ripple flex items-center gap-4 rounded-control-lg text-left hover:bg-gray-800",
                         expanded ? "w-full p-2 pr-4" : "p-2",
                         focusRing,
                     ]}
@@ -366,7 +370,7 @@
         <span class="h-full w-1 rounded-full transition-colors duration-200 group-hover:bg-gray-400 group-active:bg-gray-400"></span>
     </div>
 
-    <div class="relative min-h-0 min-w-0 flex-1 animate-shell-in overflow-hidden rounded-b-4xl bg-gray-950 md:rounded-4xl">
+    <div class="relative min-h-0 min-w-0 flex-1 animate-shell-in overflow-hidden rounded-b-card bg-gray-950 md:rounded-card">
         <main bind:this={scroller} class="size-full overflow-y-auto overscroll-contain px-4 py-6 md:px-8">
             {#key page.url.pathname}
                 <div class="animate-page-in">{@render children()}</div>

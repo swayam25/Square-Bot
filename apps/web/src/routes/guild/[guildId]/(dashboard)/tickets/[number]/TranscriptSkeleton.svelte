@@ -12,22 +12,22 @@
     <div aria-hidden="true" class="grid grid-cols-2 gap-2 rounded-3xl bg-gray-900 p-2 md:grid-cols-3">
         {#each [0, 1, 2] as i (i)}
             <div class="flex min-h-12 items-center gap-4 rounded-2xl bg-gray-800 p-2">
-                <span class="size-8 shrink-0 skeleton rounded-full"></span>
+                <span class="size-8 shrink-0 skeleton rounded-icon"></span>
                 <span class="flex flex-1 flex-col gap-1.5">
-                    <span class="h-3 w-16 skeleton rounded-full"></span>
-                    <span class="h-3.5 w-24 skeleton rounded-full"></span>
+                    <span class="h-3 w-16 skeleton rounded-md"></span>
+                    <span class="h-3.5 w-24 skeleton rounded-md"></span>
                 </span>
             </div>
         {/each}
         {#each [0, 1, 2] as i (i)}
             <div class="flex min-h-12 flex-col justify-center gap-1.5 rounded-2xl bg-gray-800 px-4 py-2">
-                <span class="h-3 w-14 skeleton rounded-full"></span>
-                <span class="h-3.5 w-32 max-w-full skeleton rounded-full"></span>
+                <span class="h-3 w-14 skeleton rounded-md"></span>
+                <span class="h-3.5 w-32 max-w-full skeleton rounded-md"></span>
             </div>
         {/each}
     </div>
 
-    <div aria-hidden="true" class="w-full overflow-hidden rounded-2xl bg-dc-bg">
+    <div aria-hidden="true" data-discord class="w-full overflow-hidden rounded-card bg-dc-bg">
         <div class="flex h-12 items-center gap-2 border-b border-dc-line px-4">
             <span class="size-5 skeleton rounded-md"></span>
             <span class="h-4 w-28 skeleton rounded-full"></span>

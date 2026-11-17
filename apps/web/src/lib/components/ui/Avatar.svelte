@@ -28,10 +28,16 @@
     import Picture from "#lib/components/ui/Picture.svelte";
     import type { ClassValue } from "svelte/elements";
 
-    let { src, name, class: className = "size-10", animate }: { src?: string | null; name: string; class?: ClassValue; animate?: boolean } = $props();
+    let {
+        src,
+        name,
+        class: className = "size-10",
+        animate,
+        round = false,
+    }: { src?: string | null; name: string; class?: ClassValue; animate?: boolean; round?: boolean } = $props();
 </script>
 
-<Picture {src} alt={name} {animate} class={["rounded-full", className]}>
+<Picture {src} alt={name} {animate} class={[round ? "rounded-full" : "rounded-icon", className]}>
     {#snippet fallback({ loading })}
         <span
             class={[

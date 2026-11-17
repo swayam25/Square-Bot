@@ -99,7 +99,7 @@
                 <Dialog.CloseTrigger
                     aria-label="Exit full screen"
                     class={[
-                        "absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 flex size-12 items-center justify-center rounded-full bg-black/30 text-gray-100 backdrop-blur-xl transition-opacity duration-500 hover:bg-black/50 focus-visible:opacity-100 md:top-6 md:right-6",
+                        "absolute top-[max(1rem,env(safe-area-inset-top))] right-4 z-10 flex size-12 items-center justify-center rounded-control-lg bg-black/30 text-gray-100 backdrop-blur-xl transition-opacity duration-500 hover:bg-black/50 focus-visible:opacity-100 md:top-6 md:right-6",
                         idle ? "pointer-events-none opacity-0" : "opacity-100",
                     ]}
                 >
@@ -108,7 +108,7 @@
 
                 {#if lyricsOff}
                     <div class="flex flex-1 flex-col items-center justify-center gap-8 p-8 text-center">
-                        <Cover src={track.artworkUrl} class="size-[min(80vw,60dvh)] rounded-4xl text-accent shadow-2xl shadow-black/50" />
+                        <Cover src={track.artworkUrl} class="size-[min(80vw,60dvh)] rounded-3xl text-accent shadow-2xl shadow-black/50" />
                         {@render info("items-center")}
                     </div>
                 {:else}
@@ -118,7 +118,7 @@
                         <div class="flex min-w-0 items-center gap-4 pr-20 pl-4 lg:flex-col lg:items-start lg:justify-center lg:gap-8 lg:p-0">
                             <Cover
                                 src={track.artworkUrl}
-                                class="size-16 rounded-2xl text-accent shadow-xl shadow-black/50 lg:aspect-square lg:h-auto lg:w-[min(100%,60dvh)] lg:rounded-4xl lg:shadow-2xl"
+                                class="size-16 rounded-2xl text-accent shadow-xl shadow-black/50 lg:aspect-square lg:h-auto lg:w-[min(100%,60dvh)] lg:rounded-3xl lg:shadow-2xl"
                             />
                             {@render info("items-start")}
                         </div>

@@ -16,7 +16,7 @@
     let {
         src,
         name,
-        class: className = "size-12 rounded-2xl",
+        class: className = "size-12 rounded-control-lg",
         animate,
     }: { src?: string | null; name: string; class?: ClassValue; animate?: boolean } = $props();
 

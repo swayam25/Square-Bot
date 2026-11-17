@@ -39,10 +39,15 @@ class Type:
     MONO_EYEBROW = TextStyle(10, 12, 600, "mono", 0.05)
 
 
+# Same as the web's `--corner: superellipse(1.2)`
+CORNER_SHAPE = 1.2
+
+
 class Radius:
     MD = 6
     LG = 8
     XL = 12
     XL2 = 16
-    XL4 = 32
+    CONTROL_LG = 20
+    XL3 = 24
     FULL = -1

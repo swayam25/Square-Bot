@@ -72,7 +72,7 @@
 
 <CardFrame>
     <div class="flex gap-6">
-        {@render artwork(data.artwork, "size-40 rounded-2xl")}
+        {@render artwork(data.artwork, "size-40 rounded-3xl")}
         <div class="flex min-w-0 flex-1 flex-col">
             <div class="flex gap-2">
                 {#if data.stream}
@@ -118,8 +118,8 @@
             <Chip tone={data.autoplay ? "on" : "muted"}><MaterialSymbolsAutoplayRounded />Autoplay</Chip>
             {#if filters}<Chip tone="violet"><MaterialSymbolsEqualizerRounded />{filters}</Chip>{/if}
         </div>
-        <div class={["flex h-12 items-center gap-2 rounded-2xl bg-gray-900 pr-4", data.upNext ? "pl-2" : "pl-4"]}>
-            {#if data.upNext}{@render artwork(data.upNextArtwork, "size-8 rounded-lg")}{/if}
+        <div class={["flex h-12 items-center gap-2 rounded-control-lg bg-gray-900 pr-4", data.upNext ? "pl-2" : "pl-4"]}>
+            {#if data.upNext}{@render artwork(data.upNextArtwork, "size-8 rounded-xl")}{/if}
             <div class="flex min-w-0 flex-col">
                 <span class="font-mono text-[10px] leading-3 font-semibold tracking-wider text-gray-400 uppercase">
                     {data.queued ? `Up next · ${data.queued} queued` : "Up next"}

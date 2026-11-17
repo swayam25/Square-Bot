@@ -66,12 +66,12 @@ def _artwork(ui: Kit, data: bytes | None, size: float, radius: float) -> Node:
 def _up_next(ui: Kit, data: NowPlaying) -> Box:
     eyebrow = f"Up next · {fmt_count(data.queued)} queued" if data.queued else "Up next"
     title = ui.text(data.up_next, Type.SM_MEDIUM) if data.up_next else ui.muted("Nothing queued", Type.SM_MEDIUM)
-    cover = _artwork(ui, data.up_next_artwork, _COVER, Radius.LG) if data.up_next else None
+    cover = _artwork(ui, data.up_next_artwork, _COVER, Radius.XL) if data.up_next else None
     return Box(
         Row(cover, Expand(Column(ui.eyebrow(eyebrow), title)), gap=8),
         padding=(0, 16, 0, 8 if cover else 16),
         fill=ui.theme.surface,
-        radius=Radius.XL2,
+        radius=Radius.CONTROL_LG,
         height=48,
     )
 
@@ -97,7 +97,7 @@ def build(ui: Kit, data: NowPlaying) -> Node:
         else None
     )
     track = Row(
-        _artwork(ui, data.artwork, _ARTWORK, Radius.XL2),
+        _artwork(ui, data.artwork, _ARTWORK, Radius.XL3),
         Expand(
             Column(
                 Row(state, source, gap=8),

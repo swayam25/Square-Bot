@@ -47,11 +47,11 @@
     });
 </script>
 
-<div bind:this={track} role="tablist" aria-label={label} class={["relative flex rounded-full bg-gray-800 p-1", className]}>
+<div bind:this={track} role="tablist" aria-label={label} class={["relative flex rounded-control-lg bg-gray-800 p-1 md:rounded-2xl", className]}>
     {#if bar}
         <span
             aria-hidden="true"
-            class={["pointer-events-none absolute inset-y-1 left-0 rounded-full", pill, settled && "slide"]}
+            class={["pointer-events-none absolute inset-y-1 left-0 rounded-2xl md:rounded-xl", pill, settled && "slide"]}
             style="width: {bar.w}px; transform: translateX({bar.x}px)"
         ></span>
     {/if}
@@ -65,11 +65,11 @@
                 disabled={!!option.disabled}
                 onclick={() => (value = option.value)}
                 class={[
-                    "relative flex h-10 w-full items-center justify-center gap-2 rounded-full px-4 text-sm font-medium transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 md:h-8",
+                    "relative flex h-10 w-full items-center justify-center gap-2 rounded-2xl px-3 text-sm font-medium transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-40 md:h-8 md:gap-1.5 md:rounded-xl",
                     value === option.value ? "text-gray-50" : "text-gray-400 enabled:hover:text-gray-100",
                 ]}
             >
-                {#if option.icon}<option.icon class="size-4 shrink-0" />{/if}
+                {#if option.icon}<option.icon class="size-5 shrink-0 md:size-4.5" />{/if}
                 {option.label}
                 {#if option.count}<span class="font-mono text-xs text-gray-400">{formatCount(option.count)}</span>{/if}
             </button>

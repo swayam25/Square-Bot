@@ -120,7 +120,7 @@
             </div>
             <p class="h-5 text-sm text-gray-400">
                 {#await data.servers}
-                    <span aria-hidden="true" class="inline-block h-4 w-28 skeleton rounded-full align-middle"></span>
+                    <span aria-hidden="true" class="inline-block h-4 w-28 skeleton rounded-md align-middle"></span>
                 {:then servers}
                     {#if servers}
                         <span class="animate-fade-in">
@@ -138,7 +138,7 @@
                     <Shape lobes={12} depth={0.05} class="absolute top-1/2 left-1/2 size-120 -translate-1/2 text-accent/10" />
                     <Shape lobes={4} depth={0.2} class="absolute -top-10 -left-8 size-24 rotate-12 text-violet-500/40" />
                     <Shape lobes={6} depth={0.14} class="absolute -right-6 -bottom-8 size-20 text-amber-400/30" />
-                    <span class="absolute -bottom-4 -left-10 h-8 w-20 -rotate-24 rounded-full bg-emerald-400/30"></span>
+                    <span class="absolute -bottom-4 -left-10 h-8 w-20 -rotate-24 rounded-xl bg-emerald-400/30"></span>
                 </div>
                 <PlayerPreview />
             </div>
@@ -146,7 +146,7 @@
     </section>
 
     <section aria-labelledby="features" class="mx-auto max-w-6xl px-4 md:px-6">
-        <div class="relative isolate overflow-hidden rounded-4xl bg-gray-900 px-6 py-16 md:px-12">
+        <div class="relative isolate overflow-hidden rounded-card bg-gray-900 px-6 py-16 md:px-12">
             <Shape lobes={16} depth={0.04} class="absolute -bottom-32 -left-24 -z-10 size-80 text-gray-800" />
             <div class="grid gap-12 lg:grid-cols-[1fr_2fr]">
                 <div class="flex flex-col gap-4">
@@ -221,7 +221,7 @@
             )}
             <div class="relative isolate">
                 <Shape lobes={12} depth={0.05} class="absolute -top-16 -right-16 -z-10 size-72 text-accent/10" />
-                <span aria-hidden="true" class="absolute -bottom-4 -left-6 -z-10 h-8 w-20 -rotate-24 rounded-full bg-violet-500/30"></span>
+                <span aria-hidden="true" class="absolute -bottom-4 -left-6 -z-10 h-8 w-20 -rotate-24 rounded-xl bg-violet-500/30"></span>
                 <DiscordWindow channel="music">
                     <DiscordMessage command="play">
                         <DiscordAccessories>
@@ -325,7 +325,7 @@
             )}
             <div class="relative isolate">
                 <Shape lobes={4} depth={0.2} class="absolute -top-12 -right-10 -z-10 size-48 rotate-12 text-amber-400/10" />
-                <span aria-hidden="true" class="absolute -bottom-4 -left-8 -z-10 h-8 w-20 rotate-12 rounded-full bg-accent/20"></span>
+                <span aria-hidden="true" class="absolute -bottom-4 -left-8 -z-10 h-8 w-20 rotate-12 rounded-xl bg-accent/20"></span>
                 <DiscordWindow channel="support">
                     <DiscordMessage>
                         <DiscordAccessories>
@@ -353,7 +353,7 @@
             <Shape lobes={12} depth={0.05} class="absolute top-16 -left-8 size-32 text-accent/20 md:left-0 md:size-40" />
             <Shape lobes={4} depth={0.2} class="absolute top-12 right-0 size-20 rotate-12 text-violet-500/30 md:right-8" />
             <Shape lobes={6} depth={0.14} class="absolute right-4 bottom-16 size-24 text-amber-400/20 md:right-16" />
-            <span class="absolute bottom-20 left-8 h-8 w-20 -rotate-24 rounded-full bg-emerald-400/20 md:left-24"></span>
+            <span class="absolute bottom-20 left-8 h-8 w-20 -rotate-24 rounded-xl bg-emerald-400/20 md:left-24"></span>
         </div>
         <h2 id="join" class="max-w-2xl font-display text-4xl font-semibold tracking-tight text-balance md:text-6xl">Ready to bring Square in?</h2>
         <p class="max-w-md text-gray-400 md:text-lg">Add it in a few clicks, then set it up from Discord or the dashboard.</p>

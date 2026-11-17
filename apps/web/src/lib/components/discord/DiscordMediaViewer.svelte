@@ -63,6 +63,7 @@
         <Dialog.Backdrop class="fixed inset-0 z-100 bg-black/90 data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
         <Dialog.Positioner class="fixed inset-0 z-100">
             <Dialog.Content
+                data-discord
                 aria-label={current?.name || "Media"}
                 class="relative size-full text-dc-text outline-none data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in"
                 onkeydown={keys}
@@ -104,7 +105,7 @@
                                 <img src={square} alt="" class="size-6" />
                             </span>
                         {:else}
-                            <Avatar src={author.avatar} name={author.name} class="size-8 shrink-0" />
+                            <Avatar src={author.avatar} name={author.name} round class="size-8 shrink-0" />
                         {/if}
                         <div class="flex min-w-0 flex-col">
                             <span class="truncate text-sm leading-4.5 font-semibold text-dc-strong">{author.name}</span>

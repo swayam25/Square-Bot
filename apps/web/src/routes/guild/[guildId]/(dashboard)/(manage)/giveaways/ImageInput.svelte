@@ -51,7 +51,7 @@
 <FileUpload.RootProvider value={upload} class="flex min-w-0 items-center gap-2">
     {#if name}
         <div class={[field, "pl-1"]}>
-            <span class="size-10 shrink-0 overflow-hidden rounded-full bg-gray-700 md:size-8">
+            <span class="size-10 shrink-0 overflow-hidden rounded-xl bg-gray-700 md:size-8 md:rounded-lg">
                 {#if shown}
                     <Picture src={shown} alt="" class="size-full object-cover">
                         {#snippet fallback({ loading })}<span class={["size-full", loading && "skeleton"]}></span>{/snippet}
@@ -71,7 +71,7 @@
     <Tooltip content={name ? "Upload another image" : "Upload an image"}>
         <FileUpload.Trigger
             class={[
-                "ripple flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 md:size-10 [&>svg]:size-5",
+                "ripple flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-control-lg bg-gray-800 hover:bg-gray-700 md:size-10 md:rounded-2xl [&>svg]:size-5",
                 focusRing,
             ]}
         >

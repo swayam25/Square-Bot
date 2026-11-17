@@ -256,11 +256,13 @@ class SplitBar(Node):
 
     def draw(self, canvas: Canvas, x: float, y: float, width: float, height: float) -> None:
         top = y + (height - self.height) / 2
-        canvas.rect(x, top, width, self.height, fill=self.track, radius=Radius.FULL)
+        track_radius = round(self.height * 0.4 / 4) * 4
+        canvas.rect(x, top, width, self.height, fill=self.track, radius=track_radius)
         if not self.segments:
             return
         inner_h = self.height - self.padding * 2
-        outer = inner_h / 2
+        outer = track_radius - self.padding
+        inset = inner_h / 2
         last = len(self.segments) - 1
         pen = x + self.padding
         widths = self._widths(width - self.padding * 2 - self.gap * last)
@@ -268,8 +270,8 @@ class SplitBar(Node):
             left = outer if i == 0 else self.inner_radius
             right = outer if i == last else self.inner_radius
             canvas.rect(pen, top + self.padding, w, inner_h, fill=color, radius=(left, right, right, left))
-            if i == 0 and self.label is not None and self.label.natural_width() + outer * 2 <= w:
-                self.label.draw(canvas, pen + outer, top + self.padding, w - outer * 2, inner_h)
+            if i == 0 and self.label is not None and self.label.natural_width() + inset * 2 <= w:
+                self.label.draw(canvas, pen + inset, top + self.padding, w - inset * 2, inner_h)
             pen += w + self.gap
 
 

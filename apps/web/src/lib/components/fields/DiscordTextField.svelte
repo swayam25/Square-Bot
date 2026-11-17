@@ -97,7 +97,7 @@
 <div
     data-disabled={disabled || undefined}
     class={[
-        "group/field relative flex w-full min-w-0 flex-col rounded-3xl bg-gray-800 text-sm",
+        "group/field relative flex w-full min-w-0 flex-col rounded-control-lg bg-gray-800 text-sm md:rounded-2xl",
         "ring-0 ring-accent/60 transition-[background-color,box-shadow] duration-200 ease-out ring-inset",
         "focus-within:ring-2 hover:bg-gray-700",
         "has-aria-invalid:bg-red-400/10 has-aria-invalid:ring-red-400/40",

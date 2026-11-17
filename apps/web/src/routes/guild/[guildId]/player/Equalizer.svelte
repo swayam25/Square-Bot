@@ -94,7 +94,7 @@
                                         aria-busy={busy === preset.name}
                                         disabled={!!lock || (busy !== null && busy !== preset.name)}
                                         class={[
-                                            "ripple relative inline-flex h-10 items-center rounded-full px-4 text-sm font-medium transition-colors disabled:opacity-50",
+                                            "ripple relative inline-flex h-10 items-center rounded-2xl px-3 text-sm font-medium transition-colors disabled:opacity-50",
                                             on ? "bg-accent/20 text-cyan-300 hover:bg-accent/30" : "bg-white/10 text-gray-100 hover:bg-white/15",
                                         ]}
                                         {@attach ripple}
@@ -119,7 +119,7 @@
             {:else}
                 <div aria-hidden="true" class="flex flex-wrap gap-2">
                     {#each [24, 28, 20, 24, 16, 28, 20, 24] as width, i (i)}
-                        <span class="h-10 skeleton rounded-full" style:width="{width * 0.25}rem"></span>
+                        <span class="h-10 skeleton rounded-2xl" style:width="{width * 0.25}rem"></span>
                     {/each}
                 </div>
             {/if}

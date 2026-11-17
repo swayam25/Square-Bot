@@ -148,7 +148,7 @@
                             <button
                                 type="button"
                                 disabled={!!lock || adding.has("playlist")}
-                                class="ripple flex h-10 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-cyan-950 hover:bg-cyan-300"
+                                class="ripple flex h-10 items-center gap-2 rounded-2xl bg-accent px-3 text-sm font-semibold text-cyan-950 hover:bg-cyan-300"
                                 {@attach ripple}
                                 onclick={() => add("playlist", text.trim())}
                             >

@@ -46,36 +46,44 @@ Page title `text-3xl`, section `text-xl`, group `text-lg`, body `text-sm`, capti
 
 ## Sizes
 
-Phones get the next step up so every target stays at least 32px.
+Phones get the next step up, so the default button and fields are 48px there. The radius is 0.4× the height and icons are about 1.4× the text.
 
-| Control                           | Desktop                                                         | Phone | Icon     |
-| --------------------------------- | --------------------------------------------------------------- | ----- | -------- |
-| Button `lg`                       | h-12                                                            | h-12  | 20       |
-| Button `md` (default)             | h-10                                                            | h-12  | 16       |
-| Button `sm`                       | h-8                                                             | h-10  | 16       |
-| Button `xs`                       | h-6                                                             | h-8   | 12       |
-| Icon button `md`                  | 40                                                              | 48    | 20       |
-| Field (Input, Select, UserPicker) | h-10                                                            | h-12  | 16       |
-| Toggle                            | 32 × 64, 4px padding, 24 × 32 pill that stretches while pressed | same  |          |
-| Checkbox                          | 24                                                              | same  | 20       |
-| Chip `md` / `sm`                  | h-8 / h-5                                                       | same  | 16 / 12  |
-| Tab                               | h-12                                                            | same  | 16       |
-| Menu row / sheet row              | h-10 / h-12                                                     |       | 16 to 20 |
-| Setting row icon tile             | 40                                                              | same  | 20       |
+| Control                           | Desktop                                                                               | Phone                      | Icon (desktop / phone) |
+| --------------------------------- | ------------------------------------------------------------------------------------- | -------------------------- | ---------------------- |
+| Button `lg`                       | h-12, radius 20, px 16, text 16                                                       | h-14, radius 24            | 24                     |
+| Button `md` (default)             | h-10, radius 16, px 12, text 14                                                       | h-12, radius 20, px 16, 15 | 20 / 22                |
+| Button `sm`                       | h-8, radius 12, px 12, text 13                                                        | h-10, radius 16, text 14   | 18 / 20                |
+| Button `xs`                       | h-6, radius 8, px 8, text 12                                                          | h-8, radius 12, px 12, 13  | 16 / 18                |
+| Field (Input, Select, UserPicker) | h-10, radius 16, px 12                                                                | h-12, radius 20, px 16     | 20                     |
+| Toggle                            | 32 × 64 track radius 16, 24 × 32 thumb radius 12 (the one exception: half the height) | same                       |                        |
+| Checkbox                          | 24, radius 8                                                                          | same                       | 20                     |
+| Chip `md` / `sm`                  | h-8 radius 12 / h-5 radius 8                                                          | same                       | 16 / 12                |
+| Tab                               | h-10                                                                                  | h-12                       | 20                     |
+| Menu row / sheet row              | h-10 radius 16 / h-12 radius 20                                                       |                            | 20                     |
+| Setting row icon tile             | 40                                                                                    | same                       | 20                     |
 
-Select markers (channel `#`, role color dot) fill the same 16px box as button icons.
+Select markers (channel `#`, role color dot) fill the same 20px box as menu icons. Padding is symmetric on both sides, with or without an icon.
 
-## Radius
+## Shape
 
-| Radius             | What                                         |
-| ------------------ | -------------------------------------------- |
-| `rounded-full`     | Buttons, fields, chips, toggles, header pill |
-| `rounded-4xl`      | Big panels, dialogs, the dashboard frame     |
-| `rounded-3xl`      | Cards, setting groups, tables, popovers      |
-| `rounded-2xl`      | Rows, tiles, menu panels, art                |
-| `rounded-xl`       | Menu items, icon tiles                       |
-| `rounded-t-[28px]` | Drawers                                      |
-| none               | Bot image cards (Discord rounds them)        |
+Every corner is a soft squircle: `corner-shape: superellipse(1.2)` set once in `layout.css` (`--corner`). Browsers without `corner-shape` draw the same radii as plain arcs. The bot draws the same curve in `imaging/canvas.py` (`CORNER_SHAPE`).
+
+| Radius               | Value | What                                                           |
+| -------------------- | ----- | -------------------------------------------------------------- |
+| `rounded-lg`         | 8     | Thumbnails, small art, `xs` controls                           |
+| `rounded-xl`         | 12    | Chips, `sm` controls, 32px icon buttons                        |
+| `rounded-2xl`        | 16    | Buttons, fields, tiles, menu rows                              |
+| `rounded-control-lg` | 20    | 48px controls and rows (phone buttons, `lg` buttons)           |
+| `rounded-3xl`        | 24    | Popovers, menus, big art, 56px controls                        |
+| `rounded-card`       | 28    | Cards, setting groups, tables, dialogs, the dashboard frame    |
+| `rounded-t-sheet`    | 36    | Drawers                                                        |
+| `rounded-icon`       | 40%   | Avatars and other square pictures, on the web and in bot cards |
+| `rounded-full`       | round | Only status dots, slider thumbs and thin bars (true circles)   |
+| none                 |       | Bot image cards (Discord rounds them)                          |
+
+Nested shapes are concentric: inner radius = outer radius minus the padding between them. A card (28) with 12px padding holds tiles at 16, and a popover (24) with 8px padding holds rows at 16.
+
+Discord mockups follow our shape only on their outer frame (`data-discord` root, `rounded-card`). Everything inside keeps Discord's round corners, including avatars (`<Avatar round>`). Discord pieces that live outside a frame (`Mention` in dashboard text, `DiscordTooltip`) opt out with `[corner-shape:round]`. The bot's image cards inside them (`CardFrame`, `data-card`) switch back to the squircle.
 
 ## Focus and states
 
@@ -144,6 +152,8 @@ Springs are `--ease-spring` (small bounce) and `--ease-smooth` (none). Reduced m
 ## Layout
 
 - Desktop: left sidebar, content frame, details panel on the right (280px to 45vw). Phones: bottom nav, drawers for everything that's a popup on desktop.
+- Touch gestures use `#lib/attachments/swipe.ts` (touch only, with `touch-pan-y`). The calendar swipes between months, years and decades, with the same limits as its arrows.
+- `data-no-drag` tells a drawer not to start its own drag when a touch begins on that element or inside it: `"y"` blocks only vertical drags, `"x"` only horizontal, and no value blocks both. Use it on anything inside a drawer that has its own drag or swipe (the calendar grids, the queue's reorder handle). The drawer still closes from the rest of the sheet. Native range and file inputs, text fields and areas that can still scroll are already ignored, so they need no marker.
 - Dashboard content runs full width. Shell padding `px-4 py-6 md:px-8`, page gap `gap-6`.
 - Stats and charts go on Overview only, drawn with LayerChart.
 - Never switch tabs for the user. Pick once on load, then the tab is theirs.

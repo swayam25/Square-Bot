@@ -57,7 +57,7 @@ export function renderVisual(completion: Completion) {
         image.src = visual.src;
         image.alt = "";
         image.loading = "lazy";
-        image.className = visual.kind === "avatar" ? "size-6 rounded-full object-cover" : "size-6 object-contain";
+        image.className = visual.kind === "avatar" ? "size-6 rounded-icon object-cover" : "size-6 object-contain";
         box.append(image);
     } else if (visual.kind === "at") {
         box.textContent = "@";

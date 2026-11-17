@@ -26,7 +26,7 @@
                 {#if tab.icon}<tab.icon />{/if}
                 {tab.label}
                 {#if tab.count !== undefined}
-                    <span class="rounded-full bg-white/10 px-2 font-mono text-2xs text-gray-400">{formatCount(tab.count)}</span>
+                    <span class="rounded-md bg-white/10 px-2 font-mono text-2xs text-gray-400">{formatCount(tab.count)}</span>
                 {/if}
             </Tabs.Trigger>
         {/each}

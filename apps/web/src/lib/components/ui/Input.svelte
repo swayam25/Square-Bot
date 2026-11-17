@@ -22,7 +22,7 @@
     const errorId = $props.id();
 
     const iconButton =
-        "flex size-8 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-white/10 hover:text-gray-100 disabled:opacity-50 md:size-6 [&_svg]:size-4";
+        "flex size-8 shrink-0 items-center justify-center rounded-xl text-gray-400 hover:bg-white/10 hover:text-gray-100 disabled:opacity-50 md:size-6 md:rounded-lg [&_svg]:size-4";
 
     function step(direction: 1 | -1) {
         if (!ref) return;
@@ -34,7 +34,7 @@
 </script>
 
 <label class={[field, "group/field relative", (type === "number" || type === "search") && "pr-2", className]}>
-    {#if Icon}<Icon class="size-4 shrink-0 text-gray-400" />{/if}
+    {#if Icon}<Icon class="size-5 shrink-0 text-gray-400" />{/if}
     <input
         bind:this={ref}
         bind:value

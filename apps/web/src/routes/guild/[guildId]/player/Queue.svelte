@@ -156,7 +156,7 @@
         if (ok) wholeOpen = false;
     }
 
-    const action = "flex size-8 items-center justify-center rounded-full text-gray-300 transition-colors";
+    const action = "flex size-8 items-center justify-center rounded-xl text-gray-300 transition-colors";
     const neutral = [action, "hover:bg-gray-700 hover:text-gray-50"];
 </script>
 

@@ -293,7 +293,7 @@
                         <button
                             type="button"
                             disabled={offset <= -SYNC_LIMIT_MS}
-                            class="flex size-8 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-50 disabled:opacity-40"
+                            class="flex size-8 items-center justify-center rounded-xl text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-50 disabled:opacity-40"
                             onclick={() => nudgeSync(-SYNC_STEP_MS)}
                         >
                             <MaterialSymbolsRemoveRounded class="size-4" />
@@ -305,7 +305,7 @@
                             aria-live="polite"
                             disabled={offset === 0}
                             class={[
-                                "h-8 min-w-14 rounded-full px-2 font-mono text-xs tabular-nums transition-colors enabled:hover:bg-gray-800",
+                                "h-8 min-w-14 rounded-xl px-2 font-mono text-xs tabular-nums transition-colors enabled:hover:bg-gray-800",
                                 offset === 0 ? "text-gray-400" : "text-accent",
                             ]}
                             onclick={() => (lyricsSync.offset = 0)}>{syncLabel(offset)}</button
@@ -315,7 +315,7 @@
                         <button
                             type="button"
                             disabled={offset >= SYNC_LIMIT_MS}
-                            class="flex size-8 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-50 disabled:opacity-40"
+                            class="flex size-8 items-center justify-center rounded-xl text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-50 disabled:opacity-40"
                             onclick={() => nudgeSync(SYNC_STEP_MS)}
                         >
                             <MaterialSymbolsAddRounded class="size-4" />
@@ -353,7 +353,7 @@
 {:else}
     <div class="flex flex-col gap-4 p-6" aria-label="Loading lyrics" role="status">
         {#each [78, 62, 86, 54, 70] as width, i (i)}
-            <span class="h-7 skeleton rounded-full" style:width="{width}%" style:animation-delay="{i * 120}ms"></span>
+            <span class="h-7 skeleton rounded-lg" style:width="{width}%" style:animation-delay="{i * 120}ms"></span>
         {/each}
     </div>
 {/if}

@@ -104,7 +104,7 @@
                             {#if item.person}
                                 <Avatar src={item.person.avatarUrl} name={item.person.name} class="size-10" />
                             {:else}
-                                <span class={["flex size-10 shrink-0 items-center justify-center rounded-full", tone.class]}>
+                                <span class={["flex size-10 shrink-0 items-center justify-center rounded-2xl", tone.class]}>
                                     <tone.icon class="size-5" />
                                 </span>
                             {/if}

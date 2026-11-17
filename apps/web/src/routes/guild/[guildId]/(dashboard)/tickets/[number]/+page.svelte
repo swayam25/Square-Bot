@@ -59,7 +59,7 @@
                     <span
                         class="flex h-7 max-w-full items-center gap-2 rounded-full border border-dc-border bg-dc-surface pr-3 pl-0.5 text-sm font-medium"
                     >
-                        <Avatar src={who.avatarUrl} name={who.name} class="size-5.5 text-2xs" />
+                        <Avatar src={who.avatarUrl} name={who.name} round class="size-5.5 text-2xs" />
                         <span class="truncate">{who.name}</span>
                     </span>
                 {/each}

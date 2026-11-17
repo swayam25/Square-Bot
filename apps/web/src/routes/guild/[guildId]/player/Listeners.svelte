@@ -21,7 +21,7 @@
         <button
             type="button"
             aria-haspopup="dialog"
-            class="ripple flex h-10 min-w-0 items-center gap-2 rounded-full bg-black/30 pr-4 pl-1 text-sm font-semibold backdrop-blur-xl transition-colors hover:bg-black/50"
+            class="ripple flex h-10 min-w-0 items-center gap-2 rounded-2xl bg-black/30 pr-4 pl-1 text-sm font-semibold backdrop-blur-xl transition-colors hover:bg-black/50"
             {@attach ripple}
             onclick={() => (open = true)}
         >

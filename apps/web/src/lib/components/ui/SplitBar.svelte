@@ -11,11 +11,11 @@
 <div
     role="img"
     aria-label={shown.map((part) => `${part.label} ${part.value}`).join(", ")}
-    class={["flex h-10 gap-1 rounded-full bg-gray-900 p-1", className]}
+    class={["flex h-10 gap-1 rounded-2xl bg-gray-900 p-1", className]}
 >
     {#each shown as part, index (part.label)}
         <div
-            class={["flex min-w-6 items-center rounded-lg first:rounded-l-2xl last:rounded-r-2xl", "origin-left animate-grow", part.class]}
+            class={["flex min-w-6 items-center rounded-lg first:rounded-l-xl last:rounded-r-xl", "origin-left animate-grow", part.class]}
             style="flex: {part.value}; animation-delay: {index * 60}ms"
         >
             {#if index === 0 && label}

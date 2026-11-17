@@ -40,7 +40,7 @@
                                     type="button"
                                     aria-busy={busy.has(track.identifier)}
                                     disabled={!!lock || busy.has(track.identifier)}
-                                    class="flex size-8 shrink-0 items-center justify-center rounded-full text-gray-300 transition-colors hover:bg-gray-700 hover:text-gray-50 disabled:opacity-40"
+                                    class="flex size-8 shrink-0 items-center justify-center rounded-xl text-gray-300 transition-colors hover:bg-gray-700 hover:text-gray-50 disabled:opacity-40"
                                     onclick={() => replay(index, track.identifier)}
                                 >
                                     {#if busy.has(track.identifier)}<SvgSpinners90RingWithBg class="size-4" />{:else}<MaterialSymbolsAddRounded

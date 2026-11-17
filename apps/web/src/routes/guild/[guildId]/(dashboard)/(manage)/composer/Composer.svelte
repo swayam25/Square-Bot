@@ -285,14 +285,18 @@
                                     type="button"
                                     aria-pressed={isPreset(entry)}
                                     class={[
-                                        "ripple flex h-12 max-w-full items-center gap-2 rounded-full bg-gray-800 pr-4 pl-1 text-sm font-medium transition-colors hover:bg-gray-700 md:h-10",
+                                        "ripple flex h-12 max-w-full items-center gap-2 rounded-control-lg bg-gray-800 pr-4 pl-1 text-sm font-medium transition-colors hover:bg-gray-700 md:h-10 md:rounded-2xl md:pr-3",
                                         "aria-pressed:bg-accent/10 aria-pressed:text-accent",
                                         focusRing,
                                     ]}
                                     onclick={() => usePreset(entry)}
                                 >
                                     {#if entry.key === "server"}
-                                        <GuildIcon src={entry.picture} name={guild.name} class="size-10 shrink-0 rounded-full md:size-8" />
+                                        <GuildIcon
+                                            src={entry.picture}
+                                            name={guild.name}
+                                            class="size-10 shrink-0 rounded-2xl md:size-8 md:rounded-xl"
+                                        />
                                     {:else}
                                         <Avatar src={entry.picture} name={entry.label} class="size-10 shrink-0 md:size-8" />
                                     {/if}

@@ -35,8 +35,8 @@
 
 <span
     class={[
-        "inline-flex shrink-0 items-center rounded-full font-medium whitespace-nowrap",
-        size === "sm" ? "h-5 gap-1 px-2 text-2xs [&_svg]:size-3" : "h-8 gap-2 px-4 text-xs has-[svg]:px-3 [&_svg]:size-4",
+        "inline-flex shrink-0 items-center font-medium whitespace-nowrap",
+        size === "sm" ? "h-5 gap-1 rounded-lg px-2 text-2xs [&_svg]:size-3" : "h-8 gap-2 rounded-xl px-4 text-xs has-[svg]:px-3 [&_svg]:size-4",
         remove && "pr-1!",
         tones[tone],
         className,

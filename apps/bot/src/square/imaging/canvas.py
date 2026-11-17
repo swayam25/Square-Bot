@@ -3,12 +3,13 @@ from io import BytesIO
 from PIL import Image, ImageChops, ImageDraw, ImageOps
 from square.imaging import fonts
 from square.imaging.theme import RGB
-from square.imaging.tokens import Radius, TextStyle
+from square.imaging.tokens import CORNER_SHAPE, Radius, TextStyle
 
 SCALE = 2  # Output pixels per px, so images stay sharp on high-DPI screens
 # Pillow's shapes have no antialiasing, so everything is drawn this many times larger and downsampled once
 _SUPERSAMPLE = 2
 _K = SCALE * _SUPERSAMPLE
+_SHAPE_AA = 4
 
 _ELLIPSIS = "…"
 
@@ -56,29 +57,43 @@ def open_image(data: bytes | None) -> Image.Image | None:
         return None
 
 
-def _corner_radii(radius: Corners, w: float, h: float) -> tuple[float, float, float, float]:
+def _corners(radius: Corners, w: float, h: float) -> tuple[tuple[float, ...], tuple[float, ...]]:
+    # CSS superellipse(K) is the curve |x|^n + |y|^n = 1 with n = 2^K. Radius.FULL corners stay circles (n = 2)
     full = min(w, h) / 2
-    tl, tr, br, bl = (
-        full if r == Radius.FULL else min(r, full)
-        for r in ((radius,) * 4 if isinstance(radius, int | float) else radius)
-    )
-    return tl, tr, br, bl
+    raw = (radius,) * 4 if isinstance(radius, int | float) else radius
+    radii = tuple(full if r == Radius.FULL else min(r, full) for r in raw)
+    exponents = tuple(2.0 if r == Radius.FULL else 2.0**CORNER_SHAPE for r in raw)
+    return radii, exponents
 
 
-def _rounded_outline(x0: float, y0: float, x1: float, y1: float, radii: tuple[float, ...]) -> list[tuple[float, float]]:
+def _outline(
+    x0: float, y0: float, x1: float, y1: float, radii: tuple[float, ...], exponents: tuple[float, ...]
+) -> list[tuple[float, float]]:
     tl, tr, br, bl = radii
+    etl, etr, ebr, ebl = exponents
     points: list[tuple[float, float]] = []
-    for cx, cy, r, start in (
-        (x1 - tr, y0 + tr, tr, -90),
-        (x1 - br, y1 - br, br, 0),
-        (x0 + bl, y1 - bl, bl, 90),
-        (x0 + tl, y0 + tl, tl, 180),
+    for cx, cy, r, n, start in (
+        (x1 - tr, y0 + tr, tr, etr, -90),
+        (x1 - br, y1 - br, br, ebr, 0),
+        (x0 + bl, y1 - bl, bl, ebl, 90),
+        (x0 + tl, y0 + tl, tl, etl, 180),
     ):
         steps = max(int(r / 2), 1) if r else 1
         for i in range(steps + 1):
             angle = math.radians(start + 90 * i / steps)
-            points.append((cx + r * math.cos(angle), cy + r * math.sin(angle)))
+            dx, dy = math.cos(angle), math.sin(angle)
+            points.append(
+                (cx + r * math.copysign(abs(dx) ** (2 / n), dx), cy + r * math.copysign(abs(dy) ** (2 / n), dy))
+            )
     return points
+
+
+def _mask(size: tuple[int, int], radii: tuple[float, ...], exponents: tuple[float, ...]) -> Image.Image:
+    w, h = size
+    big = Image.new("L", (w * _SHAPE_AA, h * _SHAPE_AA), 0)
+    outline = _outline(0, 0, w * _SHAPE_AA - 1, h * _SHAPE_AA - 1, tuple(r * _SHAPE_AA for r in radii), exponents)
+    ImageDraw.Draw(big).polygon(outline, fill=255)
+    return big.resize(size, Image.Resampling.BOX)
 
 
 class Canvas:
@@ -98,13 +113,18 @@ class Canvas:
         fill: RGB | None = None,
         radius: Corners = 0,
     ) -> None:
-        radii = _corner_radii(radius, w, h)
-        box = (x * _K, y * _K, (x + w) * _K - 1, (y + h) * _K - 1)
-        if len(set(radii)) == 1:
-            self._draw.rounded_rectangle(box, radius=radii[0] * _K, fill=fill)
+        if not fill:
             return
-        if fill:
-            self._draw.polygon(_rounded_outline(*box, tuple(r * _K for r in radii)), fill=fill)
+        radii, exponents = _corners(radius, w, h)
+        x0, y0 = round(x * _K), round(y * _K)
+        size = (round((x + w) * _K) - x0, round((y + h) * _K) - y0)
+        if size[0] <= 0 or size[1] <= 0:
+            return
+        if not any(radii):
+            self._draw.rectangle((x0, y0, x0 + size[0] - 1, y0 + size[1] - 1), fill=fill)
+            return
+        mask = _mask(size, tuple(r * _K for r in radii), exponents)
+        self._image.paste((*fill, 255), (x0, y0, x0 + size[0], y0 + size[1]), mask)
 
     def stroke(self, points: list[tuple[float, float]], width: float, color: RGB) -> None:
         """
@@ -113,26 +133,34 @@ class Canvas:
         Pillow leaves gaps between the segments of a wide polyline, so the line is filled as one outline polygon. The
         curve has to bend more gently than half the stroke width, or the inner edge folds over itself.
         """
-        half = width * _K / 2
+        a = _K * _SHAPE_AA
+        half = width * a / 2
+        x0 = math.floor(min(px for px, _ in points) * _K - width * _K)
+        y0 = math.floor(min(py for _, py in points) * _K - width * _K)
+        x1 = math.ceil(max(px for px, _ in points) * _K + width * _K)
+        y1 = math.ceil(max(py for _, py in points) * _K + width * _K)
+        big = Image.new("L", ((x1 - x0) * _SHAPE_AA, (y1 - y0) * _SHAPE_AA), 0)
+        draw = ImageDraw.Draw(big)
+        local = [(px * a - x0 * _SHAPE_AA, py * a - y0 * _SHAPE_AA) for px, py in points]
         top, bottom = [], []
-        for i, (px, py) in enumerate(points):
-            (ax, ay), (bx, by) = points[max(i - 1, 0)], points[min(i + 1, len(points) - 1)]
+        for i, (px, py) in enumerate(local):
+            (ax, ay), (bx, by) = local[max(i - 1, 0)], local[min(i + 1, len(local) - 1)]
             dx, dy = bx - ax, by - ay
             length = math.hypot(dx, dy) or 1
             nx, ny = -dy / length * half, dx / length * half
-            top.append((px * _K + nx, py * _K + ny))
-            bottom.append((px * _K - nx, py * _K - ny))
-        self._draw.polygon(top + bottom[::-1], fill=color)
-        for px, py in (points[0], points[-1]):
-            self._draw.ellipse((px * _K - half, py * _K - half, px * _K + half, py * _K + half), fill=color)
+            top.append((px + nx, py + ny))
+            bottom.append((px - nx, py - ny))
+        draw.polygon(top + bottom[::-1], fill=255)
+        for px, py in (local[0], local[-1]):
+            draw.ellipse((px - half, py - half, px + half, py + half), fill=255)
+        mask = big.resize((x1 - x0, y1 - y0), Image.Resampling.BOX)
+        self._image.paste((*color, 255), (x0, y0, x1, y1), mask)
 
     def picture(self, image: Image.Image, x: float, y: float, w: float, h: float, *, radius: float = 0) -> None:
         size = (round(w * _K), round(h * _K))
         fitted = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
-        mask = Image.new("L", size, 0)
-        ImageDraw.Draw(mask).rounded_rectangle(
-            (0, 0, size[0] - 1, size[1] - 1), radius=_corner_radii(radius, w, h)[0] * _K, fill=255
-        )
+        radii, exponents = _corners(radius, w, h)
+        mask = _mask(size, tuple(r * _K for r in radii), exponents)
         self._image.alpha_composite(
             Image.composite(fitted, Image.new("RGBA", size), ImageChops.multiply(mask, fitted.getchannel("A"))),
             (round(x * _K), round(y * _K)),
