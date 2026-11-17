@@ -160,17 +160,25 @@ class Starboard(
             )
             await ctx.respond(view=view, ephemeral=True)
             return
-        if starboard_db.board_in(ctx.guild.id, message.channel.id):
+        if board := starboard_db.board_in(ctx.guild.id, message.channel.id):
             # Picked on a post, so it acts on the message the post shows
             post = await starboard_db.fetch_by_post(message.id)
-            try:
-                source = (
-                    await actions.fetch(self.client, ctx.guild.id, post.channel_id, post.message_id) if post else None
+            if post is None:
+                view = error_view(
+                    f"Messages in <#{board.channel_id}> can't go on a starboard, since it is one. "
+                    "Pick a message from another channel."
                 )
+                await ctx.respond(view=view, ephemeral=True)
+                return
+            try:
+                source = await actions.fetch(self.client, ctx.guild.id, post.channel_id, post.message_id)
             except discord.HTTPException:
                 source = None
             if source is None:
-                await ctx.respond(view=error_view("I can't find the message this post shows."), ephemeral=True)
+                await ctx.respond(
+                    view=error_view("The message this post shows is gone. It or its channel was deleted."),
+                    ephemeral=True,
+                )
                 return
             message = source
         await ctx.respond(view=await self._panel(ctx.guild, message), ephemeral=True)
