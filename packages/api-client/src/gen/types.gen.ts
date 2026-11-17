@@ -23,6 +23,50 @@ export type ActivityDay = {
 };
 
 /**
+ * AutomodHit
+ */
+export type AutomodHit = {
+    source: "discord" | "square";
+    rule: string;
+    detail: string;
+};
+
+/**
+ * AutomodPatch
+ */
+export type AutomodPatch = {
+    rules?: Array<SquareRule>;
+    punishments?: Array<Punishment>;
+};
+
+/**
+ * AutomodSettings
+ */
+export type AutomodSettings = {
+    rules: Array<SquareRule>;
+    punishments: Array<Punishment>;
+};
+
+/**
+ * AutomodTest
+ */
+export type AutomodTest = {
+    content: string;
+    /**
+     * A Discord ID
+     */
+    channelId?: string | null;
+};
+
+/**
+ * AutomodTestResult
+ */
+export type AutomodTestResult = {
+    hits: Array<AutomodHit>;
+    skipped: Array<string>;
+};
+
+/**
  * AutoroleUser
  */
 export type AutoroleUser = {
@@ -224,10 +268,6 @@ export type GeneralPatch = {
     autoroleBotIds?: Array<string>;
     autoroleSplit?: boolean;
     autoroleUsers?: Array<AutoroleUserPatch>;
-    /**
-     * A Discord ID
-     */
-    mediaOnlyChannelId?: string | null;
 };
 
 /**
@@ -238,10 +278,6 @@ export type GeneralSettings = {
     autoroleBotIds: Array<string>;
     autoroleSplit: boolean;
     autoroleUsers: Array<AutoroleUser>;
-    /**
-     * A Discord ID
-     */
-    mediaOnlyChannelId: string | null;
 };
 
 /**
@@ -839,6 +875,77 @@ export type MusicSettings = {
 };
 
 /**
+ * NativeRule
+ */
+export type NativeRule = {
+    /**
+     * A Discord ID
+     */
+    id: string;
+    name: string;
+    trigger: "keyword" | "spam" | "preset" | "mention_spam" | "member_profile";
+    enabled: boolean;
+    bySquare: boolean;
+    keywords: Array<string>;
+    patterns: Array<string>;
+    allowList: Array<string>;
+    presets: Array<"profanity" | "sexual_content" | "slurs">;
+    mentionLimit: number | null;
+    raidProtection: boolean;
+    block: boolean;
+    blockMessage: string | null;
+    /**
+     * A Discord ID
+     */
+    alertChannelId: string | null;
+    timeoutSeconds: number | null;
+    blockInteraction: boolean;
+    exemptRoleIds: Array<string>;
+    exemptChannelIds: Array<string>;
+};
+
+/**
+ * NativeRuleCreate
+ */
+export type NativeRuleCreate = {
+    trigger: "keyword" | "spam" | "preset" | "mention_spam" | "member_profile";
+    name: string;
+};
+
+/**
+ * NativeRulePatch
+ */
+export type NativeRulePatch = {
+    name?: string;
+    enabled?: boolean;
+    keywords?: Array<string>;
+    patterns?: Array<string>;
+    allowList?: Array<string>;
+    presets?: Array<"profanity" | "sexual_content" | "slurs">;
+    mentionLimit?: number;
+    raidProtection?: boolean;
+    block?: boolean;
+    blockMessage?: string | null;
+    /**
+     * A Discord ID
+     */
+    alertChannelId?: string | null;
+    timeoutSeconds?: number | null;
+    blockInteraction?: boolean;
+    exemptRoleIds?: Array<string>;
+    exemptChannelIds?: Array<string>;
+};
+
+/**
+ * NativeRules
+ */
+export type NativeRules = {
+    rules: Array<NativeRule>;
+    canManage: boolean;
+    canTimeout: boolean;
+};
+
+/**
  * Notes
  */
 export type Notes = {
@@ -907,6 +1014,15 @@ export type PlaylistInfo = {
  */
 export type Problem = {
     detail: string;
+};
+
+/**
+ * Punishment
+ */
+export type Punishment = {
+    warnings: number;
+    action: "timeout" | "kick" | "ban";
+    seconds?: number | null;
 };
 
 /**
@@ -1012,6 +1128,22 @@ export type SkipVote = {
     voterIds: Array<string>;
     needed: number;
     endsAt: number;
+};
+
+/**
+ * SquareRule
+ */
+export type SquareRule = {
+    kind: "media" | "invites" | "flood" | "duplicates" | "caps" | "emojis";
+    enabled: boolean;
+    amount: number | null;
+    seconds: number | null;
+    channelIds: Array<string>;
+    delete: boolean;
+    warn: boolean;
+    notify: boolean;
+    exemptRoleIds: Array<string>;
+    exemptChannelIds: Array<string>;
 };
 
 /**
@@ -4563,6 +4695,398 @@ export type UpdateStarboardResponses = {
 };
 
 export type UpdateStarboardResponse = UpdateStarboardResponses[keyof UpdateStarboardResponses];
+
+export type ResetAutomodData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/automod";
+};
+
+export type ResetAutomodErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ResetAutomodError = ResetAutomodErrors[keyof ResetAutomodErrors];
+
+export type ResetAutomodResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: AutomodSettings;
+};
+
+export type ResetAutomodResponse = ResetAutomodResponses[keyof ResetAutomodResponses];
+
+export type GetAutomodData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/automod";
+};
+
+export type GetAutomodErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GetAutomodError = GetAutomodErrors[keyof GetAutomodErrors];
+
+export type GetAutomodResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: AutomodSettings;
+};
+
+export type GetAutomodResponse = GetAutomodResponses[keyof GetAutomodResponses];
+
+export type UpdateAutomodData = {
+    body: AutomodPatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/automod";
+};
+
+export type UpdateAutomodErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type UpdateAutomodError = UpdateAutomodErrors[keyof UpdateAutomodErrors];
+
+export type UpdateAutomodResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: AutomodSettings;
+};
+
+export type UpdateAutomodResponse = UpdateAutomodResponses[keyof UpdateAutomodResponses];
+
+export type ListNativeRulesData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/automod/discord";
+};
+
+export type ListNativeRulesErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type ListNativeRulesError = ListNativeRulesErrors[keyof ListNativeRulesErrors];
+
+export type ListNativeRulesResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: NativeRules;
+};
+
+export type ListNativeRulesResponse = ListNativeRulesResponses[keyof ListNativeRulesResponses];
+
+export type CreateNativeRuleData = {
+    body: NativeRuleCreate;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/automod/discord";
+};
+
+export type CreateNativeRuleErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type CreateNativeRuleError = CreateNativeRuleErrors[keyof CreateNativeRuleErrors];
+
+export type CreateNativeRuleResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: NativeRule;
+};
+
+export type CreateNativeRuleResponse = CreateNativeRuleResponses[keyof CreateNativeRuleResponses];
+
+export type DeleteNativeRuleData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        /**
+         * A Discord AutoMod rule ID
+         */
+        rule_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/automod/discord/{rule_id}";
+};
+
+export type DeleteNativeRuleErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type DeleteNativeRuleError = DeleteNativeRuleErrors[keyof DeleteNativeRuleErrors];
+
+export type DeleteNativeRuleResponses = {
+    /**
+     * Request fulfilled, nothing follows
+     */
+    204: void;
+};
+
+export type DeleteNativeRuleResponse = DeleteNativeRuleResponses[keyof DeleteNativeRuleResponses];
+
+export type UpdateNativeRuleData = {
+    body: NativeRulePatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        /**
+         * A Discord AutoMod rule ID
+         */
+        rule_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/automod/discord/{rule_id}";
+};
+
+export type UpdateNativeRuleErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type UpdateNativeRuleError = UpdateNativeRuleErrors[keyof UpdateNativeRuleErrors];
+
+export type UpdateNativeRuleResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: NativeRule;
+};
+
+export type UpdateNativeRuleResponse = UpdateNativeRuleResponses[keyof UpdateNativeRuleResponses];
+
+export type TestAutomodData = {
+    body: AutomodTest;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/automod/test";
+};
+
+export type TestAutomodErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type TestAutomodError = TestAutomodErrors[keyof TestAutomodErrors];
+
+export type TestAutomodResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: AutomodTestResult;
+};
+
+export type TestAutomodResponse = TestAutomodResponses[keyof TestAutomodResponses];
 
 export type MusicPlayerData = {
     body?: never;

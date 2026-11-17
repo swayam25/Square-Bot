@@ -5,6 +5,7 @@ from discord import ui
 from discord.commands import option, slash_command
 from square.cogs.moderation.purge import Purge
 from square.cogs.moderation.roles import Roles
+from square.cogs.moderation.warnings import Warnings
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView, error_view, success_view
@@ -16,6 +17,7 @@ from square.utils.helpers import parse_duration
 class Moderation(
     Purge,
     Roles,
+    Warnings,
     Cog,
     name="Moderation",
     description="Moderate your server & keep it managed by using commands.",

@@ -33,6 +33,7 @@
     import MaterialSymbolsPlayCircleRounded from "~icons/material-symbols/play-circle-rounded";
     import MaterialSymbolsPlayShapesRounded from "~icons/material-symbols/play-shapes-rounded";
     import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
+    import MaterialSymbolsShieldRounded from "~icons/material-symbols/shield-rounded";
     import MaterialSymbolsTuneRounded from "~icons/material-symbols/tune-rounded";
     import MaterialSymbolsUnfoldMoreRounded from "~icons/material-symbols/unfold-more-rounded";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
@@ -121,6 +122,7 @@
                       label: "Server",
                       items: [
                           moduleLink("logs"),
+                          { href: `${base}/automod`, label: "AutoMod", icon: MaterialSymbolsShieldRounded },
                           { href: `${base}/general`, label: "General", icon: MaterialSymbolsTuneRounded },
                           { href: `${base}/customize`, label: "Customize", icon: MaterialSymbolsFormatPaintRounded },
                           { href: `${base}/composer`, label: "Composer", icon: MaterialSymbolsEditSquareRounded },

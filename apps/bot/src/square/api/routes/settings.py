@@ -76,9 +76,6 @@ async def _general(client: Client, guild: discord.Guild) -> GeneralSettings:
             )
             for user_id, user in zip(user_ids, users, strict=True)
         ],
-        media_only_channel_id=id_of(
-            guild.get_channel(settings.media_only_channel_id) if settings.media_only_channel_id else None
-        ),
     )
 
 
@@ -93,15 +90,14 @@ def _givable(guild: discord.Guild, role_ids: list[str]) -> list[int]:
 async def _reset_general(guild: discord.Guild) -> None:
     await guild_db.set_autoroles(guild.id, humans=[], bots=[], split=False)
     await guild_db.set_autorole_users(guild.id, {})
-    await guild_db.set_media_only(guild.id, None)
 
 
-@get("/general", summary="Auto roles and media-only channel")
+@get("/general", summary="Auto roles")
 async def get_general_settings(client: Client, guild: discord.Guild) -> GeneralSettings:
     return await _general(client, guild)
 
 
-@patch("/general", summary="Change the auto roles or media-only channel", responses=REFUSED)
+@patch("/general", summary="Change the auto roles", responses=REFUSED)
 async def update_general_settings(client: Client, guild: discord.Guild, data: GeneralPatch) -> GeneralSettings:
     # Resolve and check everything first, so a refusal doesn't leave the change half applied
     humans = _givable(guild, data.autorole_ids) if data.autorole_ids is not UNSET else None
@@ -112,20 +108,11 @@ async def update_general_settings(client: Client, guild: discord.Guild, data: Ge
         if len({entry.user_id for entry in data.autorole_users}) != len(data.autorole_users):
             raise SettingError("Each person can only be listed once.")
         users = {int(entry.user_id): _givable(guild, entry.role_ids) for entry in data.autorole_users}
-    channel = (
-        resolve.text_channel(guild, data.media_only_channel_id) if data.media_only_channel_id is not UNSET else UNSET
-    )
-    if channel:
-        perms = channel.permissions_for(guild.me)
-        if not (perms.send_messages and perms.manage_messages):
-            raise SettingError(f"Square needs `Send Messages` and `Manage Messages` in {channel.mention}.")
 
     if humans is not None or bots is not None or split is not None:
         await guild_db.set_autoroles(guild.id, humans=humans, bots=bots, split=split)
     if users is not None:
         await guild_db.set_autorole_users(guild.id, users)
-    if channel is not UNSET:
-        await guild_db.set_media_only(guild.id, channel.id if channel else None)
     return await _general(client, guild)
 
 

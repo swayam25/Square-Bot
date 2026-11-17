@@ -21,6 +21,31 @@ export const zActivity = z.object({
 });
 
 /**
+ * AutomodHit
+ */
+export const zAutomodHit = z.object({
+    source: z.enum(["discord", "square"]),
+    rule: z.string(),
+    detail: z.string(),
+});
+
+/**
+ * AutomodTest
+ */
+export const zAutomodTest = z.object({
+    content: z.string().min(1).max(4000),
+    channelId: z.string().nullish(),
+});
+
+/**
+ * AutomodTestResult
+ */
+export const zAutomodTestResult = z.object({
+    hits: z.array(zAutomodHit),
+    skipped: z.array(z.string()),
+});
+
+/**
  * AutoroleUserPatch
  */
 export const zAutoroleUserPatch = z.object({
@@ -161,7 +186,6 @@ export const zGeneralPatch = z.object({
     autoroleBotIds: z.array(z.string()).max(10).optional(),
     autoroleSplit: z.boolean().optional(),
     autoroleUsers: z.array(zAutoroleUserPatch).max(50).optional(),
-    mediaOnlyChannelId: z.string().nullish(),
 });
 
 /**
@@ -548,6 +572,71 @@ export const zMusicSettings = z.object({
 });
 
 /**
+ * NativeRule
+ */
+export const zNativeRule = z.object({
+    id: z.string().regex(/^\d{17,20}$/),
+    name: z.string(),
+    trigger: z.enum(["keyword", "spam", "preset", "mention_spam", "member_profile"]),
+    enabled: z.boolean(),
+    bySquare: z.boolean(),
+    keywords: z.array(z.string()),
+    patterns: z.array(z.string()),
+    allowList: z.array(z.string()),
+    presets: z.array(z.enum(["profanity", "sexual_content", "slurs"])),
+    mentionLimit: z.int().nullable(),
+    raidProtection: z.boolean(),
+    block: z.boolean(),
+    blockMessage: z.string().nullable(),
+    alertChannelId: z.string().nullable(),
+    timeoutSeconds: z.int().nullable(),
+    blockInteraction: z.boolean(),
+    exemptRoleIds: z.array(z.string()),
+    exemptChannelIds: z.array(z.string()),
+});
+
+/**
+ * NativeRuleCreate
+ */
+export const zNativeRuleCreate = z.object({
+    trigger: z.enum(["keyword", "spam", "preset", "mention_spam", "member_profile"]),
+    name: z.string().min(1).max(100),
+});
+
+/**
+ * NativeRulePatch
+ */
+export const zNativeRulePatch = z.object({
+    name: z.string().min(1).max(100).optional(),
+    enabled: z.boolean().optional(),
+    keywords: z.array(z.string()).max(1000).optional(),
+    patterns: z.array(z.string()).max(10).optional(),
+    allowList: z.array(z.string()).max(1000).optional(),
+    presets: z
+        .array(z.enum(["profanity", "sexual_content", "slurs"]))
+        .max(3)
+        .optional(),
+    mentionLimit: z.int().gte(1).lte(50).optional(),
+    raidProtection: z.boolean().optional(),
+    block: z.boolean().optional(),
+    blockMessage: z.string().nullish(),
+    alertChannelId: z.string().nullish(),
+    timeoutSeconds: z.int().nullish(),
+    blockInteraction: z.boolean().optional(),
+    exemptRoleIds: z.array(z.string()).max(20).optional(),
+    exemptChannelIds: z.array(z.string()).max(50).optional(),
+});
+
+/**
+ * NativeRules
+ */
+export const zNativeRules = z.object({
+    rules: z.array(zNativeRule),
+    canManage: z.boolean(),
+    canTimeout: z.boolean(),
+});
+
+/**
  * Notes
  */
 export const zNotes = z.object({
@@ -615,7 +704,6 @@ export const zGeneralSettings = z.object({
     autoroleBotIds: z.array(z.string()),
     autoroleSplit: z.boolean(),
     autoroleUsers: z.array(zAutoroleUser),
-    mediaOnlyChannelId: z.string().nullable(),
 });
 
 /**
@@ -727,6 +815,15 @@ export const zProblem = z.object({
 });
 
 /**
+ * Punishment
+ */
+export const zPunishment = z.object({
+    warnings: z.int().gte(1).lte(100),
+    action: z.enum(["timeout", "kick", "ban"]),
+    seconds: z.int().nullish(),
+});
+
+/**
  * Purged
  */
 export const zPurged = z.object({
@@ -806,6 +903,38 @@ export const zSkipVote = z.object({
     voterIds: z.array(z.string()),
     needed: z.int(),
     endsAt: z.int(),
+});
+
+/**
+ * SquareRule
+ */
+export const zSquareRule = z.object({
+    kind: z.enum(["media", "invites", "flood", "duplicates", "caps", "emojis"]),
+    enabled: z.boolean(),
+    amount: z.int().nullable(),
+    seconds: z.int().nullable(),
+    channelIds: z.array(z.string()).max(10),
+    delete: z.boolean(),
+    warn: z.boolean(),
+    notify: z.boolean(),
+    exemptRoleIds: z.array(z.string()).max(25),
+    exemptChannelIds: z.array(z.string()).max(50),
+});
+
+/**
+ * AutomodPatch
+ */
+export const zAutomodPatch = z.object({
+    rules: z.array(zSquareRule).max(6).optional(),
+    punishments: z.array(zPunishment).max(10).optional(),
+});
+
+/**
+ * AutomodSettings
+ */
+export const zAutomodSettings = z.object({
+    rules: z.array(zSquareRule),
+    punishments: z.array(zPunishment),
 });
 
 /**
@@ -2139,6 +2268,120 @@ export const zUpdateStarboardPath = z.object({
  * Request fulfilled, document follows
  */
 export const zUpdateStarboardResponse = zStarboard;
+
+export const zResetAutomodHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zResetAutomodPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zResetAutomodResponse = zAutomodSettings;
+
+export const zGetAutomodHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGetAutomodPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGetAutomodResponse = zAutomodSettings;
+
+export const zUpdateAutomodBody = zAutomodPatch;
+
+export const zUpdateAutomodHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateAutomodPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateAutomodResponse = zAutomodSettings;
+
+export const zListNativeRulesHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zListNativeRulesPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zListNativeRulesResponse = zNativeRules;
+
+export const zCreateNativeRuleBody = zNativeRuleCreate;
+
+export const zCreateNativeRuleHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zCreateNativeRulePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zCreateNativeRuleResponse = zNativeRule;
+
+export const zDeleteNativeRuleHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zDeleteNativeRulePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    rule_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, nothing follows
+ */
+export const zDeleteNativeRuleResponse = z.void();
+
+export const zUpdateNativeRuleBody = zNativeRulePatch;
+
+export const zUpdateNativeRuleHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateNativeRulePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    rule_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateNativeRuleResponse = zNativeRule;
+
+export const zTestAutomodBody = zAutomodTest;
+
+export const zTestAutomodHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zTestAutomodPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zTestAutomodResponse = zAutomodTestResult;
 
 export const zMusicPlayerHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

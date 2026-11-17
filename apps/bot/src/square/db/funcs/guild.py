@@ -41,13 +41,6 @@ async def set_module(guild_id: int, module: Module, on: bool) -> None:
     cache.entry(guild_id).modules = list(guild.modules)
 
 
-async def set_media_only(guild_id: int, channel_id: int | None) -> None:
-    guild = await fetch_guild_settings(guild_id)
-    guild.media_only_channel_id = channel_id
-    await guild.save(update_fields=["media_only_channel_id"])
-    cache.entry(guild_id).media_only_channel_id = channel_id
-
-
 async def set_autoroles(
     guild_id: int, *, humans: list[int] | None = None, bots: list[int] | None = None, split: bool | None = None
 ) -> None:

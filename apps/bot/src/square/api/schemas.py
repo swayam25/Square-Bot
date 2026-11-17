@@ -320,7 +320,6 @@ class GeneralSettings(Schema):
     autorole_bot_ids: list[Snowflake]
     autorole_split: bool
     autorole_users: list[AutoroleUser]
-    media_only_channel_id: Snowflake | None
 
 
 class GeneralPatch(Schema):
@@ -328,7 +327,6 @@ class GeneralPatch(Schema):
     autorole_bot_ids: AutoroleIds | UnsetType = UNSET
     autorole_split: bool | UnsetType = UNSET
     autorole_users: Annotated[list[AutoroleUserPatch], msgspec.Meta(max_length=MAX_AUTOROLE_USERS)] | UnsetType = UNSET
-    media_only_channel_id: Snowflake | None | UnsetType = UNSET
 
 
 class LogChannels(Schema):
@@ -786,6 +784,125 @@ class StarboardPatch(Schema):
     max_age_days: AgeDays | None | UnsetType = UNSET
     follow_deletes: bool | UnsetType = UNSET
     color: HexColor | None | UnsetType = UNSET
+
+
+MAX_PUNISHMENTS = 10
+MAX_WARNINGS = 100
+MAX_RULE_ROLES = 25
+MAX_RULE_CHANNELS = 50
+MAX_MEDIA_CHANNELS = 10
+MAX_TIMEOUT_SECONDS = 28 * 24 * 3600
+MAX_NATIVE_KEYWORDS = 1000
+MAX_NATIVE_PATTERNS = 10
+MAX_NATIVE_ALLOW = 1000
+MAX_NATIVE_MENTIONS = 50
+MAX_NATIVE_ROLES = 20
+MAX_NATIVE_CHANNELS = 50
+NATIVE_LIMITS = {"keyword": 6, "spam": 1, "preset": 1, "mention_spam": 1, "member_profile": 1}
+
+RuleKind = Literal["media", "invites", "flood", "duplicates", "caps", "emojis"]
+PunishAction = Literal["timeout", "kick", "ban"]
+TimeoutSeconds = Annotated[int, msgspec.Meta(ge=60, le=MAX_TIMEOUT_SECONDS)]
+NativeTrigger = Literal["keyword", "spam", "preset", "mention_spam", "member_profile"]
+NativePreset = Literal["profanity", "sexual_content", "slurs"]
+NativeName = Annotated[str, msgspec.Meta(min_length=1, max_length=100)]
+NativeKeyword = Annotated[str, msgspec.Meta(min_length=1, max_length=60)]
+NativePattern = Annotated[str, msgspec.Meta(min_length=1, max_length=260)]
+
+
+class SquareRule(Schema):
+    kind: RuleKind
+    enabled: bool
+    amount: int | None  # Messages, repeats, percent of capitals or emojis, depending on the kind
+    seconds: int | None
+    channel_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_MEDIA_CHANNELS)]  # Media-only channels
+    delete: bool
+    warn: bool
+    notify: bool
+    exempt_role_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_RULE_ROLES)]
+    exempt_channel_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_RULE_CHANNELS)]
+
+
+class Punishment(Schema):
+    warnings: Annotated[int, msgspec.Meta(ge=1, le=MAX_WARNINGS)]
+    action: PunishAction
+    seconds: TimeoutSeconds | None = None
+
+
+class AutomodSettings(Schema):
+    rules: list[SquareRule]
+    punishments: list[Punishment]
+
+
+class AutomodPatch(Schema):
+    rules: Annotated[list[SquareRule], msgspec.Meta(max_length=len(get_args(RuleKind)))] | UnsetType = UNSET
+    punishments: Annotated[list[Punishment], msgspec.Meta(max_length=MAX_PUNISHMENTS)] | UnsetType = UNSET
+
+
+class NativeRule(Schema):
+    id: Snowflake
+    name: str
+    trigger: NativeTrigger
+    enabled: bool
+    by_square: bool
+    keywords: list[str]
+    patterns: list[str]
+    allow_list: list[str]
+    presets: list[NativePreset]
+    mention_limit: int | None
+    raid_protection: bool
+    block: bool
+    block_message: str | None
+    alert_channel_id: Snowflake | None
+    timeout_seconds: int | None
+    block_interaction: bool
+    exempt_role_ids: list[Snowflake]
+    exempt_channel_ids: list[Snowflake]
+
+
+class NativeRules(Schema):
+    rules: list[NativeRule]
+    can_manage: bool
+    can_timeout: bool
+
+
+class NativeRuleCreate(Schema):
+    trigger: NativeTrigger
+    name: NativeName
+
+
+class NativeRulePatch(Schema):
+    name: NativeName | UnsetType = UNSET
+    enabled: bool | UnsetType = UNSET
+    keywords: Annotated[list[NativeKeyword], msgspec.Meta(max_length=MAX_NATIVE_KEYWORDS)] | UnsetType = UNSET
+    patterns: Annotated[list[NativePattern], msgspec.Meta(max_length=MAX_NATIVE_PATTERNS)] | UnsetType = UNSET
+    allow_list: Annotated[list[NativeKeyword], msgspec.Meta(max_length=MAX_NATIVE_ALLOW)] | UnsetType = UNSET
+    presets: Annotated[list[NativePreset], msgspec.Meta(max_length=3)] | UnsetType = UNSET
+    mention_limit: Annotated[int, msgspec.Meta(ge=1, le=MAX_NATIVE_MENTIONS)] | UnsetType = UNSET
+    raid_protection: bool | UnsetType = UNSET
+    block: bool | UnsetType = UNSET
+    block_message: Annotated[str, msgspec.Meta(max_length=150)] | None | UnsetType = UNSET
+    alert_channel_id: Snowflake | None | UnsetType = UNSET
+    timeout_seconds: TimeoutSeconds | None | UnsetType = UNSET
+    block_interaction: bool | UnsetType = UNSET
+    exempt_role_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_NATIVE_ROLES)] | UnsetType = UNSET
+    exempt_channel_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_NATIVE_CHANNELS)] | UnsetType = UNSET
+
+
+class AutomodTest(Schema):
+    content: Annotated[str, msgspec.Meta(min_length=1, max_length=4000)]
+    channel_id: Snowflake | None = None
+
+
+class AutomodHit(Schema):
+    source: Literal["discord", "square"]
+    rule: str
+    detail: str
+
+
+class AutomodTestResult(Schema):
+    hits: list[AutomodHit]
+    skipped: list[str]  # Rules a typed message can't show, like flood or Discord's own word lists
 
 
 class ModuleSettings(Schema):

@@ -1,5 +1,17 @@
 from square.api import live
-from square.api.routes import giveaways, guilds, invites, messages, music, profile, settings, starboard, system, tickets
+from square.api.routes import (
+    automod,
+    giveaways,
+    guilds,
+    invites,
+    messages,
+    music,
+    profile,
+    settings,
+    starboard,
+    system,
+    tickets,
+)
 
 handlers = [
     system.bot_emojis,
@@ -12,6 +24,7 @@ handlers = [
     tickets.router,
     giveaways.router,
     starboard.router,
+    automod.router,
     music.router,
     live.live,
 ]

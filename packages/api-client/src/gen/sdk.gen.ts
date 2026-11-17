@@ -20,6 +20,9 @@ import type {
     CreateGiveawayData,
     CreateGiveawayErrors,
     CreateGiveawayResponses,
+    CreateNativeRuleData,
+    CreateNativeRuleErrors,
+    CreateNativeRuleResponses,
     CreateRequestChannelData,
     CreateRequestChannelErrors,
     CreateRequestChannelResponses,
@@ -35,6 +38,9 @@ import type {
     DeleteGiveawayData,
     DeleteGiveawayErrors,
     DeleteGiveawayResponses,
+    DeleteNativeRuleData,
+    DeleteNativeRuleErrors,
+    DeleteNativeRuleResponses,
     DeleteStarboardData,
     DeleteStarboardErrors,
     DeleteStarboardResponses,
@@ -47,6 +53,9 @@ import type {
     EqPresetsData,
     EqPresetsErrors,
     EqPresetsResponses,
+    GetAutomodData,
+    GetAutomodErrors,
+    GetAutomodResponses,
     GetBotProfileData,
     GetBotProfileErrors,
     GetBotProfileResponses,
@@ -101,6 +110,9 @@ import type {
     ListGiveawaysData,
     ListGiveawaysErrors,
     ListGiveawaysResponses,
+    ListNativeRulesData,
+    ListNativeRulesErrors,
+    ListNativeRulesResponses,
     ListStarboardsData,
     ListStarboardsErrors,
     ListStarboardsResponses,
@@ -176,6 +188,9 @@ import type {
     ResetAllSettingsData,
     ResetAllSettingsErrors,
     ResetAllSettingsResponses,
+    ResetAutomodData,
+    ResetAutomodErrors,
+    ResetAutomodResponses,
     ResetBotProfileData,
     ResetBotProfileErrors,
     ResetBotProfileResponses,
@@ -248,12 +263,18 @@ import type {
     StopPlayerData,
     StopPlayerErrors,
     StopPlayerResponses,
+    TestAutomodData,
+    TestAutomodErrors,
+    TestAutomodResponses,
     TicketFileData,
     TicketFileErrors,
     TicketFileResponses,
     TicketTranscriptData,
     TicketTranscriptErrors,
     TicketTranscriptResponses,
+    UpdateAutomodData,
+    UpdateAutomodErrors,
+    UpdateAutomodResponses,
     UpdateBotProfileData,
     UpdateBotProfileErrors,
     UpdateBotProfileResponses,
@@ -275,6 +296,9 @@ import type {
     UpdateMusicSettingsData,
     UpdateMusicSettingsErrors,
     UpdateMusicSettingsResponses,
+    UpdateNativeRuleData,
+    UpdateNativeRuleErrors,
+    UpdateNativeRuleResponses,
     UpdateStarboardData,
     UpdateStarboardErrors,
     UpdateStarboardResponses,
@@ -446,7 +470,7 @@ export const resetGeneralSettings = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Auto roles and media-only channel
+ * Auto roles
  */
 export const getGeneralSettings = <ThrowOnError extends boolean = false>(
     options: Options<GetGeneralSettingsData, ThrowOnError>,
@@ -458,7 +482,7 @@ export const getGeneralSettings = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Change the auto roles or media-only channel
+ * Change the auto roles
  */
 export const updateGeneralSettings = <ThrowOnError extends boolean = false>(
     options: Options<UpdateGeneralSettingsData, ThrowOnError>,
@@ -1162,6 +1186,118 @@ export const updateStarboard = <ThrowOnError extends boolean = false>(
     (options.client ?? client).patch<UpdateStarboardResponses, UpdateStarboardErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/starboards/{board_id}",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Reset Square's AutoMod rules and warning punishments
+ */
+export const resetAutomod = <ThrowOnError extends boolean = false>(
+    options: Options<ResetAutomodData, ThrowOnError>,
+): RequestResult<ResetAutomodResponses, ResetAutomodErrors, ThrowOnError> =>
+    (options.client ?? client).delete<ResetAutomodResponses, ResetAutomodErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/automod",
+        ...options,
+    });
+
+/**
+ * Square's own AutoMod rules and warning punishments
+ */
+export const getAutomod = <ThrowOnError extends boolean = false>(
+    options: Options<GetAutomodData, ThrowOnError>,
+): RequestResult<GetAutomodResponses, GetAutomodErrors, ThrowOnError> =>
+    (options.client ?? client).get<GetAutomodResponses, GetAutomodErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/automod",
+        ...options,
+    });
+
+/**
+ * Change Square's AutoMod rules or warning punishments
+ */
+export const updateAutomod = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateAutomodData, ThrowOnError>,
+): RequestResult<UpdateAutomodResponses, UpdateAutomodErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateAutomodResponses, UpdateAutomodErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/automod",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Discord's own AutoMod rules in this server
+ */
+export const listNativeRules = <ThrowOnError extends boolean = false>(
+    options: Options<ListNativeRulesData, ThrowOnError>,
+): RequestResult<ListNativeRulesResponses, ListNativeRulesErrors, ThrowOnError> =>
+    (options.client ?? client).get<ListNativeRulesResponses, ListNativeRulesErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/automod/discord",
+        ...options,
+    });
+
+/**
+ * Add a Discord AutoMod rule
+ */
+export const createNativeRule = <ThrowOnError extends boolean = false>(
+    options: Options<CreateNativeRuleData, ThrowOnError>,
+): RequestResult<CreateNativeRuleResponses, CreateNativeRuleErrors, ThrowOnError> =>
+    (options.client ?? client).post<CreateNativeRuleResponses, CreateNativeRuleErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/automod/discord",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Delete a Discord AutoMod rule
+ */
+export const deleteNativeRule = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteNativeRuleData, ThrowOnError>,
+): RequestResult<DeleteNativeRuleResponses, DeleteNativeRuleErrors, ThrowOnError> =>
+    (options.client ?? client).delete<DeleteNativeRuleResponses, DeleteNativeRuleErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/automod/discord/{rule_id}",
+        ...options,
+    });
+
+/**
+ * Change a Discord AutoMod rule
+ */
+export const updateNativeRule = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateNativeRuleData, ThrowOnError>,
+): RequestResult<UpdateNativeRuleResponses, UpdateNativeRuleErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateNativeRuleResponses, UpdateNativeRuleErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/automod/discord/{rule_id}",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Check a message against every AutoMod rule
+ */
+export const testAutomod = <ThrowOnError extends boolean = false>(
+    options: Options<TestAutomodData, ThrowOnError>,
+): RequestResult<TestAutomodResponses, TestAutomodErrors, ThrowOnError> =>
+    (options.client ?? client).post<TestAutomodResponses, TestAutomodErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/automod/test",
         ...options,
         headers: {
             "Content-Type": "application/json",

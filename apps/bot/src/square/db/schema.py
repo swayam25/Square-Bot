@@ -16,7 +16,6 @@ class GuildTable(Model):
     id = fields.IntField(primary_key=True)
     guild_id = fields.BigIntField(unique=True)
     modules: list[str] = fields.JSONField(default=lambda: list(DEFAULT_MODULES))
-    media_only_channel_id = fields.BigIntField(null=True)
     autorole_ids: list[int] = fields.JSONField(default=list)
     autorole_bot_ids: list[int] = fields.JSONField(default=list)
     autorole_split = fields.BooleanField(default=False)
@@ -42,6 +41,9 @@ class GuildTable(Model):
     giveaways: fields.ReverseRelation[GiveawayTable]
     starboards: fields.ReverseRelation[StarboardTable]
     starboard_votes: fields.ReverseRelation[StarboardVoteTable]
+    automod_rules: fields.ReverseRelation[AutomodRuleTable]
+    warnings: fields.ReverseRelation[WarningTable]
+    warn_punishments: fields.ReverseRelation[WarnPunishmentTable]
 
     class Meta:
         table = "guild"
@@ -299,3 +301,53 @@ class StarboardVoteTable(Model):
         table = "starboard_vote"
         unique_together = (("message_id", "user_id", "emoji"),)
         indexes = (("channel_id",), ("created_at",))
+
+
+class AutomodRuleTable(Model):
+    id = fields.IntField(primary_key=True)
+    guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
+        "models.GuildTable", related_name="automod_rules", on_delete=fields.CASCADE
+    )
+    kind = fields.CharField(max_length=16)  # media, invites, flood, duplicates, caps or emojis
+    enabled = fields.BooleanField(default=True)
+    amount = fields.IntField(null=True)  # The rule's limit: messages, repeats, percent of capitals or emojis
+    seconds = fields.IntField(null=True)
+    channel_ids: list[int] = fields.JSONField(default=list)  # Media-only channels
+    delete_message = fields.BooleanField(default=True)
+    warn = fields.BooleanField(default=False)
+    notify = fields.BooleanField(default=True)
+    exempt_role_ids: list[int] = fields.JSONField(default=list)
+    exempt_channel_ids: list[int] = fields.JSONField(default=list)
+
+    class Meta:
+        table = "automod_rule"
+        unique_together = (("guild", "kind"),)
+
+
+class WarningTable(Model):
+    id = fields.IntField(primary_key=True)
+    guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
+        "models.GuildTable", related_name="warnings", on_delete=fields.CASCADE
+    )
+    user_id = fields.BigIntField()
+    moderator_id = fields.BigIntField(null=True)  # None when AutoMod gave it
+    reason = fields.TextField(default="")
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    class Meta:
+        table = "warning"
+        indexes = (("guild", "user_id"),)
+
+
+class WarnPunishmentTable(Model):
+    id = fields.IntField(primary_key=True)
+    guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
+        "models.GuildTable", related_name="warn_punishments", on_delete=fields.CASCADE
+    )
+    warnings = fields.IntField()
+    action = fields.CharField(max_length=8)  # timeout, kick or ban
+    seconds = fields.IntField(null=True)
+
+    class Meta:
+        table = "warn_punishment"
+        unique_together = (("guild", "warnings"),)

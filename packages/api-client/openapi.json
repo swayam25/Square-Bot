@@ -1026,7 +1026,7 @@
         "tags": [
           "Settings"
         ],
-        "summary": "Auto roles and media-only channel",
+        "summary": "Auto roles",
         "operationId": "get_general_settings",
         "parameters": [
           {
@@ -1206,7 +1206,7 @@
         "tags": [
           "Settings"
         ],
-        "summary": "Change the auto roles or media-only channel",
+        "summary": "Change the auto roles",
         "operationId": "update_general_settings",
         "parameters": [
           {
@@ -7076,6 +7076,851 @@
         ]
       }
     },
+    "/guilds/{guild_id}/automod": {
+      "get": {
+        "tags": [
+          "AutoMod"
+        ],
+        "summary": "Square's own AutoMod rules and warning punishments",
+        "operationId": "get_automod",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomodSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "AutoMod"
+        ],
+        "summary": "Reset Square's AutoMod rules and warning punishments",
+        "operationId": "reset_automod",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomodSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "AutoMod"
+        ],
+        "summary": "Change Square's AutoMod rules or warning punishments",
+        "operationId": "update_automod",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomodPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomodSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/automod/discord": {
+      "get": {
+        "tags": [
+          "AutoMod"
+        ],
+        "summary": "Discord's own AutoMod rules in this server",
+        "operationId": "list_native_rules",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeRules"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "AutoMod"
+        ],
+        "summary": "Add a Discord AutoMod rule",
+        "operationId": "create_native_rule",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NativeRuleCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeRule"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/automod/discord/{rule_id}": {
+      "delete": {
+        "tags": [
+          "AutoMod"
+        ],
+        "summary": "Delete a Discord AutoMod rule",
+        "operationId": "delete_native_rule",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "rule_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord AutoMod rule ID"
+            },
+            "description": "A Discord AutoMod rule ID",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Request fulfilled, nothing follows",
+            "headers": {}
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "AutoMod"
+        ],
+        "summary": "Change a Discord AutoMod rule",
+        "operationId": "update_native_rule",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "rule_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord AutoMod rule ID"
+            },
+            "description": "A Discord AutoMod rule ID",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NativeRulePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NativeRule"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/automod/test": {
+      "post": {
+        "tags": [
+          "AutoMod"
+        ],
+        "summary": "Check a message against every AutoMod rule",
+        "operationId": "test_automod",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomodTest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomodTestResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
     "/guilds/{guild_id}/music/player": {
       "get": {
         "tags": [
@@ -10105,6 +10950,129 @@
         ],
         "title": "ActivityDay"
       },
+      "AutomodHit": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "discord",
+              "square"
+            ]
+          },
+          "rule": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail",
+          "rule",
+          "source"
+        ],
+        "title": "AutomodHit"
+      },
+      "AutomodPatch": {
+        "properties": {
+          "rules": {
+            "oneOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SquareRule"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 6
+          },
+          "punishments": {
+            "oneOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Punishment"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 10
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "AutomodPatch"
+      },
+      "AutomodSettings": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/SquareRule"
+            },
+            "type": "array"
+          },
+          "punishments": {
+            "items": {
+              "$ref": "#/components/schemas/Punishment"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "punishments",
+          "rules"
+        ],
+        "title": "AutomodSettings"
+      },
+      "AutomodTest": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1
+          },
+          "channelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "AutomodTest"
+      },
+      "AutomodTestResult": {
+        "properties": {
+          "hits": {
+            "items": {
+              "$ref": "#/components/schemas/AutomodHit"
+            },
+            "type": "array"
+          },
+          "skipped": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hits",
+          "skipped"
+        ],
+        "title": "AutomodTestResult"
+      },
       "AutoroleUser": {
         "properties": {
           "user": {
@@ -10699,18 +11667,6 @@
               }
             ],
             "maxItems": 50
-          },
-          "mediaOnlyChannelId": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
           }
         },
         "type": "object",
@@ -10739,18 +11695,6 @@
               "$ref": "#/components/schemas/AutoroleUser"
             },
             "type": "array"
-          },
-          "mediaOnlyChannelId": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
           }
         },
         "type": "object",
@@ -10758,8 +11702,7 @@
           "autoroleBotIds",
           "autoroleIds",
           "autoroleSplit",
-          "autoroleUsers",
-          "mediaOnlyChannelId"
+          "autoroleUsers"
         ],
         "title": "GeneralSettings"
       },
@@ -12679,6 +13622,355 @@
         ],
         "title": "MusicSettings"
       },
+      "NativeRule": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "name": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "keyword",
+              "spam",
+              "preset",
+              "mention_spam",
+              "member_profile"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "bySquare": {
+            "type": "boolean"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "patterns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "allowList": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "presets": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "profanity",
+                "sexual_content",
+                "slurs"
+              ]
+            },
+            "type": "array"
+          },
+          "mentionLimit": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raidProtection": {
+            "type": "boolean"
+          },
+          "block": {
+            "type": "boolean"
+          },
+          "blockMessage": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "alertChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "timeoutSeconds": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "blockInteraction": {
+            "type": "boolean"
+          },
+          "exemptRoleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "exemptChannelIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alertChannelId",
+          "allowList",
+          "block",
+          "blockInteraction",
+          "blockMessage",
+          "bySquare",
+          "enabled",
+          "exemptChannelIds",
+          "exemptRoleIds",
+          "id",
+          "keywords",
+          "mentionLimit",
+          "name",
+          "patterns",
+          "presets",
+          "raidProtection",
+          "timeoutSeconds",
+          "trigger"
+        ],
+        "title": "NativeRule"
+      },
+      "NativeRuleCreate": {
+        "properties": {
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "keyword",
+              "spam",
+              "preset",
+              "mention_spam",
+              "member_profile"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "trigger"
+        ],
+        "title": "NativeRuleCreate"
+      },
+      "NativeRulePatch": {
+        "properties": {
+          "name": {
+            "oneOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "maxLength": 100,
+            "minLength": 1
+          },
+          "enabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "keywords": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 1000
+          },
+          "patterns": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 10
+          },
+          "allowList": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 1000
+          },
+          "presets": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "profanity",
+                    "sexual_content",
+                    "slurs"
+                  ]
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 3
+          },
+          "mentionLimit": {
+            "oneOf": [
+              {
+                "type": "integer"
+              }
+            ],
+            "maximum": 50,
+            "minimum": 1
+          },
+          "raidProtection": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "block": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "blockMessage": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maxLength": 150
+          },
+          "alertChannelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "timeoutSeconds": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maximum": 2419200,
+            "minimum": 60
+          },
+          "blockInteraction": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "exemptRoleIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 20
+          },
+          "exemptChannelIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 50
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "NativeRulePatch"
+      },
+      "NativeRules": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/NativeRule"
+            },
+            "type": "array"
+          },
+          "canManage": {
+            "type": "boolean"
+          },
+          "canTimeout": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "canManage",
+          "canTimeout",
+          "rules"
+        ],
+        "title": "NativeRules"
+      },
       "Notes": {
         "properties": {
           "notes": {
@@ -12874,6 +14166,41 @@
           "detail"
         ],
         "title": "Problem"
+      },
+      "Punishment": {
+        "properties": {
+          "warnings": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "timeout",
+              "kick",
+              "ban"
+            ]
+          },
+          "seconds": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maximum": 2419200,
+            "minimum": 60
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "warnings"
+        ],
+        "title": "Punishment"
       },
       "Purged": {
         "properties": {
@@ -13144,6 +14471,88 @@
           "voterIds"
         ],
         "title": "SkipVote"
+      },
+      "SquareRule": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "media",
+              "invites",
+              "flood",
+              "duplicates",
+              "caps",
+              "emojis"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "amount": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "seconds": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "channelIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10
+          },
+          "delete": {
+            "type": "boolean"
+          },
+          "warn": {
+            "type": "boolean"
+          },
+          "notify": {
+            "type": "boolean"
+          },
+          "exemptRoleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 25
+          },
+          "exemptChannelIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount",
+          "channelIds",
+          "delete",
+          "enabled",
+          "exemptChannelIds",
+          "exemptRoleIds",
+          "kind",
+          "notify",
+          "seconds",
+          "warn"
+        ],
+        "title": "SquareRule"
       },
       "Starboard": {
         "properties": {

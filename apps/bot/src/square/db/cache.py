@@ -1,12 +1,19 @@
 from dataclasses import dataclass, field, fields
-from square.db.schema import AutoroleUserTable, DJRoleTable, GuildTable, LogChannelTable, StarboardTable
+from square.db.schema import (
+    AutomodRuleTable,
+    AutoroleUserTable,
+    DJRoleTable,
+    GuildTable,
+    LogChannelTable,
+    StarboardTable,
+    WarnPunishmentTable,
+)
 from square.modules import DEFAULT_MODULES, Module
 
 
 @dataclass
 class GuildSettings:
     modules: list[str] = field(default_factory=lambda: list(DEFAULT_MODULES))
-    media_only_channel_id: int | None = None
     autorole_ids: list[int] = field(default_factory=list)
     autorole_bot_ids: list[int] = field(default_factory=list)
     autorole_split: bool = False
@@ -25,12 +32,16 @@ class GuildSettings:
     log_channels: dict[str, int] = field(default_factory=dict)
     autorole_users: dict[int, list[int]] = field(default_factory=dict)
     starboards: list[StarboardTable] = field(default_factory=list)
+    automod_rules: dict[str, AutomodRuleTable] = field(default_factory=dict)
+    warn_punishments: list[WarnPunishmentTable] = field(default_factory=list)
 
 
 _settings: dict[int, GuildSettings] = {}
 _DEFAULT = GuildSettings()
 _GUILD_COLUMNS = tuple(
-    f.name for f in fields(GuildSettings) if f.name not in ("dj_roles", "log_channels", "autorole_users", "starboards")
+    f.name
+    for f in fields(GuildSettings)
+    if f.name not in ("dj_roles", "log_channels", "autorole_users", "starboards", "automod_rules", "warn_punishments")
 )
 
 
@@ -51,6 +62,10 @@ async def load() -> None:
         entry(guild_id).autorole_users[user_id] = role_ids
     for board in await StarboardTable.all().select_related("guild").order_by("id"):
         entry(board.guild.guild_id).starboards.append(board)
+    for rule in await AutomodRuleTable.all().select_related("guild"):
+        entry(rule.guild.guild_id).automod_rules[rule.kind] = rule
+    for step in await WarnPunishmentTable.all().select_related("guild").order_by("warnings"):
+        entry(step.guild.guild_id).warn_punishments.append(step)
 
 
 def get(guild_id: int) -> GuildSettings:

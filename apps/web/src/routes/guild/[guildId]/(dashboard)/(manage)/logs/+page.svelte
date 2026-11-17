@@ -15,8 +15,8 @@
     import MaterialSymbolsChatRounded from "~icons/material-symbols/chat-rounded";
     import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
     import MaterialSymbolsDescriptionRounded from "~icons/material-symbols/description-rounded";
-    import MaterialSymbolsGavelRounded from "~icons/material-symbols/gavel-rounded";
     import MaterialSymbolsGroupRounded from "~icons/material-symbols/group-rounded";
+    import MaterialSymbolsHardwareRounded from "~icons/material-symbols/hardware-rounded";
     import MaterialSymbolsHomeStorageRounded from "~icons/material-symbols/home-storage-rounded";
     import MaterialSymbolsLinkRounded from "~icons/material-symbols/link-rounded";
     import MaterialSymbolsShieldPersonRounded from "~icons/material-symbols/shield-person-rounded";
@@ -28,7 +28,7 @@
 
     type Key = keyof LogChannels;
     const LOGS: { key: Key; label: string; description: string; icon: Component }[] = [
-        { key: "moderation", label: "Moderation", description: "Bans, unbans and timeouts.", icon: MaterialSymbolsGavelRounded },
+        { key: "moderation", label: "Moderation", description: "Bans, unbans and timeouts.", icon: MaterialSymbolsHardwareRounded },
         { key: "members", label: "Members", description: "Joins, leaves, nickname and role changes.", icon: MaterialSymbolsGroupRounded },
         { key: "messages", label: "Messages", description: "Edited and deleted messages.", icon: MaterialSymbolsChatRounded },
         { key: "channels", label: "Channels", description: "Channels and threads created, changed or deleted.", icon: MaterialSymbolsTagRounded },
