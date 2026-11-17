@@ -3,6 +3,7 @@ import type { Component } from "svelte";
 import MaterialSymbolsCelebrationRounded from "~icons/material-symbols/celebration-rounded";
 import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
 import MaterialSymbolsDescriptionRounded from "~icons/material-symbols/description-rounded";
+import MaterialSymbolsIdentityPlatformRounded from "~icons/material-symbols/identity-platform-rounded";
 import MaterialSymbolsPersonAddRounded from "~icons/material-symbols/person-add-rounded";
 import MaterialSymbolsStarRounded from "~icons/material-symbols/star-rounded";
 
@@ -36,6 +37,13 @@ export const MODULES: { key: ModuleKey; label: string; description: string; path
         description: "Messages people vote for with reactions get a spot on a board.",
         path: "starboard",
         icon: MaterialSymbolsStarRounded,
+    },
+    {
+        key: "autorole",
+        label: "AutoRole",
+        description: "Give roles when people join, and give back the ones they had when they return.",
+        path: "autorole",
+        icon: MaterialSymbolsIdentityPlatformRounded,
     },
     {
         key: "logs",

@@ -1,4 +1,3 @@
-import asyncio
 import discord
 from collections import defaultdict
 from collections.abc import Mapping
@@ -11,9 +10,6 @@ from square.api.refusals import REFUSED, refused
 from square.api.resolve import SettingError
 from square.api.routes.profile import reset_profile
 from square.api.schemas import (
-    AutoroleUser,
-    GeneralPatch,
-    GeneralSettings,
     InvitePatch,
     InviteSettings,
     LogChannels,
@@ -27,9 +23,7 @@ from square.api.schemas import (
     TicketPatch,
     TicketSettings,
     id_of,
-    person_of,
 )
-from square.api.users import find_user
 from square.cogs.giveaways import actions as giveaway_actions
 from square.cogs.tickets import cards
 from square.cogs.tickets.panel import post as post_panel
@@ -54,72 +48,6 @@ from square.utils.server_log import LogType
 
 def _notes(guild: discord.Guild, *notes: str | None) -> Notes:
     return Notes(notes=[resolve.plain(guild, note) for note in notes if note])
-
-
-def _role_ids(guild: discord.Guild, role_ids: list[int]) -> list[str]:
-    return [str(role_id) for role_id in role_ids if guild.get_role(role_id)]
-
-
-async def _general(client: Client, guild: discord.Guild) -> GeneralSettings:
-    settings = cache.get(guild.id)
-    user_ids = list(settings.autorole_users)
-    users = await asyncio.gather(*(find_user(client, guild, user_id) for user_id in user_ids))
-    return GeneralSettings(
-        autorole_ids=_role_ids(guild, settings.autorole_ids),
-        autorole_bot_ids=_role_ids(guild, settings.autorole_bot_ids),
-        autorole_split=settings.autorole_split,
-        autorole_users=[
-            AutoroleUser(
-                user=person_of(user_id, user),
-                member=isinstance(user, discord.Member),
-                role_ids=_role_ids(guild, settings.autorole_users[user_id]),
-            )
-            for user_id, user in zip(user_ids, users, strict=True)
-        ],
-    )
-
-
-def _givable(guild: discord.Guild, role_ids: list[str]) -> list[int]:
-    roles = resolve.roles(guild, role_ids)
-    for role in roles:
-        if role.managed or role >= guild.me.top_role:
-            raise SettingError(f"Square can't give out {role.mention}, it's above Square's role or managed.")
-    return [role.id for role in roles]
-
-
-async def _reset_general(guild: discord.Guild) -> None:
-    await guild_db.set_autoroles(guild.id, humans=[], bots=[], split=False)
-    await guild_db.set_autorole_users(guild.id, {})
-
-
-@get("/general", summary="Auto roles")
-async def get_general_settings(client: Client, guild: discord.Guild) -> GeneralSettings:
-    return await _general(client, guild)
-
-
-@patch("/general", summary="Change the auto roles", responses=REFUSED)
-async def update_general_settings(client: Client, guild: discord.Guild, data: GeneralPatch) -> GeneralSettings:
-    # Resolve and check everything first, so a refusal doesn't leave the change half applied
-    humans = _givable(guild, data.autorole_ids) if data.autorole_ids is not UNSET else None
-    bots = _givable(guild, data.autorole_bot_ids) if data.autorole_bot_ids is not UNSET else None
-    split = data.autorole_split if data.autorole_split is not UNSET else None
-    users = None
-    if data.autorole_users is not UNSET:
-        if len({entry.user_id for entry in data.autorole_users}) != len(data.autorole_users):
-            raise SettingError("Each person can only be listed once.")
-        users = {int(entry.user_id): _givable(guild, entry.role_ids) for entry in data.autorole_users}
-
-    if humans is not None or bots is not None or split is not None:
-        await guild_db.set_autoroles(guild.id, humans=humans, bots=bots, split=split)
-    if users is not None:
-        await guild_db.set_autorole_users(guild.id, users)
-    return await _general(client, guild)
-
-
-@delete("/general", summary="Reset general settings", status_code=200)
-async def reset_general_settings(client: Client, guild: discord.Guild) -> GeneralSettings:
-    await _reset_general(guild)
-    return await _general(client, guild)
 
 
 def _logs(guild: discord.Guild) -> LogSettings:
@@ -531,9 +459,6 @@ router = Router(
         "member": Provide(provide_member, sync_to_thread=False),
     },
     route_handlers=[
-        get_general_settings,
-        update_general_settings,
-        reset_general_settings,
         get_log_settings,
         update_log_settings,
         reset_log_settings,

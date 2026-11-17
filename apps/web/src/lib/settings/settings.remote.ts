@@ -42,14 +42,6 @@ export const mentionedChannel = query.batch(
     byGuild((guild, ids) => read(sdk.mentionedChannels({ ...forGuild(guild), query: { ids } }))),
 );
 
-export const generalSettings = query(guildId, (guild) => read(sdk.getGeneralSettings(forGuild(guild))));
-
-export const updateGeneral = command(schema.zGeneralPatch.extend({ guild: guildId }), async ({ guild, ...body }) => {
-    generalSettings(guild).set(await read(sdk.updateGeneralSettings({ ...forGuild(guild), body })));
-});
-
-export const resetGeneral = command(guildId, (guild) => read(sdk.resetGeneralSettings(forGuild(guild))));
-
 export const logSettings = query(guildId, (guild) => read(sdk.getLogSettings(forGuild(guild))));
 
 export const updateLogs = command(schema.zLogPatch.extend({ guild: guildId }), async ({ guild, ...body }) => {

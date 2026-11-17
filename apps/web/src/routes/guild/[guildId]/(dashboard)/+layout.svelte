@@ -123,7 +123,7 @@
                       items: [
                           moduleLink("logs"),
                           { href: `${base}/automod`, label: "AutoMod", icon: MaterialSymbolsShieldRounded },
-                          { href: `${base}/general`, label: "General", icon: MaterialSymbolsTuneRounded },
+                          moduleLink("autorole"),
                           { href: `${base}/customize`, label: "Customize", icon: MaterialSymbolsFormatPaintRounded },
                           { href: `${base}/composer`, label: "Composer", icon: MaterialSymbolsEditSquareRounded },
                       ],

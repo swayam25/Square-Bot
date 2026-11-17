@@ -19,6 +19,10 @@ class GuildTable(Model):
     autorole_ids: list[int] = fields.JSONField(default=list)
     autorole_bot_ids: list[int] = fields.JSONField(default=list)
     autorole_split = fields.BooleanField(default=False)
+    autorole_delay = fields.IntField(default=0)
+    autorole_screening = fields.BooleanField(default=False)  # Wait until they pass Discord's rules screening
+    autorole_sticky = fields.BooleanField(default=False)
+    autorole_sticky_ignore_ids: list[int] = fields.JSONField(default=list)
     dj_mode = fields.BooleanField(default=False)
     music_channel_id = fields.BigIntField(null=True)
     music_message_id = fields.BigIntField(null=True)
@@ -35,6 +39,7 @@ class GuildTable(Model):
     log_channels: fields.ReverseRelation[LogChannelTable]
     dj_roles: fields.ReverseRelation[DJRoleTable]
     autorole_users: fields.ReverseRelation[AutoroleUserTable]
+    sticky_roles: fields.ReverseRelation[StickyRoleTable]
     invite_joins: fields.ReverseRelation[InviteJoinTable]
     invite_bonuses: fields.ReverseRelation[InviteBonusTable]
     tickets: fields.ReverseRelation[TicketTable]
@@ -84,6 +89,22 @@ class AutoroleUserTable(Model):
 
     class Meta:
         table = "autorole_user"
+        unique_together = (("guild", "user_id"),)
+
+
+class StickyRoleTable(Model):
+    """The roles someone had when they left, kept until they rejoin while sticky roles are on."""
+
+    id = fields.IntField(primary_key=True)
+    guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
+        "models.GuildTable", related_name="sticky_roles", on_delete=fields.CASCADE
+    )
+    user_id = fields.BigIntField()
+    role_ids: list[int] = fields.JSONField(default=list)
+    saved_at = fields.DatetimeField(auto_now=True)
+
+    class Meta:
+        table = "sticky_role"
         unique_together = (("guild", "user_id"),)
 
 

@@ -1,6 +1,7 @@
 from square.api import live
 from square.api.routes import (
     automod,
+    autorole,
     giveaways,
     guilds,
     invites,
@@ -25,6 +26,7 @@ handlers = [
     giveaways.router,
     starboard.router,
     automod.router,
+    autorole.router,
     music.router,
     live.live,
 ]

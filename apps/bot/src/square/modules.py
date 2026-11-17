@@ -8,13 +8,14 @@ class Module(enum.StrEnum):
     INVITES = "invites"
     GIVEAWAYS = "giveaways"
     STARBOARD = "starboard"
+    AUTOROLE = "autorole"
 
     @property
     def label(self) -> str:
-        return self.value.capitalize()
+        return "AutoRole" if self is Module.AUTOROLE else self.value.capitalize()
 
 
-DEFAULT_MODULES = [Module.LOGS.value, Module.GIVEAWAYS.value, Module.STARBOARD.value]
+DEFAULT_MODULES = [Module.LOGS.value, Module.GIVEAWAYS.value, Module.STARBOARD.value, Module.AUTOROLE.value]
 
 
 class ModuleOff(discord.CheckFailure):

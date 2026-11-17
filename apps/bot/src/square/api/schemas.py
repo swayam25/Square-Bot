@@ -29,6 +29,8 @@ MAX_FAKE_DAYS = 365
 MAX_SUPPORT_ROLES = 10
 MAX_AUTOROLES = 10
 MAX_AUTOROLE_USERS = 50
+MAX_AUTOROLE_DELAY = 3600
+MAX_STICKY_IGNORE = 25
 MAX_BONUS_USERS = 100
 MAX_BONUS = 100_000
 MAX_OPEN_TICKETS = 25
@@ -315,18 +317,27 @@ class Purged(Schema):
     removed: int
 
 
-class GeneralSettings(Schema):
-    autorole_ids: list[Snowflake]
-    autorole_bot_ids: list[Snowflake]
-    autorole_split: bool
-    autorole_users: list[AutoroleUser]
+class AutoroleSettings(Schema):
+    role_ids: list[Snowflake]
+    bot_role_ids: list[Snowflake]
+    split_bots: bool
+    users: list[AutoroleUser]
+    delay: int
+    wait_for_screening: bool
+    sticky: bool
+    sticky_ignore_ids: list[Snowflake]
+    kept: int  # People who left with roles the bot is keeping for them
 
 
-class GeneralPatch(Schema):
-    autorole_ids: AutoroleIds | UnsetType = UNSET
-    autorole_bot_ids: AutoroleIds | UnsetType = UNSET
-    autorole_split: bool | UnsetType = UNSET
-    autorole_users: Annotated[list[AutoroleUserPatch], msgspec.Meta(max_length=MAX_AUTOROLE_USERS)] | UnsetType = UNSET
+class AutorolePatch(Schema):
+    role_ids: AutoroleIds | UnsetType = UNSET
+    bot_role_ids: AutoroleIds | UnsetType = UNSET
+    split_bots: bool | UnsetType = UNSET
+    users: Annotated[list[AutoroleUserPatch], msgspec.Meta(max_length=MAX_AUTOROLE_USERS)] | UnsetType = UNSET
+    delay: Annotated[int, msgspec.Meta(ge=0, le=MAX_AUTOROLE_DELAY)] | UnsetType = UNSET
+    wait_for_screening: bool | UnsetType = UNSET
+    sticky: bool | UnsetType = UNSET
+    sticky_ignore_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_STICKY_IGNORE)] | UnsetType = UNSET
 
 
 class LogChannels(Schema):
@@ -911,6 +922,7 @@ class ModuleSettings(Schema):
     invites: bool
     giveaways: bool
     starboard: bool
+    autorole: bool
 
 
 class ModulePatch(Schema):
@@ -919,6 +931,7 @@ class ModulePatch(Schema):
     invites: bool | UnsetType = UNSET
     giveaways: bool | UnsetType = UNSET
     starboard: bool | UnsetType = UNSET
+    autorole: bool | UnsetType = UNSET
 
 
 # A new `Module` needs a field in both structs above, so the bot refuses to start until it has one

@@ -15,61 +15,99 @@
     import Select from "#lib/components/ui/Select.svelte";
     import Toggle from "#lib/components/ui/Toggle.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { formatCount } from "#lib/format.ts";
     import { roleOptions } from "#lib/settings/options.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
     import type { AutoroleUser, UserMatch } from "@square/api-client";
+    import MaterialSymbolsBlockRounded from "~icons/material-symbols/block-rounded";
     import MaterialSymbolsCallSplitRounded from "~icons/material-symbols/call-split-rounded";
     import MaterialSymbolsChevronRightRounded from "~icons/material-symbols/chevron-right-rounded";
     import MaterialSymbolsGroupRounded from "~icons/material-symbols/group-rounded";
+    import MaterialSymbolsHistoryRounded from "~icons/material-symbols/history-rounded";
+    import MaterialSymbolsHowToRegRounded from "~icons/material-symbols/how-to-reg-rounded";
     import MaterialSymbolsPersonRemoveRounded from "~icons/material-symbols/person-remove-rounded";
     import MaterialSymbolsPersonRounded from "~icons/material-symbols/person-rounded";
+    import MaterialSymbolsScheduleRounded from "~icons/material-symbols/schedule-rounded";
     import MaterialSymbolsSmartToyRounded from "~icons/material-symbols/smart-toy-rounded";
     import type { PageProps } from "./$types";
+    import * as remote from "./autorole.remote.ts";
 
     let { data }: PageProps = $props();
 
     const MAX_ROLES = 10;
     const MAX_USERS = 50;
+    const MAX_IGNORED = 25;
+    const DESCRIPTION = "Roles Square gives when people join, and the ones it gives back when they return.";
+    const DELAYS = [
+        { value: "0", label: "Right away" },
+        { value: "60", label: "1 minute" },
+        { value: "300", label: "5 minutes" },
+        { value: "600", label: "10 minutes" },
+        { value: "1800", label: "30 minutes" },
+        { value: "3600", label: "1 hour" },
+    ];
 
     const details = getDetails();
     const guild = $derived(data.guild.id);
-    const savedQuery = $derived(settings.generalSettings(guild));
+    const savedQuery = $derived(remote.autorole(guild));
     const rolesQuery = $derived(settings.guildRoles(guild));
 
     const saved = $derived(savedQuery.current!);
     const roles = $derived(rolesQuery.current!);
 
-    let humans = $derived(saved.autoroleIds);
-    let bots = $derived(saved.autoroleBotIds);
-    let split = $derived(saved.autoroleSplit);
-    let users = $derived<AutoroleUser[]>(saved.autoroleUsers);
+    let humans = $derived(saved.roleIds);
+    let bots = $derived(saved.botRoleIds);
+    let split = $derived(saved.splitBots);
+    let users = $derived<AutoroleUser[]>(saved.users);
+    let delay = $derived(saved.delay);
+    let screening = $derived(saved.waitForScreening);
+    let sticky = $derived(saved.sticky);
+    let ignored = $derived(saved.stickyIgnoreIds);
 
     const sameRoles = (a: string[], b: string[]) => a.length === b.length && a.every((id) => b.includes(id));
     const sameUsers = (a: AutoroleUser[], b: AutoroleUser[]) =>
         a.length === b.length && a.every((entry) => b.some((other) => other.user.id === entry.user.id && sameRoles(other.roleIds, entry.roleIds)));
 
     const changes = $derived({
-        ...(!sameRoles(humans, saved.autoroleIds) && { autoroleIds: humans }),
-        ...(!sameRoles(bots, saved.autoroleBotIds) && { autoroleBotIds: bots }),
-        ...(split !== saved.autoroleSplit && { autoroleSplit: split }),
-        ...(!sameUsers(users, saved.autoroleUsers) && {
-            autoroleUsers: users.map((entry) => ({ userId: entry.user.id, roleIds: entry.roleIds })),
+        ...(!sameRoles(humans, saved.roleIds) && { roleIds: humans }),
+        ...(!sameRoles(bots, saved.botRoleIds) && { botRoleIds: bots }),
+        ...(split !== saved.splitBots && { splitBots: split }),
+        ...(!sameUsers(users, saved.users) && {
+            users: users.map((entry) => ({ userId: entry.user.id, roleIds: entry.roleIds })),
         }),
+        ...(delay !== saved.delay && { delay }),
+        ...(screening !== saved.waitForScreening && { waitForScreening: screening }),
+        ...(sticky !== saved.sticky && { sticky }),
+        ...(!sameRoles(ignored, saved.stickyIgnoreIds) && { stickyIgnoreIds: ignored }),
     });
     const invalid = $derived(users.some((entry) => !entry.roleIds.length) ? "Pick at least one role for everyone on the list." : "");
 
     function discard() {
-        humans = saved.autoroleIds;
-        bots = saved.autoroleBotIds;
-        split = saved.autoroleSplit;
-        users = saved.autoroleUsers;
+        humans = saved.roleIds;
+        bots = saved.botRoleIds;
+        split = saved.splitBots;
+        users = saved.users;
+        delay = saved.delay;
+        screening = saved.waitForScreening;
+        sticky = saved.sticky;
+        ignored = saved.stickyIgnoreIds;
     }
 
     const roleName = $derived(new Map(roles.map((role) => [role.id, role.name])));
-    const keep = $derived([...saved.autoroleIds, ...saved.autoroleBotIds, ...saved.autoroleUsers.flatMap((entry) => entry.roleIds)]);
+    const keep = $derived([...saved.roleIds, ...saved.botRoleIds, ...saved.users.flatMap((entry) => entry.roleIds)]);
     const roleChoices = $derived(roleOptions(roles, { assignable: true, keep }));
+    const ignoreChoices = $derived(roleOptions(roles));
 
-    const isDefault = $derived(!saved.autoroleIds.length && !saved.autoroleBotIds.length && !saved.autoroleSplit && !saved.autoroleUsers.length);
+    const isDefault = $derived(
+        !saved.roleIds.length &&
+            !saved.botRoleIds.length &&
+            !saved.splitBots &&
+            !saved.users.length &&
+            !saved.delay &&
+            !saved.waitForScreening &&
+            !saved.sticky &&
+            !saved.stickyIgnoreIds.length,
+    );
 
     const open = (entry: AutoroleUser) => details.show("Extra roles", personPanel, entry.user.id);
 
@@ -119,23 +157,23 @@
     {/if}
 {/snippet}
 
-<QueryGate queries={[savedQuery, rolesQuery]} title="General" description="The basics Square handles for {data.guild.name}." actions>
-    {#snippet skeleton()}<PageSkeleton groups={[{ rows: 3 }, { rows: 2 }]} />{/snippet}
+<QueryGate queries={[savedQuery, rolesQuery]} title="AutoRole" description={DESCRIPTION} actions>
+    {#snippet skeleton()}<PageSkeleton groups={[{ rows: 3 }, { rows: 2 }, { rows: 2 }, { rows: 2 }]} />{/snippet}
     <div class="flex flex-col gap-6">
-        <PageHeading title="General" description="The basics Square handles for {data.guild.name}.">
+        <PageHeading title="AutoRole" description={DESCRIPTION}>
             {#snippet actions()}
                 <ResetButton
-                    title="Reset general settings?"
-                    done="General settings reset"
-                    description="This clears every join role. Nobody loses a role they already have."
+                    title="Reset AutoRole?"
+                    done="AutoRole reset"
+                    description="This clears every join role and turns off the wait and sticky roles. Nobody loses a role they already have, and roles kept for people who left are forgotten."
                     disabled={isDefault}
-                    reset={() => settings.resetGeneral(guild)}
+                    reset={() => remote.resetAutorole(guild)}
                     apply={(next) => savedQuery.set(next)}
                 />
             {/snippet}
         </PageHeading>
 
-        <SettingGroup title="Join roles" description="Square gives these out the moment someone joins.">
+        <SettingGroup title="Join roles" description="Square gives these out when someone joins.">
             <SettingRow
                 label="Separate roles for bots"
                 description="Give bots a different set than members."
@@ -199,7 +237,47 @@
                 <p class="p-4 text-sm text-gray-400">No one added yet.</p>
             {/each}
         </SettingGroup>
+
+        <SettingGroup title="Timing" description="When Square gives the join roles. Extra roles for people follow the same timing.">
+            <SettingRow
+                label="Wait before giving"
+                description="Gives people time to read the rules first. Leaving before then means no roles."
+                icon={MaterialSymbolsScheduleRounded}
+            >
+                <Select
+                    title="Wait before giving"
+                    options={DELAYS}
+                    bind:value={() => String(delay), (next) => next !== null && (delay = Number(next))}
+                />
+            </SettingRow>
+            <SettingRow
+                label="Wait for rules screening"
+                description="With Discord's rules screening on, roles come only after someone agrees to the rules. Bots never wait."
+                icon={MaterialSymbolsHowToRegRounded}
+                layout="inline"
+            >
+                <Toggle label="Wait for rules screening" bind:checked={screening} />
+            </SettingRow>
+        </SettingGroup>
+
+        <SettingGroup title="Sticky roles" description="Give people back the roles they had when they left, so leaving can't shake off a muted role.">
+            <SettingRow
+                label="Give roles back"
+                description={saved.sticky && saved.kept
+                    ? `Square is keeping roles for ${formatCount(saved.kept)} ${saved.kept === 1 ? "person" : "people"}. Turning this off forgets them.`
+                    : "Square remembers the roles of people who leave from now on. They come back right away, without waiting."}
+                icon={MaterialSymbolsHistoryRounded}
+                layout="inline"
+            >
+                <Toggle label="Give roles back" bind:checked={sticky} />
+            </SettingRow>
+            {#if sticky}
+                <SettingRow label="Never give back" description="Roles left out when someone returns." icon={MaterialSymbolsBlockRounded}>
+                    <Select title="Never give back" placeholder="No roles" options={ignoreChoices} multiple max={MAX_IGNORED} bind:values={ignored} />
+                </SettingRow>
+            {/if}
+        </SettingGroup>
     </div>
 
-    <SaveBar dirty={Object.keys(changes).length > 0} {invalid} onsave={() => settings.updateGeneral({ guild, ...changes })} ondiscard={discard} />
+    <SaveBar dirty={Object.keys(changes).length > 0} {invalid} onsave={() => remote.updateAutorole({ guild, ...changes })} ondiscard={discard} />
 </QueryGate>

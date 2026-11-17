@@ -1021,298 +1021,6 @@
         ]
       }
     },
-    "/guilds/{guild_id}/settings/general": {
-      "get": {
-        "tags": [
-          "Settings"
-        ],
-        "summary": "Auto roles",
-        "operationId": "get_general_settings",
-        "parameters": [
-          {
-            "name": "guild_id",
-            "in": "path",
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d{17,20}$",
-              "description": "A Discord ID"
-            },
-            "description": "A Discord ID",
-            "required": true,
-            "deprecated": false
-          },
-          {
-            "name": "x-actor-id",
-            "in": "header",
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d{17,20}$",
-              "description": "The signed-in Discord user the dashboard is acting for"
-            },
-            "description": "The signed-in Discord user the dashboard is acting for",
-            "required": true,
-            "deprecated": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Request fulfilled, document follows",
-            "headers": {},
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GeneralSettings"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request syntax or unsupported method",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "detail": {
-                      "type": "string"
-                    },
-                    "extra": {
-                      "additionalProperties": {},
-                      "type": [
-                        "null",
-                        "object",
-                        "array"
-                      ]
-                    }
-                  },
-                  "type": "object",
-                  "required": [
-                    "detail",
-                    "status_code"
-                  ],
-                  "description": "Validation Exception",
-                  "examples": [
-                    {
-                      "status_code": 400,
-                      "detail": "Bad Request",
-                      "extra": {}
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "deprecated": false,
-        "security": [
-          {
-            "secret": []
-          }
-        ]
-      },
-      "delete": {
-        "tags": [
-          "Settings"
-        ],
-        "summary": "Reset general settings",
-        "operationId": "reset_general_settings",
-        "parameters": [
-          {
-            "name": "guild_id",
-            "in": "path",
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d{17,20}$",
-              "description": "A Discord ID"
-            },
-            "description": "A Discord ID",
-            "required": true,
-            "deprecated": false
-          },
-          {
-            "name": "x-actor-id",
-            "in": "header",
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d{17,20}$",
-              "description": "The signed-in Discord user the dashboard is acting for"
-            },
-            "description": "The signed-in Discord user the dashboard is acting for",
-            "required": true,
-            "deprecated": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Request fulfilled, document follows",
-            "headers": {},
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GeneralSettings"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request syntax or unsupported method",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "detail": {
-                      "type": "string"
-                    },
-                    "extra": {
-                      "additionalProperties": {},
-                      "type": [
-                        "null",
-                        "object",
-                        "array"
-                      ]
-                    }
-                  },
-                  "type": "object",
-                  "required": [
-                    "detail",
-                    "status_code"
-                  ],
-                  "description": "Validation Exception",
-                  "examples": [
-                    {
-                      "status_code": 400,
-                      "detail": "Bad Request",
-                      "extra": {}
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "deprecated": false,
-        "security": [
-          {
-            "secret": []
-          }
-        ]
-      },
-      "patch": {
-        "tags": [
-          "Settings"
-        ],
-        "summary": "Change the auto roles",
-        "operationId": "update_general_settings",
-        "parameters": [
-          {
-            "name": "guild_id",
-            "in": "path",
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d{17,20}$",
-              "description": "A Discord ID"
-            },
-            "description": "A Discord ID",
-            "required": true,
-            "deprecated": false
-          },
-          {
-            "name": "x-actor-id",
-            "in": "header",
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d{17,20}$",
-              "description": "The signed-in Discord user the dashboard is acting for"
-            },
-            "description": "The signed-in Discord user the dashboard is acting for",
-            "required": true,
-            "deprecated": false
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GeneralPatch"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Request fulfilled, document follows",
-            "headers": {},
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GeneralSettings"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request syntax or unsupported method",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "status_code": {
-                      "type": "integer"
-                    },
-                    "detail": {
-                      "type": "string"
-                    },
-                    "extra": {
-                      "additionalProperties": {},
-                      "type": [
-                        "null",
-                        "object",
-                        "array"
-                      ]
-                    }
-                  },
-                  "type": "object",
-                  "required": [
-                    "detail",
-                    "status_code"
-                  ],
-                  "description": "Validation Exception",
-                  "examples": [
-                    {
-                      "status_code": 400,
-                      "detail": "Bad Request",
-                      "extra": {}
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "The bot refused the change",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": false,
-        "security": [
-          {
-            "secret": []
-          }
-        ]
-      }
-    },
     "/guilds/{guild_id}/settings/logs": {
       "get": {
         "tags": [
@@ -7921,6 +7629,298 @@
         ]
       }
     },
+    "/guilds/{guild_id}/autorole": {
+      "get": {
+        "tags": [
+          "AutoRole"
+        ],
+        "summary": "Join roles, sticky roles and their timing",
+        "operationId": "get_autorole",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoroleSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "AutoRole"
+        ],
+        "summary": "Reset AutoRole",
+        "operationId": "reset_autorole",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoroleSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "AutoRole"
+        ],
+        "summary": "Change AutoRole",
+        "operationId": "update_autorole",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutorolePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoroleSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
     "/guilds/{guild_id}/music/player": {
       "get": {
         "tags": [
@@ -11073,6 +11073,142 @@
         ],
         "title": "AutomodTestResult"
       },
+      "AutorolePatch": {
+        "properties": {
+          "roleIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 10
+          },
+          "botRoleIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 10
+          },
+          "splitBots": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "users": {
+            "oneOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AutoroleUserPatch"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 50
+          },
+          "delay": {
+            "oneOf": [
+              {
+                "type": "integer"
+              }
+            ],
+            "maximum": 3600
+          },
+          "waitForScreening": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "sticky": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "stickyIgnoreIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 25
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "AutorolePatch"
+      },
+      "AutoroleSettings": {
+        "properties": {
+          "roleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "botRoleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "splitBots": {
+            "type": "boolean"
+          },
+          "users": {
+            "items": {
+              "$ref": "#/components/schemas/AutoroleUser"
+            },
+            "type": "array"
+          },
+          "delay": {
+            "type": "integer"
+          },
+          "waitForScreening": {
+            "type": "boolean"
+          },
+          "sticky": {
+            "type": "boolean"
+          },
+          "stickyIgnoreIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "kept": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "botRoleIds",
+          "delay",
+          "kept",
+          "roleIds",
+          "splitBots",
+          "sticky",
+          "stickyIgnoreIds",
+          "users",
+          "waitForScreening"
+        ],
+        "title": "AutoroleSettings"
+      },
       "AutoroleUser": {
         "properties": {
           "user": {
@@ -11625,86 +11761,6 @@
           "preset"
         ],
         "title": "EqToggle"
-      },
-      "GeneralPatch": {
-        "properties": {
-          "autoroleIds": {
-            "oneOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            ],
-            "maxItems": 10
-          },
-          "autoroleBotIds": {
-            "oneOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            ],
-            "maxItems": 10
-          },
-          "autoroleSplit": {
-            "oneOf": [
-              {
-                "type": "boolean"
-              }
-            ]
-          },
-          "autoroleUsers": {
-            "oneOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/AutoroleUserPatch"
-                },
-                "type": "array"
-              }
-            ],
-            "maxItems": 50
-          }
-        },
-        "type": "object",
-        "required": [],
-        "title": "GeneralPatch"
-      },
-      "GeneralSettings": {
-        "properties": {
-          "autoroleIds": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "autoroleBotIds": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "autoroleSplit": {
-            "type": "boolean"
-          },
-          "autoroleUsers": {
-            "items": {
-              "$ref": "#/components/schemas/AutoroleUser"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object",
-        "required": [
-          "autoroleBotIds",
-          "autoroleIds",
-          "autoroleSplit",
-          "autoroleUsers"
-        ],
-        "title": "GeneralSettings"
       },
       "Giveaway": {
         "properties": {
@@ -13506,6 +13562,13 @@
                 "type": "boolean"
               }
             ]
+          },
+          "autorole": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
           }
         },
         "type": "object",
@@ -13528,10 +13591,14 @@
           },
           "starboard": {
             "type": "boolean"
+          },
+          "autorole": {
+            "type": "boolean"
           }
         },
         "type": "object",
         "required": [
+          "autorole",
           "giveaways",
           "invites",
           "logs",

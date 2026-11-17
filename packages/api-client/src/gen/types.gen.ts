@@ -67,6 +67,35 @@ export type AutomodTestResult = {
 };
 
 /**
+ * AutorolePatch
+ */
+export type AutorolePatch = {
+    roleIds?: Array<string>;
+    botRoleIds?: Array<string>;
+    splitBots?: boolean;
+    users?: Array<AutoroleUserPatch>;
+    delay?: number;
+    waitForScreening?: boolean;
+    sticky?: boolean;
+    stickyIgnoreIds?: Array<string>;
+};
+
+/**
+ * AutoroleSettings
+ */
+export type AutoroleSettings = {
+    roleIds: Array<string>;
+    botRoleIds: Array<string>;
+    splitBots: boolean;
+    users: Array<AutoroleUser>;
+    delay: number;
+    waitForScreening: boolean;
+    sticky: boolean;
+    stickyIgnoreIds: Array<string>;
+    kept: number;
+};
+
+/**
  * AutoroleUser
  */
 export type AutoroleUser = {
@@ -258,26 +287,6 @@ export type EqPreset = {
 export type EqToggle = {
     preset: string;
     enabled: boolean;
-};
-
-/**
- * GeneralPatch
- */
-export type GeneralPatch = {
-    autoroleIds?: Array<string>;
-    autoroleBotIds?: Array<string>;
-    autoroleSplit?: boolean;
-    autoroleUsers?: Array<AutoroleUserPatch>;
-};
-
-/**
- * GeneralSettings
- */
-export type GeneralSettings = {
-    autoroleIds: Array<string>;
-    autoroleBotIds: Array<string>;
-    autoroleSplit: boolean;
-    autoroleUsers: Array<AutoroleUser>;
 };
 
 /**
@@ -833,6 +842,7 @@ export type ModulePatch = {
     invites?: boolean;
     giveaways?: boolean;
     starboard?: boolean;
+    autorole?: boolean;
 };
 
 /**
@@ -844,6 +854,7 @@ export type ModuleSettings = {
     invites: boolean;
     giveaways: boolean;
     starboard: boolean;
+    autorole: boolean;
 };
 
 /**
@@ -2005,145 +2016,6 @@ export type ServerStatsResponses = {
 };
 
 export type ServerStatsResponse = ServerStatsResponses[keyof ServerStatsResponses];
-
-export type ResetGeneralSettingsData = {
-    body?: never;
-    headers: {
-        /**
-         * The signed-in Discord user the dashboard is acting for
-         */
-        "x-actor-id": string;
-    };
-    path: {
-        /**
-         * A Discord ID
-         */
-        guild_id: string;
-    };
-    query?: never;
-    url: "/guilds/{guild_id}/settings/general";
-};
-
-export type ResetGeneralSettingsErrors = {
-    /**
-     * Validation Exception
-     */
-    400: {
-        status_code: number;
-        detail: string;
-        extra?:
-            | null
-            | {
-                  [key: string]: unknown;
-              }
-            | Array<unknown>;
-    };
-};
-
-export type ResetGeneralSettingsError = ResetGeneralSettingsErrors[keyof ResetGeneralSettingsErrors];
-
-export type ResetGeneralSettingsResponses = {
-    /**
-     * Request fulfilled, document follows
-     */
-    200: GeneralSettings;
-};
-
-export type ResetGeneralSettingsResponse = ResetGeneralSettingsResponses[keyof ResetGeneralSettingsResponses];
-
-export type GetGeneralSettingsData = {
-    body?: never;
-    headers: {
-        /**
-         * The signed-in Discord user the dashboard is acting for
-         */
-        "x-actor-id": string;
-    };
-    path: {
-        /**
-         * A Discord ID
-         */
-        guild_id: string;
-    };
-    query?: never;
-    url: "/guilds/{guild_id}/settings/general";
-};
-
-export type GetGeneralSettingsErrors = {
-    /**
-     * Validation Exception
-     */
-    400: {
-        status_code: number;
-        detail: string;
-        extra?:
-            | null
-            | {
-                  [key: string]: unknown;
-              }
-            | Array<unknown>;
-    };
-};
-
-export type GetGeneralSettingsError = GetGeneralSettingsErrors[keyof GetGeneralSettingsErrors];
-
-export type GetGeneralSettingsResponses = {
-    /**
-     * Request fulfilled, document follows
-     */
-    200: GeneralSettings;
-};
-
-export type GetGeneralSettingsResponse = GetGeneralSettingsResponses[keyof GetGeneralSettingsResponses];
-
-export type UpdateGeneralSettingsData = {
-    body: GeneralPatch;
-    headers: {
-        /**
-         * The signed-in Discord user the dashboard is acting for
-         */
-        "x-actor-id": string;
-    };
-    path: {
-        /**
-         * A Discord ID
-         */
-        guild_id: string;
-    };
-    query?: never;
-    url: "/guilds/{guild_id}/settings/general";
-};
-
-export type UpdateGeneralSettingsErrors = {
-    /**
-     * Validation Exception
-     */
-    400: {
-        status_code: number;
-        detail: string;
-        extra?:
-            | null
-            | {
-                  [key: string]: unknown;
-              }
-            | Array<unknown>;
-    };
-    /**
-     * The bot refused the change
-     */
-    422: Problem;
-};
-
-export type UpdateGeneralSettingsError = UpdateGeneralSettingsErrors[keyof UpdateGeneralSettingsErrors];
-
-export type UpdateGeneralSettingsResponses = {
-    /**
-     * Request fulfilled, document follows
-     */
-    200: GeneralSettings;
-};
-
-export type UpdateGeneralSettingsResponse = UpdateGeneralSettingsResponses[keyof UpdateGeneralSettingsResponses];
 
 export type ResetLogSettingsData = {
     body?: never;
@@ -5087,6 +4959,145 @@ export type TestAutomodResponses = {
 };
 
 export type TestAutomodResponse = TestAutomodResponses[keyof TestAutomodResponses];
+
+export type ResetAutoroleData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/autorole";
+};
+
+export type ResetAutoroleErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ResetAutoroleError = ResetAutoroleErrors[keyof ResetAutoroleErrors];
+
+export type ResetAutoroleResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: AutoroleSettings;
+};
+
+export type ResetAutoroleResponse = ResetAutoroleResponses[keyof ResetAutoroleResponses];
+
+export type GetAutoroleData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/autorole";
+};
+
+export type GetAutoroleErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type GetAutoroleError = GetAutoroleErrors[keyof GetAutoroleErrors];
+
+export type GetAutoroleResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: AutoroleSettings;
+};
+
+export type GetAutoroleResponse = GetAutoroleResponses[keyof GetAutoroleResponses];
+
+export type UpdateAutoroleData = {
+    body: AutorolePatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/autorole";
+};
+
+export type UpdateAutoroleErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type UpdateAutoroleError = UpdateAutoroleErrors[keyof UpdateAutoroleErrors];
+
+export type UpdateAutoroleResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: AutoroleSettings;
+};
+
+export type UpdateAutoroleResponse = UpdateAutoroleResponses[keyof UpdateAutoroleResponses];
 
 export type MusicPlayerData = {
     body?: never;

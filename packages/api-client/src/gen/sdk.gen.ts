@@ -56,12 +56,12 @@ import type {
     GetAutomodData,
     GetAutomodErrors,
     GetAutomodResponses,
+    GetAutoroleData,
+    GetAutoroleErrors,
+    GetAutoroleResponses,
     GetBotProfileData,
     GetBotProfileErrors,
     GetBotProfileResponses,
-    GetGeneralSettingsData,
-    GetGeneralSettingsErrors,
-    GetGeneralSettingsResponses,
     GetGiveawayData,
     GetGiveawayErrors,
     GetGiveawayResponses,
@@ -191,15 +191,15 @@ import type {
     ResetAutomodData,
     ResetAutomodErrors,
     ResetAutomodResponses,
+    ResetAutoroleData,
+    ResetAutoroleErrors,
+    ResetAutoroleResponses,
     ResetBotProfileData,
     ResetBotProfileErrors,
     ResetBotProfileResponses,
     ResetEqData,
     ResetEqErrors,
     ResetEqResponses,
-    ResetGeneralSettingsData,
-    ResetGeneralSettingsErrors,
-    ResetGeneralSettingsResponses,
     ResetInviteCountsData,
     ResetInviteCountsErrors,
     ResetInviteCountsResponses,
@@ -275,12 +275,12 @@ import type {
     UpdateAutomodData,
     UpdateAutomodErrors,
     UpdateAutomodResponses,
+    UpdateAutoroleData,
+    UpdateAutoroleErrors,
+    UpdateAutoroleResponses,
     UpdateBotProfileData,
     UpdateBotProfileErrors,
     UpdateBotProfileResponses,
-    UpdateGeneralSettingsData,
-    UpdateGeneralSettingsErrors,
-    UpdateGeneralSettingsResponses,
     UpdateGiveawayData,
     UpdateGiveawayErrors,
     UpdateGiveawayResponses,
@@ -455,46 +455,6 @@ export const serverStats = <ThrowOnError extends boolean = false>(
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/stats/server",
         ...options,
-    });
-
-/**
- * Reset general settings
- */
-export const resetGeneralSettings = <ThrowOnError extends boolean = false>(
-    options: Options<ResetGeneralSettingsData, ThrowOnError>,
-): RequestResult<ResetGeneralSettingsResponses, ResetGeneralSettingsErrors, ThrowOnError> =>
-    (options.client ?? client).delete<ResetGeneralSettingsResponses, ResetGeneralSettingsErrors, ThrowOnError>({
-        security: [{ scheme: "bearer", type: "http" }],
-        url: "/guilds/{guild_id}/settings/general",
-        ...options,
-    });
-
-/**
- * Auto roles
- */
-export const getGeneralSettings = <ThrowOnError extends boolean = false>(
-    options: Options<GetGeneralSettingsData, ThrowOnError>,
-): RequestResult<GetGeneralSettingsResponses, GetGeneralSettingsErrors, ThrowOnError> =>
-    (options.client ?? client).get<GetGeneralSettingsResponses, GetGeneralSettingsErrors, ThrowOnError>({
-        security: [{ scheme: "bearer", type: "http" }],
-        url: "/guilds/{guild_id}/settings/general",
-        ...options,
-    });
-
-/**
- * Change the auto roles
- */
-export const updateGeneralSettings = <ThrowOnError extends boolean = false>(
-    options: Options<UpdateGeneralSettingsData, ThrowOnError>,
-): RequestResult<UpdateGeneralSettingsResponses, UpdateGeneralSettingsErrors, ThrowOnError> =>
-    (options.client ?? client).patch<UpdateGeneralSettingsResponses, UpdateGeneralSettingsErrors, ThrowOnError>({
-        security: [{ scheme: "bearer", type: "http" }],
-        url: "/guilds/{guild_id}/settings/general",
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...options.headers,
-        },
     });
 
 /**
@@ -1298,6 +1258,46 @@ export const testAutomod = <ThrowOnError extends boolean = false>(
     (options.client ?? client).post<TestAutomodResponses, TestAutomodErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/automod/test",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Reset AutoRole
+ */
+export const resetAutorole = <ThrowOnError extends boolean = false>(
+    options: Options<ResetAutoroleData, ThrowOnError>,
+): RequestResult<ResetAutoroleResponses, ResetAutoroleErrors, ThrowOnError> =>
+    (options.client ?? client).delete<ResetAutoroleResponses, ResetAutoroleErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/autorole",
+        ...options,
+    });
+
+/**
+ * Join roles, sticky roles and their timing
+ */
+export const getAutorole = <ThrowOnError extends boolean = false>(
+    options: Options<GetAutoroleData, ThrowOnError>,
+): RequestResult<GetAutoroleResponses, GetAutoroleErrors, ThrowOnError> =>
+    (options.client ?? client).get<GetAutoroleResponses, GetAutoroleErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/autorole",
+        ...options,
+    });
+
+/**
+ * Change AutoRole
+ */
+export const updateAutorole = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateAutoroleData, ThrowOnError>,
+): RequestResult<UpdateAutoroleResponses, UpdateAutoroleErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateAutoroleResponses, UpdateAutoroleErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/autorole",
         ...options,
         headers: {
             "Content-Type": "application/json",

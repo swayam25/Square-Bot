@@ -54,6 +54,20 @@ export const zAutoroleUserPatch = z.object({
 });
 
 /**
+ * AutorolePatch
+ */
+export const zAutorolePatch = z.object({
+    roleIds: z.array(z.string()).max(10).optional(),
+    botRoleIds: z.array(z.string()).max(10).optional(),
+    splitBots: z.boolean().optional(),
+    users: z.array(zAutoroleUserPatch).max(50).optional(),
+    delay: z.int().lte(3600).optional(),
+    waitForScreening: z.boolean().optional(),
+    sticky: z.boolean().optional(),
+    stickyIgnoreIds: z.array(z.string()).max(25).optional(),
+});
+
+/**
  * Bonus
  */
 export const zBonus = z.object({
@@ -176,16 +190,6 @@ export const zEqPreset = z.object({
 export const zEqToggle = z.object({
     preset: z.string(),
     enabled: z.boolean(),
-});
-
-/**
- * GeneralPatch
- */
-export const zGeneralPatch = z.object({
-    autoroleIds: z.array(z.string()).max(10).optional(),
-    autoroleBotIds: z.array(z.string()).max(10).optional(),
-    autoroleSplit: z.boolean().optional(),
-    autoroleUsers: z.array(zAutoroleUserPatch).max(50).optional(),
 });
 
 /**
@@ -539,6 +543,7 @@ export const zModulePatch = z.object({
     invites: z.boolean().optional(),
     giveaways: z.boolean().optional(),
     starboard: z.boolean().optional(),
+    autorole: z.boolean().optional(),
 });
 
 /**
@@ -550,6 +555,7 @@ export const zModuleSettings = z.object({
     invites: z.boolean(),
     giveaways: z.boolean(),
     starboard: z.boolean(),
+    autorole: z.boolean(),
 });
 
 /**
@@ -669,6 +675,21 @@ export const zAutoroleUser = z.object({
 });
 
 /**
+ * AutoroleSettings
+ */
+export const zAutoroleSettings = z.object({
+    roleIds: z.array(z.string()),
+    botRoleIds: z.array(z.string()),
+    splitBots: z.boolean(),
+    users: z.array(zAutoroleUser),
+    delay: z.int(),
+    waitForScreening: z.boolean(),
+    sticky: z.boolean(),
+    stickyIgnoreIds: z.array(z.string()),
+    kept: z.int(),
+});
+
+/**
  * Entrant
  */
 export const zEntrant = z.object({
@@ -694,16 +715,6 @@ export const zEntrantPage = z.object({
     people: z.int(),
     eligible: z.int(),
     tickets: z.int(),
-});
-
-/**
- * GeneralSettings
- */
-export const zGeneralSettings = z.object({
-    autoroleIds: z.array(z.string()),
-    autoroleBotIds: z.array(z.string()),
-    autoroleSplit: z.boolean(),
-    autoroleUsers: z.array(zAutoroleUser),
 });
 
 /**
@@ -1468,47 +1479,6 @@ export const zServerStatsPath = z.object({
  * Request fulfilled, document follows
  */
 export const zServerStatsResponse = zServerStats;
-
-export const zResetGeneralSettingsHeaders = z.object({
-    "x-actor-id": z.string().regex(/^\d{17,20}$/),
-});
-
-export const zResetGeneralSettingsPath = z.object({
-    guild_id: z.string().regex(/^\d{17,20}$/),
-});
-
-/**
- * Request fulfilled, document follows
- */
-export const zResetGeneralSettingsResponse = zGeneralSettings;
-
-export const zGetGeneralSettingsHeaders = z.object({
-    "x-actor-id": z.string().regex(/^\d{17,20}$/),
-});
-
-export const zGetGeneralSettingsPath = z.object({
-    guild_id: z.string().regex(/^\d{17,20}$/),
-});
-
-/**
- * Request fulfilled, document follows
- */
-export const zGetGeneralSettingsResponse = zGeneralSettings;
-
-export const zUpdateGeneralSettingsBody = zGeneralPatch;
-
-export const zUpdateGeneralSettingsHeaders = z.object({
-    "x-actor-id": z.string().regex(/^\d{17,20}$/),
-});
-
-export const zUpdateGeneralSettingsPath = z.object({
-    guild_id: z.string().regex(/^\d{17,20}$/),
-});
-
-/**
- * Request fulfilled, document follows
- */
-export const zUpdateGeneralSettingsResponse = zGeneralSettings;
 
 export const zResetLogSettingsHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),
@@ -2382,6 +2352,47 @@ export const zTestAutomodPath = z.object({
  * Request fulfilled, document follows
  */
 export const zTestAutomodResponse = zAutomodTestResult;
+
+export const zResetAutoroleHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zResetAutorolePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zResetAutoroleResponse = zAutoroleSettings;
+
+export const zGetAutoroleHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGetAutorolePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGetAutoroleResponse = zAutoroleSettings;
+
+export const zUpdateAutoroleBody = zAutorolePatch;
+
+export const zUpdateAutoroleHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateAutorolePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateAutoroleResponse = zAutoroleSettings;
 
 export const zMusicPlayerHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

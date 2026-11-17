@@ -17,6 +17,10 @@ class GuildSettings:
     autorole_ids: list[int] = field(default_factory=list)
     autorole_bot_ids: list[int] = field(default_factory=list)
     autorole_split: bool = False
+    autorole_delay: int = 0
+    autorole_screening: bool = False
+    autorole_sticky: bool = False
+    autorole_sticky_ignore_ids: list[int] = field(default_factory=list)
     dj_mode: bool = False
     music_channel_id: int | None = None
     music_message_id: int | None = None
