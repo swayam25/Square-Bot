@@ -1,12 +1,11 @@
 <script lang="ts">
+    import Seo from "#lib/components/site/Seo.svelte";
     import type { Snippet } from "svelte";
 
     let { title, description, actions }: { title: string; description?: string; actions?: Snippet } = $props();
 </script>
 
-<svelte:head>
-    <title>{title} · Square</title>
-</svelte:head>
+<Seo {title} {description} />
 
 <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
     <div class="flex flex-col gap-2">

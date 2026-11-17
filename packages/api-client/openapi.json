@@ -10,13 +10,13 @@
     }
   ],
   "paths": {
-    "/health": {
+    "/emojis": {
       "get": {
         "tags": [
           "System"
         ],
-        "summary": "Bot status",
-        "operationId": "health",
+        "summary": "Square's own emojis by name, custom ones once synced from /emoji",
+        "operationId": "bot_emojis",
         "responses": {
           "200": {
             "description": "Request fulfilled, document follows",
@@ -24,7 +24,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Health"
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/BotEmoji"
+                  },
+                  "type": "object"
                 }
               }
             }
@@ -9785,6 +9788,31 @@
         ],
         "title": "BonusRole"
       },
+      "BotEmoji": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "animated": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "BotEmoji"
+      },
       "BotProfile": {
         "properties": {
           "name": {
@@ -11075,33 +11103,6 @@
           "name"
         ],
         "title": "Guild"
-      },
-      "Health": {
-        "properties": {
-          "ready": {
-            "type": "boolean"
-          },
-          "guilds": {
-            "type": "integer"
-          },
-          "latencyMs": {
-            "oneOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "guilds",
-          "latencyMs",
-          "ready"
-        ],
-        "title": "Health"
       },
       "InviteBoard": {
         "properties": {

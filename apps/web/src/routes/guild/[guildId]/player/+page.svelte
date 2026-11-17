@@ -1,6 +1,7 @@
 <script lang="ts">
     import { ripple } from "#lib/attachments/ripple.ts";
     import Island from "#lib/components/site/Island.svelte";
+    import Seo from "#lib/components/site/Seo.svelte";
     import Drawer from "#lib/components/ui/Drawer.svelte";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
@@ -120,9 +121,7 @@
     });
 </script>
 
-<svelte:head>
-    <title>Player · {data.guild.name} · Square</title>
-</svelte:head>
+<Seo title="Player · {data.guild.name}" description="Control the music in {data.guild.name} live." />
 
 {#snippet sheetButton(value: Tab, label: string, Icon: typeof MaterialSymbolsSearchRounded, off: string | false = false, count?: number)}
     <Tooltip content={off || label}>

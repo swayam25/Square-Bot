@@ -39,10 +39,10 @@ class Schema(msgspec.Struct, rename="camel", kw_only=True, forbid_unknown_fields
     pass
 
 
-class Health(Schema):
-    ready: bool
-    guilds: int
-    latency_ms: int | None
+class BotEmoji(Schema):
+    name: str
+    id: Snowflake | UnsetType = UNSET
+    animated: bool = False
 
 
 class Guild(Schema):

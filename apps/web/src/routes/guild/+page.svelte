@@ -1,6 +1,7 @@
 <script lang="ts">
     import { ripple } from "#lib/attachments/ripple.ts";
     import { openPopup } from "#lib/auth.ts";
+    import Seo from "#lib/components/site/Seo.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import GuildIcon from "#lib/components/ui/GuildIcon.svelte";
@@ -33,9 +34,7 @@
     }
 </script>
 
-<svelte:head>
-    <title>Your servers · Square</title>
-</svelte:head>
+<Seo title="Your servers" description="Pick a server to set Square up in it, or add Square to a new one." />
 
 <main class="mx-auto flex max-w-6xl flex-col gap-20 px-4 pt-32 pb-24 md:px-6 md:pt-40">
     <section aria-labelledby="servers" class="flex flex-col gap-8">

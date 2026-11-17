@@ -22,7 +22,7 @@
     {:else}
         {#each groups as { rows, title = true }, g (g)}
             <div class="flex flex-col gap-2">
-                {#if title}<div class="flex h-7 items-center px-2"><span class="h-4 w-40 skeleton rounded-lg"></span></div>{/if}
+                {#if title}<div class="flex h-7 items-center px-2"><span class="h-4 w-40 skeleton rounded-md"></span></div>{/if}
                 <div class="@container flex flex-col divide-y divide-white/5 rounded-card bg-gray-900">
                     {#each { length: rows }, i (i)}
                         <div class="flex flex-col gap-4 p-4 @2xl:flex-row @2xl:items-center">

@@ -54,6 +54,18 @@ export const zBonusRole = z.object({
 });
 
 /**
+ * BotEmoji
+ */
+export const zBotEmoji = z.object({
+    name: z.string(),
+    id: z
+        .string()
+        .regex(/^\d{17,20}$/)
+        .optional(),
+    animated: z.boolean().optional().default(false),
+});
+
+/**
  * BotProfile
  */
 export const zBotProfile = z.object({
@@ -256,15 +268,6 @@ export const zGuild = z.object({
     iconUrl: z.string().nullable(),
     memberCount: z.int(),
     canManage: z.boolean(),
-});
-
-/**
- * Health
- */
-export const zHealth = z.object({
-    ready: z.boolean(),
-    guilds: z.int(),
-    latencyMs: z.int().nullable(),
 });
 
 /**
@@ -1141,7 +1144,7 @@ export const zVolume = z.object({
 /**
  * Request fulfilled, document follows
  */
-export const zHealthResponse = zHealth;
+export const zBotEmojisResponse = z.record(z.string(), zBotEmoji);
 
 export const zMyGuildsHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

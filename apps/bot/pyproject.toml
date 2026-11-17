@@ -1,7 +1,7 @@
 [project]
 name = "square"
 version = "2.7.2"
-description = "Advanced multipurpose discord bot for all your needs."
+description = "The one Discord bot your server needs."
 license = "GPL-3.0-only"
 authors = [{ name = "swayam25" }]
 requires-python = ">=3.14"

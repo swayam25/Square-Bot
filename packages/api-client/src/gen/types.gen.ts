@@ -74,6 +74,18 @@ export type BonusRole = {
 };
 
 /**
+ * BotEmoji
+ */
+export type BotEmoji = {
+    name: string;
+    /**
+     * A Discord ID
+     */
+    id?: string;
+    animated?: boolean;
+};
+
+/**
  * BotProfile
  */
 export type BotProfile = {
@@ -420,15 +432,6 @@ export type Guild = {
     iconUrl: string | null;
     memberCount: number;
     canManage: boolean;
-};
-
-/**
- * Health
- */
-export type Health = {
-    ready: boolean;
-    guilds: number;
-    latencyMs: number | null;
 };
 
 /**
@@ -1331,21 +1334,23 @@ export type Volume = {
     volume: number;
 };
 
-export type HealthData = {
+export type BotEmojisData = {
     body?: never;
     path?: never;
     query?: never;
-    url: "/health";
+    url: "/emojis";
 };
 
-export type HealthResponses = {
+export type BotEmojisResponses = {
     /**
      * Request fulfilled, document follows
      */
-    200: Health;
+    200: {
+        [key: string]: BotEmoji;
+    };
 };
 
-export type HealthResponse = HealthResponses[keyof HealthResponses];
+export type BotEmojisResponse = BotEmojisResponses[keyof BotEmojisResponses];
 
 export type MyGuildsData = {
     body?: never;

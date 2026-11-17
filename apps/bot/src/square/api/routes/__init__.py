@@ -2,7 +2,7 @@ from square.api import live
 from square.api.routes import giveaways, guilds, invites, messages, music, profile, settings, system, tickets
 
 handlers = [
-    system.health,
+    system.bot_emojis,
     guilds.my_guilds,
     guilds.router,
     settings.router,

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Seo from "#lib/components/site/Seo.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import { MODULE_OFF } from "#lib/settings/modules.ts";
     import { page } from "$app/state";
@@ -22,9 +23,7 @@
     const retryable = $derived(status >= 500 || status === 429);
 </script>
 
-<svelte:head>
-    <title>{title} · Square</title>
-</svelte:head>
+<Seo {title} description={detail} />
 
 <main class="mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center gap-8 px-4 pt-28 pb-16 text-center">
     <span class="font-mono text-5xl font-medium tracking-tight text-accent">{status}</span>

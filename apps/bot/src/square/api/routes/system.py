@@ -1,14 +1,13 @@
-import math
 from litestar import get
-from litestar.datastructures import State
-from square.api.schemas import Health
-from square.core import Client
+from msgspec import UNSET
+from square.api.schemas import BotEmoji
+from square.utils.emoji import emoji, get_emoji_names
 
 
-@get("/health", summary="Bot status", tags=["System"])
-async def health(state: State) -> Health:
-    client: Client | None = state.client
-    if client is None or not client.is_ready():
-        return Health(ready=False, guilds=0, latency_ms=None)
-    latency = round(client.latency * 1000) if math.isfinite(client.latency) else None
-    return Health(ready=True, guilds=len(client.guilds), latency_ms=latency)
+@get("/emojis", summary="Square's own emojis by name, custom ones once synced from /emoji", tags=["System"])
+async def bot_emojis() -> dict[str, BotEmoji]:
+    icons = {name: getattr(emoji, name) for name in get_emoji_names()}
+    return {
+        name: BotEmoji(name=icon.name, id=str(icon.id) if icon.id else UNSET, animated=icon.animated)
+        for name, icon in icons.items()
+    }

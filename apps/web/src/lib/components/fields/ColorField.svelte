@@ -66,7 +66,10 @@
         title="Custom color"
         placement="bottom-start"
         contentClass="w-72"
-        triggerClass={[field, "h-10! w-40! cursor-pointer bg-gray-700! pl-1 text-left hover:bg-gray-600! md:h-8! md:pl-1"]}
+        triggerClass={[
+            field,
+            "h-10! w-40! cursor-pointer rounded-2xl! bg-gray-700! pl-1 text-left hover:bg-gray-600! md:h-8! md:rounded-xl! md:pl-1",
+        ]}
     >
         {#snippet trigger()}
             <span

@@ -14,11 +14,11 @@
     import NowPlayingCard from "#lib/components/discord/NowPlayingCard.svelte";
     import BrandIcon from "#lib/components/music/BrandIcon.svelte";
     import PlayerPreview from "#lib/components/music/PlayerPreview.svelte";
+    import Seo from "#lib/components/site/Seo.svelte";
     import SiteFooter from "#lib/components/site/SiteFooter.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Shape from "#lib/components/ui/Shape.svelte";
     import { EMOJI } from "#lib/discord/markdown.ts";
-    import { formatCount } from "#lib/format.ts";
     import { demo, time, TRACKS } from "#lib/music/demo.svelte.ts";
     import MaterialSymbolsCheckCircleRounded from "~icons/material-symbols/check-circle-rounded";
     import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
@@ -90,13 +90,7 @@
     Every setting lives on the web dashboard, and <Mention kind="command" name="settings" /> in Discord links straight to it.
 {/snippet}
 
-<svelte:head>
-    <title>Square · Advanced multipurpose Discord bot</title>
-    <meta
-        name="description"
-        content="Advanced multipurpose Discord bot for all your needs: music with a live web player, tickets, invites, moderation and logs."
-    />
-</svelte:head>
+<Seo />
 
 <div class="isolate overflow-x-clip">
     <section class="mx-auto flex max-w-6xl flex-col items-center gap-20 px-4 pt-36 pb-24 md:px-6 md:pt-44 lg:flex-row lg:gap-12">
@@ -106,7 +100,7 @@
                 <span class="font-display text-5xl font-semibold tracking-tight">Square</span>
             </div>
             <h1 class="max-w-xl font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-                Advanced multipurpose Discord bot for all your needs
+                The one Discord bot your server needs
             </h1>
             <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <Button variant="primary" size="lg" href={data.inviteUrl}><SimpleIconsDiscord />Add to Discord</Button>
@@ -118,18 +112,6 @@
                     </Button>
                 {/if}
             </div>
-            <p class="h-5 text-sm text-gray-400">
-                {#await data.servers}
-                    <span aria-hidden="true" class="inline-block h-4 w-28 skeleton rounded-md align-middle"></span>
-                {:then servers}
-                    {#if servers}
-                        <span class="animate-fade-in">
-                            In <span class="font-mono font-medium text-gray-100">{formatCount(servers)}</span>
-                            {servers === 1 ? "server" : "servers"}
-                        </span>
-                    {/if}
-                {/await}
-            </p>
         </div>
 
         <div class="flex w-full flex-1 justify-center lg:justify-end">

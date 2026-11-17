@@ -6,6 +6,8 @@ import type {
     ActivityData,
     ActivityErrors,
     ActivityResponses,
+    BotEmojisData,
+    BotEmojisResponses,
     ChangeBonusData,
     ChangeBonusErrors,
     ChangeBonusResponses,
@@ -78,8 +80,6 @@ import type {
     GuildRolesData,
     GuildRolesErrors,
     GuildRolesResponses,
-    HealthData,
-    HealthResponses,
     InviteLeaderboardData,
     InviteLeaderboardErrors,
     InviteLeaderboardResponses,
@@ -290,14 +290,14 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
- * Bot status
+ * Square's own emojis by name, custom ones once synced from /emoji
  */
-export const health = <ThrowOnError extends boolean = false>(
-    options?: Options<HealthData, ThrowOnError>,
-): RequestResult<HealthResponses, unknown, ThrowOnError> =>
-    (options?.client ?? client).get<HealthResponses, unknown, ThrowOnError>({
+export const botEmojis = <ThrowOnError extends boolean = false>(
+    options?: Options<BotEmojisData, ThrowOnError>,
+): RequestResult<BotEmojisResponses, unknown, ThrowOnError> =>
+    (options?.client ?? client).get<BotEmojisResponses, unknown, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
-        url: "/health",
+        url: "/emojis",
         ...options,
     });
 

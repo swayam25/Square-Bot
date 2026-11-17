@@ -4,7 +4,7 @@
 
 # Square Bot
 
-Advanced multipurpose discord bot for all your needs.
+The one Discord bot your server needs.
 
 [![Python Version](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fswayam25%2FSquare-Bot%2Fmain%2Fapps%2Fbot%2Fpyproject.toml&style=for-the-badge&logo=python&logoColor=%23FFFFFF&labelColor=%233776AB&color=%23000000)](https://www.python.org/downloads)
 [![Pycord Version](https://img.shields.io/badge/pycord-v2.8.1-%23000000?style=for-the-badge&logo=python&logoColor=%23FFFFFF&labelColor=%235865F2)](https://github.com/Pycord-Development/pycord)
@@ -12,15 +12,6 @@ Advanced multipurpose discord bot for all your needs.
 [![GitHub License](https://img.shields.io/github/license/swayam25/Square-Bot?style=for-the-badge&logo=gnu&logoColor=%23FFFFFF&labelColor=%23A32D2A&color=%23000000)](https://github.com/swayam25/Square-Bot/blob/main/LICENSE)
 
 </div>
-
-## 🎯 Features
-
-- Music with player controls, DJ roles with vote skip, multi-node failover, smart autoplay, audio filters and much more!
-- Auto-mod, mass moderation, tickets & detailed logging.
-- Giveaways with requirements, bonus entries, scheduling and rerolls, all restart-safe.
-- A web dashboard with a live music player, settings, invite leaderboards and ticket transcripts.
-- Custom emojis synced from a simple `.zip` upload.
-- Fully dockerized, deploys with a single `just up` command.
 
 ## 💫 Prerequisites
 
