@@ -731,11 +731,69 @@ class Reroll(Schema):
     )
 
 
+MAX_STARBOARDS = 5
+MAX_STARBOARD_EMOJIS = 5
+MAX_STARBOARD_CHANNELS = 50
+MAX_STARBOARD_ROLES = 25
+MAX_STARBOARD_VOTES = 1000
+MAX_STARBOARD_AGE_DAYS = 365
+
+StarboardEmojis = Annotated[list[EmojiText], msgspec.Meta(max_length=MAX_STARBOARD_EMOJIS)]
+StarboardChannels = Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_STARBOARD_CHANNELS)]
+StarboardRoles = Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_STARBOARD_ROLES)]
+Votes = Annotated[int, msgspec.Meta(ge=1, le=MAX_STARBOARD_VOTES)]
+AgeDays = Annotated[int, msgspec.Meta(ge=1, le=MAX_STARBOARD_AGE_DAYS)]
+ChannelMode = Literal["all", "only", "except"]
+
+
+class Starboard(Schema):
+    id: int
+    channel_id: Snowflake
+    enabled: bool
+    emojis: list[str]
+    downvote_emojis: list[str]
+    threshold: int
+    drop_below: int | None  # None keeps posts on the board whatever happens to their votes
+    self_vote: bool
+    allow_bots: bool
+    channel_mode: ChannelMode
+    channel_ids: list[Snowflake]
+    blocked_role_ids: list[Snowflake]
+    max_age_days: int | None
+    follow_deletes: bool
+    color: str | None
+    posts: int
+
+
+class StarboardCreate(Schema):
+    channel_id: Snowflake
+    emojis: StarboardEmojis = msgspec.field(default_factory=lambda: ["⭐"])
+    threshold: Votes = 3
+
+
+class StarboardPatch(Schema):
+    channel_id: Snowflake | UnsetType = UNSET
+    enabled: bool | UnsetType = UNSET
+    emojis: StarboardEmojis | UnsetType = UNSET
+    downvote_emojis: StarboardEmojis | UnsetType = UNSET
+    threshold: Votes | UnsetType = UNSET
+    drop_below: Votes | None | UnsetType = UNSET
+    self_vote: bool | UnsetType = UNSET
+    allow_bots: bool | UnsetType = UNSET
+    channel_mode: ChannelMode | UnsetType = UNSET
+    channel_ids: StarboardChannels | UnsetType = UNSET
+    blocked_role_ids: StarboardRoles | UnsetType = UNSET
+    max_age_days: AgeDays | None | UnsetType = UNSET
+    follow_deletes: bool | UnsetType = UNSET
+    color: HexColor | None | UnsetType = UNSET
+
+
 class ModuleSettings(Schema):
     logs: bool
     tickets: bool
     invites: bool
     giveaways: bool
+    starboard: bool
 
 
 class ModulePatch(Schema):
@@ -743,6 +801,7 @@ class ModulePatch(Schema):
     tickets: bool | UnsetType = UNSET
     invites: bool | UnsetType = UNSET
     giveaways: bool | UnsetType = UNSET
+    starboard: bool | UnsetType = UNSET
 
 
 # A new `Module` needs a field in both structs above, so the bot refuses to start until it has one

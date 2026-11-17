@@ -1,5 +1,6 @@
 import discord
 import re
+from square.core import Client
 from typing import Any
 
 
@@ -9,6 +10,7 @@ class SettingError(Exception):
 
 _MENTION = re.compile(r"<(#|@&|@!?)(\d+)>")
 _CUSTOM_EMOJI = re.compile(r"<a?:\w+:\d+>\s*")
+_EMOJI = re.compile(r"^<(a?):(\w{2,32}):(\d{17,20})>$")
 # Lazy label, so titles with their own brackets ("Song [Remix]") still match up to the link
 _LINK = re.compile(r"\[(.+?)\]\(<?https?://[^\s)>]+>?\)")
 _MARKERS = re.compile(r"\*\*|__|~~|`")
@@ -82,3 +84,16 @@ def roles(guild: discord.Guild, role_ids: list[str]) -> list[discord.Role]:
     if any(found.is_default() for found in picked):
         raise SettingError("@everyone can't be picked here.")
     return picked
+
+
+def emoji(client: Client, text: str | None) -> str | None:
+    if text is None:
+        return None
+    text = text.strip()
+    if match := _EMOJI.match(text):
+        found = client.get_emoji(int(match[3]))
+        if found is None or not found.is_usable():
+            raise SettingError("Square can't use that emoji. Pick one from this server.")
+    elif not text or len(text) > 32 or any(char.isspace() or char.isalnum() for char in text):
+        raise SettingError("That isn't an emoji.")
+    return text

@@ -23,6 +23,9 @@ import type {
     CreateRequestChannelData,
     CreateRequestChannelErrors,
     CreateRequestChannelResponses,
+    CreateStarboardData,
+    CreateStarboardErrors,
+    CreateStarboardResponses,
     CreateTicketPanelData,
     CreateTicketPanelErrors,
     CreateTicketPanelResponses,
@@ -32,6 +35,9 @@ import type {
     DeleteGiveawayData,
     DeleteGiveawayErrors,
     DeleteGiveawayResponses,
+    DeleteStarboardData,
+    DeleteStarboardErrors,
+    DeleteStarboardResponses,
     DeleteTicketData,
     DeleteTicketErrors,
     DeleteTicketResponses,
@@ -95,6 +101,9 @@ import type {
     ListGiveawaysData,
     ListGiveawaysErrors,
     ListGiveawaysResponses,
+    ListStarboardsData,
+    ListStarboardsErrors,
+    ListStarboardsResponses,
     ListTicketsData,
     ListTicketsErrors,
     ListTicketsResponses,
@@ -266,6 +275,9 @@ import type {
     UpdateMusicSettingsData,
     UpdateMusicSettingsErrors,
     UpdateMusicSettingsResponses,
+    UpdateStarboardData,
+    UpdateStarboardErrors,
+    UpdateStarboardResponses,
     UpdateTicketSettingsData,
     UpdateTicketSettingsErrors,
     UpdateTicketSettingsResponses,
@@ -1094,6 +1106,62 @@ export const removeEntrants = <ThrowOnError extends boolean = false>(
     (options.client ?? client).post<RemoveEntrantsResponses, RemoveEntrantsErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/giveaways/{giveaway_id}/entrants/remove",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * This server's starboards
+ */
+export const listStarboards = <ThrowOnError extends boolean = false>(
+    options: Options<ListStarboardsData, ThrowOnError>,
+): RequestResult<ListStarboardsResponses, ListStarboardsErrors, ThrowOnError> =>
+    (options.client ?? client).get<ListStarboardsResponses, ListStarboardsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/starboards",
+        ...options,
+    });
+
+/**
+ * Make a channel a starboard
+ */
+export const createStarboard = <ThrowOnError extends boolean = false>(
+    options: Options<CreateStarboardData, ThrowOnError>,
+): RequestResult<CreateStarboardResponses, CreateStarboardErrors, ThrowOnError> =>
+    (options.client ?? client).post<CreateStarboardResponses, CreateStarboardErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/starboards",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Stop a channel being a starboard
+ */
+export const deleteStarboard = <ThrowOnError extends boolean = false>(
+    options: Options<DeleteStarboardData, ThrowOnError>,
+): RequestResult<DeleteStarboardResponses, DeleteStarboardErrors, ThrowOnError> =>
+    (options.client ?? client).delete<DeleteStarboardResponses, DeleteStarboardErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/starboards/{board_id}",
+        ...options,
+    });
+
+/**
+ * Change a starboard
+ */
+export const updateStarboard = <ThrowOnError extends boolean = false>(
+    options: Options<UpdateStarboardData, ThrowOnError>,
+): RequestResult<UpdateStarboardResponses, UpdateStarboardErrors, ThrowOnError> =>
+    (options.client ?? client).patch<UpdateStarboardResponses, UpdateStarboardErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/starboards/{board_id}",
         ...options,
         headers: {
             "Content-Type": "application/json",

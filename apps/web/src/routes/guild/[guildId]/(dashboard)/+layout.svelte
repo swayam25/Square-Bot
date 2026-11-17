@@ -110,6 +110,7 @@
                           moduleLink("invites"),
                           moduleLink("tickets"),
                           moduleLink("giveaways"),
+                          moduleLink("starboard"),
                       ],
                   },
               ]

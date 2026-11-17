@@ -170,7 +170,7 @@ class Logging(Cog):
             f"{emoji.description_red} **Before**:\n{clip(before.content)}\n"
             f"{emoji.description} **After**:\n{clip(after.content)}",
             extra=extra,
-            buttons=[ui.Button(label="Jump to Message", url=after.jump_url, style=discord.ButtonStyle.link)],
+            buttons=[ui.Button(label="Jump to message", url=after.jump_url, style=discord.ButtonStyle.link)],
         )
         await self.send_log(before.guild, server_log.LogType.MESSAGES, view)
 

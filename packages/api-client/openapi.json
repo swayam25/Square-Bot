@@ -6644,6 +6644,438 @@
         ]
       }
     },
+    "/guilds/{guild_id}/starboards": {
+      "get": {
+        "tags": [
+          "Starboard"
+        ],
+        "summary": "This server's starboards",
+        "operationId": "list_starboards",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Starboard"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Starboard"
+        ],
+        "summary": "Make a channel a starboard",
+        "operationId": "create_starboard",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StarboardCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Starboard"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
+    "/guilds/{guild_id}/starboards/{board_id}": {
+      "delete": {
+        "tags": [
+          "Starboard"
+        ],
+        "summary": "Stop a channel being a starboard",
+        "operationId": "delete_starboard",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "board_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Request fulfilled, nothing follows",
+            "headers": {}
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Starboard"
+        ],
+        "summary": "Change a starboard",
+        "operationId": "update_starboard",
+        "parameters": [
+          {
+            "name": "guild_id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "A Discord ID"
+            },
+            "description": "A Discord ID",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "x-actor-id",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{17,20}$",
+              "description": "The signed-in Discord user the dashboard is acting for"
+            },
+            "description": "The signed-in Discord user the dashboard is acting for",
+            "required": true,
+            "deprecated": false
+          },
+          {
+            "name": "board_id",
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "required": true,
+            "deprecated": false
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StarboardPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Starboard"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request syntax or unsupported method",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status_code": {
+                      "type": "integer"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "extra": {
+                      "additionalProperties": {},
+                      "type": [
+                        "null",
+                        "object",
+                        "array"
+                      ]
+                    }
+                  },
+                  "type": "object",
+                  "required": [
+                    "detail",
+                    "status_code"
+                  ],
+                  "description": "Validation Exception",
+                  "examples": [
+                    {
+                      "status_code": 400,
+                      "detail": "Bad Request",
+                      "extra": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The bot refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
     "/guilds/{guild_id}/music/player": {
       "get": {
         "tags": [
@@ -12124,6 +12556,13 @@
                 "type": "boolean"
               }
             ]
+          },
+          "starboard": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
           }
         },
         "type": "object",
@@ -12143,6 +12582,9 @@
           },
           "giveaways": {
             "type": "boolean"
+          },
+          "starboard": {
+            "type": "boolean"
           }
         },
         "type": "object",
@@ -12150,6 +12592,7 @@
           "giveaways",
           "invites",
           "logs",
+          "starboard",
           "tickets"
         ],
         "title": "ModuleSettings"
@@ -12701,6 +13144,289 @@
           "voterIds"
         ],
         "title": "SkipVote"
+      },
+      "Starboard": {
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "channelId": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "emojis": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "downvoteEmojis": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "threshold": {
+            "type": "integer"
+          },
+          "dropBelow": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "selfVote": {
+            "type": "boolean"
+          },
+          "allowBots": {
+            "type": "boolean"
+          },
+          "channelMode": {
+            "type": "string",
+            "enum": [
+              "all",
+              "only",
+              "except"
+            ]
+          },
+          "channelIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "blockedRoleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "maxAgeDays": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "followDeletes": {
+            "type": "boolean"
+          },
+          "color": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "posts": {
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "allowBots",
+          "blockedRoleIds",
+          "channelId",
+          "channelIds",
+          "channelMode",
+          "color",
+          "downvoteEmojis",
+          "dropBelow",
+          "emojis",
+          "enabled",
+          "followDeletes",
+          "id",
+          "maxAgeDays",
+          "posts",
+          "selfVote",
+          "threshold"
+        ],
+        "title": "Starboard"
+      },
+      "StarboardCreate": {
+        "properties": {
+          "channelId": {
+            "type": "string",
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "emojis": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 5
+          },
+          "threshold": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "default": 3
+          }
+        },
+        "type": "object",
+        "required": [
+          "channelId"
+        ],
+        "title": "StarboardCreate"
+      },
+      "StarboardPatch": {
+        "properties": {
+          "channelId": {
+            "oneOf": [
+              {
+                "type": "string"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
+          "enabled": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "emojis": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 5
+          },
+          "downvoteEmojis": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 5
+          },
+          "threshold": {
+            "oneOf": [
+              {
+                "type": "integer"
+              }
+            ],
+            "maximum": 1000,
+            "minimum": 1
+          },
+          "dropBelow": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maximum": 1000,
+            "minimum": 1
+          },
+          "selfVote": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "allowBots": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "channelMode": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "all",
+                  "only",
+                  "except"
+                ]
+              }
+            ]
+          },
+          "channelIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 50
+          },
+          "blockedRoleIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 25
+          },
+          "maxAgeDays": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "maximum": 365,
+            "minimum": 1
+          },
+          "followDeletes": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "color": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          }
+        },
+        "type": "object",
+        "required": [],
+        "title": "StarboardPatch"
       },
       "TicketDetail": {
         "properties": {

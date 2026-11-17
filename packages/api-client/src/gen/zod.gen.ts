@@ -514,6 +514,7 @@ export const zModulePatch = z.object({
     tickets: z.boolean().optional(),
     invites: z.boolean().optional(),
     giveaways: z.boolean().optional(),
+    starboard: z.boolean().optional(),
 });
 
 /**
@@ -524,6 +525,7 @@ export const zModuleSettings = z.object({
     tickets: z.boolean(),
     invites: z.boolean(),
     giveaways: z.boolean(),
+    starboard: z.boolean(),
 });
 
 /**
@@ -804,6 +806,60 @@ export const zSkipVote = z.object({
     voterIds: z.array(z.string()),
     needed: z.int(),
     endsAt: z.int(),
+});
+
+/**
+ * Starboard
+ */
+export const zStarboard = z.object({
+    id: z.int(),
+    channelId: z.string().regex(/^\d{17,20}$/),
+    enabled: z.boolean(),
+    emojis: z.array(z.string()),
+    downvoteEmojis: z.array(z.string()),
+    threshold: z.int(),
+    dropBelow: z.int().nullable(),
+    selfVote: z.boolean(),
+    allowBots: z.boolean(),
+    channelMode: z.enum(["all", "only", "except"]),
+    channelIds: z.array(z.string()),
+    blockedRoleIds: z.array(z.string()),
+    maxAgeDays: z.int().nullable(),
+    followDeletes: z.boolean(),
+    color: z.string().nullable(),
+    posts: z.int(),
+});
+
+/**
+ * StarboardCreate
+ */
+export const zStarboardCreate = z.object({
+    channelId: z.string().regex(/^\d{17,20}$/),
+    emojis: z.array(z.string()).max(5).optional(),
+    threshold: z.int().gte(1).lte(1000).optional().default(3),
+});
+
+/**
+ * StarboardPatch
+ */
+export const zStarboardPatch = z.object({
+    channelId: z
+        .string()
+        .regex(/^\d{17,20}$/)
+        .optional(),
+    enabled: z.boolean().optional(),
+    emojis: z.array(z.string()).max(5).optional(),
+    downvoteEmojis: z.array(z.string()).max(5).optional(),
+    threshold: z.int().gte(1).lte(1000).optional(),
+    dropBelow: z.int().nullish(),
+    selfVote: z.boolean().optional(),
+    allowBots: z.boolean().optional(),
+    channelMode: z.union([z.literal("all"), z.literal("only"), z.literal("except")]).optional(),
+    channelIds: z.array(z.string()).max(50).optional(),
+    blockedRoleIds: z.array(z.string()).max(25).optional(),
+    maxAgeDays: z.int().nullish(),
+    followDeletes: z.boolean().optional(),
+    color: z.string().nullish(),
 });
 
 /**
@@ -2025,6 +2081,64 @@ export const zRemoveEntrantsPath = z.object({
  * Request fulfilled, nothing follows
  */
 export const zRemoveEntrantsResponse = z.void();
+
+export const zListStarboardsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zListStarboardsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zListStarboardsResponse = z.array(zStarboard);
+
+export const zCreateStarboardBody = zStarboardCreate;
+
+export const zCreateStarboardHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zCreateStarboardPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zCreateStarboardResponse = zStarboard;
+
+export const zDeleteStarboardHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zDeleteStarboardPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    board_id: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Request fulfilled, nothing follows
+ */
+export const zDeleteStarboardResponse = z.void();
+
+export const zUpdateStarboardBody = zStarboardPatch;
+
+export const zUpdateStarboardHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zUpdateStarboardPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    board_id: z.int().gte(1).lte(2147483647),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zUpdateStarboardResponse = zStarboard;
 
 export const zMusicPlayerHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

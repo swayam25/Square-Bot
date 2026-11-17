@@ -179,7 +179,7 @@
                     </Combobox.Trigger>
                 </Combobox.Control>
                 <Portal>
-                    <Combobox.Positioner class="z-50">
+                    <Combobox.Positioner class="z-60">
                         <Combobox.Content bind:ref={menu} class={menuPanel}>
                             {#each collection.items as option (option.value)}
                                 <Combobox.Item item={option} class={menuItem}>

@@ -39,7 +39,7 @@
     <Popover.Root bind:open positioning={{ placement, gutter: 8 }} finalFocusEl={finalFocus}>
         <Popover.Trigger class={triggerClass} {disabled}>{@render trigger()}</Popover.Trigger>
         <Portal>
-            <Popover.Positioner class="z-50">
+            <Popover.Positioner class="z-60">
                 <Popover.Content
                     aria-label={title}
                     class={[

@@ -2,7 +2,7 @@ from collections.abc import Callable
 from io import BytesIO
 from PIL import Image, ImageDraw
 from square.imaging import Template
-from square.imaging.templates import invite_card, leaderboard, now_playing
+from square.imaging.templates import invite_card, leaderboard, now_playing, starboard_card
 
 
 def sample_leaderboard() -> leaderboard.Leaderboard:
@@ -85,8 +85,23 @@ def sample_now_playing() -> now_playing.NowPlaying:
     )
 
 
+def sample_starboard_card() -> starboard_card.StarboardCard:
+    return starboard_card.StarboardCard(
+        name="𝓶𝓸𝓬𝓱𝓲 the long-named poster ⭐",
+        username="mochi.dev",
+        avatar=None,
+        guild_name="My Server",
+        guild_icon=_sample_icon(),
+        rank=2,
+        received=12_480,
+        posts=312,
+        best=486,
+    )
+
+
 PREVIEWS: dict[str, tuple[Template, Callable[[], object]]] = {
     "invite_card": (invite_card.build, sample_invite_card),
     "leaderboard": (leaderboard.build, sample_leaderboard),
     "now_playing": (now_playing.build, sample_now_playing),
+    "starboard_card": (starboard_card.build, sample_starboard_card),
 }

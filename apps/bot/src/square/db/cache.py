@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, fields
-from square.db.schema import AutoroleUserTable, DJRoleTable, GuildTable, LogChannelTable
+from square.db.schema import AutoroleUserTable, DJRoleTable, GuildTable, LogChannelTable, StarboardTable
 from square.modules import DEFAULT_MODULES, Module
 
 
@@ -24,12 +24,13 @@ class GuildSettings:
     dj_roles: list[int] = field(default_factory=list)
     log_channels: dict[str, int] = field(default_factory=dict)
     autorole_users: dict[int, list[int]] = field(default_factory=dict)
+    starboards: list[StarboardTable] = field(default_factory=list)
 
 
 _settings: dict[int, GuildSettings] = {}
 _DEFAULT = GuildSettings()
 _GUILD_COLUMNS = tuple(
-    f.name for f in fields(GuildSettings) if f.name not in ("dj_roles", "log_channels", "autorole_users")
+    f.name for f in fields(GuildSettings) if f.name not in ("dj_roles", "log_channels", "autorole_users", "starboards")
 )
 
 
@@ -48,6 +49,8 @@ async def load() -> None:
         "guild__guild_id", "user_id", "role_ids"
     ):
         entry(guild_id).autorole_users[user_id] = role_ids
+    for board in await StarboardTable.all().select_related("guild").order_by("id"):
+        entry(board.guild.guild_id).starboards.append(board)
 
 
 def get(guild_id: int) -> GuildSettings:

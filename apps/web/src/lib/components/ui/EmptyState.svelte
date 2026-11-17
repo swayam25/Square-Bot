@@ -15,6 +15,7 @@
         card = false,
         class: className,
         children,
+        action,
     }: {
         icon?: Component;
         title: string;
@@ -25,6 +26,7 @@
         card?: boolean;
         class?: ClassValue;
         children?: Snippet;
+        action?: Snippet;
     } = $props();
 
     const Icon = $derived(icon ?? MaterialSymbolsErrorRounded);
@@ -63,6 +65,7 @@
     {#if children || text}<p class="max-w-sm text-sm text-gray-400">
             {#if children}{@render children()}{:else}{text}{/if}
         </p>{/if}
+    {#if action}<div class="mt-2">{@render action()}</div>{/if}
     {#if retry}
         <Button size="sm" class="mt-2" loading={retrying} onclick={again}>
             {#if !retrying}<MaterialSymbolsRefreshRounded />{/if}{retrying ? "Trying…" : "Try again"}

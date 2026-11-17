@@ -1,7 +1,6 @@
 import base64
 import binascii
 import discord
-import re
 import secrets
 import time
 from datetime import UTC, datetime, timedelta
@@ -47,7 +46,6 @@ MAX_LENGTH = timedelta(days=365)
 MAX_LEAD = timedelta(days=365)
 # Room left for the lines the bot adds under the description
 TEXT_BUDGET = 3000
-_CUSTOM_EMOJI = re.compile(r"^<(a?):(\w{2,32}):(\d{17,20})>$")
 _LIVE_ONLY = {
     "channel_id",
     "starts_at",
@@ -233,19 +231,6 @@ def _min_invites(guild: discord.Guild, count: int) -> int:
     return count
 
 
-def _emoji(client: Client, text: str | None) -> str | None:
-    if text is None:
-        return None
-    text = text.strip()
-    if match := _CUSTOM_EMOJI.match(text):
-        found = client.get_emoji(int(match[3]))
-        if found is None or not found.is_usable():
-            raise SettingError("Square can't use that emoji. Pick one from this server.")
-    elif len(text) > 32 or any(char.isspace() or char.isalnum() for char in text):
-        raise SettingError("That isn't an emoji.")
-    return text
-
-
 def _times(starts_ms: int | None, ends_ms: int, *, scheduled: bool) -> tuple[datetime, datetime]:
     now = actions.now()
     starts = _at(starts_ms) if scheduled and starts_ms is not None else now
@@ -332,7 +317,7 @@ async def create_giveaway(
         "image_url": data.image_url,
         "image_file": upload[0] if upload else None,
         "button_label": data.button_label.strip(),
-        "button_emoji": _emoji(client, data.button_emoji),
+        "button_emoji": resolve.emoji(client, data.button_emoji),
         "button_style": data.button_style,
     }
     created = await giveaways_db.create_giveaway(guild.id, **values)
@@ -404,7 +389,7 @@ async def update_giveaway(
     if "min_invites" in sent:
         changes["min_invites"] = _min_invites(guild, data.min_invites)  # type: ignore[arg-type]
     if "button_emoji" in sent:
-        changes["button_emoji"] = _emoji(client, data.button_emoji)  # type: ignore[arg-type]
+        changes["button_emoji"] = resolve.emoji(client, data.button_emoji)  # type: ignore[arg-type]
     if "button_label" in sent:
         changes["button_label"] = data.button_label.strip()  # type: ignore[union-attr]
     for name in ("require_all_roles", "min_account_days", "min_member_days", "color", "button_style"):

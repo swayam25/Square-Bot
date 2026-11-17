@@ -4,6 +4,7 @@ import MaterialSymbolsCelebrationRounded from "~icons/material-symbols/celebrati
 import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
 import MaterialSymbolsDescriptionRounded from "~icons/material-symbols/description-rounded";
 import MaterialSymbolsPersonAddRounded from "~icons/material-symbols/person-add-rounded";
+import MaterialSymbolsStarRounded from "~icons/material-symbols/star-rounded";
 
 export type ModuleKey = keyof ModuleSettings;
 
@@ -28,6 +29,13 @@ export const MODULES: { key: ModuleKey; label: string; description: string; path
         description: "Run giveaways with requirements, bonus entries and fair, weighted draws.",
         path: "giveaways",
         icon: MaterialSymbolsCelebrationRounded,
+    },
+    {
+        key: "starboard",
+        label: "Starboard",
+        description: "Messages people vote for with reactions get a spot on a board.",
+        path: "starboard",
+        icon: MaterialSymbolsStarRounded,
     },
     {
         key: "logs",

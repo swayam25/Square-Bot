@@ -64,6 +64,8 @@ class Emoji:
     giveaway = Icon("🎉")
     giveaway_white = Icon("🎉")
     giveaway_green = Icon("🎉")
+    star = Icon("⭐")
+    star_white = Icon("⭐")
 
     mention = Icon("🔔")
     id = Icon("🆔")

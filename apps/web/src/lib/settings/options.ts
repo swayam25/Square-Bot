@@ -20,13 +20,30 @@ const icons: Partial<Record<Channel["type"], Option["icon"]>> = {
     category: MaterialSymbolsFolderRounded,
 };
 
+const isVoice = (channel: Channel) => channel.type === "voice" || channel.type === "stage_voice";
+
+/** Discord's own order: channels without a category first, then each category with its channels, text before voice. */
 export function channelOptions(channels: Channel[], kinds: Channel["type"][]): Option[] {
-    const categories = new Map(channels.filter((channel) => channel.type === "category").map((channel) => [channel.id, channel]));
-    return channels
-        .filter((channel) => kinds.includes(channel.type))
-        .map((channel) => ({ channel, category: channel.parentId ? categories.get(channel.parentId) : undefined }))
-        .sort((a, b) => (a.category?.position ?? -1) - (b.category?.position ?? -1) || a.channel.position - b.channel.position)
-        .map(({ channel, category }) => ({ value: channel.id, label: channel.name, icon: icons[channel.type], hint: category?.name }));
+    const categories = channels.filter((channel) => channel.type === "category").sort((a, b) => a.position - b.position);
+    const known = new Set(categories.map((category) => category.id));
+    const option = (channel: Channel, category?: Channel): Option => ({
+        value: channel.id,
+        label: channel.name,
+        icon: icons[channel.type],
+        hint: category?.name,
+    });
+    const inside = (parent: string | null) =>
+        channels
+            .filter((channel) => channel.type !== "category" && kinds.includes(channel.type))
+            .filter((channel) => (channel.parentId && known.has(channel.parentId) ? channel.parentId : null) === parent)
+            .sort((a, b) => Number(isVoice(a)) - Number(isVoice(b)) || a.position - b.position);
+    return [
+        ...inside(null).map((channel) => option(channel)),
+        ...categories.flatMap((category) => [
+            ...(kinds.includes("category") ? [option(category)] : []),
+            ...inside(category.id).map((channel) => option(channel, category)),
+        ]),
+    ];
 }
 
 export const textChannelOptions = (channels: Channel[]) => channelOptions(channels, ["text", "news"]);

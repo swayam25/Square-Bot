@@ -40,6 +40,8 @@ class GuildTable(Model):
     invite_bonuses: fields.ReverseRelation[InviteBonusTable]
     tickets: fields.ReverseRelation[TicketTable]
     giveaways: fields.ReverseRelation[GiveawayTable]
+    starboards: fields.ReverseRelation[StarboardTable]
+    starboard_votes: fields.ReverseRelation[StarboardVoteTable]
 
     class Meta:
         table = "guild"
@@ -221,3 +223,79 @@ class GiveawayEntryTable(Model):
     class Meta:
         table = "giveaway_entry"
         unique_together = (("giveaway", "user_id"),)
+
+
+class StarboardTable(Model):
+    id = fields.IntField(primary_key=True)
+    guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
+        "models.GuildTable", related_name="starboards", on_delete=fields.CASCADE
+    )
+    channel_id = fields.BigIntField()
+    enabled = fields.BooleanField(default=True)
+    emojis: list[str] = fields.JSONField(default=lambda: ["⭐"])
+    downvote_emojis: list[str] = fields.JSONField(default=list)
+    threshold = fields.IntField(default=3)
+    drop_below = fields.IntField(null=True)  # Posts whose score falls under this leave the board, None keeps them
+    self_vote = fields.BooleanField(default=False)
+    allow_bots = fields.BooleanField(default=True)
+    channel_mode = fields.CharField(max_length=8, default="all")  # all, only or except
+    channel_ids: list[int] = fields.JSONField(default=list)
+    blocked_role_ids: list[int] = fields.JSONField(default=list)
+    max_age_days = fields.IntField(null=True)
+    follow_deletes = fields.BooleanField(default=False)  # Deleting the original deletes its post too
+    color = fields.CharField(max_length=7, null=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    posts: fields.ReverseRelation[StarboardPostTable]
+
+    class Meta:
+        table = "starboard"
+        unique_together = (("guild", "channel_id"),)
+
+
+class StarboardPostTable(Model):
+    id = fields.IntField(primary_key=True)
+    board: fields.ForeignKeyRelation[StarboardTable] = fields.ForeignKeyField(
+        "models.StarboardTable", related_name="posts", on_delete=fields.CASCADE
+    )
+    message_id = fields.BigIntField()
+    channel_id = fields.BigIntField()
+    author_id = fields.BigIntField()
+    post_id = fields.BigIntField(null=True, unique=True)
+    webhook_id = fields.BigIntField(null=True)  # The webhook that sent the post, None when the bot did
+    score = fields.IntField(default=0)
+    emoji = fields.CharField(max_length=64, null=True)  # The vote emoji the score came from
+    forced = fields.BooleanField(default=False)
+    uploaded: dict[str, str] = fields.JSONField(
+        default=dict
+    )  # Source attachment ID -> file name re-uploaded on the post
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    class Meta:
+        table = "starboard_post"
+        unique_together = (("board", "message_id"),)
+        indexes = (("board", "score"), ("board", "author_id"), ("message_id",))
+
+
+class StarboardVoteTable(Model):
+    """
+    Reactions with a board emoji, bots included, so the stored count matches Discord's and drift shows.
+
+    Only kept while a message is being voted on: the sweep drops old ones, and a later vote reads them back from
+    Discord when its count no longer matches.
+    """
+
+    id = fields.IntField(primary_key=True)
+    guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
+        "models.GuildTable", related_name="starboard_votes", on_delete=fields.CASCADE
+    )
+    message_id = fields.BigIntField()
+    channel_id = fields.BigIntField()
+    user_id = fields.BigIntField()
+    emoji = fields.CharField(max_length=32)  # Custom emoji ID or the Unicode emoji without variation selectors
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    class Meta:
+        table = "starboard_vote"
+        unique_together = (("message_id", "user_id", "emoji"),)
+        indexes = (("channel_id",), ("created_at",))

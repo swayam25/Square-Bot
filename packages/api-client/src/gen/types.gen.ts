@@ -796,6 +796,7 @@ export type ModulePatch = {
     tickets?: boolean;
     invites?: boolean;
     giveaways?: boolean;
+    starboard?: boolean;
 };
 
 /**
@@ -806,6 +807,7 @@ export type ModuleSettings = {
     tickets: boolean;
     invites: boolean;
     giveaways: boolean;
+    starboard: boolean;
 };
 
 /**
@@ -1010,6 +1012,66 @@ export type SkipVote = {
     voterIds: Array<string>;
     needed: number;
     endsAt: number;
+};
+
+/**
+ * Starboard
+ */
+export type Starboard = {
+    id: number;
+    /**
+     * A Discord ID
+     */
+    channelId: string;
+    enabled: boolean;
+    emojis: Array<string>;
+    downvoteEmojis: Array<string>;
+    threshold: number;
+    dropBelow: number | null;
+    selfVote: boolean;
+    allowBots: boolean;
+    channelMode: "all" | "only" | "except";
+    channelIds: Array<string>;
+    blockedRoleIds: Array<string>;
+    maxAgeDays: number | null;
+    followDeletes: boolean;
+    color: string | null;
+    posts: number;
+};
+
+/**
+ * StarboardCreate
+ */
+export type StarboardCreate = {
+    /**
+     * A Discord ID
+     */
+    channelId: string;
+    emojis?: Array<string>;
+    threshold?: number;
+};
+
+/**
+ * StarboardPatch
+ */
+export type StarboardPatch = {
+    /**
+     * A Discord ID
+     */
+    channelId?: string;
+    enabled?: boolean;
+    emojis?: Array<string>;
+    downvoteEmojis?: Array<string>;
+    threshold?: number;
+    dropBelow?: number | null;
+    selfVote?: boolean;
+    allowBots?: boolean;
+    channelMode?: "all" | "only" | "except";
+    channelIds?: Array<string>;
+    blockedRoleIds?: Array<string>;
+    maxAgeDays?: number | null;
+    followDeletes?: boolean;
+    color?: string | null;
 };
 
 /**
@@ -4307,6 +4369,200 @@ export type RemoveEntrantsResponses = {
 };
 
 export type RemoveEntrantsResponse = RemoveEntrantsResponses[keyof RemoveEntrantsResponses];
+
+export type ListStarboardsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/starboards";
+};
+
+export type ListStarboardsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type ListStarboardsError = ListStarboardsErrors[keyof ListStarboardsErrors];
+
+export type ListStarboardsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Array<Starboard>;
+};
+
+export type ListStarboardsResponse = ListStarboardsResponses[keyof ListStarboardsResponses];
+
+export type CreateStarboardData = {
+    body: StarboardCreate;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/starboards";
+};
+
+export type CreateStarboardErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type CreateStarboardError = CreateStarboardErrors[keyof CreateStarboardErrors];
+
+export type CreateStarboardResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Starboard;
+};
+
+export type CreateStarboardResponse = CreateStarboardResponses[keyof CreateStarboardResponses];
+
+export type DeleteStarboardData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        board_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/starboards/{board_id}";
+};
+
+export type DeleteStarboardErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type DeleteStarboardError = DeleteStarboardErrors[keyof DeleteStarboardErrors];
+
+export type DeleteStarboardResponses = {
+    /**
+     * Request fulfilled, nothing follows
+     */
+    204: void;
+};
+
+export type DeleteStarboardResponse = DeleteStarboardResponses[keyof DeleteStarboardResponses];
+
+export type UpdateStarboardData = {
+    body: StarboardPatch;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        board_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/starboards/{board_id}";
+};
+
+export type UpdateStarboardErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type UpdateStarboardError = UpdateStarboardErrors[keyof UpdateStarboardErrors];
+
+export type UpdateStarboardResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Starboard;
+};
+
+export type UpdateStarboardResponse = UpdateStarboardResponses[keyof UpdateStarboardResponses];
 
 export type MusicPlayerData = {
     body?: never;

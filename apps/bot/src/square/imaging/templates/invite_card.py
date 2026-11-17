@@ -40,7 +40,7 @@ def build(ui: Kit, data: InviteCard) -> Node:
         gap=8,
     )
     rank = (
-        ui.chip(f"Rank #{data.rank}", "accent", style=Type.MONO_SM_MEDIUM)
+        ui.chip(f"Rank #{data.rank}", "warning" if data.rank == 1 else "accent", style=Type.MONO_SM_MEDIUM)
         if data.rank
         else ui.chip("Unranked", "muted", style=Type.MONO_SM_MEDIUM)
     )
