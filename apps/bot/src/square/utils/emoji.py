@@ -39,6 +39,7 @@ class Emoji:
     up_white = Icon("⬆️")
     down_white = Icon("⬇️")
     bottom_right = Icon("↪️")
+    bottom_right_orange = Icon("↪️")
     loading = Icon("⏳")
     loading_white = Icon("⏳")
     copy_white = Icon("📋")

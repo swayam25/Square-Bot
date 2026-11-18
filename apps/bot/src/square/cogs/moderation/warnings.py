@@ -1,19 +1,20 @@
 import datetime
 import discord
+import math
 from babel.dates import format_timedelta
 from contextlib import suppress
 from dataclasses import dataclass
 from discord import ui
-from discord.commands import SlashCommandGroup, option, slash_command
+from discord.commands import option, slash_command
 from square.core import Client
-from square.core.view import DesignerView, error_view, not_in_server, success_view
+from square.core.view import DesignerView, button, error_view, not_in_server, show_loading, success_view
 from square.db.funcs import automod as automod_db
 from square.db.schema import WarningTable, WarnPunishmentTable
 from square.utils import config, mod_dm, server_log
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count
 
-LIST_LIMIT = 10
+PAGE_SIZE = 5
 MAX_REASON = 500
 
 
@@ -117,6 +118,125 @@ async def warn(
     return Warned(warning, total, punishment, punished, messaged)
 
 
+def _warnings(count: int) -> str:
+    return f"{fmt_count(count)} warning{'' if count == 1 else 's'}"
+
+
+class WarningsList(DesignerView):
+    def __init__(self, guild: discord.Guild, user: discord.User):
+        super().__init__()
+        self.guild = guild
+        self.user = user
+        self.page = 0
+        self.confirming = False
+
+    def empty(self) -> DesignerView:
+        return success_view(f"{self.user.mention} (`{self.user.name}`) has no warnings.")
+
+    async def build(self) -> bool:
+        """Returns False when the user has no warnings left."""
+        total = await automod_db.count_warnings(self.guild.id, self.user.id)
+        if not total:
+            return False
+        pages = math.ceil(total / PAGE_SIZE)
+        self.page = min(self.page, pages - 1)
+        start = self.page * PAGE_SIZE
+        found = await automod_db.fetch_warnings(self.guild.id, self.user.id, start, PAGE_SIZE)
+
+        self.clear_items()
+        container = ui.Container(
+            ui.Section(
+                ui.TextDisplay(f"## Warnings · {fmt_count(total)}"),
+                ui.TextDisplay(f"{self.user.mention} (`{self.user.name}`)"),
+                accessory=ui.Thumbnail(url=self.user.display_avatar.url),
+            ),
+            color=config.color.orange,
+        )
+        for index, warning in enumerate(found):
+            number = total - start - index
+            by = f"<@{warning.moderator_id}> (`{warning.moderator_id}`)" if warning.moderator_id else "AutoMod"
+            reason = discord.utils.escape_markdown(warning.reason) or "No reason given"
+            container.add_item(
+                ui.Section(
+                    ui.TextDisplay(
+                        f"`{number}.` {discord.utils.format_dt(warning.created_at, 'R')} · {by}\n"
+                        f"-# {emoji.bottom_right_orange} {reason}"
+                    ),
+                    accessory=button(
+                        lambda i, warning_id=warning.id: self._remove(i, warning_id),
+                        emoji=emoji.bin_white,
+                        disabled=self.confirming,
+                    ),
+                )
+            )
+        if pages > 1:
+            container.add_item(ui.Separator())
+            container.add_item(ui.TextDisplay(f"-# Viewing Page {self.page + 1}/{pages}"))
+        self.add_item(container)
+        if self.confirming:
+            self.add_item(
+                ui.ActionRow(
+                    button(lambda i: self._confirm(i, False), label="Cancel"),
+                    button(
+                        self._clear,
+                        label=f"Yes, clear {_warnings(total)}",
+                        emoji=emoji.bin_white,
+                        style=discord.ButtonStyle.red,
+                    ),
+                )
+            )
+            return True
+        clear = button(
+            lambda i: self._confirm(i, True), label="Clear all", emoji=emoji.bin_white, style=discord.ButtonStyle.red
+        )
+        if pages == 1:
+            self.add_item(ui.ActionRow(clear))
+            return True
+        last = pages - 1
+        arrows = [
+            button(lambda i, page=page: self._go(i, page), emoji=icon)
+            for icon, page in (
+                (emoji.start_white, 0),
+                (emoji.previous_white, last if self.page == 0 else self.page - 1),
+                (emoji.next_white, 0 if self.page == last else self.page + 1),
+                (emoji.end_white, last),
+            )
+        ]
+        self.add_item(ui.ActionRow(*arrows[:2], clear, *arrows[2:]))
+        return True
+
+    async def _redraw(self, interaction: discord.Interaction) -> None:
+        await interaction.edit_original_response(view=self if await self.build() else self.empty())
+
+    async def _go(self, interaction: discord.Interaction, page: int) -> None:
+        if not await show_loading(self, interaction):
+            return
+        self.page = page
+        await self._redraw(interaction)
+
+    async def _remove(self, interaction: discord.Interaction, warning_id: int) -> None:
+        if not await show_loading(self, interaction):
+            return
+        await automod_db.remove_warning(self.guild.id, self.user.id, warning_id)
+        await self._redraw(interaction)
+
+    async def _confirm(self, interaction: discord.Interaction, confirming: bool) -> None:
+        if not await show_loading(self, interaction):
+            return
+        self.confirming = confirming
+        await self._redraw(interaction)
+
+    async def _clear(self, interaction: discord.Interaction) -> None:
+        if not await show_loading(self, interaction):
+            return
+        count = await automod_db.clear_warnings(self.guild.id, self.user.id)
+        await interaction.edit_original_response(
+            view=success_view(f"Cleared {_warnings(count)} from {self.user.mention} (`{self.user.name}`).")
+            if count
+            else self.empty()
+        )
+
+
 def _refusal(ctx: discord.ApplicationContext, member: discord.Member) -> str | None:
     if member == ctx.author:
         return "You cannot use it on yourself."
@@ -168,59 +288,13 @@ class Warnings:
         )
         await ctx.respond(view=view, allowed_mentions=discord.AllowedMentions.none())
 
-    warnings = SlashCommandGroup(
-        name="warnings",
-        description="Warning related commands.",
-        default_member_permissions=discord.Permissions(moderate_members=True),
-    )
-
-    @warnings.command(name="list")
+    @slash_command(name="warnings")
+    @discord.default_permissions(moderate_members=True)
     @option("user", description="Mention the user whose warnings you want to see")
-    async def warnings_list(self, ctx: discord.ApplicationContext, user: discord.User):
-        """Shows a user's latest warnings."""
-        found, total = await automod_db.fetch_warnings(ctx.guild.id, user.id, LIST_LIMIT)
-        if not total:
-            await ctx.respond(view=success_view(f"{user.mention} (`{user.name}`) has no warnings."), ephemeral=True)
+    async def warnings(self, ctx: discord.ApplicationContext, user: discord.User):
+        """Shows a user's warnings, with buttons to remove one or clear them all."""
+        view = WarningsList(ctx.guild, user)
+        if not await view.build():
+            await ctx.respond(view=view.empty(), ephemeral=True)
             return
-        rows = [
-            f"`#{warning.id}` · {discord.utils.format_dt(warning.created_at, 'R')} · "
-            f"{f'<@{warning.moderator_id}> (`{warning.moderator_id}`)' if warning.moderator_id else 'AutoMod'}\n"
-            f"-# {discord.utils.escape_markdown(warning.reason) or 'No reason given'}"
-            for warning in found
-        ]
-        more = f"\n-# Showing the latest {LIST_LIMIT}." if total > LIST_LIMIT else ""
-        view = DesignerView(
-            ui.Container(
-                ui.Section(
-                    ui.TextDisplay(f"## Warnings · {fmt_count(total)}"),
-                    ui.TextDisplay(f"{user.mention} (`{user.name}`)\n\n" + "\n".join(rows) + more),
-                    accessory=ui.Thumbnail(url=user.display_avatar.url),
-                ),
-                color=config.color.orange,
-            )
-        )
         await ctx.respond(view=view, ephemeral=True)
-
-    @warnings.command(name="remove")
-    @option("warning", description="Enter the warning number, shown as #number in the list", min_value=1)
-    async def warnings_remove(self, ctx: discord.ApplicationContext, warning: int):
-        """Removes one warning."""
-        removed = await automod_db.remove_warning(ctx.guild.id, warning)
-        if removed is None:
-            await ctx.respond(view=error_view(f"There's no warning `#{warning}` in this server."), ephemeral=True)
-            return
-        await ctx.respond(
-            view=success_view(f"Removed warning `#{warning}` from <@{removed.user_id}> (`{removed.user_id}`).")
-        )
-
-    @warnings.command(name="clear")
-    @option("user", description="Mention the user whose warnings you want to clear")
-    async def warnings_clear(self, ctx: discord.ApplicationContext, user: discord.User):
-        """Removes every warning a user has."""
-        count = await automod_db.clear_warnings(ctx.guild.id, user.id)
-        if not count:
-            await ctx.respond(view=error_view(f"{user.mention} (`{user.name}`) has no warnings."), ephemeral=True)
-            return
-        await ctx.respond(
-            view=success_view(f"Cleared {fmt_count(count)} warnings from {user.mention} (`{user.name}`).")
-        )

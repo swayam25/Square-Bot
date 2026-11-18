@@ -52,16 +52,18 @@ async def add_warning(guild_id: int, user_id: int, moderator_id: int | None, rea
     return warning, await WarningTable.filter(guild=guild, user_id=user_id).count()
 
 
-async def fetch_warnings(guild_id: int, user_id: int, limit: int) -> tuple[list[WarningTable], int]:
+async def count_warnings(guild_id: int, user_id: int) -> int:
+    return await WarningTable.filter(guild__guild_id=guild_id, user_id=user_id).count()
+
+
+async def fetch_warnings(guild_id: int, user_id: int, offset: int, limit: int) -> list[WarningTable]:
+    """Newest first."""
     query = WarningTable.filter(guild__guild_id=guild_id, user_id=user_id)
-    return await query.order_by("-id").limit(limit), await query.count()
+    return await query.order_by("-id").offset(offset).limit(limit)
 
 
-async def remove_warning(guild_id: int, warning_id: int) -> WarningTable | None:
-    warning = await WarningTable.filter(guild__guild_id=guild_id, id=warning_id).first()
-    if warning:
-        await warning.delete()
-    return warning
+async def remove_warning(guild_id: int, user_id: int, warning_id: int) -> bool:
+    return bool(await WarningTable.filter(guild__guild_id=guild_id, user_id=user_id, id=warning_id).delete())
 
 
 async def clear_warnings(guild_id: int, user_id: int) -> int:

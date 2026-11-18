@@ -38,8 +38,8 @@
 </script>
 
 {#snippet commands()}
-    Give warnings with <Mention kind="command" name="warn" /> and see them with <Mention kind="command" name="warnings list" />. When someone reaches
-    a count, Square runs that step. AutoMod rules set to warn count too.
+    Give warnings with <Mention kind="command" name="warn" /> and see them with <Mention kind="command" name="warnings" />. When someone reaches a
+    count, Square runs that step. AutoMod rules set to warn count too.
 {/snippet}
 
 <SettingGroup title="Punishments">
