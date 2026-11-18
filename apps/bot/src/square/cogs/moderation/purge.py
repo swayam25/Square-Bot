@@ -6,7 +6,7 @@ from discord.abc import Snowflake
 from discord.commands import SlashCommandGroup, option
 from square.core import Client
 from square.core.view import error_view, success_view
-from square.utils.helpers import fmt_user
+from square.utils.helpers import fmt_user, plural
 
 PurgeableChannel = discord.TextChannel | discord.VoiceChannel | discord.StageChannel | discord.Thread
 # Discord's bulk delete refuses messages older than 14 days, a minute of margin covers clock drift
@@ -72,7 +72,7 @@ class Purge:
         default_member_permissions=discord.Permissions(manage_messages=True),
     )
 
-    async def _purge(self, ctx: discord.ApplicationContext, what: str, **kwargs) -> None:
+    async def _purge(self, ctx: discord.ApplicationContext, which: str, **kwargs) -> None:
         channel = ctx.channel
         if not isinstance(channel, PurgeableChannel):
             await ctx.respond(view=error_view("Messages can't be purged in this channel."), ephemeral=True)
@@ -80,25 +80,28 @@ class Purge:
         await ctx.defer(ephemeral=True)
         deleted, skipped = await purge_messages(channel, reason=f"Purged by {fmt_user(ctx.author)}", **kwargs)
         note = f"\n-# Skipped `{skipped}` older than 14 days, Discord can't bulk delete those." if skipped else ""
-        await ctx.respond(view=success_view(f"Successfully purged `{deleted}` {what}.{note}"), ephemeral=True)
+        await ctx.respond(
+            view=success_view(f"Successfully purged `{deleted}` {plural(deleted, 'message')}{which}.{note}"),
+            ephemeral=True,
+        )
 
     @purge.command(name="any")
     @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
     async def purge_any(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages."""
-        await self._purge(ctx, "messages", limit=amount)
+        await self._purge(ctx, "", limit=amount)
 
     @purge.command(name="humans")
     @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
     async def purge_humans(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages sent by humans."""
-        await self._purge(ctx, "messages sent by humans", limit=amount, check=lambda m: not m.author.bot)
+        await self._purge(ctx, " sent by humans", limit=amount, check=lambda m: not m.author.bot)
 
     @purge.command(name="bots")
     @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
     async def purge_bots(self, ctx: discord.ApplicationContext, amount: int):
         """Purges the amount of given messages sent by bots."""
-        await self._purge(ctx, "messages sent by bots", limit=amount, check=lambda m: m.author.bot)
+        await self._purge(ctx, " sent by bots", limit=amount, check=lambda m: m.author.bot)
 
     @purge.command(name="user")
     @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
@@ -107,7 +110,7 @@ class Purge:
         """Purges the amount of given messages sent by the mentioned user."""
         await self._purge(
             ctx,
-            f"messages sent by {user.mention} (`{user.name}`)",
+            f" sent by {user.mention} (`{user.name}`)",
             limit=amount,
             check=lambda m: m.author.id == user.id,
         )
@@ -118,9 +121,7 @@ class Purge:
     async def purge_contains(self, ctx: discord.ApplicationContext, amount: int, phrase: str):
         """Purges the amount of given messages containing the given phrase."""
         needle = phrase.lower()
-        await self._purge(
-            ctx, f"messages containing `{phrase}`", limit=amount, check=lambda m: needle in m.content.lower()
-        )
+        await self._purge(ctx, f" containing `{phrase}`", limit=amount, check=lambda m: needle in m.content.lower())
 
     # Message IDs are strings: Discord's integer options can't hold a 64-bit snowflake
     @purge.command(name="after")
@@ -131,7 +132,7 @@ class Purge:
         if not message_id.isdigit():
             await ctx.respond(view=error_view("Message ID must be a valid integer."), ephemeral=True)
             return
-        await self._purge(ctx, f"messages after `{message_id}`", limit=amount, after=discord.Object(int(message_id)))
+        await self._purge(ctx, f" after `{message_id}`", limit=amount, after=discord.Object(int(message_id)))
 
     @purge.command(name="from-to")
     @option(
@@ -150,7 +151,7 @@ class Purge:
         low, high = sorted((int(from_message_id), int(to_message_id)))
         await self._purge(
             ctx,
-            f"messages between `{low}` and `{high}`",
+            f" between `{low}` and `{high}`",
             limit=1000,
             after=discord.Object(low),
             before=discord.Object(high),

@@ -6,6 +6,7 @@ from square.core.cog import Cog
 from square.core.view import DesignerView, error_view, not_in_server, success_view
 from square.utils import config
 from square.utils.emoji import emoji
+from square.utils.helpers import plural
 from typing import Literal
 
 
@@ -56,7 +57,7 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
                 ui.Container(
                     ui.TextDisplay("## Moved VC Members"),
                     ui.TextDisplay(
-                        f"Successfully moved {len(moved)} member{'' if len(moved) == 1 else 's'} from {source.mention} to {to.mention}.\n"
+                        f"Successfully moved {len(moved)} {plural(len(moved), 'member')} from {source.mention} to {to.mention}.\n"
                         f"{emoji.members_green} **Members**: {', '.join(moved)}"
                     ),
                     color=config.color.green,

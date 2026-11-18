@@ -11,6 +11,7 @@ from square.db.funcs import automod as automod_db
 from square.db.schema import AutomodRuleTable
 from square.utils import config, server_log
 from square.utils.emoji import emoji
+from square.utils.helpers import plural
 
 _CHECKED = (discord.MessageType.default, discord.MessageType.reply)
 _TEXT_KINDS = ("invites", "caps", "emojis")
@@ -48,10 +49,10 @@ class AutoMod(Cog):
                     return "No file or link"
             case "flood":
                 if self.recent.flood(sent, rule.amount or 5, rule.seconds or 5):
-                    return f"Over {rule.amount} messages in {rule.seconds}s"
+                    return f"Over {rule.amount} {plural(rule.amount, 'message')} in {rule.seconds}s"
             case "duplicates":
                 if self.recent.duplicates(sent, rule.amount or 3, rule.seconds or 60):
-                    return f"Same message over {rule.amount} times in {rule.seconds}s"
+                    return f"Same message over {rule.amount} {plural(rule.amount, 'time')} in {rule.seconds}s"
             case _:
                 return await rules.content_hit(self.client, message.guild, rule, message.content)
         return None

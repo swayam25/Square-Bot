@@ -20,7 +20,7 @@
     import ScrollRow from "#lib/components/ui/ScrollRow.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { errorMessage } from "#lib/errors.ts";
-    import { formatCount, time } from "#lib/format.ts";
+    import { plural, time } from "#lib/format.ts";
     import * as music from "#lib/music/music.remote.ts";
     import type { SearchResults } from "@square/api-client";
     import { SvelteSet } from "svelte/reactivity";
@@ -139,7 +139,7 @@
                         <div class="flex min-w-0 flex-1 flex-col">
                             <span class="truncate text-sm font-semibold">{results.playlist.name}</span>
                             <span class="text-xs text-gray-400">
-                                Playlist · {formatCount(results.playlist.trackCount)} tracks{results.tracks.length < results.playlist.trackCount
+                                Playlist · {plural(results.playlist.trackCount, "track")}{results.tracks.length < results.playlist.trackCount
                                     ? `, first ${results.tracks.length} below`
                                     : ""}
                             </span>

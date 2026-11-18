@@ -25,7 +25,7 @@ from square.imaging.templates import invite_card, leaderboard
 from square.modules import Module
 from square.utils import config, invites, server_log
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_count
+from square.utils.helpers import fmt_count, plural
 
 LEADERBOARD_PAGE = 10
 
@@ -235,7 +235,7 @@ class Invites(
         )
         file = await imaging.render(invite_card.build, data, filename="invites.png")
         alt = (
-            f"{target.display_name}: {data.total} invites ({counts.regular} regular, {counts.bonus} bonus, "
+            f"{target.display_name}: {data.total} {plural(data.total, 'invite')} ({counts.regular} regular, {counts.bonus} bonus, "
             f"{counts.left} left, {counts.fake} fake)"
         )
         view = DesignerView(

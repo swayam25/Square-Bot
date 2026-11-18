@@ -14,6 +14,7 @@ from square.music.history import history_tracks
 from square.music.utils import music_log, split_log_text
 from square.utils import config
 from square.utils.emoji import Icon, emoji
+from square.utils.helpers import plural
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -246,7 +247,11 @@ async def remove_requested_by(guild: discord.Guild, member: discord.Member, user
         raise MusicError(f"No tracks found requested by <@{user_id}> in the queue.")
     queue_view.nudge_card(player, guild.id)
     return await _done(
-        player, member, emoji.remove, f"removed `{removed}` tracks requested by <@{user_id}>", render=False
+        player,
+        member,
+        emoji.remove,
+        f"removed `{removed}` {plural(removed, 'track')} requested by <@{user_id}>",
+        render=False,
     )
 
 

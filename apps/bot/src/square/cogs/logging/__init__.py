@@ -7,7 +7,7 @@ from square.core.view import DesignerView
 from square.db import cache
 from square.utils import config, invites, server_log, webhook
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_count
+from square.utils.helpers import fmt_count, plural
 
 
 def clip(text: str, limit: int = 1024) -> str:
@@ -167,7 +167,7 @@ class Logging(Cog):
         if before.attachments and not after.attachments:
             extra.append(
                 ui.TextDisplay(
-                    f"### Removed Attachment{'s' if len(before.attachments) > 1 else ''} [`{len(before.attachments)}`]"
+                    f"### Removed {plural(len(before.attachments), 'Attachment')} [`{len(before.attachments)}`]"
                 )
             )
             extra.append(ui.MediaGallery(*[discord.MediaGalleryItem(url=media.url) for media in before.attachments]))
@@ -207,15 +207,11 @@ class Logging(Cog):
             return
         extra: list[ui.Item] = []
         if msg.stickers:
-            extra.append(
-                ui.TextDisplay(f"### Deleted Sticker{'s' if len(msg.stickers) > 1 else ''} [`{len(msg.stickers)}`]")
-            )
+            extra.append(ui.TextDisplay(f"### Deleted {plural(len(msg.stickers), 'Sticker')} [`{len(msg.stickers)}`]"))
             extra.append(ui.MediaGallery(*[discord.MediaGalleryItem(url=sticker.url) for sticker in msg.stickers]))
         if msg.attachments:
             extra.append(
-                ui.TextDisplay(
-                    f"### Deleted Attachment{'s' if len(msg.attachments) > 1 else ''} [`{len(msg.attachments)}`]"
-                )
+                ui.TextDisplay(f"### Deleted {plural(len(msg.attachments), 'Attachment')} [`{len(msg.attachments)}`]")
             )
             extra.append(ui.MediaGallery(*[discord.MediaGalleryItem(url=media.url) for media in msg.attachments]))
         view = log_view(

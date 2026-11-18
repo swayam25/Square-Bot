@@ -11,7 +11,7 @@ from square.music.errors import MusicError
 from square.music.utils import music_interaction_check, reply
 from square.utils import config
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_count
+from square.utils.helpers import fmt_count, plural
 
 _AUTOPLAY_SHOWN = 10
 
@@ -214,7 +214,7 @@ class QueueContainer(ui.Container):
         if queue_list:
             # duration_until ignores loop mode, unlike total_duration, which reports inf while looping.
             runtime = fmt_time(player.queue.duration_until(total))
-            self.add_item(ui.TextDisplay(f"### Queued {fmt_count(total)} Tracks • `{runtime}`"))
+            self.add_item(ui.TextDisplay(f"### Queued {fmt_count(total)} {plural(total, 'Track')} • `{runtime}`"))
             self.items.extend(queue_list)
         if total > items_per_page:
             self.add_item(ui.Separator())

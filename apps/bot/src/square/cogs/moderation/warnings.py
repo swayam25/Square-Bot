@@ -12,7 +12,7 @@ from square.db.funcs import automod as automod_db
 from square.db.schema import WarningTable, WarnPunishmentTable
 from square.utils import config, mod_dm, server_log
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_count
+from square.utils.helpers import fmt_count, plural
 
 PAGE_SIZE = 5
 MAX_REASON = 500
@@ -45,7 +45,7 @@ async def _punish(
 ) -> bool:
     if not _can_punish(guild, member):
         return False
-    reason = f"Reached {step.warnings} warnings"
+    reason = f"Reached {step.warnings} {plural(step.warnings, 'warning')}"
     try:
         match step.action:
             case "timeout":
@@ -118,10 +118,6 @@ async def warn(
     return Warned(warning, total, punishment, punished, messaged)
 
 
-def _warnings(count: int) -> str:
-    return f"{fmt_count(count)} warning{'' if count == 1 else 's'}"
-
-
 class WarningsList(DesignerView):
     def __init__(self, guild: discord.Guild, user: discord.User):
         super().__init__()
@@ -179,7 +175,7 @@ class WarningsList(DesignerView):
                     button(lambda i: self._confirm(i, False), label="Cancel"),
                     button(
                         self._clear,
-                        label=f"Yes, clear {_warnings(total)}",
+                        label=f"Yes, clear {fmt_count(total)} {plural(total, 'warning')}",
                         emoji=emoji.bin_white,
                         style=discord.ButtonStyle.red,
                     ),
@@ -231,7 +227,9 @@ class WarningsList(DesignerView):
             return
         count = await automod_db.clear_warnings(self.guild.id, self.user.id)
         await interaction.edit_original_response(
-            view=success_view(f"Cleared {_warnings(count)} from {self.user.mention} (`{self.user.name}`).")
+            view=success_view(
+                f"Cleared {fmt_count(count)} {plural(count, 'warning')} from {self.user.mention} (`{self.user.name}`)."
+            )
             if count
             else self.empty()
         )

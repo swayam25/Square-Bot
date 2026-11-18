@@ -34,7 +34,7 @@ from square.music.queue import QueueListView
 from square.music.utils import container, get_source, reply
 from square.utils import config
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_count, parse_duration
+from square.utils.helpers import fmt_count, parse_duration, plural
 
 # Discord renders at most this many autocomplete choices, and caps each name and value at 100 characters.
 AUTOCOMPLETE_LIMIT = 25
@@ -123,7 +123,10 @@ class Music(
         if link and isinstance(data, Playlist):
             return [
                 discord.OptionChoice(
-                    name=self._choice_name("Playlist", data.name, f"{fmt_count(len(data))} tracks"), value=value
+                    name=self._choice_name(
+                        "Playlist", data.name, f"{fmt_count(len(data))} {plural(len(data), 'track')}"
+                    ),
+                    value=value,
                 )
             ]
         found = data.tracks if isinstance(data, Playlist) else data if isinstance(data, list) else [data]

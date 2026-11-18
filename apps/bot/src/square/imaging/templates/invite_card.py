@@ -3,7 +3,7 @@ from square.imaging.canvas import open_image
 from square.imaging.components import Kit
 from square.imaging.layout import Column, Expand, Node, Row, Text
 from square.imaging.tokens import Radius, Type
-from square.utils.helpers import fmt_count
+from square.utils.helpers import fmt_count, plural
 
 
 class InviteCard(msgspec.Struct, frozen=True):
@@ -68,7 +68,7 @@ def build(ui: Kit, data: InviteCard) -> Node:
         ),
         Row(*(Expand(ui.stat(label, fmt_count(value), color)) for label, value, color in kinds), gap=8),
         Text(
-            f"Total counts regular and bonus invites. Fake invites are accounts younger than {data.fake_days} days "
+            f"Total counts regular and bonus invites. Fake invites are accounts younger than {data.fake_days} {plural(data.fake_days, 'day')} "
             "when they joined.",
             Type.XS,
             t.muted,

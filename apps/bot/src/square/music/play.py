@@ -18,6 +18,7 @@ from square.music.player import discard_stale, schedule_render, stop_player
 from square.music.utils import get_source, reply, split_log_text
 from square.utils import config
 from square.utils.emoji import emoji
+from square.utils.helpers import plural
 
 log = logging.getLogger(__name__)
 
@@ -167,7 +168,7 @@ async def enqueue(client: Client, player: SquarePlayer, data: object, requester_
     if isinstance(data, Playlist):
         queued = [tag_requester(client, track, requester_id) for track in data.tracks]
         src_info = get_source(queued[0].source_name)
-        content = f"{src_info['emoji']} Added **{data.name}** with `{len(queued)}` tracks."
+        content = f"{src_info['emoji']} Added **{data.name}** with `{len(queued)}` {plural(len(queued), 'track')}."
     else:
         queued = tag_requester(client, data[0] if isinstance(data, list) else data, requester_id)
         src_info = get_source(queued.source_name)

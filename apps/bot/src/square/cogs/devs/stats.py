@@ -14,7 +14,7 @@ from square.core import Client
 from square.core.view import DesignerView, show_loading
 from square.music.core import fetch_node_info
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_memory
+from square.utils.helpers import fmt_memory, plural
 from typing import Literal
 
 
@@ -60,7 +60,7 @@ class StatsView(DesignerView):
         return labels
 
     def _chart(self, title: str, series: list[float]) -> list[str]:
-        caption = f"     last {len(series)} samples"
+        caption = f"     last {len(series)} {plural(len(series), 'sample')}"
         if not self.auto or len(series) < 2:
             return []
 
@@ -106,7 +106,7 @@ class StatsView(DesignerView):
                 container.add_item(ui.TextDisplay(Term.fence(section)))
             if omitted:
                 container.add_item(
-                    ui.TextDisplay(f"-# {omitted} node section{'s' if omitted > 1 else ''} omitted: report too long.")
+                    ui.TextDisplay(f"-# {omitted} node {plural(omitted, 'section')} omitted: report too long.")
                 )
             container.add_item(
                 ui.TextDisplay(f"-# Updated {discord.utils.format_dt(datetime.datetime.now(datetime.UTC), 'R')}")
@@ -238,7 +238,7 @@ class StatsView(DesignerView):
             [
                 ["Memory", fmt_memory(mem.used), fmt_memory(mem.total), self._bar(mem.percent)],
                 ["Storage", fmt_memory(disk.used), fmt_memory(disk.total), self._bar(disk.percent)],
-                ["CPU", f"{threads} thr", f"{cores} cores", self._bar(host_cpu)],
+                ["CPU", f"{threads} thr", f"{cores} {plural(cores, 'core')}", self._bar(host_cpu)],
             ],
         )
         rows = [

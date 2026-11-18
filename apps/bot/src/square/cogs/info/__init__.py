@@ -8,7 +8,7 @@ from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView, error_view
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_count, member_counts
+from square.utils.helpers import fmt_count, member_counts, plural
 from typing import Literal
 
 start_time = time.time()
@@ -420,9 +420,9 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
                 f"{emoji.owner} **Owner**: <@{ctx.guild.owner_id}> (`{ctx.guild.owner.name if ctx.guild.owner else ctx.guild.owner_id}`)\n"
                 f"{emoji.verification} **Verification Level**: {ctx.guild.verification_level.name.title()}\n"
                 f"{emoji.channel} **Total Channels**: `{len(ctx.guild.text_channels) + len(ctx.guild.voice_channels)}`"
-                f" `({len(ctx.guild.categories)} Categories | {len(ctx.guild.text_channels)} Text | {len(ctx.guild.voice_channels)} Voice | {len(ctx.guild.stage_channels)} Stage)`\n"
+                f" `({len(ctx.guild.categories)} {plural(len(ctx.guild.categories), 'Category', 'Categories')} | {len(ctx.guild.text_channels)} Text | {len(ctx.guild.voice_channels)} Voice | {len(ctx.guild.stage_channels)} Stage)`\n"
                 f"{emoji.members} **Total Members**: `{fmt_count(total)}`"
-                f" `({fmt_count(humans)} Humans | {fmt_count(bots)} Bots)`\n"
+                f" `({fmt_count(humans)} {plural(humans, 'Human')} | {fmt_count(bots)} {plural(bots, 'Bot')})`\n"
                 f"{emoji.role} **Roles**: `{len(ctx.guild.roles)}`"
                 f" `({user_roles} User | {bot_roles} Bot)`\n"
                 f"{emoji.boost} **Boosts**: `{fmt_count(ctx.guild.premium_subscription_count)}`"

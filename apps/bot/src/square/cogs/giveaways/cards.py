@@ -8,7 +8,7 @@ from square.db.schema import GiveawayTable
 from square.modules import Module
 from square.utils import config
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_count
+from square.utils.helpers import fmt_count, plural
 
 STYLES = {
     "blurple": discord.ButtonStyle.blurple,
@@ -30,11 +30,11 @@ def mentions(user_ids: list[int]) -> str:
 
 
 def days(count: int) -> str:
-    return f"`{count} day{'' if count == 1 else 's'}`"
+    return f"`{count} {plural(count, 'day')}`"
 
 
 def invites(count: int) -> str:
-    return f"`{count}` invite{'' if count == 1 else 's'}"
+    return f"`{count}` {plural(count, 'invite')}"
 
 
 def needs_invites(giveaway: GiveawayTable, guild_id: int) -> bool:
@@ -92,7 +92,7 @@ def giveaway_card(giveaway: GiveawayTable, guild_id: int) -> DesignerView:
         winners = mentions(giveaway.winner_ids) if giveaway.winner_ids else "Nobody could win"
         ended_at = giveaway.ended_at or giveaway.ends_at
         lines = [
-            f"{emoji.crown} **{'Winner' if len(giveaway.winner_ids) == 1 else 'Winners'}**: {winners}",
+            f"{emoji.crown} **{plural(len(giveaway.winner_ids), 'Winner')}**: {winners}",
             f"{emoji.user} **Hosted By**: <@{giveaway.host_id}>",
             f"{emoji.duration} **Ended**: {discord.utils.format_dt(ended_at, 'R')}",
         ]

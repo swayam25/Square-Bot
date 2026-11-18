@@ -84,6 +84,11 @@ def fmt_count(value: int) -> str:
     return f"{value:,}" if abs(value) < 10_000 else fmt_number(value)
 
 
+def plural(count: int, word: str, words: str | None = None) -> str:
+    """The form of `word` that goes with `count`, so callers keep formatting the number their own way."""
+    return word if count == 1 else words or f"{word}s"
+
+
 def fmt_user(user: discord.abc.User) -> str:
     """
     Plain text for places mentions can't render, like audit-log reasons: `Name (username)`.

@@ -1,3 +1,4 @@
+import { plural } from "#lib/format.ts";
 import type { NativeRule, NativeRulePatch, Punishment, SquareRule } from "@square/api-client";
 import type { Component } from "svelte";
 import MaterialSymbolsAlternateEmailRounded from "~icons/material-symbols/alternate-email-rounded";
@@ -132,7 +133,7 @@ export const DURATIONS = [
 ];
 
 export const durationLabel = (seconds: number) =>
-    DURATIONS.find((entry) => Number(entry.value) === seconds)?.label ?? `${Math.round(seconds / MINUTE)} minutes`;
+    DURATIONS.find((entry) => Number(entry.value) === seconds)?.label ?? plural(Math.round(seconds / MINUTE), "minute");
 
 export const sameJson = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 export const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;

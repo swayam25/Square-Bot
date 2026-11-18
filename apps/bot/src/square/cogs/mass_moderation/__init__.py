@@ -11,7 +11,7 @@ from square.core.cog import Cog
 from square.core.view import DesignerView, error_view
 from square.utils import bans, config, mod_dm, server_log
 from square.utils.emoji import emoji
-from square.utils.helpers import parse_duration
+from square.utils.helpers import parse_duration, plural
 
 
 class MassModeration(
@@ -76,7 +76,7 @@ class MassModeration(
         def icon(name: str) -> str:
             return getattr(emoji, f"{name}{suffix}")
 
-        lines = [] if moderator else [f"Successfully {summary} {len(users)} users."]
+        lines = [] if moderator else [f"Successfully {summary} {len(users)} {plural(len(users), 'user')}."]
         lines += [f"{icon(name)} **{label}**: {value}" for name, label, value in fields]
         lines.append(f"{icon('user')} **Users**: {', '.join(users)}")
         if moderator:
@@ -334,7 +334,7 @@ class MassModeration(
             errors,
             action=lambda m: m.add_roles(*_roles) if add else m.remove_roles(*_roles),
             title=f"Mass {past.capitalize()} Roles",
-            summary=f"{past} {len(_roles)} roles {prep}",
+            summary=f"{past} {len(_roles)} {plural(len(_roles), 'role')} {prep}",
             error_title=f"Can't {verb.capitalize()} Roles",
             fields=[("role", "Roles", ", ".join(role.mention for role in _roles))],
             log_color=None,

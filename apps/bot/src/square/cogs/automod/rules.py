@@ -5,6 +5,7 @@ import time
 from collections import deque
 from square.core import Client
 from square.db.schema import AutomodRuleTable
+from square.utils.helpers import plural
 from typing import Literal, get_args
 
 Kind = Literal["media", "invites", "flood", "duplicates", "caps", "emojis"]
@@ -174,7 +175,7 @@ async def content_hit(client: Client, guild: discord.Guild, rule: AutomodRuleTab
                 return f"{percent}% capitals"
         case "emojis":
             if (count := emoji_count(content)) > (rule.amount or 0):
-                return f"{count} emojis"
+                return f"{count} {plural(count, 'emoji')}"
     return None
 
 

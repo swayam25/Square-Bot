@@ -7,7 +7,7 @@ from square.core import Client
 from square.core.view import DesignerView, error_view, not_in_server, success_view
 from square.utils import config
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_user
+from square.utils.helpers import fmt_user, plural
 
 
 class Roles:
@@ -79,7 +79,11 @@ class Roles:
 
         updated = len(members) - len(errors)
         if updated > 0:
-            await msg.edit(view=success_view(f"Successfully {past} {role.mention} {prep} `{updated}` {target}."))
+            await msg.edit(
+                view=success_view(
+                    f"Successfully {past} {role.mention} {prep} `{updated}` {plural(updated, target[:-1], target)}."
+                )
+            )
         if errors:
             lines = [f"{emoji.bullet_red} {member}: {err}" for member, err in errors[:15]]
             if len(errors) > 15:

@@ -20,6 +20,7 @@ from square.utils.emoji import (
     reload_emoji,
     update_emoji,
 )
+from square.utils.helpers import plural
 
 # Discord re-encodes emojis, so its copy can't show whether a file changed. The hash of the uploaded file can.
 UPLOADS = Path(".cache/emoji_uploads.json")
@@ -170,7 +171,11 @@ class EmojiPanel(DesignerView):
         problems += [f"{emoji.bullet_red} **Skipped** `{name}`: {why}" for name, why in snap.skipped.items()]
         if problems:
             items.append(ui.TextDisplay("### Issues\n" + "\n".join(problems)))
-        items.append(ui.TextDisplay(f"-# `{len(snap.files)}` files · `{len(snap.remote)}` app emojis"))
+        items.append(
+            ui.TextDisplay(
+                f"-# `{len(snap.files)}` {plural(len(snap.files), 'file')} · `{len(snap.remote)}` app {plural(len(snap.remote), 'emoji')}"
+            )
+        )
         self.add_item(ui.Container(*items))
         self.add_item(
             ui.ActionRow(

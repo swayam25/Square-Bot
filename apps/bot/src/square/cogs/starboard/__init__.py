@@ -17,7 +17,7 @@ from square.imaging import assets
 from square.imaging.templates import starboard_card
 from square.modules import Module, ModuleOff
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_count
+from square.utils.helpers import fmt_count, plural
 
 TOP_SHOWN = 10
 # Long enough to cover the votes on any message people are still starring
@@ -336,7 +336,8 @@ class Starboard(
         )
         file = await imaging.render(starboard_card.build, data, filename="starboard.png")
         alt = (
-            f"{who.display_name}: {found['received']} stars received over {found['posts']} posts, "
+            f"{who.display_name}: {found['received']} {plural(found['received'], 'star')} received over "
+            f"{found['posts']} {plural(found['posts'], 'post')}, "
             f"best post {found['best']}"
         )
         view = DesignerView(

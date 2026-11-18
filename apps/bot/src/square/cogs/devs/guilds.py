@@ -10,7 +10,7 @@ from square.db.funcs.guild import add_guild
 from square.forget import forget_guild
 from square.utils import check, config
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_count, member_counts
+from square.utils.helpers import fmt_count, member_counts, plural
 
 
 class GuildContainer(ui.Container):
@@ -83,7 +83,7 @@ class Guilds:
                 ui.TextDisplay(
                     f"{emoji.server} **Name**: {guild.name}\n"
                     f"{emoji.id} **ID**: `{guild.id}`\n"
-                    f"{emoji.members} **Total Members**: `{fmt_count(total)} ({fmt_count(humans)} Humans | {fmt_count(bots)} Bots)`"
+                    f"{emoji.members} **Total Members**: `{fmt_count(total)} ({fmt_count(humans)} {plural(humans, 'Human')} | {fmt_count(bots)} {plural(bots, 'Bot')})`"
                 ),
             )
         )
@@ -102,7 +102,7 @@ class Guilds:
                 ui.TextDisplay(
                     f"{emoji.server_red} **Name**: {guild.name}\n"
                     f"{emoji.id_red} **ID**: `{guild.id}`\n"
-                    f"{emoji.members_red} **Total Members**: `{fmt_count(total)} ({fmt_count(humans)} Humans | {fmt_count(bots)} Bots)`"
+                    f"{emoji.members_red} **Total Members**: `{fmt_count(total)} ({fmt_count(humans)} {plural(humans, 'Human')} | {fmt_count(bots)} {plural(bots, 'Bot')})`"
                 ),
                 color=config.color.red,
             )
