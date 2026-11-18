@@ -13,9 +13,6 @@
 
     let { draft, guild, you, channels }: { draft: Draft; guild: string; you: Person; channels: Channel[] } = $props();
 
-    // Same as the bot's default card color, `config.color.orange`
-    const ORANGE = "#E67E22";
-
     setGuildDiscord(
         () => guild,
         () => [you],
@@ -41,7 +38,7 @@
 <DiscordWindow channel={boardName}>
     <DiscordMessage name={you.name} avatar={you.avatarUrl}>
         <DiscordAccessories>
-            <DiscordContainer color={draft.color ?? ORANGE}>
+            <DiscordContainer color={draft.color ?? "var(--color-embed-orange)"}>
                 <DiscordMarkdown text="Just finished my desk setup, what do you all think?" />
                 <DiscordMarkdown text={footer} />
             </DiscordContainer>
