@@ -3,15 +3,12 @@
 import asyncio
 import discord
 import logging
-from discord import ui
 from square.cogs.tickets import cards, snapshot
 from square.core import Client
-from square.core.view import DesignerView
 from square.db import cache
 from square.db.funcs import tickets as db
 from square.db.schema import TicketTable
-from square.utils import config, server_log
-from square.utils.emoji import emoji
+from square.utils import server_log
 
 log = logging.getLogger(__name__)
 
@@ -92,7 +89,10 @@ async def open_ticket(
     }
     try:
         channel = await category.create_text_channel(
-            cards.channel_name(number), overwrites=overwrites, topic=reason[:1024], reason=f"Ticket opened by {opener}"
+            cards.channel_name(number),
+            overwrites=overwrites,
+            topic=reason[:1024],
+            reason=f"Ticket opened by {opener}",
         )
     except discord.HTTPException as exc:
         return f"I couldn't create the ticket channel: {exc.text or exc}"
@@ -214,18 +214,3 @@ async def delete(
             client, guild, server_log.LogType.TICKETS, ticket.log_message_id, cards.log_card(ticket, guild.id)
         )
     await channel.delete(reason=f"Ticket deleted by {by}")
-
-
-async def close_legacy(client: Client, guild: discord.Guild, channel: discord.TextChannel, by: discord.Member) -> None:
-    opener = channel.name.removeprefix("ticket-")
-    view = DesignerView(
-        ui.Container(
-            ui.TextDisplay("## Ticket Closed"),
-            ui.TextDisplay(
-                f"{emoji.user_red} **Opened By**: <@{opener}>\n{emoji.lock_red} **Closed By**: {by.mention}"
-            ),
-            color=config.color.red,
-        )
-    )
-    await server_log.post(client, guild, server_log.LogType.TICKETS, view)
-    await channel.delete(reason=f"Ticket closed by {by}")

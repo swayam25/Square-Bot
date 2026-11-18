@@ -1,5 +1,5 @@
 from collections.abc import Awaitable, Callable
-from discord import AllowedMentions, ApplicationContext, ButtonStyle, Interaction
+from discord import AllowedMentions, ApplicationContext, ButtonStyle, Interaction, Member, User
 from discord.ui import Button, Container, DesignerModal, Item, Label, TextDisplay
 from discord.ui import DesignerView as BaseDesignerView
 from discord.ui.view import V
@@ -92,6 +92,14 @@ def error_view(text: str) -> DesignerView:
 
 def success_view(text: str) -> DesignerView:
     return DesignerView(Container(TextDisplay(f"{emoji.success} {text}"), color=config.color.green))
+
+
+async def not_in_server(ctx: ApplicationContext, user: Member | User) -> bool:
+    """Replies and returns True when `user` isn't a member here."""
+    if isinstance(user, Member):
+        return False
+    await ctx.respond(view=error_view(f"{user.mention} (`{user.name}`) isn't in this server."), ephemeral=True)
+    return True
 
 
 def button(callback: Callback, **kwargs) -> Button:

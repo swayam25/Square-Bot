@@ -34,7 +34,7 @@ class UserInfo:
         info_lines = [
             f"{emoji.mention} {self.user.mention} {(emoji.crown if self.user.guild.owner_id == self.user.id else '') if isinstance(self.user, discord.Member) else ''}",
             f"{emoji.id} **ID**: `{self.user.id}`",
-            f"{emoji.bot} **Bot?**: {self.user.bot}",
+            f"{emoji.bot} **Bot?**: {'Yes' if self.user.bot else 'No'}",
             f"{emoji.date} **Account Created**: {discord.utils.format_dt(self.user.created_at, 'R')}",
         ]
 
@@ -42,7 +42,7 @@ class UserInfo:
         if isinstance(self.user, discord.Member):
             info_lines.extend(
                 [
-                    f"{emoji.user} **Nickname**: {self.user.nick}",
+                    f"{emoji.user} **Nickname**: {self.user.nick or 'No nickname'}",
                     f"{emoji.role} **Highest Role**: {'@everyone' if self.user.top_role.is_default() else self.user.top_role.mention}",
                     f"{emoji.add} **Server Joined**: {discord.utils.format_dt(self.user.joined_at, 'R')}",
                     f"{emoji.boost} **Boosting Since**: {discord.utils.format_dt(self.user.premium_since, 'R') if self.user.premium_since else 'Not Boosting'}",
@@ -345,11 +345,12 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         await ctx.respond(view=view)
 
     @slash_command(name="avatar")
-    @option("user", description="Mention the user whom you will see avatar", required=False)
+    @option("user", description="Mention the user whose avatar you want to see", required=False)
     async def avatar(self, ctx: discord.ApplicationContext, user: discord.Member = None):
         """Shows the avatar of the mentioned user."""
         if not user:
             user = ctx.author
+        guild_avatar = user.guild_avatar if isinstance(user, discord.Member) else None
 
         async def profile_btn_callback(interaction: discord.Interaction):
             await interaction.response.edit_message(
@@ -357,9 +358,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
             )
 
         async def get_view(type: Literal["main", "server"] = "server"):
-            avatar = (
-                user.guild_avatar if user.guild_avatar and type == "server" else (user.avatar or user.default_avatar)
-            )
+            avatar = guild_avatar if guild_avatar and type == "server" else (user.avatar or user.default_avatar)
             profile_btn = ui.Button(
                 emoji=emoji.profile_white,
                 label=f"View {'Main' if type == 'server' else 'Server'} Avatar",
@@ -385,7 +384,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
                 ctx=ctx,
                 check_author_interaction=True,
             )
-            if user.guild_avatar:
+            if guild_avatar:
                 view.add_item(ui.ActionRow(profile_btn))
             return view
 
@@ -395,7 +394,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
     info = SlashCommandGroup(name="info", description="Info related commands.")
 
     @info.command(name="user")
-    @option("user", description="Mention the member whom you will see info")
+    @option("user", description="Mention the user whose info you want to see")
     async def user_info(self, ctx: discord.ApplicationContext, user: discord.Member | discord.User):
         """Shows info of the mentioned user."""
         await ctx.defer()
@@ -418,7 +417,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
             ui.TextDisplay(
                 f"{emoji.mention} **Name**: {ctx.guild.name}\n"
                 f"{emoji.id} **ID**: `{ctx.guild.id}`\n"
-                f"{emoji.owner} **Owner**: <@{ctx.guild.owner_id}>\n"
+                f"{emoji.owner} **Owner**: <@{ctx.guild.owner_id}> (`{ctx.guild.owner.name if ctx.guild.owner else ctx.guild.owner_id}`)\n"
                 f"{emoji.verification} **Verification Level**: {ctx.guild.verification_level.name.title()}\n"
                 f"{emoji.channel} **Total Channels**: `{len(ctx.guild.text_channels) + len(ctx.guild.voice_channels)}`"
                 f" `({len(ctx.guild.categories)} Categories | {len(ctx.guild.text_channels)} Text | {len(ctx.guild.voice_channels)} Voice | {len(ctx.guild.stage_channels)} Stage)`\n"
@@ -460,11 +459,11 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
                         ui.TextDisplay(
                             f"{emoji.mention} **Name**: `{_emoji.name}`\n"
                             f"{emoji.id} **ID**: `{_emoji.id}`\n"
-                            f"{emoji.img} **Is Animated?**: {_emoji.animated}\n"
-                            f"{emoji.bot} **Is Managed?**: {_emoji.managed}\n"
-                            f"{emoji.keyboard} **Is Usuable?**: {_emoji.is_usable()}\n"
+                            f"{emoji.img} **Is Animated?**: {'Yes' if _emoji.animated else 'No'}\n"
+                            f"{emoji.bot} **Is Managed?**: {'Yes' if _emoji.managed else 'No'}\n"
+                            f"{emoji.keyboard} **Is Usable?**: {'Yes' if _emoji.is_usable() else 'No'}\n"
                             f"{emoji.description} **Usage**: `{icon}`\n"
-                            f"{emoji.owner} **Uploaded By**: {_emoji.user.mention if _emoji.user else 'Unknown'}\n"
+                            f"{emoji.owner} **Uploaded By**: {f'{_emoji.user.mention} (`{_emoji.user.name}`)' if _emoji.user else 'Unknown'}\n"
                             f"{emoji.date} **Emoji Created**: {discord.utils.format_dt(_emoji.created_at, 'R')}"
                         ),
                         accessory=ui.Thumbnail(_emoji.url),

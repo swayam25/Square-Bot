@@ -3,7 +3,7 @@ import discord
 from discord import SlashCommandGroup, option, ui
 from square.core import Client
 from square.core.cog import Cog
-from square.core.view import DesignerView, error_view, success_view
+from square.core.view import DesignerView, error_view, not_in_server, success_view
 from square.utils import config
 from square.utils.emoji import emoji
 from typing import Literal
@@ -76,10 +76,12 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
     @staticmethod
     async def _check_target(ctx: discord.ApplicationContext, user: discord.Member) -> bool:
         """The shared rules for acting on someone in voice. Replies and returns False when one fails."""
+        if await not_in_server(ctx, user):
+            return False
         if user == ctx.author:
             error = "You cannot use it on yourself."
         elif user.voice is None:
-            error = f"**{user}** is not in a voice channel."
+            error = f"{user.mention} (`{user.name}`) is not in a voice channel."
         elif user.top_role.position >= ctx.author.top_role.position:
             error = "Given user has same role or higher role than you."
         else:
@@ -94,10 +96,15 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
             return
         word = "muted" if flag == "mute" else "deafened"
         if (user.voice.mute if flag == "mute" else user.voice.deaf) == value:
-            await ctx.respond(view=error_view(f"**{user}** is {'already' if value else 'not'} {word}."), ephemeral=True)
+            await ctx.respond(
+                view=error_view(f"{user.mention} (`{user.name}`) is {'already' if value else 'not'} {word}."),
+                ephemeral=True,
+            )
             return
         await (user.edit(mute=value) if flag == "mute" else user.edit(deafen=value))
-        await ctx.respond(view=success_view(f"Successfully {'' if value else 'un'}{word} **{user}** in voice."))
+        await ctx.respond(
+            view=success_view(f"Successfully {'' if value else 'un'}{word} {user.mention} (`{user.name}`) in voice.")
+        )
 
     @vc.command(name="kick")
     @option("user", description="Mention the user whom you want to kick from voice.")
@@ -107,7 +114,9 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
             return
         channel = user.voice.channel
         await user.move_to(None)
-        await ctx.respond(view=success_view(f"Successfully kicked **{user}** from {channel.mention}."))
+        await ctx.respond(
+            view=success_view(f"Successfully kicked {user.mention} (`{user.name}`) from {channel.mention}.")
+        )
 
     @vc.command(name="mute")
     @option("user", description="Mention the user whom you want to mute in voice.")
@@ -137,6 +146,8 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
     @option("user", description="Mention the user whom you want to pull into your voice channel.")
     async def pull(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Pulls a member into your voice channel."""
+        if await not_in_server(ctx, user):
+            return
         if ctx.author.voice is None:
             view = error_view("You need to be in a voice channel to use this.")
             await ctx.respond(view=view, ephemeral=True)
@@ -144,15 +155,15 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
             view = error_view("You cannot use it on yourself.")
             await ctx.respond(view=view, ephemeral=True)
         elif user.voice is None:
-            view = error_view(f"**{user}** is not in a voice channel.")
+            view = error_view(f"{user.mention} (`{user.name}`) is not in a voice channel.")
             await ctx.respond(view=view, ephemeral=True)
         elif user.voice.channel == ctx.author.voice.channel:
-            view = error_view(f"**{user}** is already in your voice channel.")
+            view = error_view(f"{user.mention} (`{user.name}`) is already in your voice channel.")
             await ctx.respond(view=view, ephemeral=True)
         else:
             channel = ctx.author.voice.channel
             await user.move_to(channel)
-            view = success_view(f"Successfully pulled **{user}** into {channel.mention}.")
+            view = success_view(f"Successfully pulled {user.mention} (`{user.name}`) into {channel.mention}.")
             await ctx.respond(view=view)
 
     @vc.command(name="status")

@@ -8,15 +8,13 @@ from discord.ext import commands
 from square.cogs.tickets import actions, cards, panel
 from square.core import Client
 from square.core.cog import Cog
-from square.core.view import DesignerView, error_view, modal, show_loading, success_view
+from square.core.view import DesignerView, error_view, modal, not_in_server, show_loading, success_view
 from square.db import cache
 from square.db.funcs.tickets import fetch_ticket, save_ticket
 from square.db.schema import TicketTable
 from square.modules import Module, ModuleOff
 from square.music.utils import delete_quietly
 from square.utils.emoji import emoji
-
-LEGACY_IDS = {"ticket_close", "ticket_transcript"}
 
 
 class Tickets(
@@ -125,12 +123,10 @@ class Tickets(
         if interaction.type is not discord.InteractionType.component:
             return
         custom_id = str((interaction.data or {}).get("custom_id", ""))
-        if not (custom_id in LEGACY_IDS or custom_id.startswith("ticket:")):
+        if not custom_id.startswith("ticket:"):
             return
         if interaction.guild_id and not cache.enabled(interaction.guild_id, Module.TICKETS):
             await self._reply(interaction, error_view(str(ModuleOff(Module.TICKETS))))
-        elif custom_id in LEGACY_IDS:
-            await self._legacy(interaction, custom_id)
         elif custom_id == "ticket:open":
             await self._open_from_panel(interaction)
         elif custom_id.startswith("ticket:") and (context := await self._context(interaction)):
@@ -236,7 +232,7 @@ class Tickets(
                 return
             await submitted.response.defer(ephemeral=True)
             result = await actions.open_ticket(
-                self.client, submitted.guild, submitted.user, (reason.value or "").strip() or "No reason provided"
+                self.client, submitted.guild, submitted.user, (reason.value or "").strip() or "No reason given"
             )
             view = error_view(result) if isinstance(result, str) else success_view(f"Opened {result.mention}.")
             await submitted.followup.send(view=view, ephemeral=True)
@@ -244,32 +240,9 @@ class Tickets(
         label = ui.Label("Reason", reason, description="What do you need help with?")
         await interaction.response.send_modal(modal("Open a ticket", label, on_submit=submit))
 
-    async def _legacy(self, interaction: discord.Interaction, custom_id: str) -> None:
-        guild, member, channel, message = interaction.guild, interaction.user, interaction.channel, interaction.message
-        if not (guild and message and isinstance(member, discord.Member) and isinstance(channel, discord.TextChannel)):
-            return
-        if not member.guild_permissions.manage_channels:
-            await self._reply(interaction, error_view("You need `Manage Channels` to use this."))
-            return
-
-        def card() -> ui.DesignerView:
-            view = ui.DesignerView.from_message(message, timeout=None)
-            view._store = False  # from_message has no option for it, and the listener handles these buttons
-            return view
-
-        if custom_id == "ticket_transcript":
-            await self._reply(
-                interaction,
-                error_view("This ticket was opened before transcripts moved to the dashboard, so it has none."),
-            )
-        else:
-            await self._with_loading(
-                interaction, card, "Closing...", lambda: actions.close_legacy(self.client, guild, channel, member)
-            )
-
     @ticket.command(name="create")
     @option("reason", description="What do you need help with?", required=False)
-    async def create_ticket(self, ctx: discord.ApplicationContext, reason: str = "No reason provided"):
+    async def create_ticket(self, ctx: discord.ApplicationContext, reason: str = "No reason given"):
         """Opens a ticket."""
         if not ctx.guild or not isinstance(ctx.author, discord.Member):
             return
@@ -354,26 +327,33 @@ class Tickets(
             await ctx.respond(view=error_view("Nobody has claimed this ticket."), ephemeral=True)
         elif ticket.claimed_by != member.id and not member.guild_permissions.manage_channels:
             await ctx.respond(
-                view=error_view(f"Only <@{ticket.claimed_by}> or an admin can unclaim this ticket."), ephemeral=True
+                view=error_view(
+                    f"Only <@{ticket.claimed_by}> (`{ticket.claimed_by}`) or an admin can unclaim this ticket."
+                ),
+                ephemeral=True,
             )
         else:
             await ctx.respond(view=success_view(await actions.unclaim(self.client, guild, ticket)), ephemeral=True)
 
     @ticket.command(name="add")
-    @option("member", description="Who to add to this ticket.")
-    async def add_to_ticket(self, ctx: discord.ApplicationContext, member: discord.Member):
-        """Adds a member to this ticket."""
+    @option("user", description="Who to add to this ticket.")
+    async def add_to_ticket(self, ctx: discord.ApplicationContext, user: discord.Member):
+        """Adds a user to this ticket."""
+        if await not_in_server(ctx, user):
+            return
         if found := await self._ticket_here(ctx, staff=True, still_open="Reopen the ticket first to add members."):
             _, by, channel, ticket = found
-            await ctx.respond(view=success_view(await actions.add_members(ticket, channel, [member], by)))
+            await ctx.respond(view=success_view(await actions.add_members(ticket, channel, [user], by)))
 
     @ticket.command(name="remove")
-    @option("member", description="Who to remove from this ticket.")
-    async def remove_from_ticket(self, ctx: discord.ApplicationContext, member: discord.Member):
-        """Removes a member from this ticket."""
+    @option("user", description="Who to remove from this ticket.")
+    async def remove_from_ticket(self, ctx: discord.ApplicationContext, user: discord.Member):
+        """Removes a user from this ticket."""
+        if await not_in_server(ctx, user):
+            return
         if found := await self._ticket_here(ctx, staff=True, still_open="Reopen the ticket first to remove members."):
             _, by, channel, ticket = found
-            await ctx.respond(view=success_view(await actions.remove_members(ticket, channel, [member], by)))
+            await ctx.respond(view=success_view(await actions.remove_members(ticket, channel, [user], by)))
 
 
 def setup(client: Client):

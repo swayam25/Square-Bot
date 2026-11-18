@@ -45,7 +45,7 @@ def _button(custom_id: str, text: str, icon: Icon, style: discord.ButtonStyle = 
 
 
 def _who(user_id: int | None, fallback: str = "Nobody yet") -> str:
-    return f"<@{user_id}>" if user_id else fallback
+    return f"<@{user_id}> (`{user_id}`)" if user_id else fallback
 
 
 def controls(ticket: TicketTable, guild: discord.Guild) -> DesignerView:
@@ -106,7 +106,7 @@ def _transcript_button(guild_id: int, ticket: TicketTable) -> ui.ActionRow:
 def log_card(ticket: TicketTable, guild_id: int) -> DesignerView:
     if ticket.status == "open":
         lines = [
-            f"{emoji.user} **Opened By**: <@{ticket.opener_id}>",
+            f"{emoji.user} **Opened By**: {_who(ticket.opener_id)}",
             f"{emoji.ticket} **Reason**: {ticket.reason}",
             f"{emoji.claim} **Claimed By**: {_who(ticket.claimed_by)}",
             f"{emoji.channel} **Channel**: <#{ticket.channel_id}>",
@@ -116,7 +116,7 @@ def log_card(ticket: TicketTable, guild_id: int) -> DesignerView:
             ui.Container(ui.TextDisplay(f"## Ticket {label(ticket)}"), ui.TextDisplay("\n".join(lines)))
         )
     lines = [
-        f"{emoji.user_red} **Opened By**: <@{ticket.opener_id}>",
+        f"{emoji.user_red} **Opened By**: {_who(ticket.opener_id)}",
         f"{emoji.ticket_red} **Reason**: {ticket.reason}",
         f"{emoji.support_red} **Claimed By**: {_who(ticket.claimed_by)}",
         f"{emoji.lock_red} **Closed By**: {_who(ticket.closed_by, 'Unknown')}",

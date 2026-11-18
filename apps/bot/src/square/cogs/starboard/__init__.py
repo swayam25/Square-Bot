@@ -247,15 +247,15 @@ class Starboard(
 
     @starboard.command(name="top")
     @option("channel", description="Only this starboard.", default=None)
-    @option("member", description="Only this member's messages.", default=None)
+    @option("user", description="Only this user's messages.", default=None)
     async def top(
-        self, ctx: discord.ApplicationContext, channel: discord.TextChannel | None, member: discord.Member | None
+        self, ctx: discord.ApplicationContext, channel: discord.TextChannel | None, user: discord.Member | None
     ):
         """Shows the most starred messages."""
         assert ctx.guild is not None
         if not (boards := await self._boards(ctx, channel)):
             return
-        posts = await starboard_db.top_posts([board.id for board in boards], member.id if member else None, TOP_SHOWN)
+        posts = await starboard_db.top_posts([board.id for board in boards], user.id if user else None, TOP_SHOWN)
         title = f"## Top of <#{boards[0].channel_id}>" if len(boards) == 1 else "## Top starred"
         container = ui.Container(ui.TextDisplay(title))
         if not posts:
@@ -314,13 +314,13 @@ class Starboard(
         )
 
     @starboard.command(name="stats")
-    @option("member", description="Whose stats to show. Defaults to you.", default=None)
-    async def stats(self, ctx: discord.ApplicationContext, member: discord.Member | None):
+    @option("user", description="Whose stats to show. Defaults to you.", default=None)
+    async def stats(self, ctx: discord.ApplicationContext, user: discord.Member | None):
         """Shows how many stars someone got."""
         assert ctx.guild is not None
         if not (boards := await self._boards(ctx, None)):
             return
-        guild, who = ctx.guild, member or ctx.author
+        guild, who = ctx.guild, user or ctx.author
         await ctx.defer()
         found, (avatar, icon) = await asyncio.gather(
             starboard_db.user_stats([board.id for board in boards], who.id),

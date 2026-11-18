@@ -206,12 +206,12 @@ class Invites(
         return None
 
     @invites.command(name="user")
-    @option("member", description="Whose invites to show. Defaults to you.", required=False)
-    async def invites_user(self, ctx: discord.ApplicationContext, member: discord.Member | None = None):
+    @option("user", description="Whose invites to show. Defaults to you.", required=False)
+    async def invites_user(self, ctx: discord.ApplicationContext, user: discord.Member | None = None):
         """Shows how many members someone has invited."""
         if not (guild := ctx.guild):
             return
-        target = member or ctx.author
+        target = user or ctx.author
         await ctx.defer()
 
         async def standing() -> tuple[InviteCounts, int | None]:
@@ -260,20 +260,22 @@ class Invites(
         await ctx.respond(view=view, file=file)
 
     @invites.command(name="who")
-    @option("member", description="The member to look up.")
-    async def invites_who(self, ctx: discord.ApplicationContext, member: discord.Member):
-        """Shows who invited a member."""
+    @option("user", description="The user to look up.")
+    async def invites_who(self, ctx: discord.ApplicationContext, user: discord.Member):
+        """Shows who invited a user."""
         if not (guild := ctx.guild):
             return
-        join = await fetch_join(guild.id, member.id)
+        join = await fetch_join(guild.id, user.id)
         if join is None or join.inviter_id is None:
-            await ctx.respond(view=error_view(f"I don't know who invited {member.mention}."), ephemeral=True)
+            await ctx.respond(
+                view=error_view(f"I don't know who invited {user.mention} (`{user.name}`)."), ephemeral=True
+            )
             return
         view = DesignerView(
             ui.Container(
-                ui.TextDisplay(f"## How {member.display_name} Joined"),
+                ui.TextDisplay(f"## How {user.display_name} Joined"),
                 ui.TextDisplay(
-                    f"{emoji.user} **Invited By**: <@{join.inviter_id}>\n"
+                    f"{emoji.user} **Invited By**: <@{join.inviter_id}> (`{join.inviter_id}`)\n"
                     f"{emoji.invite} **Code**: `{join.code or 'unknown'}`\n"
                     f"{emoji.date} **Joined**: {discord.utils.format_dt(join.joined_at, 'R')}"
                     + (f"\n{emoji.fake} **Counted As Fake**: account was too new" if join.fake else "")
@@ -283,28 +285,30 @@ class Invites(
         await ctx.respond(view=view)
 
     @invites.command(name="bonus")
-    @option("member", description="Who gets the bonus invites.")
+    @option("user", description="Who gets the bonus invites.")
     @option("amount", description="How many to add. Negative numbers take some away.", min_value=-1000, max_value=1000)
-    async def invites_bonus(self, ctx: discord.ApplicationContext, member: discord.Member, amount: int):
+    async def invites_bonus(self, ctx: discord.ApplicationContext, user: discord.Member, amount: int):
         """Adds or removes bonus invites."""
         if not (guild := await self._managed_guild(ctx)):
             return
-        bonus = await add_bonus(guild.id, member.id, amount)
+        bonus = await add_bonus(guild.id, user.id, amount)
         await ctx.respond(
-            view=success_view(f"Successfully set {member.mention}'s bonus invites to `{fmt_count(bonus)}`.")
+            view=success_view(
+                f"Successfully set {user.mention} (`{user.name}`)'s bonus invites to `{fmt_count(bonus)}`."
+            )
         )
 
     @invites.command(name="reset")
-    @option("member", description="Whose invites to reset. Leave empty for the whole server.", required=False)
-    async def invites_reset(self, ctx: discord.ApplicationContext, member: discord.Member | None = None):
-        """Resets invite counts for a member or the whole server."""
+    @option("user", description="Whose invites to reset. Leave empty for the whole server.", required=False)
+    async def invites_reset(self, ctx: discord.ApplicationContext, user: discord.Member | None = None):
+        """Resets invite counts for a user or the whole server."""
         if not (guild := await self._managed_guild(ctx)):
             return
-        if member is None:
+        if user is None:
             await ctx.respond(view=ResetAllView(ctx), ephemeral=True)
             return
-        await reset_invites(guild.id, member.id)
-        await ctx.respond(view=success_view(f"Successfully reset {member.mention}'s invites."))
+        await reset_invites(guild.id, user.id)
+        await ctx.respond(view=success_view(f"Successfully reset {user.mention} (`{user.name}`)'s invites."))
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -321,7 +325,7 @@ class Invites(
                 ui.TextDisplay("## Invite Used"),
                 ui.TextDisplay(
                     f"{emoji.joins_green} **Member**: {member.mention} (`{member.name}`)\n"
-                    f"{emoji.user_green} **Invited By**: <@{inviter_id}>\n"
+                    f"{emoji.user_green} **Invited By**: <@{inviter_id}> (`{inviter_id}`)\n"
                     f"{emoji.description_green} **Code**: `{code}`\n"
                     f"{emoji.members_green} **Their Invites**: `{fmt_count(total)}`"
                     + ("\n-# Counted as fake, the account is too new." if fake else "")

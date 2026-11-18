@@ -4,7 +4,7 @@ from collections.abc import Callable
 from discord import ui
 from discord.commands import SlashCommandGroup, option
 from square.core import Client
-from square.core.view import DesignerView, error_view, success_view
+from square.core.view import DesignerView, error_view, not_in_server, success_view
 from square.utils import config
 from square.utils.emoji import emoji
 
@@ -68,9 +68,9 @@ class Roles:
                 else:
                     await member.remove_roles(role, reason=reason)
             except discord.Forbidden:
-                errors.append((member.mention, "Missing permissions."))
+                errors.append((f"{member.mention} (`{member.name}`)", "Missing permissions."))
             except discord.HTTPException as e:
-                errors.append((member.mention, e.text or "Something went wrong."))
+                errors.append((f"{member.mention} (`{member.name}`)", e.text or "Something went wrong."))
             # Throttled so progress edits don't compete with the role updates for rate limits.
             if time.monotonic() - last_edit >= 2 and count < len(members):
                 await msg.edit(view=progress_view(count))
@@ -87,7 +87,7 @@ class Roles:
             )
             await msg.edit(view=view)
         if errors:
-            lines = [f"{emoji.bullet_red} **{member}**: {err}" for member, err in errors[:15]]
+            lines = [f"{emoji.bullet_red} {member}: {err}" for member, err in errors[:15]]
             if len(errors) > 15:
                 lines.append(f"{emoji.bullet_red} *...and `{len(errors) - 15}` more.*")
             view = DesignerView(
@@ -107,6 +107,8 @@ class Roles:
     @option("role", description="Mention the role which you will add to the user")
     async def add_role_user(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Adds the mentioned role to the mentioned user."""
+        if await not_in_server(ctx, user):
+            return
         if user.top_role.position >= ctx.author.top_role.position:
             view = error_view("Given user has same role or higher role than you.")
             await ctx.respond(view=view, ephemeral=True)
@@ -116,7 +118,7 @@ class Roles:
             await ctx.respond(view=view, ephemeral=True)
             return
         await user.add_roles(role)
-        view = success_view(f"Successfully added {role.mention} to {user.mention}.")
+        view = success_view(f"Successfully added {role.mention} to {user.mention} (`{user.name}`).")
         await ctx.respond(view=view)
 
     @role_add.command(name="all")
@@ -142,6 +144,8 @@ class Roles:
     @option("role", description="Mention the role which you will remove from the user")
     async def remove_role_user(self, ctx: discord.ApplicationContext, user: discord.Member, role: discord.Role):
         """Removes the mentioned role from the mentioned user."""
+        if await not_in_server(ctx, user):
+            return
         if user.top_role.position >= ctx.author.top_role.position:
             view = error_view("Given user has same role or higher role than you.")
             await ctx.respond(view=view, ephemeral=True)
@@ -151,7 +155,7 @@ class Roles:
             await ctx.respond(view=view, ephemeral=True)
             return
         await user.remove_roles(role)
-        view = success_view(f"Successfully removed {role.mention} from {user.mention}.")
+        view = success_view(f"Successfully removed {role.mention} from {user.mention} (`{user.name}`).")
         await ctx.respond(view=view)
 
     @role_remove.command(name="all")

@@ -52,14 +52,15 @@ class Logging(Cog):
         used = await invites.used_invite(member)
         if used and used.inviter_id:
             inviter = self.client.get_user(used.inviter_id)
-            invited_by = f"<@{used.inviter_id}>" + (f" (`{inviter.name}`)" if inviter else "")
+            invited_by = f"<@{used.inviter_id}> (`{inviter.name if inviter else used.inviter_id}`)"
         elif used:
             invited_by = f"`{used.code}`"
         else:
             invited_by = "Unknown"
         view = log_view(
             "Member Joined",
-            f"{emoji.user} **Name**: {member.mention} (`{member.name}`)\n"
+            f"{emoji.user} **Member**: {member.mention} (`{member.name}`)\n"
+            f"{emoji.id} **ID**: `{member.id}`\n"
             f"{emoji.duration} **Account Created**: {discord.utils.format_dt(member.created_at, 'R')}\n"
             f"{emoji.invite} **Invited By**: {invited_by}\n"
             f"{emoji.members} **Member Count**: {fmt_count(member.guild.member_count or 0)}",
@@ -72,7 +73,8 @@ class Logging(Cog):
         roles = [role.mention for role in member.roles if role != member.guild.default_role]
         view = log_view(
             "Member Left",
-            f"{emoji.user_red} **Name**: {member.mention} (`{member.name}`)\n"
+            f"{emoji.user_red} **Member**: {member.mention} (`{member.name}`)\n"
+            f"{emoji.id_red} **ID**: `{member.id}`\n"
             f"{emoji.duration_red} **Account Created**: {discord.utils.format_dt(member.created_at, 'R')}\n"
             + (
                 f"{emoji.add_red} **Server Joined**: {discord.utils.format_dt(member.joined_at, 'R')}\n"
@@ -90,7 +92,8 @@ class Logging(Cog):
         if before.nick != after.nick:
             view = log_view(
                 "Nickname Changed",
-                f"{emoji.user} **Name**: {after.mention} (`{after.name}`)\n"
+                f"{emoji.user} **Member**: {after.mention} (`{after.name}`)\n"
+                f"{emoji.id} **ID**: `{after.id}`\n"
                 f"{emoji.description_red} **Before**: `{before.nick or before.name}`\n"
                 f"{emoji.description} **After**: `{after.nick or after.name}`",
                 thumbnail=after.display_avatar.url,
@@ -102,7 +105,8 @@ class Logging(Cog):
             removed = [role.mention for role in before.roles if role not in after.roles]
             view = log_view(
                 "Member Roles Updated",
-                f"{emoji.user} **Name**: {after.mention} (`{after.name}`)\n"
+                f"{emoji.user} **Member**: {after.mention} (`{after.name}`)\n"
+                f"{emoji.id} **ID**: `{after.id}`\n"
                 + (f"{emoji.add} **Added**: {clip(', '.join(added), 512)}\n" if added else "")
                 + (f"{emoji.remove} **Removed**: {clip(', '.join(removed), 512)}" if removed else ""),
                 thumbnail=after.display_avatar.url,
@@ -113,7 +117,8 @@ class Logging(Cog):
             if after.communication_disabled_until is not None:
                 view = log_view(
                     "Member Timed Out",
-                    f"{emoji.user_orange} **Name**: {after.mention} (`{after.name}`)\n"
+                    f"{emoji.user_orange} **Member**: {after.mention} (`{after.name}`)\n"
+                    f"{emoji.id_orange} **ID**: `{after.id}`\n"
                     f"{emoji.duration_orange} **Until**: {discord.utils.format_dt(after.communication_disabled_until, 'R')}",
                     color=config.color.orange,
                     thumbnail=after.display_avatar.url,
@@ -121,7 +126,8 @@ class Logging(Cog):
             else:
                 view = log_view(
                     "Timeout Removed",
-                    f"{emoji.user_green} **Name**: {after.mention} (`{after.name}`)",
+                    f"{emoji.user_green} **Member**: {after.mention} (`{after.name}`)\n"
+                    f"{emoji.id_green} **ID**: `{after.id}`",
                     color=config.color.green,
                     thumbnail=after.display_avatar.url,
                 )
@@ -132,7 +138,8 @@ class Logging(Cog):
         joined_at = getattr(user, "joined_at", None)
         view = log_view(
             "Member Banned",
-            f"{emoji.user_red} **Name**: {user.mention} (`{user.name}`)\n"
+            f"{emoji.user_red} **User**: {user.mention} (`{user.name}`)\n"
+            f"{emoji.id_red} **ID**: `{user.id}`\n"
             f"{emoji.duration_red} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}"
             + (f"\n{emoji.add_red} **Server Joined**: {discord.utils.format_dt(joined_at, 'R')}" if joined_at else ""),
             color=config.color.red,
@@ -144,7 +151,8 @@ class Logging(Cog):
     async def on_member_unban(self, guild: discord.Guild, user: discord.User):
         view = log_view(
             "Member Unbanned",
-            f"{emoji.user_green} **Name**: {user.mention} (`{user.name}`)\n"
+            f"{emoji.user_green} **User**: {user.mention} (`{user.name}`)\n"
+            f"{emoji.id_green} **ID**: `{user.id}`\n"
             f"{emoji.duration_green} **Account Created**: {discord.utils.format_dt(user.created_at, 'R')}",
             color=config.color.green,
             thumbnail=user.display_avatar.url,
@@ -165,7 +173,7 @@ class Logging(Cog):
             extra.append(ui.MediaGallery(*[discord.MediaGalleryItem(url=media.url) for media in before.attachments]))
         view = log_view(
             "Message Edited",
-            f"{emoji.owner} **Author**: {before.author.mention}\n"
+            f"{emoji.owner} **Author**: {before.author.mention} (`{before.author.name}`)\n"
             f"{emoji.channel} **Channel**: {before.channel.mention}\n"
             f"{emoji.description_red} **Before**:\n{clip(before.content)}\n"
             f"{emoji.description} **After**:\n{clip(after.content)}",
@@ -212,7 +220,7 @@ class Logging(Cog):
             extra.append(ui.MediaGallery(*[discord.MediaGalleryItem(url=media.url) for media in msg.attachments]))
         view = log_view(
             "Message Deleted",
-            f"{emoji.owner_red} **Author**: {msg.author.mention}\n"
+            f"{emoji.owner_red} **Author**: {msg.author.mention} (`{msg.author.name}`)\n"
             f"{emoji.channel_red} **Channel**: {msg.channel.mention} (`{msg.channel.name}`)\n"
             f"{emoji.duration_red} **Sent**: {discord.utils.format_dt(msg.created_at, 'R')}"
             + (f"\n{emoji.description_red} **Message**:\n{clip(msg.content)}" if msg.content else ""),
@@ -278,7 +286,7 @@ class Logging(Cog):
             "Thread Created",
             f"{emoji.channel} **Thread**: {thread.mention} (`{thread.name}`)\n"
             f"{emoji.channel} **Parent**: {thread.parent.mention if thread.parent else 'Unknown'}\n"
-            f"{emoji.owner} **Owner**: <@{thread.owner_id}>",
+            f"{emoji.owner} **Owner**: <@{thread.owner_id}> (`{thread.owner_id}`)",
         )
         await self.send_log(thread.guild, server_log.LogType.CHANNELS, view)
 
@@ -330,7 +338,9 @@ class Logging(Cog):
         if before.name != after.name:
             lines.append(f"{emoji.description} **Name**: `{before.name}` → `{after.name}`")
         if before.owner_id != after.owner_id:
-            lines.append(f"{emoji.crown} **Owner**: <@{before.owner_id}> → <@{after.owner_id}>")
+            lines.append(
+                f"{emoji.crown} **Owner**: <@{before.owner_id}> (`{before.owner_id}`) → <@{after.owner_id}> (`{after.owner_id}`)"
+            )
         if before.icon != after.icon:
             lines.append(f"{emoji.img} **Icon**: Updated")
         if not lines:
@@ -379,18 +389,18 @@ class Logging(Cog):
         if before.channel is None:
             view = log_view(
                 "Voice Joined",
-                f"{emoji.user} **Name**: {member.mention}\n{emoji.voice} **Channel**: {after.channel.mention}",
+                f"{emoji.user} **Member**: {member.mention} (`{member.name}`)\n{emoji.voice} **Channel**: {after.channel.mention}",
             )
         elif after.channel is None:
             view = log_view(
                 "Voice Left",
-                f"{emoji.user_red} **Name**: {member.mention}\n{emoji.voice_red} **Channel**: {before.channel.mention}",
+                f"{emoji.user_red} **Member**: {member.mention} (`{member.name}`)\n{emoji.voice_red} **Channel**: {before.channel.mention}",
                 color=config.color.red,
             )
         else:
             view = log_view(
                 "Voice Moved",
-                f"{emoji.user} **Name**: {member.mention}\n"
+                f"{emoji.user} **Member**: {member.mention} (`{member.name}`)\n"
                 f"{emoji.voice_red} **From**: {before.channel.mention}\n"
                 f"{emoji.voice} **To**: {after.channel.mention}",
             )
@@ -406,7 +416,7 @@ class Logging(Cog):
         view = log_view(
             "Invite Created",
             f"{emoji.invite} **Code**: `{invite.code}`\n"
-            f"{emoji.user} **Created By**: {invite.inviter.mention if invite.inviter else 'Unknown'}\n"
+            f"{emoji.user} **Created By**: {f'{invite.inviter.mention} (`{invite.inviter.name}`)' if invite.inviter else 'Unknown'}\n"
             f"{emoji.channel} **Channel**: <#{invite.channel.id}>\n"
             f"{emoji.members} **Max Uses**: {invite.max_uses or 'Unlimited'}\n"
             f"{emoji.duration} **Expires**: "
@@ -435,7 +445,8 @@ class Logging(Cog):
             return
         view = log_view(
             "AutoMod Action",
-            f"{emoji.user_red} **Member**: <@{payload.user_id}>\n"
+            f"{emoji.user_red} **Member**: <@{payload.user_id}> (`{payload.member.name if payload.member else payload.user_id}`)\n"
+            f"{emoji.id_red} **ID**: `{payload.user_id}`\n"
             f"{emoji.mod_red} **Action**: {str(payload.action.type.name).replace('_', ' ').title()}\n"
             f"{emoji.description_red} **Trigger**: {str(payload.rule_trigger_type.name).replace('_', ' ').title()}\n"
             + (f"{emoji.channel_red} **Channel**: <#{payload.channel_id}>\n" if payload.channel_id else "")

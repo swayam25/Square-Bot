@@ -2,20 +2,24 @@ import discord
 import importlib
 import os
 import sys
+import time
 from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
 from discord.ext import commands
+from importlib.metadata import version
 from square.cogs import extensions
 from square.cogs.devs.emojis import Emojis
 from square.cogs.devs.eval import Eval
 from square.cogs.devs.guilds import Guilds
 from square.cogs.devs.stats import StatsView
+from square.cogs.info import start_time
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView, error_view, success_view
 from square.db.funcs.dev import add_dev, fetch_dev_ids, remove_dev
 from square.utils import check, config, temp
 from square.utils.emoji import emoji
+from square.utils.helpers import fmt_count
 
 # Cogs import these without them being cogs, so `reload_extension` alone leaves them stale. Dependencies first.
 # `assets` is skipped to keep its avatar cache.
@@ -49,14 +53,33 @@ class Devs(
 ):
     def __init__(self, client: Client):
         self.client = client
+        self.announced = False
 
     @commands.Cog.listener("on_ready")
     async def when_bot_gets_ready(self):
-        start_log_ch = self.client.get_channel(config.system_channel_id) or await self.client.fetch_channel(
+        # py-cord fires on_ready again after a reconnect that can't resume, which isn't a fresh start
+        if self.announced:
+            return
+        self.announced = True
+        channel = self.client.get_channel(config.system_channel_id) or await self.client.fetch_channel(
             config.system_channel_id
         )
-        view = success_view(f"Logged in as **{self.client.user}** with ID `{self.client.user.id}`")
-        await start_log_ch.send(view=view)
+        guilds = self.client.guilds
+        members = sum(guild.member_count or 0 for guild in guilds)
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(f"## {self.client.user.display_name} is online"),
+                ui.TextDisplay(
+                    f"{emoji.server} **Servers**: `{fmt_count(len(guilds))}`\n"
+                    f"{emoji.members} **Members**: `{fmt_count(members)}`\n"
+                    f"{emoji.console} **Commands**: `{fmt_count(len(self.client.application_commands))}`\n"
+                    f"{emoji.duration} **Ready In**: `{time.time() - start_time:.1f}s`"
+                ),
+                ui.TextDisplay(f"-# v{version('square')}"),
+                color=config.color.theme,
+            )
+        )
+        await channel.send(view=view)
 
     dev = SlashCommandGroup(guild_ids=config.owner_guild_ids, name="dev", description="Developer related commands.")
 
@@ -66,7 +89,7 @@ class Devs(
     async def add_dev(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Adds a bot dev."""
         await add_dev(user.id)
-        view = success_view(f"Added {user.mention} to dev.")
+        view = success_view(f"Added {user.mention} (`{user.name}`) to dev.")
         await ctx.respond(view=view)
 
     @dev.command(name="remove")
@@ -75,7 +98,7 @@ class Devs(
     async def remove_dev(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Removes a bot dev."""
         await remove_dev(user.id)
-        view = success_view(f"Removed {user.mention} from dev")
+        view = success_view(f"Removed {user.mention} (`{user.name}`) from dev.")
         await ctx.respond(view=view)
 
     @dev.command(name="list")
@@ -87,7 +110,7 @@ class Devs(
         dev_ids = await fetch_dev_ids()
         for ids in dev_ids:
             num += 1
-            dev_mention = f"<@{ids}>"
+            dev_mention = f"<@{ids}> (`{ids}`)"
             devs_list += f"`{num}.` {dev_mention}\n"
         if devs_list:
             view = DesignerView(

@@ -9,7 +9,7 @@ from discord.ext import commands
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView, error_view
-from square.utils import config, server_log
+from square.utils import bans, config, mod_dm, server_log
 from square.utils.emoji import emoji
 from square.utils.helpers import parse_duration
 
@@ -41,6 +41,7 @@ class MassModeration(
         verb: str,
         check: Callable[[discord.Member], str | None] | None = None,
         convert: Callable[[str], Awaitable[discord.abc.User]] | None = None,
+        missing: str = "User not found.",
     ) -> tuple[list, list[tuple]] | None:
         if len(users.split()) > 10:
             await ctx.respond(view=error_view(f"You can only mass {verb} upto 10 users."), ephemeral=True)
@@ -53,7 +54,7 @@ class MassModeration(
             try:
                 _user = await convert(user)
             except commands.BadArgument, ValueError, discord.HTTPException:
-                errors.append((user, "User not found."))
+                errors.append((user, missing))
                 continue
             if error := check(_user):
                 errors.append((_user.mention, error))
@@ -79,7 +80,7 @@ class MassModeration(
         lines += [f"{icon(name)} **{label}**: {value}" for name, label, value in fields]
         lines.append(f"{icon('user')} **Users**: {', '.join(users)}")
         if moderator:
-            lines.append(f"{icon('owner')} **Moderator**: {moderator.mention}")
+            lines.append(f"{icon('owner')} **Moderator**: {moderator.mention} (`{moderator.name}`)")
         return DesignerView(
             ui.Container(
                 ui.TextDisplay(f"## {title}"),
@@ -108,7 +109,7 @@ class MassModeration(
             elif isinstance(result, BaseException):
                 raise result
             else:
-                done.append(target.mention)
+                done.append(f"{target.mention} (`{target.name}`)")
         if done:
             await ctx.respond(view=self._result_view(title, summary, done, fields, config.color.green))
             log_view = self._result_view(title, summary, done, fields, log_color, moderator=ctx.author)
@@ -133,11 +134,21 @@ class MassModeration(
             await self._run(
                 ctx,
                 *resolved,
-                action=lambda m: m.kick(reason=reason),
+                action=lambda m: mod_dm.send_before(
+                    m,
+                    mod_dm.view(
+                        ctx.guild,
+                        "You got kicked",
+                        config.color.orange,
+                        mod_dm.moderation_rows(reason, ctx.author),
+                        member=False,
+                    ),
+                    m.kick(reason=reason),
+                ),
                 title="Mass Kicked Users",
                 summary="kicked",
                 error_title="Can't kick users",
-                fields=[("description", "Reason", reason)],
+                fields=[("description", "Reason", reason or "No reason given")],
                 log_color=config.color.orange,
             )
 
@@ -162,16 +173,26 @@ class MassModeration(
             await self._run(
                 ctx,
                 *resolved,
-                action=lambda m: ctx.guild.ban(m, reason=reason, delete_message_seconds=dur),
+                action=lambda m: mod_dm.send_before(
+                    m,
+                    mod_dm.view(
+                        ctx.guild,
+                        "You got banned",
+                        config.color.red,
+                        mod_dm.moderation_rows(reason, ctx.author),
+                        member=False,
+                    ),
+                    ctx.guild.ban(m, reason=reason, delete_message_seconds=dur),
+                ),
                 title="Mass Banned Users",
                 summary="banned",
                 error_title="Can't ban users",
                 fields=[
-                    ("description", "Reason", reason),
+                    ("description", "Reason", reason or "No reason given"),
                     (
                         "bin",
                         "Delete Message Duration",
-                        f"`{format_timedelta(del_after, locale='en') if del_after else 'None'}`",
+                        f"`{format_timedelta(del_after, locale='en')}`" if del_after else "Kept all messages",
                     ),
                 ],
                 log_color=config.color.red,
@@ -179,18 +200,23 @@ class MassModeration(
 
     @mass.command(name="unban")
     @option(
-        "users", description='Enter the user IDs whom you want to unban. Use " " to separate user IDs.', required=True
+        "users",
+        description='Enter the usernames or IDs of the users you want to unban. Use " " to separate them.',
+        required=True,
     )
     @option("reason", description="Enter the reason for unbanning the user", required=False)
     async def mass_unban_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
         """Unbans mentioned users."""
         await ctx.defer()
+        banned = await bans.banned_users(ctx.guild)
+
+        async def convert(text: str) -> discord.User:
+            if user := bans.find(banned, text):
+                return user
+            raise ValueError(text)
+
         resolved = await self._resolve(
-            ctx,
-            users,
-            "unban",
-            check=lambda user: None,
-            convert=lambda user: self.client.fetch_user(int(user)),
+            ctx, users, "unban", check=lambda user: None, convert=convert, missing="Isn't banned here."
         )
         if resolved:
             await self._run(
@@ -200,7 +226,7 @@ class MassModeration(
                 title="Mass Unbanned Users",
                 summary="unbanned",
                 error_title="Can't unban users",
-                fields=[("description", "Reason", reason)],
+                fields=[("description", "Reason", reason or "No reason given")],
                 log_color=config.color.green,
             )
 
@@ -226,17 +252,23 @@ class MassModeration(
                 "You cannot use it on server owner." if m == ctx.guild.owner else self._hierarchy_error(ctx, m)
             ),
         )
+
+        async def timeout(member: discord.Member) -> None:
+            until = discord.utils.utcnow() + dur
+            await member.timeout(until, reason=reason)
+            await mod_dm.send(member, mod_dm.timed_out(ctx.guild, until, reason, ctx.author))
+
         if resolved:
             await self._run(
                 ctx,
                 *resolved,
-                action=lambda m: m.timeout_for(dur, reason=reason),
+                action=timeout,
                 title="Mass Timed out Users",
                 summary="timed out",
                 error_title="Can't timeout users",
                 fields=[
                     ("duration", "Duration", f"`{format_timedelta(dur, locale='en')}`"),
-                    ("description", "Reason", reason),
+                    ("description", "Reason", reason or "No reason given"),
                 ],
                 log_color=config.color.orange,
             )
@@ -249,15 +281,28 @@ class MassModeration(
     async def mass_untimeout_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
         """Untimeouts mentioned users."""
         await ctx.defer()
+
+        async def untimeout(member: discord.Member) -> None:
+            was_timed_out = member.timed_out
+            await member.timeout(None, reason=reason)
+            if was_timed_out:
+                dm = mod_dm.view(
+                    ctx.guild,
+                    "Your timeout was removed",
+                    config.color.green,
+                    mod_dm.moderation_rows(reason, ctx.author),
+                )
+                await mod_dm.send(member, dm)
+
         if resolved := await self._resolve(ctx, users, "untimeout"):
             await self._run(
                 ctx,
                 *resolved,
-                action=lambda m: m.timeout(None, reason=reason),
+                action=untimeout,
                 title="Mass Untimed out Users",
                 summary="untimed out",
                 error_title="Can't untimeout users",
-                fields=[("description", "Reason", reason)],
+                fields=[("description", "Reason", reason or "No reason given")],
                 log_color=config.color.green,
             )
 

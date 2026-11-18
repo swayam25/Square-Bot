@@ -99,10 +99,11 @@ class AutoMod(Cog):
             log_view(
                 f"{self.client.user.name} AutoMod",
                 f"{emoji.user_red} **Member**: {member.mention} (`{member.name}`)\n"
+                f"{emoji.id_red} **ID**: `{member.id}`\n"
                 f"{emoji.mod_red} **Rule**: {LABELS[rule.kind]}\n"
                 f"{emoji.description_red} **Why**: {detail}\n"
                 f"{emoji.channel_red} **Channel**: {message.channel.mention}\n"
-                f"{emoji.bin_red} **Action**: {', '.join(actions) or 'None'}"
+                f"{emoji.bin_red} **Action**: {', '.join(actions) or 'Only logged'}"
                 + (f"\n{emoji.description_red} **Content**:\n{clip(message.content, 512)}" if message.content else ""),
                 color=config.color.red,
             ),

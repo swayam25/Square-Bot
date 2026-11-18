@@ -5,19 +5,25 @@ from discord import ui
 from discord.commands import option, slash_command
 from square.cogs.moderation.purge import Purge
 from square.cogs.moderation.roles import Roles
+from square.cogs.moderation.timeouts import TimeoutEnds
 from square.cogs.moderation.warnings import Warnings
 from square.core import Client
 from square.core.cog import Cog
-from square.core.view import DesignerView, error_view, success_view
-from square.utils import config
+from square.core.view import DesignerView, error_view, not_in_server, success_view
+from square.utils import bans, config, mod_dm
 from square.utils.emoji import emoji
 from square.utils.helpers import parse_duration
+
+
+def _dms_closed(messaged: bool) -> str:
+    return "" if messaged else "\n-# They have DMs closed, so they weren't told."
 
 
 class Moderation(
     Purge,
     Roles,
     Warnings,
+    TimeoutEnds,
     Cog,
     name="Moderation",
     description="Moderate your server & keep it managed by using commands.",
@@ -26,6 +32,7 @@ class Moderation(
 ):
     def __init__(self, client: Client):
         self.client = client
+        self.timeout_ends = {}
 
     @slash_command(name="kick")
     @discord.default_permissions(kick_members=True)
@@ -33,6 +40,8 @@ class Moderation(
     @option("reason", description="Enter the reason for kicking the user", required=False)
     async def kick(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Kicks the mentioned user."""
+        if await not_in_server(ctx, user):
+            return
         if user == ctx.author:
             view = error_view("You cannot use it on yourself")
             await ctx.respond(view=view, ephemeral=True)
@@ -40,13 +49,21 @@ class Moderation(
             view = error_view("Given user has same role or higher role than you")
             await ctx.respond(view=view, ephemeral=True)
         else:
-            await user.kick(reason=reason)
+            dm = mod_dm.view(
+                ctx.guild,
+                "You got kicked",
+                config.color.orange,
+                mod_dm.moderation_rows(reason, ctx.author),
+                member=False,
+            )
+            messaged = await mod_dm.send_before(user, dm, user.kick(reason=reason))
             view = DesignerView(
                 ui.Container(
                     ui.Section(
                         ui.TextDisplay("## Kicked User"),
                         ui.TextDisplay(
-                            f"Successfully kicked **{user}** from the server.\n{emoji.description_green} **Reason**: {reason}"
+                            f"Successfully kicked {user.mention} (`{user.name}`) from the server.\n{emoji.description_green} **Reason**: {reason or 'No reason given'}"
+                            + _dms_closed(messaged)
                         ),
                         accessory=ui.Thumbnail(url=user.display_avatar.url),
                     ),
@@ -83,17 +100,26 @@ class Moderation(
             if delete_messages and delete_messages != "0":
                 del_after = parse_duration(delete_messages, max_duration="7d")
                 dur = int(del_after.total_seconds()) if del_after else None
-            await ctx.guild.ban(user, reason=reason, delete_message_seconds=dur)
+            dm = mod_dm.view(
+                ctx.guild,
+                "You got banned",
+                config.color.red,
+                mod_dm.moderation_rows(reason, ctx.author),
+                member=False,
+            )
+            messaged = await mod_dm.send_before(
+                user, dm, ctx.guild.ban(user, reason=reason, delete_message_seconds=dur)
+            )
             view = DesignerView(
                 ui.Container(
                     ui.Section(
                         ui.TextDisplay("## Banned User"),
                         ui.TextDisplay(
-                            f"Successfully banned **{user.display_name}** from the server.\n"
+                            f"Successfully banned {user.mention} (`{user.name}`) from the server.\n"
                             f"{emoji.id_green} **ID**: `{user.id}`\n"
-                            f"{emoji.user_green} **User**: `{user}`\n"
-                            f"{emoji.description_green} **Reason**: {reason}\n"
-                            f"{emoji.bin_green} **Delete Message Duration**: `{format_timedelta(del_after, locale='en') if del_after else 'None'}`"
+                            f"{emoji.description_green} **Reason**: {reason or 'No reason given'}\n"
+                            f"{emoji.bin_green} **Delete Message Duration**: {f'`{format_timedelta(del_after, locale="en")}`' if del_after else 'Kept all messages'}"
+                            + _dms_closed(messaged)
                         ),
                         accessory=ui.Thumbnail(url=user.display_avatar.url),
                     ),
@@ -104,23 +130,21 @@ class Moderation(
 
     @slash_command(name="unban")
     @discord.default_permissions(ban_members=True)
-    @option("user_id", description="Enter the user ID whom you want to unban")
+    @option(
+        "user",
+        description="Enter the username or ID of the user you want to unban",
+        autocomplete=bans.autocomplete,
+    )
     @option("reason", description="Enter the reason for unbanning the user", required=False)
-    async def unban(self, ctx: discord.ApplicationContext, user_id: str, reason: str = None):
-        """Unbans the user with the given ID."""
-        if not user_id.isdigit():
-            view = error_view("User ID must be a valid integer.")
+    async def unban(self, ctx: discord.ApplicationContext, user: str, reason: str = None):
+        """Unbans a user by their username or ID."""
+        found = bans.find(await bans.banned_users(ctx.guild), user)
+        if found is None:
+            view = error_view(f"`{user.replace('`', '')}` isn't banned here.")
             await ctx.respond(view=view, ephemeral=True)
             return
-        user_id = int(user_id)
-        try:
-            user = await self.client.fetch_user(user_id)
-            await ctx.guild.unban(user, reason=reason)
-            view = success_view(f"Successfully unbanned {user.mention}.")
-            await ctx.respond(view=view)
-        except discord.NotFound:
-            view = error_view(f"User with ID `{user_id}` not found.")
-            await ctx.respond(view=view, ephemeral=True)
+        await ctx.guild.unban(found, reason=reason)
+        await ctx.respond(view=success_view(f"Successfully unbanned {found.mention} (`{found.name}`)."))
 
     @slash_command(name="timeout")
     @discord.default_permissions(moderate_members=True)
@@ -131,6 +155,8 @@ class Moderation(
         self, ctx: discord.ApplicationContext, user: discord.Member, duration: str, reason: str = None
     ):
         """Timeouts the mentioned user."""
+        if await not_in_server(ctx, user):
+            return
         if user == ctx.author:
             view = error_view("You cannot use it on yourself.")
             await ctx.respond(view=view, ephemeral=True)
@@ -144,14 +170,16 @@ class Moderation(
                 view = error_view(f"{e}")
                 await ctx.respond(view=view, ephemeral=True)
                 return
-            await user.timeout_for(dur, reason=reason)
+            until = discord.utils.utcnow() + dur
+            await user.timeout(until, reason=reason)
+            messaged = await mod_dm.send(user, mod_dm.timed_out(ctx.guild, until, reason, ctx.author)) is not None
             view = DesignerView(
                 ui.Container(
                     ui.TextDisplay("## Timed out User"),
                     ui.TextDisplay(
-                        f"Successfully timed out {user.mention}.\n"
+                        f"Successfully timed out {user.mention} (`{user.name}`).\n"
                         f"{emoji.duration_green} **Duration**: `{format_timedelta(dur, locale='en')}`\n"
-                        f"{emoji.description_green} **Reason**: {reason}"
+                        f"{emoji.description_green} **Reason**: {reason or 'No reason given'}" + _dms_closed(messaged)
                     ),
                     color=config.color.green,
                 )
@@ -164,6 +192,8 @@ class Moderation(
     @option("reason", description="Enter the reason for user timeout", required=False)
     async def untimeout_user(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Untimeouts the mentioned user."""
+        if await not_in_server(ctx, user):
+            return
         if user == ctx.author:
             view = error_view("You cannot use it on yourself")
             await ctx.respond(view=view, ephemeral=True)
@@ -171,12 +201,23 @@ class Moderation(
             view = error_view("Given user has same role or higher role than you")
             await ctx.respond(view=view, ephemeral=True)
         else:
+            was_timed_out = user.timed_out
             await user.timeout(None, reason=reason)
+            messaged = True
+            if was_timed_out:
+                dm = mod_dm.view(
+                    ctx.guild,
+                    "Your timeout was removed",
+                    config.color.green,
+                    mod_dm.moderation_rows(reason, ctx.author),
+                )
+                messaged = await mod_dm.send(user, dm) is not None
             view = DesignerView(
                 ui.Container(
                     ui.TextDisplay("## Untimed out User"),
                     ui.TextDisplay(
-                        f"Successfully untimed out {user.mention}.\n{emoji.description_green} **Reason**: {reason}"
+                        f"Successfully untimed out {user.mention} (`{user.name}`).\n{emoji.description_green} **Reason**: {reason or 'No reason given'}"
+                        + _dms_closed(messaged)
                     ),
                     color=config.color.green,
                 )
@@ -218,7 +259,7 @@ class Moderation(
             ui.Container(
                 ui.TextDisplay("## Channel Locked"),
                 ui.TextDisplay(
-                    f"Successfully locked {channel.mention}.\n{emoji.description_green} **Reason**: {reason}"
+                    f"Successfully locked {channel.mention}.\n{emoji.description_green} **Reason**: {reason or 'No reason given'}"
                 ),
                 color=config.color.green,
             )

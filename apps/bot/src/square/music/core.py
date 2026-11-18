@@ -176,7 +176,9 @@ class SquarePlayer(sonolink.Player):
         self._empty_task = None
         if self.current is None:
             return
-        await music_log(self.guild.id, f"{emoji.stop} Stopped the player since everyone left.", color=config.color.red)
+        await music_log(
+            self.guild.id, f"{emoji.stop_red} Stopped the player since everyone left.", color=config.color.red
+        )
         await stop_player(self, self.guild)
 
 
