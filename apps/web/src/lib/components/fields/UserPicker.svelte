@@ -15,6 +15,7 @@
     import { createListCollection } from "@ark-ui/svelte/collection";
     import { Combobox } from "@ark-ui/svelte/combobox";
     import type { UserMatch } from "@square/api-client";
+    import { tick } from "svelte";
     import type { ClassValue } from "svelte/elements";
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
 
@@ -39,6 +40,8 @@
     } = $props();
 
     let open = $state(false);
+    // Ark keeps the picked id unless the prop really changes, so a fixed `[]` made re-picking the same person do nothing
+    let value = $state<string[]>([]);
     let input = $state<HTMLInputElement | null>(null);
     let menu = $state<HTMLElement | null>(null);
     let typed = $state("");
@@ -111,13 +114,16 @@
 {:else}
     <Combobox.Root
         {collection}
-        value={[]}
+        {value}
         bind:open
         inputValue={typed}
         onInputValueChange={(details) => details.reason === "input-change" && (typed = details.inputValue)}
-        onValueChange={(details) => {
+        onValueChange={async (details) => {
+            value = details.value;
             const user = found.find((match) => match.id === details.value[0]);
             if (user) pick(user);
+            await tick();
+            value = [];
         }}
         openOnClick
         inputBehavior="autohighlight"
