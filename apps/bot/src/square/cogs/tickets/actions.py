@@ -9,6 +9,7 @@ from square.db import cache
 from square.db.funcs import tickets as db
 from square.db.schema import TicketTable
 from square.utils import server_log
+from square.utils.helpers import fmt_user
 
 log = logging.getLogger(__name__)
 
@@ -92,7 +93,7 @@ async def open_ticket(
             cards.channel_name(number),
             overwrites=overwrites,
             topic=reason[:1024],
-            reason=f"Ticket opened by {opener}",
+            reason=f"Ticket opened by {fmt_user(opener)}",
         )
     except discord.HTTPException as exc:
         return f"I couldn't create the ticket channel: {exc.text or exc}"
@@ -139,9 +140,9 @@ async def add_members(
     ticket: TicketTable, channel: discord.TextChannel, members: list[discord.Member], by: discord.Member
 ) -> str:
     for member in members:
-        await channel.set_permissions(member, overwrite=MEMBER, reason=f"Added to the ticket by {by}")
+        await channel.set_permissions(member, overwrite=MEMBER, reason=f"Added to the ticket by {fmt_user(by)}")
         await db.add_ticket_member(ticket, member.id, by.id)
-    return f"Added {', '.join(member.mention for member in members)} to this ticket."
+    return f"Added {', '.join(f'{member.mention} (`{member.name}`)' for member in members)} to this ticket."
 
 
 async def remove_members(
@@ -149,11 +150,11 @@ async def remove_members(
 ) -> str:
     removable = [member for member in members if member.id != ticket.opener_id]
     for member in removable:
-        await channel.set_permissions(member, overwrite=None, reason=f"Removed from the ticket by {by}")
+        await channel.set_permissions(member, overwrite=None, reason=f"Removed from the ticket by {fmt_user(by)}")
         await db.remove_ticket_member(ticket, member.id)
     if not removable:
         return "The opener can't be removed from their own ticket."
-    return f"Removed {', '.join(member.mention for member in removable)} from this ticket."
+    return f"Removed {', '.join(f'{member.mention} (`{member.name}`)' for member in removable)} from this ticket."
 
 
 async def save_transcript(guild: discord.Guild, channel: discord.TextChannel, ticket: TicketTable) -> bool:
@@ -186,7 +187,7 @@ async def close(
     await save_transcript(guild, channel, ticket)
     await _log(client, guild, ticket)
     await refresh(client, guild, ticket)
-    _rename(channel, True, f"Ticket closed by {by}")
+    _rename(channel, True, f"Ticket closed by {fmt_user(by)}")
 
 
 async def reopen(client: Client, guild: discord.Guild, ticket: TicketTable, channel: discord.TextChannel) -> None:
@@ -213,4 +214,4 @@ async def delete(
         await server_log.edit(
             client, guild, server_log.LogType.TICKETS, ticket.log_message_id, cards.log_card(ticket, guild.id)
         )
-    await channel.delete(reason=f"Ticket deleted by {by}")
+    await channel.delete(reason=f"Ticket deleted by {fmt_user(by)}")

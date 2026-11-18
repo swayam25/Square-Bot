@@ -277,7 +277,9 @@ class Giveaways(
             await ctx.respond(view=error_view(f"**{found.prize}** hasn't ended yet."), ephemeral=True)
             return
         if winner and winner.id not in found.winner_ids:
-            await ctx.respond(view=error_view(f"{winner.mention} didn't win **{found.prize}**."), ephemeral=True)
+            await ctx.respond(
+                view=error_view(f"{winner.mention} (`{winner.name}`) didn't win **{found.prize}**."), ephemeral=True
+            )
             return
         await ctx.defer(ephemeral=True)
         new = await actions.reroll(self.client, found, [winner.id] if winner else None)

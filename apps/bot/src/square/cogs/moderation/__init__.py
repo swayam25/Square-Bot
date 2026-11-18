@@ -12,7 +12,7 @@ from square.core.cog import Cog
 from square.core.view import DesignerView, error_view, not_in_server, success_view
 from square.utils import bans, config, mod_dm
 from square.utils.emoji import emoji
-from square.utils.helpers import parse_duration
+from square.utils.helpers import fmt_user, parse_duration
 
 
 def _dms_closed(messaged: bool) -> str:
@@ -244,7 +244,7 @@ class Moderation(
         await channel.set_permissions(
             everyone,
             overwrite=None if overwrite.is_empty() else overwrite,
-            reason=f"{'Unlocked' if allow is None else 'Locked'} by {ctx.author}",
+            reason=f"{'Unlocked' if allow is None else 'Locked'} by {fmt_user(ctx.author)}",
         )
         return channel
 

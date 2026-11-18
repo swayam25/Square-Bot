@@ -1,6 +1,7 @@
 import discord
 import re
 import time
+from square.utils.helpers import fmt_user
 
 AUTOCOMPLETE_TTL = 30
 CHOICE_LIMIT = 25
@@ -49,4 +50,4 @@ async def autocomplete(ctx: discord.AutocompleteContext) -> list[discord.OptionC
         for user in users
         if typed in user.name.lower() or typed in (user.global_name or "").lower() or typed in str(user.id)
     ]
-    return [discord.OptionChoice(name=str(user)[:100], value=str(user.id)) for user in matches[:CHOICE_LIMIT]]
+    return [discord.OptionChoice(name=fmt_user(user)[:100], value=str(user.id)) for user in matches[:CHOICE_LIMIT]]

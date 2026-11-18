@@ -444,7 +444,7 @@ class Logging(Cog):
         if guild is None:
             return
         view = log_view(
-            "AutoMod Action",
+            "Discord Rule Triggered",
             f"{emoji.user_red} **Member**: <@{payload.user_id}> (`{payload.member.name if payload.member else payload.user_id}`)\n"
             f"{emoji.id_red} **ID**: `{payload.user_id}`\n"
             f"{emoji.mod_red} **Action**: {str(payload.action.type.name).replace('_', ' ').title()}\n"

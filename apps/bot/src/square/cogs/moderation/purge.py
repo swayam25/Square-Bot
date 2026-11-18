@@ -6,6 +6,7 @@ from discord.abc import Snowflake
 from discord.commands import SlashCommandGroup, option
 from square.core import Client
 from square.core.view import error_view, success_view
+from square.utils.helpers import fmt_user
 
 PurgeableChannel = discord.TextChannel | discord.VoiceChannel | discord.StageChannel | discord.Thread
 # Discord's bulk delete refuses messages older than 14 days, a minute of margin covers clock drift
@@ -77,7 +78,7 @@ class Purge:
             await ctx.respond(view=error_view("Messages can't be purged in this channel."), ephemeral=True)
             return
         await ctx.defer(ephemeral=True)
-        deleted, skipped = await purge_messages(channel, reason=f"Purged by {ctx.author}", **kwargs)
+        deleted, skipped = await purge_messages(channel, reason=f"Purged by {fmt_user(ctx.author)}", **kwargs)
         note = f"\n-# Skipped `{skipped}` older than 14 days, Discord can't bulk delete those." if skipped else ""
         await ctx.respond(view=success_view(f"Successfully purged `{deleted}` {what}.{note}"), ephemeral=True)
 
@@ -104,7 +105,12 @@ class Purge:
     @option("user", description="Mention the user whose messages you want to purge.")
     async def purge_user(self, ctx: discord.ApplicationContext, amount: int, user: discord.Member):
         """Purges the amount of given messages sent by the mentioned user."""
-        await self._purge(ctx, f"messages sent by {user.mention}", limit=amount, check=lambda m: m.author.id == user.id)
+        await self._purge(
+            ctx,
+            f"messages sent by {user.mention} (`{user.name}`)",
+            limit=amount,
+            check=lambda m: m.author.id == user.id,
+        )
 
     @purge.command(name="contains")
     @option("amount", description="Enter an integer.", min_value=1, max_value=1000)

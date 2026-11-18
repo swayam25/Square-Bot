@@ -43,9 +43,9 @@ class HelpView(DesignerView):
         self.clear_items()
         category_list = "\n".join(f"{cog['emoji']} `:` **{cog['name']}**" for cog in self.cogs)
         container = ui.Container(
-            ui.TextDisplay(f"## {self.client.user.name} Help Desk"),
+            ui.TextDisplay(f"## {self.client.user.display_name} Help Desk"),
             ui.TextDisplay(
-                f"Hello {self.ctx.author.mention}! I'm {self.client.user.name}, use the dropdown menu below to see the commands of each category. If you need help, feel free to ask in the [support server]({config.support_server_url})."
+                f"Hello {self.ctx.author.mention}! I'm {self.client.user.display_name}, use the dropdown menu below to see the commands of each category. If you need help, feel free to ask in the [support server]({config.support_server_url})."
             ),
             ui.TextDisplay(f"### Categories\n{category_list}"),
         )

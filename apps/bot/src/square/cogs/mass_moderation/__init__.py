@@ -54,10 +54,10 @@ class MassModeration(
             try:
                 _user = await convert(user)
             except commands.BadArgument, ValueError, discord.HTTPException:
-                errors.append((user, missing))
+                errors.append((f"`{user.replace('`', '')}`", missing))
                 continue
             if error := check(_user):
-                errors.append((_user.mention, error))
+                errors.append((f"{_user.mention} (`{_user.name}`)", error))
             else:
                 resolved.append(_user)
         return resolved, errors
@@ -105,7 +105,7 @@ class MassModeration(
         results = await asyncio.gather(*(action(target) for target in targets), return_exceptions=True)
         for target, result in zip(targets, results, strict=True):
             if isinstance(result, discord.HTTPException):
-                errors.append((target.mention, result.text or "Something went wrong."))
+                errors.append((f"{target.mention} (`{target.name}`)", result.text or "Something went wrong."))
             elif isinstance(result, BaseException):
                 raise result
             else:
@@ -118,7 +118,7 @@ class MassModeration(
             view = DesignerView(
                 ui.Container(
                     ui.TextDisplay(f"## {error_title}"),
-                    ui.TextDisplay("\n".join(f"{emoji.bullet_red} **{obj}**: {error}" for obj, error in errors)),
+                    ui.TextDisplay("\n".join(f"{emoji.bullet_red} {obj}: {error}" for obj, error in errors)),
                     color=config.color.red,
                 )
             )
@@ -318,7 +318,7 @@ class MassModeration(
             try:
                 _role = await commands.RoleConverter().convert(ctx, role)
             except commands.BadArgument:
-                errors.append((role, "Role not found."))
+                errors.append((f"`{role.replace('`', '')}`", "Role not found."))
                 continue
             if _role.position >= ctx.guild.me.top_role.position:
                 errors.append((_role.mention, "Role has same or higher position than me."))

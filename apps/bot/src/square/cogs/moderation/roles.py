@@ -7,6 +7,7 @@ from square.core import Client
 from square.core.view import DesignerView, error_view, not_in_server, success_view
 from square.utils import config
 from square.utils.emoji import emoji
+from square.utils.helpers import fmt_user
 
 
 class Roles:
@@ -59,7 +60,7 @@ class Roles:
 
         msg = await ctx.respond(view=progress_view(0))
         errors: list[tuple] = []
-        reason = f"Role {verb} {target} by {ctx.author}"
+        reason = f"Role {verb} {target} by {fmt_user(ctx.author)}"
         last_edit = time.monotonic()
         for count, member in enumerate(members, start=1):
             try:

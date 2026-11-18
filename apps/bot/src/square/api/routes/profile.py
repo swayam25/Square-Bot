@@ -10,6 +10,7 @@ from square.api.refusals import REFUSED, refused
 from square.api.resolve import SettingError
 from square.api.schemas import IMAGE_DATA_MAX, IMAGE_MAX_BYTES, BotProfile, BotProfilePatch
 from square.core import Client
+from square.utils.helpers import fmt_user
 from typing import Any
 
 # Discord returns the bot's server bio only in reply to the bot's own member PATCH, never on a member fetch
@@ -69,7 +70,7 @@ async def _out(client: Client, guild: discord.Guild, me: discord.Member) -> BotP
 
 
 def _reason(member: discord.Member) -> str:
-    return f"Dashboard: {member} ({member.id})"
+    return f"Dashboard: {fmt_user(member)}"
 
 
 def _check_nick(guild: discord.Guild) -> None:

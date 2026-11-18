@@ -32,7 +32,7 @@ class UserInfo:
             self.user = await self.ctx.guild.fetch_member(self.user.id)
 
         info_lines = [
-            f"{emoji.mention} {self.user.mention} {(emoji.crown if self.user.guild.owner_id == self.user.id else '') if isinstance(self.user, discord.Member) else ''}",
+            f"{emoji.mention} {self.user.mention} (`{self.user.name}`) {(emoji.crown if self.user.guild.owner_id == self.user.id else '') if isinstance(self.user, discord.Member) else ''}",
             f"{emoji.id} **ID**: `{self.user.id}`",
             f"{emoji.bot} **Bot?**: {'Yes' if self.user.bot else 'No'}",
             f"{emoji.date} **Account Created**: {discord.utils.format_dt(self.user.created_at, 'R')}",

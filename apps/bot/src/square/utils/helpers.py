@@ -84,6 +84,15 @@ def fmt_count(value: int) -> str:
     return f"{value:,}" if abs(value) < 10_000 else fmt_number(value)
 
 
+def fmt_user(user: discord.abc.User) -> str:
+    """
+    Plain text for places mentions can't render, like audit-log reasons: `Name (username)`.
+
+    py-cord's own `str(user)` puts the username first, the reverse of how Square names people.
+    """
+    return user.name if user.display_name == user.name else f"{user.display_name} ({user.name})"
+
+
 def member_counts(guild: discord.Guild) -> tuple[int, int, int]:
     bots = sum(1 for member in guild.members if member.bot)
     return guild.member_count or len(guild.members), len(guild.members) - bots, bots

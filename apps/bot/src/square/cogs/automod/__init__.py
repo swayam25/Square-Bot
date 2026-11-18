@@ -97,7 +97,7 @@ class AutoMod(Cog):
             guild,
             server_log.LogType.AUTOMOD,
             log_view(
-                f"{self.client.user.name} AutoMod",
+                "Square Rule Triggered",
                 f"{emoji.user_red} **Member**: {member.mention} (`{member.name}`)\n"
                 f"{emoji.id_red} **ID**: `{member.id}`\n"
                 f"{emoji.mod_red} **Rule**: {LABELS[rule.kind]}\n"
