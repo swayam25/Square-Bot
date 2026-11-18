@@ -10,10 +10,10 @@
     import type { Channel, Role, SquareRule } from "@square/api-client";
     import MaterialSymbolsChatErrorRounded from "~icons/material-symbols/chat-error-rounded";
     import MaterialSymbolsDeleteRounded from "~icons/material-symbols/delete-rounded";
-    import MaterialSymbolsHardwareRounded from "~icons/material-symbols/hardware-rounded";
     import MaterialSymbolsShieldPersonRounded from "~icons/material-symbols/shield-person-rounded";
     import MaterialSymbolsTagRounded from "~icons/material-symbols/tag-rounded";
     import MaterialSymbolsTimerRounded from "~icons/material-symbols/timer-rounded";
+    import MaterialSymbolsWarningRounded from "~icons/material-symbols/warning-rounded";
     import { KINDS, LIMITS, type Mode, type SquareProblems } from "./automod.ts";
 
     let {
@@ -96,7 +96,7 @@
         <SettingRow
             label="Warn them"
             description="Adds a warning, which counts toward the punishments."
-            icon={MaterialSymbolsHardwareRounded}
+            icon={MaterialSymbolsWarningRounded}
             layout="inline"
         >
             <Toggle label="Warn them" bind:checked={rule.warn} />

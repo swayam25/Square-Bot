@@ -5,6 +5,7 @@ from msgspec import UNSET, UnsetType
 from sonolink import QueueMode
 from sonolink.models import Playable, Playlist
 from square.api import resolve
+from square.cogs.moderation.warnings import MAX_REASON
 from square.cogs.tickets.snapshot import Transcript
 from square.core import Client
 from square.modules import Module
@@ -54,6 +55,7 @@ class Guild(Schema):
     icon_url: str | None
     member_count: int
     can_manage: bool
+    can_moderate: bool
 
 
 class Channel(Schema):
@@ -269,6 +271,55 @@ class InviteProfile(Schema):
     total: int
     invited_by: Person | None
     invitees: list[Invitee]
+
+
+class WarnEntry(Schema):
+    rank: int
+    user: Person
+    warnings: int
+    last_at: int  # Unix ms
+
+
+class WarnBoard(Schema):
+    entries: list[WarnEntry]
+    page: int
+    pages: int
+    people: int
+    warnings: int
+
+
+class WarningItem(Schema):
+    id: int
+    number: int
+    reason: str
+    moderator: Person | None  # None when AutoMod gave it
+    created_at: int  # Unix ms
+
+
+class WarnProfile(Schema):
+    user: Person
+    member: bool
+    rank: int | None
+    total: int
+    warnings: list[WarningItem]
+    page: int
+    pages: int
+
+
+class WarnCreate(Schema):
+    user_id: Snowflake
+    reason: Annotated[str, msgspec.Meta(max_length=MAX_REASON)] = ""
+
+
+class WarnResult(Schema):
+    total: int
+    punishment: str | None
+    punished: bool
+    messaged: bool
+
+
+class WarningsCleared(Schema):
+    cleared: int
 
 
 class BonusChange(Schema):
@@ -951,6 +1002,7 @@ def guild_out(guild: discord.Guild, member: discord.Member) -> Guild:
         icon_url=guild.icon.replace(size=128, static_format="webp").url if guild.icon else None,
         member_count=guild.member_count or 0,
         can_manage=member.guild_permissions.manage_guild,
+        can_moderate=member.guild_permissions.moderate_members,
     )
 
 

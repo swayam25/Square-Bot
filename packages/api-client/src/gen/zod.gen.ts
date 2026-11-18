@@ -305,6 +305,7 @@ export const zGuild = z.object({
     iconUrl: z.string().nullable(),
     memberCount: z.int(),
     canManage: z.boolean(),
+    canModerate: z.boolean(),
 });
 
 /**
@@ -1337,6 +1338,76 @@ export const zVolume = z.object({
 });
 
 /**
+ * WarnCreate
+ */
+export const zWarnCreate = z.object({
+    userId: z.string().regex(/^\d{17,20}$/),
+    reason: z.string().max(500).optional().default(""),
+});
+
+/**
+ * WarnEntry
+ */
+export const zWarnEntry = z.object({
+    rank: z.int(),
+    user: zPerson,
+    warnings: z.int(),
+    lastAt: z.int(),
+});
+
+/**
+ * WarnBoard
+ */
+export const zWarnBoard = z.object({
+    entries: z.array(zWarnEntry),
+    page: z.int(),
+    pages: z.int(),
+    people: z.int(),
+    warnings: z.int(),
+});
+
+/**
+ * WarnResult
+ */
+export const zWarnResult = z.object({
+    total: z.int(),
+    punishment: z.string().nullable(),
+    punished: z.boolean(),
+    messaged: z.boolean(),
+});
+
+/**
+ * WarningItem
+ */
+export const zWarningItem = z.object({
+    id: z.int(),
+    number: z.int(),
+    reason: z.string(),
+    moderator: zPerson.nullable(),
+    createdAt: z.int(),
+});
+
+/**
+ * WarnProfile
+ */
+export const zWarnProfile = z.object({
+    user: zPerson,
+    member: z.boolean(),
+    rank: z.int().nullable(),
+    total: z.int(),
+    warnings: z.array(zWarningItem),
+    page: z.int(),
+    pages: z.int(),
+});
+
+/**
+ * WarningsCleared
+ */
+export const zWarningsCleared = z.object({
+    cleared: z.int(),
+});
+
+/**
  * Request fulfilled, document follows
  */
 export const zBotEmojisResponse = z.record(z.string(), zBotEmoji);
@@ -2364,6 +2435,85 @@ export const zTestAutomodPath = z.object({
  * Request fulfilled, document follows
  */
 export const zTestAutomodResponse = zAutomodTestResult;
+
+export const zWarningRankingHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zWarningRankingPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+export const zWarningRankingQuery = z.object({
+    page: z.int().gte(1).lte(10000).optional().default(1),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zWarningRankingResponse = zWarnBoard;
+
+export const zClearWarningsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zClearWarningsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    user_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zClearWarningsResponse = zWarningsCleared;
+
+export const zWarningProfileHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zWarningProfilePath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    user_id: z.string().regex(/^\d{17,20}$/),
+});
+
+export const zWarningProfileQuery = z.object({
+    page: z.int().gte(1).lte(10000).optional().default(1),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zWarningProfileResponse = zWarnProfile;
+
+export const zGiveWarningBody = zWarnCreate;
+
+export const zGiveWarningHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zGiveWarningPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zGiveWarningResponse = zWarnResult;
+
+export const zRemoveWarningHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zRemoveWarningPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+    user_id: z.string().regex(/^\d{17,20}$/),
+    warning_id: z.int(),
+});
+
+/**
+ * Request fulfilled, nothing follows
+ */
+export const zRemoveWarningResponse = z.void();
 
 export const zResetAutoroleHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

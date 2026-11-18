@@ -17,6 +17,9 @@ import type {
     ClearQueueData,
     ClearQueueErrors,
     ClearQueueResponses,
+    ClearWarningsData,
+    ClearWarningsErrors,
+    ClearWarningsResponses,
     CloseTicketData,
     CloseTicketErrors,
     CloseTicketResponses,
@@ -89,6 +92,9 @@ import type {
     GiveawayImageData,
     GiveawayImageErrors,
     GiveawayImageResponses,
+    GiveWarningData,
+    GiveWarningErrors,
+    GiveWarningResponses,
     GuildChannelsData,
     GuildChannelsErrors,
     GuildChannelsResponses,
@@ -179,6 +185,9 @@ import type {
     RemoveTrackData,
     RemoveTrackErrors,
     RemoveTrackResponses,
+    RemoveWarningData,
+    RemoveWarningErrors,
+    RemoveWarningResponses,
     ReopenTicketData,
     ReopenTicketErrors,
     ReopenTicketResponses,
@@ -308,6 +317,12 @@ import type {
     UpdateTicketSettingsData,
     UpdateTicketSettingsErrors,
     UpdateTicketSettingsResponses,
+    WarningProfileData,
+    WarningProfileErrors,
+    WarningProfileResponses,
+    WarningRankingData,
+    WarningRankingErrors,
+    WarningRankingResponses,
 } from "./types.gen";
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<
@@ -1278,6 +1293,70 @@ export const testAutomod = <ThrowOnError extends boolean = false>(
             "Content-Type": "application/json",
             ...options.headers,
         },
+    });
+
+/**
+ * Everyone with warnings, most first
+ */
+export const warningRanking = <ThrowOnError extends boolean = false>(
+    options: Options<WarningRankingData, ThrowOnError>,
+): RequestResult<WarningRankingResponses, WarningRankingErrors, ThrowOnError> =>
+    (options.client ?? client).get<WarningRankingResponses, WarningRankingErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/warnings/ranking",
+        ...options,
+    });
+
+/**
+ * Remove every warning one person has
+ */
+export const clearWarnings = <ThrowOnError extends boolean = false>(
+    options: Options<ClearWarningsData, ThrowOnError>,
+): RequestResult<ClearWarningsResponses, ClearWarningsErrors, ThrowOnError> =>
+    (options.client ?? client).delete<ClearWarningsResponses, ClearWarningsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/warnings/people/{user_id}",
+        ...options,
+    });
+
+/**
+ * One person's warnings, newest first
+ */
+export const warningProfile = <ThrowOnError extends boolean = false>(
+    options: Options<WarningProfileData, ThrowOnError>,
+): RequestResult<WarningProfileResponses, WarningProfileErrors, ThrowOnError> =>
+    (options.client ?? client).get<WarningProfileResponses, WarningProfileErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/warnings/people/{user_id}",
+        ...options,
+    });
+
+/**
+ * Warn a member, the same as /warn
+ */
+export const giveWarning = <ThrowOnError extends boolean = false>(
+    options: Options<GiveWarningData, ThrowOnError>,
+): RequestResult<GiveWarningResponses, GiveWarningErrors, ThrowOnError> =>
+    (options.client ?? client).post<GiveWarningResponses, GiveWarningErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/warnings",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Remove one warning
+ */
+export const removeWarning = <ThrowOnError extends boolean = false>(
+    options: Options<RemoveWarningData, ThrowOnError>,
+): RequestResult<RemoveWarningResponses, RemoveWarningErrors, ThrowOnError> =>
+    (options.client ?? client).delete<RemoveWarningResponses, RemoveWarningErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/warnings/people/{user_id}/{warning_id}",
+        ...options,
     });
 
 /**

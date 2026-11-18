@@ -12,6 +12,7 @@ from square.api.routes import (
     starboard,
     system,
     tickets,
+    warnings,
 )
 
 handlers = [
@@ -26,6 +27,7 @@ handlers = [
     giveaways.router,
     starboard.router,
     automod.router,
+    warnings.router,
     autorole.router,
     music.router,
     live.live,

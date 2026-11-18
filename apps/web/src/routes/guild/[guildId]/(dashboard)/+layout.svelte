@@ -36,6 +36,7 @@
     import MaterialSymbolsShieldRounded from "~icons/material-symbols/shield-rounded";
     import MaterialSymbolsTuneRounded from "~icons/material-symbols/tune-rounded";
     import MaterialSymbolsUnfoldMoreRounded from "~icons/material-symbols/unfold-more-rounded";
+    import MaterialSymbolsWarningRounded from "~icons/material-symbols/warning-rounded";
     import SvgSpinners90RingWithBg from "~icons/svg-spinners/90-ring-with-bg";
     import type { LayoutProps } from "./$types";
 
@@ -123,6 +124,7 @@
                       items: [
                           moduleLink("logs"),
                           { href: `${base}/automod`, label: "AutoMod", icon: MaterialSymbolsShieldRounded },
+                          { href: `${base}/warnings`, label: "Warnings", icon: MaterialSymbolsWarningRounded },
                           moduleLink("autorole"),
                           { href: `${base}/customize`, label: "Customize", icon: MaterialSymbolsFormatPaintRounded },
                           { href: `${base}/composer`, label: "Composer", icon: MaterialSymbolsEditSquareRounded },
@@ -401,10 +403,11 @@
             >
                 <span class="h-full w-1 rounded-full transition-colors duration-200 group-hover:bg-gray-400 group-active:bg-gray-400"></span>
             </div>
-            <aside aria-label={details.title} class="flex w-[calc(var(--details)-0.5rem)] shrink-0 flex-col">
+            <!-- Reaches over the shell padding so its scrollbar sits at the window edge -->
+            <aside aria-label={details.title} class="-mr-2 flex w-(--details) shrink-0 flex-col">
                 {#key details.key}
                     <div class="flex min-h-0 flex-1 animate-panel-in flex-col">
-                        <div class="flex items-center gap-4 py-2 pr-2 pl-4">
+                        <div class="flex items-center gap-4 py-2 pr-4 pl-4">
                             <h2 class="min-w-0 flex-1 truncate font-display text-xl font-semibold">{details.title}</h2>
                             <Tooltip content="Close panel">
                                 <Button variant="ghost" icon onclick={() => details.close()}><MaterialSymbolsCloseRounded /></Button>

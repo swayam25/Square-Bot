@@ -14,7 +14,7 @@
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { now } from "#lib/discord/now.svelte.ts";
     import { errorMessage } from "#lib/errors.ts";
-    import { dateTime, formatCount } from "#lib/format.ts";
+    import { dateTime, formatCount, relative } from "#lib/format.ts";
     import { Debounced } from "#lib/reactive/debounced.svelte.ts";
     import { refetch } from "#lib/refetch.ts";
     import { toast } from "#lib/toast.svelte.ts";
@@ -29,7 +29,7 @@
     import MaterialSymbolsRefreshRounded from "~icons/material-symbols/refresh-rounded";
     import MaterialSymbolsSearchOffRounded from "~icons/material-symbols/search-off-rounded";
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
-    import { LIMITS, relative } from "../giveaway.ts";
+    import { LIMITS } from "../giveaway.ts";
     import * as giveaways from "../giveaways.remote.ts";
 
     let { guild, giveaway, onchange }: { guild: string; giveaway: Giveaway; onchange: () => void } = $props();

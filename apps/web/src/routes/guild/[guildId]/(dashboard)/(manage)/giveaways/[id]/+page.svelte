@@ -14,7 +14,7 @@
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { now } from "#lib/discord/now.svelte.ts";
     import { errorMessage } from "#lib/errors.ts";
-    import { dateTime, formatCount } from "#lib/format.ts";
+    import { dateTime, formatCount, relative } from "#lib/format.ts";
     import { SquarePermissions } from "#lib/permissions.ts";
     import { refetch } from "#lib/refetch.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
@@ -31,7 +31,7 @@
     import MaterialSymbolsOpenInNewRounded from "~icons/material-symbols/open-in-new-rounded";
     import MaterialSymbolsRocketLaunchRounded from "~icons/material-symbols/rocket-launch-rounded";
     import MaterialSymbolsStopCircleRounded from "~icons/material-symbols/stop-circle-rounded";
-    import { blankDraft, draftOf, patchBody, problemsOf, relative, statusName, statusTone } from "../giveaway.ts";
+    import { blankDraft, draftOf, patchBody, problemsOf, statusName, statusTone } from "../giveaway.ts";
     import GiveawayEditor from "../GiveawayEditor.svelte";
     import * as giveaways from "../giveaways.remote.ts";
     import type { PageProps } from "./$types";

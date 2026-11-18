@@ -491,6 +491,7 @@ export type Guild = {
     iconUrl: string | null;
     memberCount: number;
     canManage: boolean;
+    canModerate: boolean;
 };
 
 /**
@@ -1541,6 +1542,79 @@ export type Viewer = {
  */
 export type Volume = {
     volume: number;
+};
+
+/**
+ * WarnBoard
+ */
+export type WarnBoard = {
+    entries: Array<WarnEntry>;
+    page: number;
+    pages: number;
+    people: number;
+    warnings: number;
+};
+
+/**
+ * WarnCreate
+ */
+export type WarnCreate = {
+    /**
+     * A Discord ID
+     */
+    userId: string;
+    reason?: string;
+};
+
+/**
+ * WarnEntry
+ */
+export type WarnEntry = {
+    rank: number;
+    user: Person;
+    warnings: number;
+    lastAt: number;
+};
+
+/**
+ * WarnProfile
+ */
+export type WarnProfile = {
+    user: Person;
+    member: boolean;
+    rank: number | null;
+    total: number;
+    warnings: Array<WarningItem>;
+    page: number;
+    pages: number;
+};
+
+/**
+ * WarnResult
+ */
+export type WarnResult = {
+    total: number;
+    punishment: string | null;
+    punished: boolean;
+    messaged: boolean;
+};
+
+/**
+ * WarningItem
+ */
+export type WarningItem = {
+    id: number;
+    number: number;
+    reason: string;
+    moderator: Person | null;
+    createdAt: number;
+};
+
+/**
+ * WarningsCleared
+ */
+export type WarningsCleared = {
+    cleared: number;
 };
 
 export type BotEmojisData = {
@@ -5008,6 +5082,260 @@ export type TestAutomodResponses = {
 };
 
 export type TestAutomodResponse = TestAutomodResponses[keyof TestAutomodResponses];
+
+export type WarningRankingData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: {
+        page?: number;
+    };
+    url: "/guilds/{guild_id}/warnings/ranking";
+};
+
+export type WarningRankingErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type WarningRankingError = WarningRankingErrors[keyof WarningRankingErrors];
+
+export type WarningRankingResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: WarnBoard;
+};
+
+export type WarningRankingResponse = WarningRankingResponses[keyof WarningRankingResponses];
+
+export type ClearWarningsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        /**
+         * A Discord user ID
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/warnings/people/{user_id}";
+};
+
+export type ClearWarningsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type ClearWarningsError = ClearWarningsErrors[keyof ClearWarningsErrors];
+
+export type ClearWarningsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: WarningsCleared;
+};
+
+export type ClearWarningsResponse = ClearWarningsResponses[keyof ClearWarningsResponses];
+
+export type WarningProfileData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        /**
+         * A Discord user ID
+         */
+        user_id: string;
+    };
+    query?: {
+        page?: number;
+    };
+    url: "/guilds/{guild_id}/warnings/people/{user_id}";
+};
+
+export type WarningProfileErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type WarningProfileError = WarningProfileErrors[keyof WarningProfileErrors];
+
+export type WarningProfileResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: WarnProfile;
+};
+
+export type WarningProfileResponse = WarningProfileResponses[keyof WarningProfileResponses];
+
+export type GiveWarningData = {
+    body: WarnCreate;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/warnings";
+};
+
+export type GiveWarningErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type GiveWarningError = GiveWarningErrors[keyof GiveWarningErrors];
+
+export type GiveWarningResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: WarnResult;
+};
+
+export type GiveWarningResponse = GiveWarningResponses[keyof GiveWarningResponses];
+
+export type RemoveWarningData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+        /**
+         * A Discord user ID
+         */
+        user_id: string;
+        warning_id: number;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/warnings/people/{user_id}/{warning_id}";
+};
+
+export type RemoveWarningErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type RemoveWarningError = RemoveWarningErrors[keyof RemoveWarningErrors];
+
+export type RemoveWarningResponses = {
+    /**
+     * Request fulfilled, nothing follows
+     */
+    204: void;
+};
+
+export type RemoveWarningResponse = RemoveWarningResponses[keyof RemoveWarningResponses];
 
 export type ResetAutoroleData = {
     body?: never;

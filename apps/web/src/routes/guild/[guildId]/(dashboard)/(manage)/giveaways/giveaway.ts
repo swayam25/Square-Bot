@@ -1,4 +1,5 @@
 import type { Tone } from "#lib/components/ui/Chip.svelte";
+import { relative } from "#lib/format.ts";
 import type { Giveaway, GiveawayCreate, GiveawayPatch, Person } from "@square/api-client";
 
 export type GiveawayStatus = Giveaway["status"];
@@ -215,24 +216,6 @@ export const lockedOnceEnded = new Set<keyof Draft | "bonus">([
     "pingRoleId",
     "winnerRoleId",
 ]);
-
-const relativeFormat = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
-    ["year", 365 * 24 * 60 * 60 * 1000],
-    ["month", 30 * 24 * 60 * 60 * 1000],
-    ["week", 7 * 24 * 60 * 60 * 1000],
-    ["day", 24 * 60 * 60 * 1000],
-    ["hour", 60 * 60 * 1000],
-    ["minute", 60 * 1000],
-];
-
-export function relative(at: number, now: number) {
-    const diff = at - now;
-    for (const [unit, size] of UNITS) {
-        if (Math.abs(diff) >= size) return relativeFormat.format(Math.round(diff / size), unit);
-    }
-    return relativeFormat.format(Math.round(diff / 1000), "second");
-}
 
 export function whenText(entry: { status: GiveawayStatus; startsAt: number; endsAt: number; endedAt: number | null }, now: number) {
     if (entry.status === "scheduled") return `Starts ${relative(entry.startsAt, now)}`;

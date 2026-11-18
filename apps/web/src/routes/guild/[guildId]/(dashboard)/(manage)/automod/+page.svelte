@@ -20,14 +20,15 @@
     import { load, save as store } from "#lib/storage.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import { afterNavigate } from "$app/navigation";
+    import { page } from "$app/state";
     import type { NativeRule, Punishment, SquareRule } from "@square/api-client";
     import { settled, untrack } from "svelte";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
     import MaterialSymbolsDeleteRounded from "~icons/material-symbols/delete-rounded";
-    import MaterialSymbolsHardwareRounded from "~icons/material-symbols/hardware-rounded";
     import MaterialSymbolsLockPersonRounded from "~icons/material-symbols/lock-person-rounded";
     import MaterialSymbolsScienceRounded from "~icons/material-symbols/science-rounded";
     import MaterialSymbolsShieldRounded from "~icons/material-symbols/shield-rounded";
+    import MaterialSymbolsWarningRounded from "~icons/material-symbols/warning-rounded";
     import SimpleIconsDiscord from "~icons/simple-icons/discord";
     import type { PageProps } from "./$types";
     import * as remote from "./automod.remote.ts";
@@ -71,7 +72,9 @@
     const roles = $derived(rolesQuery.current ?? []);
 
     let mode = $state<Mode>(load(MODE_KEY) === "advanced" ? "advanced" : "simple");
-    let tab = $state<"discord" | "square" | "warnings" | "test">("discord");
+    const TABS = ["discord", "square", "warnings", "test"] as const;
+    const linked = page.url.searchParams.get("tab");
+    let tab = $state<(typeof TABS)[number]>(TABS.find((value) => value === linked) ?? "discord");
 
     let rules = $state<SquareRule[]>([]);
     let steps = $state<Punishment[]>([]);
@@ -248,7 +251,7 @@
             tabs={[
                 { value: "discord", label: "Discord rules", icon: SimpleIconsDiscord, count: nativeRules.length },
                 { value: "square", label: "Square rules", icon: MaterialSymbolsShieldRounded, count: rules.filter((rule) => rule.enabled).length },
-                { value: "warnings", label: "Warnings", icon: MaterialSymbolsHardwareRounded },
+                { value: "warnings", label: "Warnings", icon: MaterialSymbolsWarningRounded },
                 { value: "test", label: "Test", icon: MaterialSymbolsScienceRounded },
             ]}
             bind:value={tab}

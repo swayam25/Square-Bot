@@ -235,12 +235,13 @@ class WarningsList(DesignerView):
         )
 
 
-def _refusal(ctx: discord.ApplicationContext, member: discord.Member) -> str | None:
-    if member == ctx.author:
-        return "You cannot use it on yourself."
+def refusal(moderator: discord.Member, member: discord.Member) -> str | None:
+    """Why `moderator` can't warn `member`, shared by `/warn` and the dashboard."""
+    if member == moderator:
+        return "You can't warn yourself."
     if member.bot:
         return "Bots can't be warned."
-    if ctx.author != ctx.guild.owner and member.top_role.position >= ctx.author.top_role.position:
+    if moderator != moderator.guild.owner and member.top_role.position >= moderator.top_role.position:
         return "Given user has same role or higher role than you."
     return None
 
@@ -256,7 +257,7 @@ class Warnings:
         """Warns the mentioned user. Enough warnings set off the punishments from the dashboard."""
         if await not_in_server(ctx, user):
             return
-        if problem := _refusal(ctx, user):
+        if problem := refusal(ctx.author, user):
             await ctx.respond(view=error_view(problem), ephemeral=True)
             return
         await ctx.defer()

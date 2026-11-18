@@ -1,6 +1,8 @@
+from datetime import datetime
 from square.db import cache
 from square.db.funcs.guild import fetch_guild_settings
 from square.db.schema import AutomodRuleTable, WarningTable, WarnPunishmentTable
+from tortoise.functions import Count, Max
 from tortoise.transactions import in_transaction
 from typing import Any
 
@@ -50,6 +52,17 @@ async def add_warning(guild_id: int, user_id: int, moderator_id: int | None, rea
     guild = await fetch_guild_settings(guild_id)
     warning = await WarningTable.create(guild=guild, user_id=user_id, moderator_id=moderator_id, reason=reason)
     return warning, await WarningTable.filter(guild=guild, user_id=user_id).count()
+
+
+async def fetch_ranking(guild_id: int) -> list[tuple[int, int, datetime]]:
+    """Everyone warned here as (user_id, warnings, last warned), most warnings first, then the latest."""
+    rows = (
+        await WarningTable.filter(guild__guild_id=guild_id)
+        .annotate(n=Count("id"), last=Max("created_at"))
+        .group_by("user_id")
+        .values_list("user_id", "n", "last")
+    )
+    return sorted(rows, key=lambda row: (-row[1], -row[2].timestamp(), row[0]))
 
 
 async def count_warnings(guild_id: int, user_id: int) -> int:

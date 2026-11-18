@@ -23,3 +23,21 @@ export function bytes(size: number) {
     if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
     return `${(size / 1024 / 1024).toFixed(1).replace(/\.0$/, "")} MB`;
 }
+
+const relativeFormat = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+    ["year", 365 * 24 * 60 * 60 * 1000],
+    ["month", 30 * 24 * 60 * 60 * 1000],
+    ["week", 7 * 24 * 60 * 60 * 1000],
+    ["day", 24 * 60 * 60 * 1000],
+    ["hour", 60 * 60 * 1000],
+    ["minute", 60 * 1000],
+];
+
+export function relative(at: number, now: number) {
+    const diff = at - now;
+    for (const [unit, size] of UNITS) {
+        if (Math.abs(diff) >= size) return relativeFormat.format(Math.round(diff / size), unit);
+    }
+    return relativeFormat.format(Math.round(diff / 1000), "second");
+}
