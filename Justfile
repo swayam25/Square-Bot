@@ -58,10 +58,13 @@ dev:
     @docker compose up -d --wait
     @pnpm run dev
 
-# Lint and format the code
+# Lint, format and type-check the code
 check:
     @uv --directory apps/bot run ruff check --fix src
     @uv --directory apps/bot run ruff format src
+    @pnpm run format
+    @pnpm --dir apps/web exec eslint --fix .
+    @pnpm run check
 
 # ── Database ──────────────────────────────────────────────────────────────────
 
