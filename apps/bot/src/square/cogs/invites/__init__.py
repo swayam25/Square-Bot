@@ -278,7 +278,7 @@ class Invites(
                     f"{emoji.user} **Invited By**: <@{join.inviter_id}> (`{join.inviter_id}`)\n"
                     f"{emoji.invite} **Code**: `{join.code or 'unknown'}`\n"
                     f"{emoji.date} **Joined**: {discord.utils.format_dt(join.joined_at, 'R')}"
-                    + (f"\n{emoji.fake} **Counted As Fake**: account was too new" if join.fake else "")
+                    + (f"\n{emoji.warning} **Counted As Fake**: account was too new" if join.fake else "")
                 ),
             )
         )

@@ -3,6 +3,7 @@ import discord
 from babel.dates import format_timedelta
 from discord import ui
 from discord.commands import option, slash_command
+from discord.ext import commands
 from square.cogs.moderation.purge import Purge
 from square.cogs.moderation.roles import Roles
 from square.cogs.moderation.timeouts import TimeoutEnds
@@ -107,9 +108,13 @@ class Moderation(
                 mod_dm.moderation_rows(reason, ctx.author),
                 member=False,
             )
-            messaged = await mod_dm.send_before(
-                user, dm, ctx.guild.ban(user, reason=reason, delete_message_seconds=dur)
-            )
+            removal = ctx.guild.ban(user, reason=reason, delete_message_seconds=dur)
+            # A user outside the server shares no server with the bot, so a DM can't reach them
+            if isinstance(user, discord.Member):
+                messaged = await mod_dm.send_before(user, dm, removal)
+            else:
+                await removal
+                messaged = True
             view = DesignerView(
                 ui.Container(
                     ui.Section(
@@ -138,13 +143,31 @@ class Moderation(
     @option("reason", description="Enter the reason for unbanning the user", required=False)
     async def unban(self, ctx: discord.ApplicationContext, user: str, reason: str = None):
         """Unbans a user by their username or ID."""
-        found = bans.find(await bans.banned_users(ctx.guild), user)
+        found = bans.find_cached(ctx.guild.id, user)
+        if found is None:
+            if bans.parse_id(user) is None:
+                await ctx.defer()  # Reading a long ban list can outlast Discord's 3 second reply window
+            found = await bans.lookup(ctx.guild, user)
         if found is None:
             view = error_view(f"`{user.replace('`', '')}` isn't banned here.")
-            await ctx.respond(view=view, ephemeral=True)
+            if ctx.response.is_done():
+                # The deferred reply is public, so it goes and the refusal is sent privately instead
+                await ctx.interaction.delete_original_response()
+                await ctx.followup.send(view=view, ephemeral=True)
+            else:
+                await ctx.respond(view=view, ephemeral=True)
             return
         await ctx.guild.unban(found, reason=reason)
         await ctx.respond(view=success_view(f"Successfully unbanned {found.mention} (`{found.name}`)."))
+
+    @commands.Cog.listener("on_member_ban")
+    async def _ban_added(self, guild: discord.Guild, user: discord.User | discord.Member):
+        # A Member's display name would carry their old nickname into the unban suggestions
+        bans.remember(guild.id, self.client.get_user(user.id) or user)
+
+    @commands.Cog.listener("on_member_unban")
+    async def _ban_removed(self, guild: discord.Guild, user: discord.User):
+        bans.forget(guild.id, user.id)
 
     @slash_command(name="timeout")
     @discord.default_permissions(moderate_members=True)

@@ -1,6 +1,7 @@
 import datetime
 import discord
 from babel.dates import format_timedelta
+from contextlib import suppress
 from dataclasses import dataclass
 from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
@@ -69,20 +70,25 @@ async def warn(
     step = next((step for step in automod_db.punishments(guild.id) if step.warnings == total), None)
     punishment = punishment_text(step) if step else None
 
-    rows = mod_dm.moderation_rows(reason, moderator) + [("id", "Warnings", fmt_count(total))]
+    rows = mod_dm.moderation_rows(reason, moderator) + [("warning", "Warnings", fmt_count(total))]
     until = None
+    punishment_rows: list[mod_dm.Row] = []
     if step and step.action == "timeout":
         length = datetime.timedelta(seconds=step.seconds or 60)
         until = discord.utils.utcnow() + length
-        rows += [("mod", "Punishment", "Timed out"), mod_dm.duration_row(until)]
+        punishment_rows = [("mod", "Punishment", "Timed out"), mod_dm.duration_row(until)]
     elif punishment:
-        rows.append(("mod", "Punishment", punishment))
+        punishment_rows = [("mod", "Punishment", punishment)]
     removed = step is not None and step.action in ("kick", "ban")
-    dm = mod_dm.view(guild, "You got warned", config.color.orange, rows, member=not removed)
+    dm = mod_dm.view(guild, "You got warned", config.color.orange, rows + punishment_rows, member=not removed)
     # Before the punishment, so a kicked or banned member still shares a server with the bot
-    messaged = await mod_dm.send(member, dm) is not None
+    sent = await mod_dm.send(member, dm)
+    messaged = sent is not None
 
     punished = await _punish(guild, member, step, until) if step else False
+    if sent and step and not punished:
+        with suppress(discord.HTTPException):
+            await sent.edit(view=mod_dm.view(guild, "You got warned", config.color.orange, rows))
     by = f"{moderator.mention} (`{moderator.name}`)" if moderator else "AutoMod"
     await server_log.send(
         client,
@@ -96,9 +102,13 @@ async def warn(
                     f"{emoji.id_orange} **ID**: `{member.id}`\n"
                     f"{emoji.owner_orange} **Moderator**: {by}\n"
                     f"{emoji.description_orange} **Reason**: {reason or 'No reason given'}\n"
-                    f"{emoji.id_orange} **Warnings**: {fmt_count(total)}"
-                    + (f"\n{emoji.mod_red} **Punishment**: {punishment}" if punishment and punished else "")
-                    + (f"\n{emoji.mod_red} **Punishment failed**: {punishment}" if punishment and not punished else "")
+                    f"{emoji.warning_orange} **Warnings**: {fmt_count(total)}"
+                    + (f"\n{emoji.mod_orange} **Punishment**: {punishment}" if punishment and punished else "")
+                    + (
+                        f"\n{emoji.mod_orange} **Punishment failed**: {punishment}"
+                        if punishment and not punished
+                        else ""
+                    )
                 ),
                 color=config.color.orange,
             )
@@ -135,13 +145,13 @@ class Warnings:
         warned = await warn(self.client, ctx.guild, user, reason, ctx.author)
         lines = [
             f"{emoji.description_green} **Reason**: {reason or 'No reason given'}",
-            f"{emoji.id_green} **Warnings**: {fmt_count(warned.total)}",
+            f"{emoji.warning_green} **Warnings**: {fmt_count(warned.total)}",
         ]
         if warned.punishment:
             lines.append(
                 f"{emoji.mod_green} **Punishment**: {warned.punishment}"
                 if warned.punished
-                else f"{emoji.mod_red} **Punishment failed**: I couldn't apply `{warned.punishment}`, "
+                else f"{emoji.mod_green} **Punishment failed**: I couldn't apply `{warned.punishment}`, "
                 "their role is above mine or I'm missing the permission."
             )
         if not warned.messaged:
