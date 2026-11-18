@@ -2,7 +2,8 @@
     import { passPress } from "#lib/components/ui/press.ts";
     import type { Component } from "svelte";
 
-    export type Option = { value: string; label: string; icon?: Component; color?: string; hint?: string };
+    // `disabled` is the reason it can't be picked, shown in place of the hint
+    export type Option = { value: string; label: string; icon?: Component; color?: string; hint?: string; disabled?: string };
 </script>
 
 <script lang="ts">
@@ -33,6 +34,7 @@
         placeholder = "Select",
         disabled = false,
         error,
+        note,
         class: className,
     }: {
         value?: string | null;
@@ -44,6 +46,7 @@
         placeholder?: string;
         disabled?: boolean;
         error?: string | null;
+        note?: string | null;
         class?: ClassValue;
     } = $props();
 
@@ -56,6 +59,8 @@
     const selected = $derived(multiple ? undefined : options.find((option) => option.value === value));
     const chosen = $derived(multiple ? options.filter((option) => values.includes(option.value)) : []);
     const full = $derived(values.length >= max);
+    // A narrow field would cut the reasons off, so their list may grow past the field's width
+    const reasons = $derived(options.some((option) => option.disabled));
     const query = $derived(search.trim().toLowerCase());
     const filtered = $derived(
         open && query ? options.filter((option) => `${option.label} ${option.hint ?? ""}`.toLowerCase().includes(query)) : options,
@@ -65,7 +70,7 @@
             items: filtered,
             itemToString: (option) => option.label,
             itemToValue: (option) => option.value,
-            isItemDisabled: (option) => multiple && full && !values.includes(option.value),
+            isItemDisabled: (option) => !!option.disabled || (multiple && full && !values.includes(option.value)),
         }),
     );
 
@@ -92,8 +97,9 @@
 
 {#snippet label(option: Option)}
     {@render marker(option)}
-    <span class="min-w-0 flex-1 truncate">{option.label}</span>
-    {#if option.hint}<span class="shrink-0 font-mono text-xs text-gray-400">{option.hint}</span>{/if}
+    <span class="min-w-0 flex-auto truncate">{option.label}</span>
+    {#if option.disabled}<span class="min-w-0 truncate text-right text-xs text-gray-400">{option.disabled}</span>
+    {:else if option.hint}<span class="shrink-0 font-mono text-xs text-gray-400">{option.hint}</span>{/if}
 {/snippet}
 
 <div class={["flex flex-col gap-2", className]}>
@@ -123,7 +129,7 @@
                                 type="button"
                                 role="option"
                                 aria-selected={multiple ? values.includes(option.value) : option.value === value}
-                                disabled={multiple && full && !values.includes(option.value)}
+                                disabled={!!option.disabled || (multiple && full && !values.includes(option.value))}
                                 class={sheetItem}
                                 {@attach ripple}
                                 onclick={() => pick(option.value)}
@@ -131,8 +137,9 @@
                                 {@render label(option)}
                             </button>
                         {:else}
-                            <p class={menuNote}>No matches</p>
+                            {#if query || !note}<p class={menuNote}>No matches</p>{/if}
                         {/each}
+                        {#if note}<p class={menuNote}>{note}</p>{/if}
                     </div>
                 </div>
             </Drawer>
@@ -154,7 +161,7 @@
                 onOpenChange={() => (search = "")}
                 openOnClick
                 inputBehavior="autohighlight"
-                positioning={{ sameWidth: true, gutter: 8 }}
+                positioning={{ sameWidth: !reasons, gutter: 8 }}
                 {disabled}
                 invalid={!!error}
             >
@@ -180,15 +187,16 @@
                 </Combobox.Control>
                 <Portal>
                     <Combobox.Positioner class="z-60">
-                        <Combobox.Content bind:ref={menu} class={menuPanel}>
+                        <Combobox.Content bind:ref={menu} class={[menuPanel, reasons && "max-w-[calc(100vw-2rem)] min-w-(--reference-width)"]}>
                             {#each collection.items as option (option.value)}
                                 <Combobox.Item item={option} class={menuItem}>
                                     {@render label(option)}
                                     <Combobox.ItemIndicator><MaterialSymbolsCheckRounded class="size-5" /></Combobox.ItemIndicator>
                                 </Combobox.Item>
                             {:else}
-                                <p class={menuNote}>No matches</p>
+                                {#if query || !note}<p class={menuNote}>No matches</p>{/if}
                             {/each}
+                            {#if note}<p class={menuNote}>{note}</p>{/if}
                         </Combobox.Content>
                         <OverlayScrollbar viewport={menu} inset={8} />
                     </Combobox.Positioner>

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { overlays } from "#lib/components/ui/overlays.svelte.ts";
+    import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Portal from "#lib/components/ui/Portal.svelte";
     import { Drawer } from "@ark-ui/svelte/drawer";
     import { untrack, type Snippet } from "svelte";
@@ -34,6 +35,7 @@
     } = $props();
 
     let content = $state<HTMLElement | null>(null);
+    let body = $state<HTMLElement>();
     let layer = $state(50);
 
     $effect.pre(() => {
@@ -80,7 +82,8 @@
                 {#if plain}
                     <div class="flex min-h-0 flex-1 flex-col">{@render children()}</div>
                 {:else}
-                    <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-1 pb-6">{@render children()}</div>
+                    <div bind:this={body} class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-1 pb-6">{@render children()}</div>
+                    <OverlayScrollbar viewport={body} />
                 {/if}
                 {#if footer}
                     <div class="flex flex-col-reverse gap-2 px-6 pb-6">{@render footer()}</div>

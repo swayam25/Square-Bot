@@ -15,7 +15,7 @@ async function manageableGuilds(session: Session) {
     return guilds;
 }
 
-export const load: PageServerLoad = async ({ locals, cookies, parent }) => {
+export const load: PageServerLoad = async ({ locals, cookies, parent, url }) => {
     const session = locals.session;
     if (!session) redirect(303, "/login");
 
@@ -31,10 +31,10 @@ export const load: PageServerLoad = async ({ locals, cookies, parent }) => {
 
     const added = new Set(guilds.map((guild) => guild.id));
     return {
-        inviteUrl: inviteUrl().href,
+        inviteUrl: inviteUrl(url.origin).href,
         invitable: discord.value
             .filter((guild) => !added.has(guild.id))
-            .map((guild) => ({ ...guild, inviteUrl: inviteUrl(guild.id).href }))
+            .map((guild) => ({ ...guild, inviteUrl: inviteUrl(url.origin, guild.id).href }))
             .toSorted((a, b) => a.name.localeCompare(b.name)),
     };
 };

@@ -3,6 +3,7 @@
     import ConfirmDialog from "#lib/components/dashboard/ConfirmDialog.svelte";
     import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
     import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
+    import PermissionNotice from "#lib/components/dashboard/PermissionNotice.svelte";
     import QueryGate from "#lib/components/dashboard/QueryGate.svelte";
     import SettingGroup from "#lib/components/dashboard/SettingGroup.svelte";
     import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
@@ -18,7 +19,8 @@
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { errorMessage } from "#lib/errors.ts";
     import { bytes, formatCount } from "#lib/format.ts";
-    import { textChannelOptions } from "#lib/settings/options.ts";
+    import { SquarePermissions } from "#lib/permissions.ts";
+    import { canUseAnyTextChannel, usableTextChannels } from "#lib/settings/options.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
     import { load, save } from "#lib/storage.ts";
     import { toast } from "#lib/toast.svelte.ts";
@@ -69,7 +71,9 @@
     const channelsQuery = $derived(settings.guildChannels(guild.id));
     const rolesQuery = $derived(settings.guildRoles(guild.id));
     const senderQuery = $derived(messages.messageSender(guild.id));
+    const permsQuery = $derived(settings.botPermissions(guild.id));
     const channels = $derived(channelsQuery.current ?? []);
+    const perms = $derived(new SquarePermissions(permsQuery.current));
     const sender = $derived(senderQuery.current);
 
     const key = $derived(`square:composer:${guild.id}`);
@@ -93,6 +97,8 @@
         const timer = setTimeout(() => save(key, json), 300);
         return () => clearTimeout(timer);
     });
+
+    const sendChannels = $derived(usableTextChannels(channels, perms, "webhook", [draft.channelId]));
 
     const uploads = new Uploads();
     onDestroy(() => uploads.clear());
@@ -240,7 +246,7 @@
     const description = "Send a message with Components V2 through Square's webhook, under any name and avatar.";
 </script>
 
-<QueryGate queries={[channelsQuery, rolesQuery, senderQuery]} title="Composer" {description} actions>
+<QueryGate queries={[channelsQuery, rolesQuery, senderQuery, permsQuery]} title="Composer" {description} actions>
     {#snippet skeleton()}<PageSkeleton groups={[{ rows: 3 }, { rows: 2 }]} />{/snippet}
     <div class="flex flex-col gap-6">
         <PageHeading title="Composer" {description}>
@@ -260,6 +266,10 @@
             {/snippet}
         </PageHeading>
 
+        {#if !canUseAnyTextChannel(channels, perms, "webhook")}
+            <PermissionNotice label="Square can't send messages here" permission="ManageWebhooks" kept="Your draft stays here until it does." />
+        {/if}
+
         {#if !wide.current}
             <Segmented
                 label="Show"
@@ -276,7 +286,13 @@
             <div class={["flex min-w-0 flex-col gap-6", !wide.current && tab !== "editor" && "hidden"]}>
                 <SettingGroup title="Sender">
                     <SettingRow label="Channel" description="Where the message goes." icon={MaterialSymbolsTagRounded}>
-                        <Select title="Channel" placeholder="Pick a channel" options={textChannelOptions(channels)} bind:value={draft.channelId} />
+                        <Select
+                            title="Channel"
+                            placeholder="Pick a channel"
+                            options={sendChannels.options}
+                            note={sendChannels.note}
+                            bind:value={draft.channelId}
+                        />
                     </SettingRow>
                     <SettingRow label="Preset" description="Fill in the name and avatar in one go." icon={MaterialSymbolsGroupRounded} layout="below">
                         <div class="flex flex-wrap items-center gap-2">

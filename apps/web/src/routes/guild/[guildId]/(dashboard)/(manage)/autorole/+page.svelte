@@ -3,6 +3,7 @@
     import { getDetails } from "#lib/components/dashboard/details.svelte.ts";
     import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
     import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
+    import PermissionNotice from "#lib/components/dashboard/PermissionNotice.svelte";
     import QueryGate from "#lib/components/dashboard/QueryGate.svelte";
     import ResetButton from "#lib/components/dashboard/ResetButton.svelte";
     import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
@@ -16,7 +17,8 @@
     import Toggle from "#lib/components/ui/Toggle.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { formatCount } from "#lib/format.ts";
-    import { roleOptions } from "#lib/settings/options.ts";
+    import { SquarePermissions } from "#lib/permissions.ts";
+    import { givableRoles, roleOptions } from "#lib/settings/options.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
     import type { AutoroleUser, UserMatch } from "@square/api-client";
     import MaterialSymbolsBlockRounded from "~icons/material-symbols/block-rounded";
@@ -51,9 +53,12 @@
     const guild = $derived(data.guild.id);
     const savedQuery = $derived(remote.autorole(guild));
     const rolesQuery = $derived(settings.guildRoles(guild));
+    const permsQuery = $derived(settings.botPermissions(guild));
 
     const saved = $derived(savedQuery.current!);
     const roles = $derived(rolesQuery.current!);
+    const perms = $derived(new SquarePermissions(permsQuery.current));
+    const screeningOn = $derived(perms.hasFeature("MEMBER_VERIFICATION_GATE_ENABLED"));
 
     let humans = $derived(saved.roleIds);
     let bots = $derived(saved.botRoleIds);
@@ -95,7 +100,7 @@
 
     const roleName = $derived(new Map(roles.map((role) => [role.id, role.name])));
     const keep = $derived([...saved.roleIds, ...saved.botRoleIds, ...saved.users.flatMap((entry) => entry.roleIds)]);
-    const roleChoices = $derived(roleOptions(roles, { assignable: true, keep }));
+    const givable = $derived(givableRoles(roles, perms, keep));
     const ignoreChoices = $derived(roleOptions(roles));
 
     const isDefault = $derived(
@@ -145,7 +150,8 @@
                 <Select
                     title="Roles for {entry.user.name}"
                     placeholder="Add a role"
-                    options={roleChoices}
+                    options={givable.options}
+                    note={givable.note}
                     multiple
                     max={MAX_ROLES}
                     error={entry.roleIds.length ? null : "Pick at least one role."}
@@ -157,7 +163,7 @@
     {/if}
 {/snippet}
 
-<QueryGate queries={[savedQuery, rolesQuery]} title="AutoRole" description={DESCRIPTION} actions>
+<QueryGate queries={[savedQuery, rolesQuery, permsQuery]} title="AutoRole" description={DESCRIPTION} actions>
     {#snippet skeleton()}<PageSkeleton groups={[{ rows: 3 }, { rows: 2 }, { rows: 2 }, { rows: 2 }]} />{/snippet}
     <div class="flex flex-col gap-6">
         <PageHeading title="AutoRole" description={DESCRIPTION}>
@@ -173,6 +179,10 @@
             {/snippet}
         </PageHeading>
 
+        {#if !perms.has("ManageRoles")}
+            <PermissionNotice label="Square can't give roles here" permission="ManageRoles" />
+        {/if}
+
         <SettingGroup title="Join roles" description="Square gives these out when someone joins.">
             <SettingRow
                 label="Separate roles for bots"
@@ -184,14 +194,38 @@
             </SettingRow>
             {#if split}
                 <SettingRow label="Members" description="People who join." icon={MaterialSymbolsPersonRounded}>
-                    <Select title="Member roles" placeholder="Add a role" options={roleChoices} multiple max={MAX_ROLES} bind:values={humans} />
+                    <Select
+                        title="Member roles"
+                        placeholder="Add a role"
+                        options={givable.options}
+                        note={givable.note}
+                        multiple
+                        max={MAX_ROLES}
+                        bind:values={humans}
+                    />
                 </SettingRow>
                 <SettingRow label="Bots" description="Bots someone adds." icon={MaterialSymbolsSmartToyRounded}>
-                    <Select title="Bot roles" placeholder="Add a role" options={roleChoices} multiple max={MAX_ROLES} bind:values={bots} />
+                    <Select
+                        title="Bot roles"
+                        placeholder="Add a role"
+                        options={givable.options}
+                        note={givable.note}
+                        multiple
+                        max={MAX_ROLES}
+                        bind:values={bots}
+                    />
                 </SettingRow>
             {:else}
                 <SettingRow label="Everyone" description="Members and bots alike." icon={MaterialSymbolsGroupRounded}>
-                    <Select title="Join roles" placeholder="Add a role" options={roleChoices} multiple max={MAX_ROLES} bind:values={humans} />
+                    <Select
+                        title="Join roles"
+                        placeholder="Add a role"
+                        options={givable.options}
+                        note={givable.note}
+                        multiple
+                        max={MAX_ROLES}
+                        bind:values={humans}
+                    />
                 </SettingRow>
             {/if}
         </SettingGroup>
@@ -222,13 +256,12 @@
                         <span class="flex min-w-0 items-center gap-2">
                             <span class="truncate text-sm font-medium">{entry.user.name}</span>
                             {#if !entry.member}<Chip tone="muted" size="sm">Not in server</Chip>{/if}
+                            {#if !entry.roleIds.length}<Chip tone="danger" size="sm">No roles picked</Chip>{/if}
                         </span>
                         {#if entry.roleIds.length}
                             <span class="truncate text-sm text-gray-400">
                                 {entry.roleIds.map((id) => roleName.get(id) ?? "Unknown role").join(", ")}
                             </span>
-                        {:else}
-                            <span class="text-sm text-red-400">No roles picked</span>
                         {/if}
                     </span>
                     <MaterialSymbolsChevronRightRounded class="size-5 shrink-0 text-gray-400" />
@@ -256,7 +289,9 @@
                 icon={MaterialSymbolsHowToRegRounded}
                 layout="inline"
             >
-                <Toggle label="Wait for rules screening" bind:checked={screening} />
+                <Tooltip content={screeningOn ? null : "Rules screening is off in this server, so there's nothing to wait for."}>
+                    <Toggle label="Wait for rules screening" disabled={!screeningOn && !screening} bind:checked={screening} />
+                </Tooltip>
             </SettingRow>
         </SettingGroup>
 
@@ -269,7 +304,9 @@
                 icon={MaterialSymbolsHistoryRounded}
                 layout="inline"
             >
-                <Toggle label="Give roles back" bind:checked={sticky} />
+                <Tooltip content={perms.reason("ManageRoles")}>
+                    <Toggle label="Give roles back" disabled={!perms.has("ManageRoles") && !sticky} bind:checked={sticky} />
+                </Tooltip>
             </SettingRow>
             {#if sticky}
                 <SettingRow label="Never give back" description="Roles left out when someone returns." icon={MaterialSymbolsBlockRounded}>

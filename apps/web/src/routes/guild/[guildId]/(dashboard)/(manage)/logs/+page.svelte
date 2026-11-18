@@ -1,13 +1,15 @@
 <script lang="ts">
     import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
     import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
+    import PermissionNotice from "#lib/components/dashboard/PermissionNotice.svelte";
     import QueryGate from "#lib/components/dashboard/QueryGate.svelte";
     import ResetButton from "#lib/components/dashboard/ResetButton.svelte";
     import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
     import SettingGroup from "#lib/components/dashboard/SettingGroup.svelte";
     import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
     import Select from "#lib/components/ui/Select.svelte";
-    import { OFF, off, picked, textChannelOptions } from "#lib/settings/options.ts";
+    import { SquarePermissions } from "#lib/permissions.ts";
+    import { canUseAnyTextChannel, OFF, off, picked, usableTextChannels } from "#lib/settings/options.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
     import type { LogChannels } from "@square/api-client";
     import type { Component } from "svelte";
@@ -53,9 +55,11 @@
     const guild = $derived(data.guild.id);
     const savedQuery = $derived(settings.logSettings(guild));
     const channelsQuery = $derived(settings.guildChannels(guild));
+    const permsQuery = $derived(settings.botPermissions(guild));
 
     const saved = $derived(savedQuery.current!);
     const channels = $derived(channelsQuery.current!);
+    const perms = $derived(new SquarePermissions(permsQuery.current));
 
     const fromSaved = () => Object.fromEntries(LOGS.map(({ key }) => [key, saved.channels[key] ?? OFF])) as Record<Key, string | null>;
     let drafts = $derived(fromSaved());
@@ -66,7 +70,8 @@
         ),
     );
 
-    const choices = $derived([off(), ...textChannelOptions(channels)]);
+    const logChannels = $derived(usableTextChannels(channels, perms, "webhook", Object.values(saved.channels)));
+    const choices = $derived([off(), ...logChannels.options]);
 
     const shared = $derived(new Set(Object.values(drafts)).size === 1 ? drafts.moderation : null);
     const setAll = (value: string | null) =>
@@ -75,7 +80,12 @@
     const isDefault = $derived(LOGS.every(({ key }) => !saved.channels[key]));
 </script>
 
-<QueryGate queries={[savedQuery, channelsQuery]} title="Logs" description="Pick where Square posts what happens in {data.guild.name}." actions>
+<QueryGate
+    queries={[savedQuery, channelsQuery, permsQuery]}
+    title="Logs"
+    description="Pick where Square posts what happens in {data.guild.name}."
+    actions
+>
     {#snippet skeleton()}<PageSkeleton groups={[{ rows: 1, title: false }, { rows: LOGS.length }]} />{/snippet}
     <div class="flex flex-col gap-6">
         <PageHeading title="Logs" description="Pick where Square posts what happens in {data.guild.name}.">
@@ -92,13 +102,23 @@
             {/snippet}
         </PageHeading>
 
+        {#if !canUseAnyTextChannel(channels, perms, "webhook")}
+            <PermissionNotice label="Square can't post logs here" permission="ManageWebhooks" />
+        {/if}
+
         <SettingGroup>
             <SettingRow
                 label="Every log"
                 description="Send all of them to one channel, then change the ones you want somewhere else."
                 icon={MaterialSymbolsDescriptionRounded}
             >
-                <Select title="Every log" placeholder="Different channels" options={choices} bind:value={() => shared, setAll} />
+                <Select
+                    title="Every log"
+                    placeholder="Different channels"
+                    options={choices}
+                    note={logChannels.note}
+                    bind:value={() => shared, setAll}
+                />
             </SettingRow>
         </SettingGroup>
 
@@ -108,6 +128,7 @@
                     <Select
                         title="{log.label} log"
                         options={choices}
+                        note={logChannels.note}
                         bind:value={() => drafts[log.key], (value) => (drafts = { ...drafts, [log.key]: value })}
                     />
                 </SettingRow>

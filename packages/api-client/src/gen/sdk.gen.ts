@@ -8,6 +8,9 @@ import type {
     ActivityResponses,
     BotEmojisData,
     BotEmojisResponses,
+    BotPermissionsData,
+    BotPermissionsErrors,
+    BotPermissionsResponses,
     ChangeBonusData,
     ChangeBonusErrors,
     ChangeBonusResponses,
@@ -370,6 +373,18 @@ export const guildRoles = <ThrowOnError extends boolean = false>(
     (options.client ?? client).get<GuildRolesResponses, GuildRolesErrors, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/guilds/{guild_id}/roles",
+        ...options,
+    });
+
+/**
+ * What Square can do in a server: its permissions, top role and the server's features
+ */
+export const botPermissions = <ThrowOnError extends boolean = false>(
+    options: Options<BotPermissionsData, ThrowOnError>,
+): RequestResult<BotPermissionsResponses, BotPermissionsErrors, ThrowOnError> =>
+    (options.client ?? client).get<BotPermissionsResponses, BotPermissionsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/permissions",
         ...options,
     });
 

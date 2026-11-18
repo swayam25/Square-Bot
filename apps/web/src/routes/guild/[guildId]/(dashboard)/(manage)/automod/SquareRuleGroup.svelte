@@ -4,6 +4,8 @@
     import Input from "#lib/components/ui/Input.svelte";
     import Select from "#lib/components/ui/Select.svelte";
     import Toggle from "#lib/components/ui/Toggle.svelte";
+    import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import type { SquarePermissions } from "#lib/permissions.ts";
     import { channelOptions, roleOptions, textChannelOptions } from "#lib/settings/options.ts";
     import type { Channel, Role, SquareRule } from "@square/api-client";
     import MaterialSymbolsChatErrorRounded from "~icons/material-symbols/chat-error-rounded";
@@ -20,7 +22,8 @@
         channels,
         roles,
         problems,
-    }: { rule: SquareRule; mode: Mode; channels: Channel[]; roles: Role[]; problems: SquareProblems } = $props();
+        perms,
+    }: { rule: SquareRule; mode: Mode; channels: Channel[]; roles: Role[]; problems: SquareProblems; perms: SquarePermissions } = $props();
 
     const kind = $derived(KINDS[rule.kind]);
     const roleChoices = $derived(roleOptions(roles));
@@ -30,7 +33,20 @@
 
 <SettingGroup>
     <SettingRow label={kind.label} description={kind.description} icon={kind.icon} layout="inline">
-        <Toggle label={kind.label} bind:checked={rule.enabled} />
+        <Toggle
+            label={kind.label}
+            bind:checked={
+                () => rule.enabled,
+                (on) => {
+                    rule.enabled = on;
+                    // A new rule starts set to delete, which Square can't do without Manage Messages, so it warns instead
+                    if (on && !perms.has("ManageMessages") && rule.delete) {
+                        rule.delete = false;
+                        rule.warn = true;
+                    }
+                }
+            }
+        />
     </SettingRow>
     {#if rule.enabled}
         {#if rule.kind === "media"}
@@ -73,7 +89,9 @@
             </SettingRow>
         {/if}
         <SettingRow label="Delete the message" description="Square removes it right away." icon={MaterialSymbolsDeleteRounded} layout="inline">
-            <Toggle label="Delete the message" bind:checked={rule.delete} />
+            <Tooltip content={perms.reason("ManageMessages")}>
+                <Toggle label="Delete the message" disabled={!perms.has("ManageMessages") && !rule.delete} bind:checked={rule.delete} />
+            </Tooltip>
         </SettingRow>
         <SettingRow
             label="Warn them"

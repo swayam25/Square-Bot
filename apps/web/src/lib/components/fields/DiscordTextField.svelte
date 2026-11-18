@@ -2,6 +2,7 @@
     import EmojiPicker from "#lib/components/fields/EmojiPicker.svelte";
     import FieldError from "#lib/components/ui/FieldError.svelte";
     import { passPress } from "#lib/components/ui/press.ts";
+    import { discordField } from "#lib/components/ui/styles.ts";
     import { discordEditor, maxLength } from "#lib/discord/editor/editor.svelte.ts";
     import { guildLookups } from "#lib/discord/guild.svelte.ts";
     import { mobile } from "#lib/media.ts";
@@ -96,14 +97,7 @@
 
 <div
     data-disabled={disabled || undefined}
-    class={[
-        "group/field relative flex w-full min-w-0 flex-col rounded-control-lg bg-gray-800 text-sm md:rounded-2xl",
-        "ring-0 ring-accent/60 transition-[background-color,box-shadow] duration-200 ease-out ring-inset",
-        "focus-within:ring-2 hover:bg-gray-700",
-        "has-aria-invalid:bg-red-400/10 has-aria-invalid:ring-red-400/40",
-        "data-disabled:pointer-events-none data-disabled:opacity-50",
-        className,
-    ]}
+    class={[discordField, "data-disabled:pointer-events-none data-disabled:opacity-50", className]}
     {@attach passPress(() => view?.contentDOM)}
 >
     <div class="min-w-0 px-4 pt-3" {@attach editor}></div>

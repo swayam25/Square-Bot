@@ -1,5 +1,6 @@
 <script lang="ts">
     import square from "#lib/assets/square.svg";
+    import { edgeFade } from "#lib/attachments/edge-fade.ts";
     import DiscordTooltip from "#lib/components/discord/DiscordTooltip.svelte";
     import DiscordVideo from "#lib/components/discord/DiscordVideo.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
@@ -174,7 +175,7 @@
                     </DiscordTooltip>
 
                     <div class="absolute inset-x-0 bottom-6 flex justify-center">
-                        <div class="flex max-w-[calc(100%-3rem)] gap-2 overflow-x-auto p-1">
+                        <div class="edge-fade-x flex max-w-[calc(100%-3rem)] scrollbar-none gap-2 overflow-x-auto p-1" {@attach edgeFade("x")}>
                             {#each media as item, index (index)}
                                 <button
                                     type="button"

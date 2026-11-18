@@ -5,6 +5,7 @@
     import Select from "#lib/components/ui/Select.svelte";
     import Toggle from "#lib/components/ui/Toggle.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import type { SquarePermissions } from "#lib/permissions.ts";
     import { channelOptions, OFF, off, picked, roleOptions, textChannelOptions } from "#lib/settings/options.ts";
     import type { Channel, NativeRule, Role } from "@square/api-client";
     import MaterialSymbolsAlternateEmailRounded from "~icons/material-symbols/alternate-email-rounded";
@@ -27,9 +28,9 @@
         mode,
         channels,
         roles,
-        canTimeout,
+        perms,
         problems,
-    }: { rule: NativeRule; mode: Mode; channels: Channel[]; roles: Role[]; canTimeout: boolean; problems: NativeProblems } = $props();
+    }: { rule: NativeRule; mode: Mode; channels: Channel[]; roles: Role[]; perms: SquarePermissions; problems: NativeProblems } = $props();
 
     const WORD_EXAMPLE = ["badword", "*badword*"].join("\n");
 
@@ -172,11 +173,11 @@
         </SettingRow>
         {#if timeouts}
             <SettingRow label="Timeout" description="How long the sender can't chat afterwards." icon={MaterialSymbolsHourglassRounded}>
-                <Tooltip content={canTimeout ? null : "Square needs the Timeout Members permission"} class="w-full">
+                <Tooltip content={perms.reason("ModerateMembers")} class="w-full">
                     <Select
                         title="Timeout"
                         options={timeoutChoices}
-                        disabled={!canTimeout && !rule.timeoutSeconds}
+                        disabled={!perms.has("ModerateMembers") && !rule.timeoutSeconds}
                         class="w-full"
                         bind:value={
                             () => (rule.timeoutSeconds ? String(rule.timeoutSeconds) : OFF),

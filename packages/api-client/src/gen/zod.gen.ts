@@ -105,6 +105,16 @@ export const zBotEmoji = z.object({
 });
 
 /**
+ * BotPermissions
+ */
+export const zBotPermissions = z.object({
+    guild: z.string().regex(/^\d+$/),
+    channels: z.record(z.string(), z.string()),
+    topRole: z.int(),
+    features: z.array(z.string()),
+});
+
+/**
  * BotProfile
  */
 export const zBotProfile = z.object({
@@ -117,7 +127,6 @@ export const zBotProfile = z.object({
     globalAvatarUrl: z.string(),
     globalBannerUrl: z.string().nullable(),
     bannerColor: z.string().nullable(),
-    canNick: z.boolean(),
 });
 
 /**
@@ -634,15 +643,6 @@ export const zNativeRulePatch = z.object({
 });
 
 /**
- * NativeRules
- */
-export const zNativeRules = z.object({
-    rules: z.array(zNativeRule),
-    canManage: z.boolean(),
-    canTimeout: z.boolean(),
-});
-
-/**
  * Notes
  */
 export const zNotes = z.object({
@@ -881,7 +881,6 @@ export const zRole = z.object({
     color: z.string().nullable(),
     position: z.int(),
     managed: z.boolean(),
-    assignable: z.boolean(),
 });
 
 /**
@@ -1376,6 +1375,19 @@ export const zGuildRolesPath = z.object({
  * Request fulfilled, document follows
  */
 export const zGuildRolesResponse = z.array(zRole);
+
+export const zBotPermissionsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zBotPermissionsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zBotPermissionsResponse = zBotPermissions;
 
 export const zGuildEmojisHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),
@@ -2291,7 +2303,7 @@ export const zListNativeRulesPath = z.object({
 /**
  * Request fulfilled, document follows
  */
-export const zListNativeRulesResponse = zNativeRules;
+export const zListNativeRulesResponse = z.array(zNativeRule);
 
 export const zCreateNativeRuleBody = zNativeRuleCreate;
 

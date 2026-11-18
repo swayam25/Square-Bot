@@ -65,7 +65,6 @@ async def _out(client: Client, guild: discord.Guild, me: discord.Member) -> BotP
         global_avatar_url=bot.display_avatar.with_size(256).url,
         global_banner_url=account.banner.with_size(1024).url if account.banner else None,
         banner_color=str(account.accent_color) if account.accent_color else None,
-        can_nick=guild.me.guild_permissions.change_nickname,
     )
 
 

@@ -14,6 +14,7 @@
     import Tabs from "#lib/components/ui/Tabs.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { errorMessage } from "#lib/errors.ts";
+    import { SquarePermissions } from "#lib/permissions.ts";
     import { refetch } from "#lib/refetch.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
     import { load, save as store } from "#lib/storage.ts";
@@ -24,6 +25,7 @@
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
     import MaterialSymbolsDeleteRounded from "~icons/material-symbols/delete-rounded";
     import MaterialSymbolsHardwareRounded from "~icons/material-symbols/hardware-rounded";
+    import MaterialSymbolsLockPersonRounded from "~icons/material-symbols/lock-person-rounded";
     import MaterialSymbolsScienceRounded from "~icons/material-symbols/science-rounded";
     import MaterialSymbolsShieldRounded from "~icons/material-symbols/shield-rounded";
     import SimpleIconsDiscord from "~icons/simple-icons/discord";
@@ -54,14 +56,17 @@
 
     const guild = $derived(data.guild.id);
     const settingsQuery = $derived(remote.automodSettings(guild));
-    const discordQuery = $derived(remote.discordRules(guild));
     const channelsQuery = $derived(settings.guildChannels(guild));
     const rolesQuery = $derived(settings.guildRoles(guild));
+    const permsQuery = $derived(settings.botPermissions(guild));
+    const perms = $derived(new SquarePermissions(permsQuery.current));
+    const canSeeRules = $derived(perms.has("ManageGuild"));
+    const discordQuery = $derived(canSeeRules ? remote.discordRules(guild) : null);
     // Discord's rules can change in Discord's own settings at any time
     afterNavigate(() => refetch(() => discordQuery));
 
     const saved = $derived(settingsQuery.current ?? { rules: [], punishments: [] });
-    const native = $derived(discordQuery.current ?? { rules: [], canManage: true, canTimeout: true });
+    const nativeRules = $derived(discordQuery?.current ?? []);
     const channels = $derived(channelsQuery.current ?? []);
     const roles = $derived(rolesQuery.current ?? []);
 
@@ -82,27 +87,27 @@
     let drafts = $state<Record<string, NativeRule>>({});
     const bases: Record<string, string> = {};
     $effect.pre(() => {
-        for (const rule of native.rules) {
+        for (const rule of nativeRules) {
             const key = JSON.stringify(rule);
             if (bases[rule.id] === key) continue;
             bases[rule.id] = key;
             untrack(() => (drafts[rule.id] = copy(rule)));
         }
         for (const id of Object.keys(bases)) {
-            if (native.rules.some((rule) => rule.id === id)) continue;
+            if (nativeRules.some((rule) => rule.id === id)) continue;
             delete bases[id];
             untrack(() => delete drafts[id]);
         }
     });
 
     const ordered = $derived(
-        [...native.rules].sort((a, b) => TRIGGER_ORDER.indexOf(a.trigger) - TRIGGER_ORDER.indexOf(b.trigger) || a.name.localeCompare(b.name)),
+        [...nativeRules].sort((a, b) => TRIGGER_ORDER.indexOf(a.trigger) - TRIGGER_ORDER.indexOf(b.trigger) || a.name.localeCompare(b.name)),
     );
     let pickedRule = $state<string | null>(null);
     const current = $derived(ordered.find((rule) => rule.id === pickedRule) ?? ordered[0]);
 
     const nativeEdits = $derived(
-        native.rules.flatMap((rule) => {
+        nativeRules.flatMap((rule) => {
             const draft = drafts[rule.id];
             const patch = draft ? nativeChanges(rule, draft) : {};
             return Object.keys(patch).length ? [{ rule, patch, problems: nativeProblems(draft!) }] : [];
@@ -139,7 +144,7 @@
     async function saveAll() {
         for (const { rule, patch } of nativeEdits) {
             const next = await remote.updateDiscordRule({ guild, id: rule.id, changes: patch });
-            discordQuery.set({ ...native, rules: native.rules.map((entry) => (entry.id === next.id ? next : entry)) });
+            discordQuery?.set(nativeRules.map((entry) => (entry.id === next.id ? next : entry)));
         }
         if (changedRules.length || stepsChanged) {
             const next = await remote.updateAutomod({
@@ -152,43 +157,54 @@
     }
 
     function discard() {
-        for (const rule of native.rules) drafts[rule.id] = copy(rule);
+        for (const rule of nativeRules) drafts[rule.id] = copy(rule);
         rules = copy(saved.rules);
         steps = copy(saved.punishments);
     }
 
     const counts = $derived(
-        Object.fromEntries(TRIGGER_ORDER.map((trigger) => [trigger, native.rules.filter((rule) => rule.trigger === trigger).length])),
+        Object.fromEntries(TRIGGER_ORDER.map((trigger) => [trigger, nativeRules.filter((rule) => rule.trigger === trigger).length])),
     );
-    const openTriggers = $derived(TRIGGER_ORDER.filter((trigger) => counts[trigger]! < TRIGGERS[trigger].limit));
+    const triggerChoices = $derived(
+        TRIGGER_ORDER.map((trigger) => ({
+            value: trigger,
+            label: TRIGGERS[trigger].label,
+            icon: TRIGGERS[trigger].icon,
+            hint: `${counts[trigger]} of ${TRIGGERS[trigger].limit}`,
+            disabled:
+                trigger === "member_profile" && !perms.hasFeature("COMMUNITY")
+                    ? "Needs a Community server"
+                    : counts[trigger]! >= TRIGGERS[trigger].limit
+                      ? `${counts[trigger]} of ${TRIGGERS[trigger].limit}, Discord's limit`
+                      : undefined,
+        })),
+    );
+    const openTriggers = $derived(triggerChoices.filter((choice) => !choice.disabled).map((choice) => choice.value));
 
     let adding = $state(false);
     let creating = $state(false);
     let newTrigger = $state<string | null>(null);
     let newName = $state("");
-    let addProblem = $state("");
 
     function openAdd() {
         newTrigger = openTriggers[0] ?? null;
         newName = newTrigger ? TRIGGERS[newTrigger as Trigger].label : "";
-        addProblem = "";
         adding = true;
     }
 
     async function create() {
         if (!newTrigger || !newName.trim()) return;
         creating = true;
-        addProblem = "";
         try {
             const { created, list } = await remote.createDiscordRule({ guild, trigger: newTrigger as Trigger, name: newName.trim() });
             adding = false;
             creating = false;
             await settled();
-            discordQuery.set(list);
+            discordQuery?.set(list);
             pickedRule = created.id;
             toast.success("Rule added, set it up and turn it on");
         } catch (err) {
-            addProblem = errorMessage(err, "Square couldn't add that rule. Try again.");
+            toast.error(errorMessage(err, "Square couldn't add that rule. Try again."));
         } finally {
             creating = false;
         }
@@ -198,7 +214,12 @@
     const isDefault = $derived(!saved.rules.some((rule) => rule.enabled) && !saved.punishments.length);
 </script>
 
-<QueryGate queries={[settingsQuery, discordQuery, channelsQuery, rolesQuery]} title="AutoMod" description={DESCRIPTION} actions>
+<QueryGate
+    queries={[settingsQuery, permsQuery, channelsQuery, rolesQuery, ...(discordQuery ? [discordQuery] : [])]}
+    title="AutoMod"
+    description={DESCRIPTION}
+    actions
+>
     {#snippet skeleton()}<PageSkeleton tabs groups={[{ rows: 2 }, { rows: 4 }, { rows: 3 }]} />{/snippet}
     <div class="flex flex-col gap-6">
         <PageHeading title="AutoMod" description={DESCRIPTION}>
@@ -225,7 +246,7 @@
         <Tabs
             label="AutoMod"
             tabs={[
-                { value: "discord", label: "Discord rules", icon: SimpleIconsDiscord, count: native.rules.length },
+                { value: "discord", label: "Discord rules", icon: SimpleIconsDiscord, count: nativeRules.length },
                 { value: "square", label: "Square rules", icon: MaterialSymbolsShieldRounded, count: rules.filter((rule) => rule.enabled).length },
                 { value: "warnings", label: "Warnings", icon: MaterialSymbolsHardwareRounded },
                 { value: "test", label: "Test", icon: MaterialSymbolsScienceRounded },
@@ -233,12 +254,13 @@
             bind:value={tab}
         >
             {#if tab === "discord"}
-                {#if !native.canManage}
+                {#if !canSeeRules}
                     <EmptyState
                         card
-                        icon={SimpleIconsDiscord}
+                        tone="danger"
+                        icon={MaterialSymbolsLockPersonRounded}
                         title="Square can't see these rules"
-                        text="Discord only shares its AutoMod rules with bots that have the Manage Server permission."
+                        text="Discord only shares its AutoMod rules with bots that have the Manage Server permission. Sync the server after giving it."
                     />
                 {:else if !current}
                     <EmptyState
@@ -280,7 +302,7 @@
                                     {mode}
                                     {channels}
                                     {roles}
-                                    canTimeout={native.canTimeout}
+                                    {perms}
                                     problems={nativeProblems(drafts[current.id]!)}
                                 />
                             {/key}
@@ -293,11 +315,11 @@
                         Square runs these on top of Discord's. People with Manage Messages, bots and webhooks are never caught.
                     </p>
                     {#each rules as rule, index (rule.kind)}
-                        <SquareRuleGroup bind:rule={rules[index]!} {mode} {channels} {roles} problems={squareProblems(rule)} />
+                        <SquareRuleGroup bind:rule={rules[index]!} {mode} {channels} {roles} problems={squareProblems(rule)} {perms} />
                     {/each}
                 </div>
             {:else if tab === "warnings"}
-                <Punishments bind:steps problems={stepProblems} />
+                <Punishments bind:steps problems={stepProblems} {perms} />
             {:else}
                 <TestBox guild={data.guild} {channels} {dirty} />
             {/if}
@@ -312,12 +334,7 @@
         <p class="text-gray-400">It starts off, so nothing is caught until you set it up and turn it on.</p>
         <Select
             title="Kind of rule"
-            options={openTriggers.map((trigger) => ({
-                value: trigger,
-                label: TRIGGERS[trigger].label,
-                icon: TRIGGERS[trigger].icon,
-                hint: `${counts[trigger]} of ${TRIGGERS[trigger].limit}`,
-            }))}
+            options={triggerChoices}
             disabled={creating}
             bind:value={
                 () => newTrigger,
@@ -328,7 +345,6 @@
             }
         />
         <Input aria-label="Rule name" placeholder="Rule name" maxlength={100} disabled={creating} bind:value={newName} />
-        {#if addProblem}<p class="font-medium text-red-400">{addProblem}</p>{/if}
     </div>
     {#snippet footer()}
         <Button variant="ghost" disabled={creating} onclick={() => (adding = false)}>Cancel</Button>
@@ -348,7 +364,7 @@
         done="Rule deleted"
         run={() => remote.deleteDiscordRule({ guild, id: current.id })}
         apply={(next) => {
-            discordQuery.set(next);
+            discordQuery?.set(next);
             pickedRule = null;
         }}
     />

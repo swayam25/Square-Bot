@@ -8,6 +8,7 @@
     import Select from "#lib/components/ui/Select.svelte";
     import { errorMessage } from "#lib/errors.ts";
     import { OFF, off, picked, textChannelOptions } from "#lib/settings/options.ts";
+    import { toast } from "#lib/toast.svelte.ts";
     import type { AutomodTestResult, Channel } from "@square/api-client";
     import MaterialSymbolsCheckCircleRounded from "~icons/material-symbols/check-circle-rounded";
     import MaterialSymbolsScienceRounded from "~icons/material-symbols/science-rounded";
@@ -22,18 +23,16 @@
     let channel = $state<string | null>(OFF);
     let running = $state(false);
     let result = $state<AutomodTestResult | null>(null);
-    let problem = $state("");
 
     const channelChoices = $derived([off("Any channel"), ...textChannelOptions(channels)]);
 
     async function run() {
         running = true;
-        problem = "";
         try {
             result = await testAutomod({ guild: guild.id, content, channelId: picked(channel) });
         } catch (err) {
             result = null;
-            problem = errorMessage(err, "Square couldn't run the test. Try again.");
+            toast.error(errorMessage(err, "Square couldn't run the test. Try again."));
         } finally {
             running = false;
         }
@@ -53,8 +52,7 @@
         <SettingRow label="Sent in" description="For media-only channels and skipped channels." icon={MaterialSymbolsTagRounded}>
             <Select title="Sent in" options={channelChoices} bind:value={channel} />
         </SettingRow>
-        <div class="flex flex-wrap items-center justify-end gap-4 p-4">
-            {#if problem}<p class="mr-auto text-sm font-medium text-red-400">{problem}</p>{/if}
+        <div class="flex justify-end p-4">
             <Button variant="primary" loading={running} disabled={!content.trim()} onclick={run}>
                 {#if !running}<MaterialSymbolsScienceRounded />{/if}{running ? "Testing…" : "Test"}
             </Button>

@@ -1,4 +1,4 @@
-import { exchangeCode, fetchUser } from "#lib/server/discord.ts";
+import { exchangeCode, fetchUser, INVITE_STATE } from "#lib/server/discord.ts";
 import { takeOAuthCookies } from "#lib/server/oauth-cookies.ts";
 import { createSession, deleteSession } from "#lib/server/session.ts";
 import { error, redirect } from "@sveltejs/kit";
@@ -6,6 +6,12 @@ import * as oauth from "oauth4webapi";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ cookies, url }) => {
+    // A finished or cancelled bot invite, not a login. Its code is never exchanged, the bot needs no user token
+    if (url.searchParams.get("state") === INVITE_STATE) {
+        const guild = url.searchParams.get("guild_id");
+        redirect(303, guild && /^\d{17,20}$/.test(guild) ? `/auth/done?guild=${guild}` : "/auth/done?invite");
+    }
+
     const login = takeOAuthCookies(cookies);
     if (!login) error(400, "This login link expired. Try logging in again.");
 

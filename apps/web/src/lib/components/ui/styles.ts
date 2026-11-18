@@ -1,12 +1,19 @@
 export const focusRing = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
-export const field = [
-    "flex h-12 w-full min-w-0 items-center gap-2 rounded-control-lg bg-gray-800 px-4 text-sm md:h-10 md:rounded-2xl md:px-3 [&>svg]:size-5 [&>svg]:shrink-0 [&>svg]:text-gray-400",
+const fieldSurface = [
+    "rounded-control-lg bg-gray-800 text-sm md:rounded-2xl",
     "ring-0 ring-accent/60 ring-inset transition-[background-color,box-shadow] duration-200 ease-out",
     "hover:bg-gray-700 focus-within:ring-2",
-    "has-[[aria-invalid=true]]:bg-red-400/10 has-[[aria-invalid=true]]:ring-red-400/40",
+    "has-aria-invalid:bg-red-400/10 has-aria-invalid:ring-red-400/40",
+];
+
+export const field = [
+    "flex h-12 w-full min-w-0 items-center gap-2 px-4 md:h-10 md:px-3 [&>svg]:size-5 [&>svg]:shrink-0 [&>svg]:text-gray-400",
+    ...fieldSurface,
     "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
 ];
+
+export const discordField = ["group/field relative flex w-full min-w-0 flex-col", ...fieldSurface];
 
 export const fieldText = "w-full min-w-0 flex-1 bg-transparent outline-none placeholder:text-gray-400";
 

@@ -18,7 +18,6 @@ from square.api.schemas import (
     NativeRule,
     NativeRuleCreate,
     NativeRulePatch,
-    NativeRules,
     Punishment,
     SquareRule,
 )
@@ -261,12 +260,12 @@ async def _discord(call: Any) -> Any:
     try:
         return await call
     except discord.Forbidden as exc:
-        # 50001 is Discord refusing bots outright, e.g. making member profile rules in some servers
+        # 50001 is Discord refusing bots outright, whatever their permissions
         if exc.code == 50001:
-            raise SettingError(
-                "Discord doesn't let bots do this here. Set it up in Discord's own server settings under AutoMod."
-            ) from exc
-        raise SettingError("Square needs the `Manage Server` permission to change AutoMod rules.") from exc
+            raise SettingError("Discord doesn't let Square do that. Change it in Server Settings › AutoMod.") from exc
+        raise SettingError(
+            "Square needs the `Manage Server` permission to see or change Discord's AutoMod rules."
+        ) from exc
     except discord.HTTPException as exc:
         detail = " ".join(exc.text.split()) if exc.text else "Try again."
         raise SettingError(f"Discord refused the change. {detail}") from exc
@@ -278,23 +277,25 @@ def _audit(actor: int) -> str:
 
 def _need_manage(guild: discord.Guild) -> None:
     if not guild.me.guild_permissions.manage_guild:
-        raise SettingError("Square needs the `Manage Server` permission to change AutoMod rules.")
+        raise SettingError("Square needs the `Manage Server` permission to see or change Discord's AutoMod rules.")
 
 
 @get("/discord", summary="Discord's own AutoMod rules in this server", responses=REFUSED)
-async def list_native_rules(client: Client, guild: discord.Guild) -> NativeRules:
-    perms = guild.me.guild_permissions
-    if not perms.manage_guild:
-        return NativeRules(rules=[], can_manage=False, can_timeout=perms.moderate_members)
+async def list_native_rules(client: Client, guild: discord.Guild) -> list[NativeRule]:
+    _need_manage(guild)
     raw = await _discord(client.http.get_auto_moderation_rules(guild.id))
-    found = [rule for item in raw if (rule := _native(item, client.user.id))]
-    return NativeRules(rules=found, can_manage=True, can_timeout=perms.moderate_members)
+    return [rule for item in raw if (rule := _native(item, client.user.id))]
 
 
 @post("/discord", summary="Add a Discord AutoMod rule", status_code=200, responses=REFUSED)
 async def create_native_rule(client: Client, guild: discord.Guild, actor: int, data: NativeRuleCreate) -> NativeRule:
     """New rules start off, so nothing is blocked before they're set up."""
     _need_manage(guild)
+    # Outside Community servers Discord answers 50001 instead of making one
+    if data.trigger == "member_profile" and "COMMUNITY" not in guild.features:
+        raise SettingError(
+            "Member profile rules need a Community server. Turn on Community in Discord's server settings first."
+        )
     raw = await _discord(client.http.get_auto_moderation_rules(guild.id))
     taken = sum(_TRIGGERS.get(item.get("trigger_type")) == data.trigger for item in raw)
     if taken >= NATIVE_LIMITS[data.trigger]:

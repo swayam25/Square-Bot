@@ -16,6 +16,7 @@ from square.db.schema import StarboardTable
 from square.imaging import assets
 from square.imaging.templates import starboard_card
 from square.modules import Module, ModuleOff
+from square.utils import config
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count
 
@@ -148,7 +149,9 @@ class Starboard(
         assert ctx.guild is not None
         if not starboard_db.boards(ctx.guild.id):
             view = DesignerView(
-                ui.Container(ui.TextDisplay(f"{emoji.error} This server has no starboard yet.")),
+                ui.Container(
+                    ui.TextDisplay(f"{emoji.error} This server has no starboard yet."), color=config.color.red
+                ),
                 ui.ActionRow(
                     ui.Button(
                         label="Open dashboard",

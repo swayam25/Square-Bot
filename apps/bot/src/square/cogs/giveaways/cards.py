@@ -127,7 +127,7 @@ def leave_card(giveaway: GiveawayTable, refusal: str | None = None) -> DesignerV
     if refusal:
         text += f"\n-# You can't win right now. {refusal}"
     return DesignerView(
-        ui.Container(ui.TextDisplay(text)),
+        ui.Container(ui.TextDisplay(text), color=config.color.green),
         ui.ActionRow(
             ui.Button(
                 custom_id=f"giveaway:leave:{giveaway.id}",

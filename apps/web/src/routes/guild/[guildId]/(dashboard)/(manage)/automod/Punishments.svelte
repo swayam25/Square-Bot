@@ -5,6 +5,7 @@
     import Input from "#lib/components/ui/Input.svelte";
     import Select from "#lib/components/ui/Select.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import type { SquarePermissions } from "#lib/permissions.ts";
     import type { Punishment } from "@square/api-client";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
     import MaterialSymbolsBlockRounded from "~icons/material-symbols/block-rounded";
@@ -13,19 +14,22 @@
     import MaterialSymbolsPersonRemoveRounded from "~icons/material-symbols/person-remove-rounded";
     import { DURATIONS, LIMITS } from "./automod.ts";
 
-    let { steps = $bindable(), problems }: { steps: Punishment[]; problems: Record<number, string> } = $props();
+    let { steps = $bindable(), problems, perms }: { steps: Punishment[]; problems: Record<number, string>; perms: SquarePermissions } = $props();
 
     const ACTIONS = [
-        { value: "timeout", label: "Timeout", icon: MaterialSymbolsHourglassRounded },
-        { value: "kick", label: "Kick", icon: MaterialSymbolsPersonRemoveRounded },
-        { value: "ban", label: "Ban", icon: MaterialSymbolsBlockRounded },
-    ];
+        { value: "timeout", label: "Timeout", icon: MaterialSymbolsHourglassRounded, permission: "ModerateMembers" },
+        { value: "kick", label: "Kick", icon: MaterialSymbolsPersonRemoveRounded, permission: "KickMembers" },
+        { value: "ban", label: "Ban", icon: MaterialSymbolsBlockRounded, permission: "BanMembers" },
+    ] as const;
+    const actionChoices = $derived(ACTIONS.map(({ permission, ...action }) => ({ ...action, disabled: perms.reason(permission) ?? undefined })));
+    const usable = $derived(ACTIONS.find((action) => perms.has(action.permission))?.value);
 
     const full = $derived(steps.length >= LIMITS.punishments);
 
     function add() {
+        if (!usable) return;
         const next = Math.min(Math.max(0, ...steps.map((step) => step.warnings ?? 0)) + 1, LIMITS.warnings);
-        steps = [...steps, { warnings: next, action: "timeout", seconds: 3600 }];
+        steps = [...steps, { warnings: next, action: usable, seconds: usable === "timeout" ? 3600 : null }];
     }
 
     function setAction(index: number, action: Punishment["action"]) {
@@ -40,8 +44,14 @@
 
 <SettingGroup title="Punishments">
     {#snippet actions()}
-        <Tooltip content={full ? `Up to ${LIMITS.punishments} steps` : null}>
-            <Button disabled={full} onclick={add}><MaterialSymbolsAddRounded />Add step</Button>
+        <Tooltip
+            content={full
+                ? `Up to ${LIMITS.punishments} steps`
+                : usable
+                  ? null
+                  : "Square needs the Timeout Members, Kick Members or Ban Members permission"}
+        >
+            <Button disabled={full || !usable} onclick={add}><MaterialSymbolsAddRounded />Add step</Button>
         </Tooltip>
     {/snippet}
     <p class="p-4 text-sm text-gray-400">{@render commands()}</p>
@@ -62,7 +72,7 @@
             <span class="text-sm text-gray-400">warnings</span>
             <Select
                 title="Punishment"
-                options={ACTIONS}
+                options={actionChoices}
                 class="w-40"
                 bind:value={() => step.action, (next) => next && setAction(index, next as Punishment["action"])}
             />

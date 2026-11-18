@@ -6,7 +6,8 @@
     import Segmented from "#lib/components/ui/Segmented.svelte";
     import Select from "#lib/components/ui/Select.svelte";
     import Toggle from "#lib/components/ui/Toggle.svelte";
-    import { channelOptions, roleOptions, textChannelOptions } from "#lib/settings/options.ts";
+    import type { SquarePermissions } from "#lib/permissions.ts";
+    import { channelOptions, roleOptions, usableTextChannels } from "#lib/settings/options.ts";
     import type { Channel, Person, Role } from "@square/api-client";
     import { MediaQuery } from "svelte/reactivity";
     import MaterialSymbolsBlockRounded from "~icons/material-symbols/block-rounded";
@@ -31,6 +32,7 @@
         you,
         channels,
         roles,
+        perms,
         taken,
         problems,
     }: {
@@ -39,6 +41,7 @@
         you: Person;
         channels: Channel[];
         roles: Role[];
+        perms: SquarePermissions;
         // Channels other boards use
         taken: string[];
         problems: Problems;
@@ -47,7 +50,8 @@
     const wide = new MediaQuery("min-width: 1280px", false);
     let tab = $state<"editor" | "preview">("editor");
 
-    const boardChoices = $derived(textChannelOptions(channels).filter((option) => !taken.includes(option.value)));
+    const boardChannels = $derived(usableTextChannels(channels, perms, "attach", [draft.channelId]));
+    const boardChoices = $derived(boardChannels.options.filter((option) => !taken.includes(option.value)));
     const sourceChoices = $derived(
         channelOptions(channels, ["text", "news", "forum", "voice", "stage_voice", "category"]).filter((option) => option.value !== draft.channelId),
     );
@@ -71,7 +75,12 @@
     <div class={["flex min-w-0 flex-col gap-6", !wide.current && tab !== "editor" && "hidden"]}>
         <SettingGroup title="Board">
             <SettingRow label="Channel" description="Where starred messages are posted." icon={MaterialSymbolsTagRounded}>
-                <Select title="Board channel" options={boardChoices} bind:value={() => draft.channelId, (next) => next && (draft.channelId = next)} />
+                <Select
+                    title="Board channel"
+                    options={boardChoices}
+                    note={boardChannels.note}
+                    bind:value={() => draft.channelId, (next) => next && (draft.channelId = next)}
+                />
             </SettingRow>
             <SettingRow
                 label="On"

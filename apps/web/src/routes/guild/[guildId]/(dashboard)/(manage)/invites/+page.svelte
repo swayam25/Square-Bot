@@ -2,6 +2,7 @@
     import { getDetails } from "#lib/components/dashboard/details.svelte.ts";
     import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
     import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
+    import PermissionNotice from "#lib/components/dashboard/PermissionNotice.svelte";
     import QueryGate from "#lib/components/dashboard/QueryGate.svelte";
     import ResetButton from "#lib/components/dashboard/ResetButton.svelte";
     import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
@@ -24,6 +25,7 @@
     import { errorMessage } from "#lib/errors.ts";
     import { day, formatCount } from "#lib/format.ts";
     import * as invites from "#lib/invites/invites.remote.ts";
+    import { SquarePermissions } from "#lib/permissions.ts";
     import { refetch } from "#lib/refetch.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
     import { toast } from "#lib/toast.svelte.ts";
@@ -54,7 +56,9 @@
     const details = getDetails();
     const guild = $derived(data.guild.id);
     const savedQuery = $derived(settings.inviteSettings(guild));
+    const permsQuery = $derived(settings.botPermissions(guild));
     const saved = $derived(savedQuery.current!);
+    const perms = $derived(new SquarePermissions(permsQuery.current));
 
     let tab = $state<"leaderboard" | "settings">("leaderboard");
 
@@ -367,10 +371,14 @@
     {/if}
 {/snippet}
 
-<QueryGate queries={[savedQuery]} title="Invites" description="Who invited whom in {data.guild.name}, and how Square counts it.">
+<QueryGate queries={[savedQuery, permsQuery]} title="Invites" description="Who invited whom in {data.guild.name}, and how Square counts it.">
     {#snippet skeleton()}<PageSkeleton tabs table="search" />{/snippet}
     <div class="flex flex-col gap-6">
         <PageHeading title="Invites" description="Who invited whom in {data.guild.name}, and how Square counts it." />
+
+        {#if !perms.has("ManageGuild")}
+            <PermissionNotice label="Square can't track invites here" permission="ManageGuild" />
+        {/if}
 
         <Tabs
             label="Invites"

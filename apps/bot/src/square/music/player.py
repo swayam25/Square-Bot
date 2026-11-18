@@ -732,7 +732,7 @@ class VoteSkipView(DesignerView):
             await reply(interaction, f"{emoji.error} Undeafen to vote on a skip.", color=config.color.red)
             return
         try:
-            await reply(interaction, await self.add_vote(interaction.user))
+            await reply(interaction, await self.add_vote(interaction.user), color=config.color.green)
         except MusicError as exc:
             await reply(interaction, f"{emoji.error} {exc}", color=config.color.red)
 

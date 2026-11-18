@@ -81,12 +81,18 @@ export async function fetchManageableGuilds(accessToken: string) {
         }));
 }
 
-export function inviteUrl(guildId?: string) {
+export const INVITE_STATE = "invite";
+
+// Discord sends the browser back to the callback once the bot is in, so the invite popup can close itself
+export function inviteUrl(origin: string, guildId?: string) {
     const url = new URL(OAuth2Routes.authorizationURL);
     url.search = new URLSearchParams({
         client_id: DISCORD_CLIENT_ID,
         scope: [OAuth2Scopes.Bot, OAuth2Scopes.ApplicationsCommands].join(" "),
         permissions: PermissionFlagsBits.Administrator.toString(),
+        response_type: "code",
+        redirect_uri: new URL("/auth/callback", origin).href,
+        state: INVITE_STATE,
         ...(guildId && { guild_id: guildId, disable_guild_select: "true" }),
     }).toString();
     return url;

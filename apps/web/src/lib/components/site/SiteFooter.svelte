@@ -14,6 +14,7 @@
 
 <script lang="ts">
     import square from "#lib/assets/square.svg";
+    import { openInvitePopup } from "#lib/auth.ts";
     import MaterialSymbolsBugReportRounded from "~icons/material-symbols/bug-report-rounded";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
     import SimpleIconsDiscord from "~icons/simple-icons/discord";
@@ -24,10 +25,10 @@
 
     const REPO = "https://github.com/swayam25/Square-Bot";
     const links = $derived([
-        { href: inviteUrl, label: "Add to Discord", icon: SimpleIconsDiscord },
+        { href: inviteUrl, label: "Add to Discord", icon: SimpleIconsDiscord, popup: true },
         { href: "/guild", label: "Dashboard", icon: MaterialSymbolsDashboardRounded },
-        { href: REPO, label: "GitHub", icon: SimpleIconsGithub },
-        { href: `${REPO}/issues/new`, label: "Report a bug", icon: MaterialSymbolsBugReportRounded },
+        { href: REPO, label: "GitHub", icon: SimpleIconsGithub, external: true },
+        { href: `${REPO}/issues/new`, label: "Report a bug", icon: MaterialSymbolsBugReportRounded, external: true },
     ]);
 </script>
 
@@ -49,8 +50,12 @@
             </div>
             <nav aria-label="Footer" class="grid w-fit grid-cols-2 gap-x-8 gap-y-4 text-sm">
                 {#each links as link (link.label)}
-                    <a href={link.href} class="flex items-center gap-2 text-gray-400 duration-200 hover:text-gray-100"
-                        ><link.icon class="size-4" />{link.label}</a
+                    <a
+                        href={link.href}
+                        target={link.popup || link.external ? "_blank" : undefined}
+                        rel={link.popup ? "noopener" : link.external ? "noopener noreferrer" : undefined}
+                        onclick={link.popup ? openInvitePopup : undefined}
+                        class="flex items-center gap-2 text-gray-400 duration-200 hover:text-gray-100"><link.icon class="size-4" />{link.label}</a
                     >
                 {/each}
             </nav>

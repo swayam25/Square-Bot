@@ -12,3 +12,9 @@ export function openPopup(url: string, name: string) {
 }
 
 export const openLoginPopup = () => openPopup("/login?popup", "square-login") !== null;
+
+// Ctrl, cmd and shift clicks are left to the browser, so opening the invite in a new tab or window still works
+export function openInvitePopup(event: MouseEvent & { currentTarget: HTMLAnchorElement }) {
+    if (event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (openPopup(event.currentTarget.href, "square-invite")) event.preventDefault();
+}

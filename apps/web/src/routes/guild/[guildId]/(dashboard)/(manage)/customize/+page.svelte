@@ -13,6 +13,8 @@
     import Input from "#lib/components/ui/Input.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { setGuildDiscord } from "#lib/discord/guild.svelte.ts";
+    import { SquarePermissions } from "#lib/permissions.ts";
+    import { botPermissions } from "#lib/settings/settings.remote.ts";
     import MaterialSymbolsBadgeRounded from "~icons/material-symbols/badge-rounded";
     import MaterialSymbolsImageRounded from "~icons/material-symbols/image-rounded";
     import MaterialSymbolsNotesRounded from "~icons/material-symbols/notes-rounded";
@@ -27,7 +29,9 @@
     const guild = $derived(data.guild.id);
     setGuildDiscord(() => guild);
     const savedQuery = $derived(profile.botProfile(guild));
+    const permsQuery = $derived(botPermissions(guild));
     const saved = $derived(savedQuery.current!);
+    const perms = $derived(new SquarePermissions(permsQuery.current));
 
     let nick = $derived(saved.nick ?? "");
     let bio = $derived(saved.bio ?? "");
@@ -55,7 +59,7 @@
     const imageLimit = `PNG, JPEG or GIF up to ${IMAGE_MAX_BYTES / 1024 / 1024} MB.`;
 </script>
 
-<QueryGate queries={[savedQuery]} title="Customize" description="How Square looks in {data.guild.name}." actions>
+<QueryGate queries={[savedQuery, permsQuery]} title="Customize" description="How Square looks in {data.guild.name}." actions>
     {#snippet skeleton()}<PageSkeleton groups={[{ rows: 4, title: false }]} />{/snippet}
     <div class="flex flex-col gap-6">
         <PageHeading title="Customize" description="How Square looks in {data.guild.name}.">
@@ -74,8 +78,14 @@
         <div class="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
             <SettingGroup>
                 <SettingRow label="Nickname" description="Shown instead of {saved.name} in this server." icon={MaterialSymbolsBadgeRounded}>
-                    <Tooltip content={saved.canNick ? null : "Square needs the Change Nickname permission here"} class="w-full">
-                        <Input aria-label="Nickname" placeholder={saved.name} maxlength={NICK_MAX} disabled={!saved.canNick} bind:value={nick} />
+                    <Tooltip content={perms.reason("ChangeNickname")} class="w-full">
+                        <Input
+                            aria-label="Nickname"
+                            placeholder={saved.name}
+                            maxlength={NICK_MAX}
+                            disabled={!perms.has("ChangeNickname")}
+                            bind:value={nick}
+                        />
                     </Tooltip>
                 </SettingRow>
                 <SettingRow

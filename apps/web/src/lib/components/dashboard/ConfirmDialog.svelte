@@ -29,19 +29,16 @@
     } = $props();
 
     let working = $state(false);
-    let problem = $state("");
     let typed = $state("");
     const unlocked = $derived(!confirmText || typed.trim() === confirmText.trim());
 
     $effect(() => {
         if (!open) return;
-        problem = "";
         typed = "";
     });
 
     async function confirm() {
         working = true;
-        problem = "";
         try {
             const result = await run();
             open = false;
@@ -51,7 +48,7 @@
             toast.success(done);
             apply?.(result);
         } catch (err) {
-            problem = errorMessage(err, "Square couldn't do that. Try again.");
+            toast.error(errorMessage(err, "Square couldn't do that. Try again."));
         } finally {
             working = false;
         }
@@ -67,7 +64,6 @@
                 <Input aria-label="Type {confirmText} to confirm" autocomplete="off" spellcheck="false" disabled={working} bind:value={typed} />
             </label>
         {/if}
-        {#if problem}<p class="font-medium text-red-400">{problem}</p>{/if}
     </div>
     {#snippet footer()}
         <Button variant="ghost" disabled={working} onclick={() => (open = false)}>Cancel</Button>

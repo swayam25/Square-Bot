@@ -11,8 +11,9 @@
     import Select from "#lib/components/ui/Select.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { errorMessage } from "#lib/errors.ts";
+    import { SquarePermissions } from "#lib/permissions.ts";
     import { refetch } from "#lib/refetch.ts";
-    import { textChannelOptions } from "#lib/settings/options.ts";
+    import { usableTextChannels } from "#lib/settings/options.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import { afterNavigate } from "$app/navigation";
@@ -36,11 +37,13 @@
     const boardsQuery = $derived(remote.starboards(guild));
     const channelsQuery = $derived(settings.guildChannels(guild));
     const rolesQuery = $derived(settings.guildRoles(guild));
+    const permsQuery = $derived(settings.botPermissions(guild));
     // Deleting a board's channel turns the board off without the dashboard
     afterNavigate(() => refetch(() => boardsQuery));
 
     const boards = $derived(boardsQuery.current ?? []);
     const channels = $derived(channelsQuery.current ?? []);
+    const perms = $derived(new SquarePermissions(permsQuery.current));
     const channelName = (id: string) => channels.find((channel) => channel.id === id)?.name ?? "deleted-channel";
 
     // Each board's draft resets only when that board changes on the bot, so saving one keeps edits on another
@@ -94,14 +97,13 @@
     let adding = $state(false);
     let creating = $state(false);
     let newChannel = $state<string | null>(null);
-    let addProblem = $state("");
-    const freeChannels = $derived(textChannelOptions(channels).filter((option) => !boards.some((board) => board.channelId === option.value)));
+    const boardChannels = $derived(usableTextChannels(channels, perms, "attach"));
+    const freeChannels = $derived(boardChannels.options.filter((option) => !boards.some((board) => board.channelId === option.value)));
     const full = $derived(boards.length >= LIMITS.boards);
 
     async function create() {
         if (!newChannel) return;
         creating = true;
-        addProblem = "";
         try {
             const board = await remote.createStarboard({ guild, channelId: newChannel });
             adding = false;
@@ -112,7 +114,7 @@
             newChannel = null;
             toast.success("Starboard made");
         } catch (err) {
-            addProblem = errorMessage(err, "Square couldn't make that starboard. Try again.");
+            toast.error(errorMessage(err, "Square couldn't make that starboard. Try again."));
         } finally {
             creating = false;
         }
@@ -121,7 +123,7 @@
     let deleting = $state(false);
 </script>
 
-<QueryGate queries={[boardsQuery, channelsQuery, rolesQuery]} title="Starboard" description={DESCRIPTION} actions>
+<QueryGate queries={[boardsQuery, channelsQuery, rolesQuery, permsQuery]} title="Starboard" description={DESCRIPTION} actions>
     {#snippet skeleton()}<PageSkeleton groups={[{ rows: 2 }, { rows: 4 }, { rows: 4 }]} />{/snippet}
     <div class="flex flex-col gap-6">
         <PageHeading title="Starboard" description={DESCRIPTION}>
@@ -170,6 +172,7 @@
                     {you}
                     {channels}
                     roles={rolesQuery.current ?? []}
+                    {perms}
                     {taken}
                     problems={problems(draft)}
                 />
@@ -183,8 +186,14 @@
 <Dialog bind:open={() => adding, (next) => !creating && (adding = next)} title="Add a starboard" dismissable={!creating}>
     <div class="flex flex-col gap-4 text-sm">
         <p class="text-gray-400">Messages that get enough votes are posted in this channel. Square needs to send messages with files there.</p>
-        <Select title="Board channel" placeholder="Pick a channel" options={freeChannels} disabled={creating} bind:value={newChannel} />
-        {#if addProblem}<p class="font-medium text-red-400">{addProblem}</p>{/if}
+        <Select
+            title="Board channel"
+            placeholder="Pick a channel"
+            options={freeChannels}
+            note={boardChannels.note}
+            disabled={creating}
+            bind:value={newChannel}
+        />
     </div>
     {#snippet footer()}
         <Button variant="ghost" disabled={creating} onclick={() => (adding = false)}>Cancel</Button>

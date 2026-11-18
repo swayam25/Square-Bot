@@ -1,6 +1,7 @@
 <script lang="ts">
     import Drawer from "#lib/components/ui/Drawer.svelte";
     import { overlays } from "#lib/components/ui/overlays.svelte.ts";
+    import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Portal from "#lib/components/ui/Portal.svelte";
     import { mobile } from "#lib/media.ts";
     import { Dialog } from "@ark-ui/svelte/dialog";
@@ -27,6 +28,8 @@
         dismissable?: boolean;
     } = $props();
 
+    let body = $state<HTMLElement>();
+
     $effect(() => {
         if (open && !mobile.current) return overlays.hold();
     });
@@ -45,7 +48,7 @@
             />
             <Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-6">
                 <Dialog.Content
-                    class="flex max-h-full w-full max-w-lg flex-col gap-6 rounded-card bg-gray-900 p-6 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
+                    class="relative flex max-h-full w-full max-w-lg flex-col gap-6 rounded-card bg-gray-900 p-6 shadow-2xl shadow-black/50 outline-none data-[state=closed]:animate-pop-out data-[state=open]:animate-pop-in"
                 >
                     <div class="flex flex-col gap-1">
                         <Dialog.Title class="font-display text-xl font-semibold">{title}</Dialog.Title>
@@ -53,7 +56,8 @@
                             <Dialog.Description class="text-sm text-gray-400">{description}</Dialog.Description>
                         {/if}
                     </div>
-                    <div class="-m-1 min-h-0 overflow-y-auto p-1">{@render children()}</div>
+                    <div bind:this={body} class="-m-1 min-h-0 overflow-y-auto p-1">{@render children()}</div>
+                    <OverlayScrollbar viewport={body} />
                     {#if footer}
                         <div class="flex justify-end gap-2">{@render footer()}</div>
                     {/if}

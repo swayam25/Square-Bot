@@ -1,4 +1,5 @@
 <script lang="ts" generics="T extends RowData">
+    import { edgeFade } from "#lib/attachments/edge-fade.ts";
     import Checkbox from "#lib/components/ui/Checkbox.svelte";
     import { createTable, FlexRender, type RowData, type RowSelectionState, type SortingState, type Updater } from "@tanstack/svelte-table";
     import MaterialSymbolsArrowDownwardRounded from "~icons/material-symbols/arrow-downward-rounded";
@@ -62,7 +63,7 @@
     const aligned = (align: "start" | "end" | undefined) => (align === "end" ? "text-right" : "text-left");
 </script>
 
-<div class="@container overflow-x-auto rounded-card bg-gray-900">
+<div class="edge-fade-x @container scrollbar-none overflow-x-auto rounded-card bg-gray-900" {@attach edgeFade("x")}>
     <table aria-label={label} class="w-full table-fixed border-collapse text-sm">
         <thead>
             {#each table.getHeaderGroups() as group (group.id)}

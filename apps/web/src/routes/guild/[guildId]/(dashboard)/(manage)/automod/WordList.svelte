@@ -1,6 +1,7 @@
 <script lang="ts">
     import FieldError from "#lib/components/ui/FieldError.svelte";
-    import { formatCount } from "#lib/format.ts";
+    import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
+    import { discordField } from "#lib/components/ui/styles.ts";
     import { untrack } from "svelte";
     import { lines, sameJson } from "./automod.ts";
 
@@ -15,6 +16,7 @@
 
     const errorId = $props.id();
     let text = $state(untrack(() => values.join("\n")));
+    let box = $state<HTMLTextAreaElement>();
 
     // Blank lines while typing never reach `values`, so only a change from outside (like Discard) rewrites the text
     $effect.pre(() => {
@@ -23,24 +25,26 @@
     });
 </script>
 
-<div class="group/field relative">
+<div class={discordField}>
     <textarea
+        bind:this={box}
         bind:value={text}
         oninput={() => (values = lines(text))}
         aria-label={label}
         aria-invalid={!!error || undefined}
         aria-describedby={error ? errorId : undefined}
         {placeholder}
-        rows={5}
+        rows={3}
         spellcheck="false"
         class={[
-            "block max-h-80 min-h-32 w-full resize-y rounded-control-lg bg-gray-800 px-4 py-3 pb-8 text-sm outline-none placeholder:text-gray-400 md:rounded-2xl md:px-3",
-            "ring-0 ring-accent/60 transition-[background-color,box-shadow] duration-200 ease-out ring-inset hover:bg-gray-700 focus:ring-2",
-            "aria-[invalid=true]:bg-red-400/10 aria-[invalid=true]:ring-red-400/40",
+            "block field-sizing-content max-h-80 min-h-16.5 w-full resize-none bg-transparent px-4 pt-3 leading-5.5 outline-none placeholder:text-gray-400",
             mono && "font-mono",
         ]}></textarea>
-    <span class={["pointer-events-none absolute right-4 bottom-2 text-xs tabular-nums", values.length > max ? "text-red-400" : "text-gray-400"]}>
-        {formatCount(values.length)} / {formatCount(max)}
-    </span>
+    <OverlayScrollbar viewport={box} />
+    <div class="flex px-4 pt-2 pb-3">
+        <span aria-hidden="true" class={["ml-auto font-mono text-xs", values.length > max ? "text-red-400" : "text-gray-400"]}
+            >{values.length}/{max}</span
+        >
+    </div>
     <FieldError id={errorId} {error} />
 </div>

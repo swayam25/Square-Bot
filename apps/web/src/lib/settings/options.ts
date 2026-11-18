@@ -1,4 +1,6 @@
 import type { Option } from "#lib/components/ui/Select.svelte";
+import { plural } from "#lib/format.ts";
+import type { Permission, SquarePermissions } from "#lib/permissions.ts";
 import type { Channel, Role } from "@square/api-client";
 import MaterialSymbolsBlockRounded from "~icons/material-symbols/block-rounded";
 import MaterialSymbolsCampaignRounded from "~icons/material-symbols/campaign-rounded";
@@ -46,10 +48,51 @@ export function channelOptions(channels: Channel[], kinds: Channel["type"][]): O
     ];
 }
 
-export const textChannelOptions = (channels: Channel[]) => channelOptions(channels, ["text", "news"]);
+const TEXT: Channel["type"][] = ["text", "news"];
 
-export function roleOptions(roles: Role[], { assignable = false, keep = [] }: { assignable?: boolean; keep?: string[] } = {}): Option[] {
-    return roles
-        .filter((role) => keep.includes(role.id) || (assignable ? role.assignable : !role.managed))
-        .map((role) => ({ value: role.id, label: role.name, color: role.color ?? "var(--color-gray-400)" }));
+export const textChannelOptions = (channels: Channel[]) => channelOptions(channels, TEXT);
+
+const roleOption = (role: Role): Option => ({ value: role.id, label: role.name, color: role.color ?? "var(--color-gray-400)" });
+
+export function roleOptions(roles: Role[], { keep = [] }: { keep?: string[] } = {}): Option[] {
+    return roles.filter((role) => keep.includes(role.id) || !role.managed).map(roleOption);
+}
+
+export type ChannelNeed = "send" | "attach" | "webhook" | "play";
+
+const CHANNEL_NEEDS: Record<ChannelNeed, { permissions: Permission[]; why: string }> = {
+    send: { permissions: ["ViewChannel", "SendMessages"], why: "can't send messages in" },
+    attach: { permissions: ["ViewChannel", "SendMessages", "AttachFiles"], why: "can't send files in" },
+    webhook: { permissions: ["ViewChannel", "SendMessages", "ManageWebhooks"], why: "needs Manage Webhooks in" },
+    play: { permissions: ["ViewChannel", "Connect", "Speak"], why: "can't connect and speak in" },
+};
+
+const canUse = (perms: SquarePermissions, channel: Channel, need: ChannelNeed) => perms.hasIn(channel.id, ...CHANNEL_NEEDS[need].permissions);
+
+export const canUseAnyTextChannel = (channels: Channel[], perms: SquarePermissions, need: ChannelNeed) =>
+    channels.some((channel) => TEXT.includes(channel.type) && canUse(perms, channel, need));
+
+export function usableChannels(
+    channels: Channel[],
+    perms: SquarePermissions,
+    kinds: Channel["type"][],
+    need: ChannelNeed,
+    keep: (string | null)[] = [],
+) {
+    const usable = channels.filter((channel) => channel.type === "category" || keep.includes(channel.id) || canUse(perms, channel, need));
+    const hidden = channels.filter((channel) => kinds.includes(channel.type) && !usable.includes(channel)).length;
+    return {
+        options: channelOptions(usable, kinds),
+        note: hidden ? `${plural(hidden, "channel")} hidden, Square ${CHANNEL_NEEDS[need].why} ${hidden === 1 ? "it" : "them"}.` : null,
+    };
+}
+
+export const usableTextChannels = (channels: Channel[], perms: SquarePermissions, need: ChannelNeed, keep: (string | null)[] = []) =>
+    usableChannels(channels, perms, TEXT, need, keep);
+
+export function givableRoles(roles: Role[], perms: SquarePermissions, keep: string[] = []) {
+    const shown = roles.filter((role) => keep.includes(role.id) || perms.canGive(role));
+    const hidden = roles.filter((role) => !role.managed && !shown.includes(role)).length;
+    const why = perms.reason("ManageRoles") ?? `${hidden === 1 ? "it's" : "they're"} above Square's role`;
+    return { options: shown.map(roleOption), note: hidden ? `${plural(hidden, "role")} hidden, ${why}.` : null };
 }

@@ -17,7 +17,7 @@
     import { mobile } from "#lib/media.ts";
     import { refetch } from "#lib/refetch.ts";
     import { MODULES, type ModuleKey } from "#lib/settings/modules.ts";
-    import { guildChannels, guildRoles, moduleSettings } from "#lib/settings/settings.remote.ts";
+    import { botPermissions, guildChannels, guildRoles, moduleSettings } from "#lib/settings/settings.remote.ts";
     import { load, save } from "#lib/storage.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import { afterNavigate } from "$app/navigation";
@@ -158,6 +158,7 @@
             await Promise.all([
                 guildChannels(data.guild.id).refresh(),
                 guildRoles(data.guild.id).refresh(),
+                botPermissions(data.guild.id).refresh(),
                 refetch(() => guildEmojis(data.guild.id)),
             ]);
             toast.success("Server synced");

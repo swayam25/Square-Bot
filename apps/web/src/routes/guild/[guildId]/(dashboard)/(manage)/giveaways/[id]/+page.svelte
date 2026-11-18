@@ -15,6 +15,7 @@
     import { now } from "#lib/discord/now.svelte.ts";
     import { errorMessage } from "#lib/errors.ts";
     import { dateTime, formatCount } from "#lib/format.ts";
+    import { SquarePermissions } from "#lib/permissions.ts";
     import { refetch } from "#lib/refetch.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
     import { toast } from "#lib/toast.svelte.ts";
@@ -44,10 +45,12 @@
     const giveawayQuery = $derived(giveaways.giveaway({ guild, id }));
     const channelsQuery = $derived(settings.guildChannels(guild));
     const rolesQuery = $derived(settings.guildRoles(guild));
+    const permsQuery = $derived(settings.botPermissions(guild));
     afterNavigate(() => refetch(() => giveawayQuery));
 
     const saved = $derived(giveawayQuery.current!);
     const channels = $derived(channelsQuery.current ?? []);
+    const perms = $derived(new SquarePermissions(permsQuery.current));
     const channelName = $derived(channels.find((channel) => channel.id === saved?.channelId)?.name ?? "deleted-channel");
     const you = $derived({ id: data.user!.id, name: data.user!.name, avatarUrl: data.user!.avatarUrl ?? "" });
 
@@ -140,7 +143,7 @@
     }
 </script>
 
-<QueryGate queries={[giveawayQuery, channelsQuery, rolesQuery]} title="Giveaway">
+<QueryGate queries={[giveawayQuery, channelsQuery, rolesQuery, permsQuery]} title="Giveaway">
     {#snippet skeleton()}<PageSkeleton tabs table="search" />{/snippet}
     <div class="flex flex-col gap-6">
         <Button variant="ghost" size="sm" class="w-fit" href="/guild/{guild}/giveaways"><MaterialSymbolsArrowBackRounded />Giveaways</Button>
@@ -246,6 +249,7 @@
                         {you}
                         {channels}
                         roles={rolesQuery.current ?? []}
+                        {perms}
                         {problems}
                         attempted
                         entries={saved.entries}

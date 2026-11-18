@@ -2,6 +2,7 @@
     import { getDetails } from "#lib/components/dashboard/details.svelte.ts";
     import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
     import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
+    import PermissionNotice from "#lib/components/dashboard/PermissionNotice.svelte";
     import QueryGate from "#lib/components/dashboard/QueryGate.svelte";
     import ResetButton from "#lib/components/dashboard/ResetButton.svelte";
     import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
@@ -16,6 +17,7 @@
     import Toggle from "#lib/components/ui/Toggle.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { errorMessage } from "#lib/errors.ts";
+    import { SquarePermissions } from "#lib/permissions.ts";
     import { refetch } from "#lib/refetch.ts";
     import { channelOptions, OFF, picked, roleOptions } from "#lib/settings/options.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
@@ -48,10 +50,12 @@
     afterNavigate(() => refetch(() => savedQuery));
     const rolesQuery = $derived(settings.guildRoles(guild));
     const channelsQuery = $derived(settings.guildChannels(guild));
+    const permsQuery = $derived(settings.botPermissions(guild));
 
     const saved = $derived(savedQuery.current!);
     const roles = $derived(rolesQuery.current!);
     const channels = $derived(channelsQuery.current!);
+    const perms = $derived(new SquarePermissions(permsQuery.current));
 
     let category = $derived<string | null>(saved.categoryId ?? OFF);
     let supportRoles = $derived(saved.supportRoleIds);
@@ -104,13 +108,17 @@
 </script>
 
 <QueryGate
-    queries={[savedQuery, rolesQuery, channelsQuery]}
+    queries={[savedQuery, rolesQuery, channelsQuery, permsQuery]}
     title="Tickets"
     description="Private help channels between members and your staff in {data.guild.name}."
 >
     {#snippet skeleton()}<PageSkeleton tabs table="filter" />{/snippet}
     <div class="flex flex-col gap-6">
         <PageHeading title="Tickets" description="Private help channels between members and your staff in {data.guild.name}." />
+
+        {#if !perms.has("ManageChannels")}
+            <PermissionNotice label="Square can't open tickets here" permission="ManageChannels" />
+        {/if}
 
         <Tabs
             label="Tickets"
@@ -169,8 +177,17 @@
                                     </Tooltip>
                                 </div>
                             {:else}
-                                <Tooltip content={dirty ? "Save or discard your changes first" : createsChannel} class="w-full">
-                                    <Button variant="primary" class="w-full" loading={creating} disabled={dirty} onclick={createPanel}>
+                                <Tooltip
+                                    content={dirty ? "Save or discard your changes first" : (perms.reason("ManageChannels") ?? createsChannel)}
+                                    class="w-full"
+                                >
+                                    <Button
+                                        variant="primary"
+                                        class="w-full"
+                                        loading={creating}
+                                        disabled={dirty || !perms.has("ManageChannels")}
+                                        onclick={createPanel}
+                                    >
                                         {#if !creating}<MaterialSymbolsAddRounded />{/if}{creating ? "Creating…" : "Create panel"}
                                     </Button>
                                 </Tooltip>

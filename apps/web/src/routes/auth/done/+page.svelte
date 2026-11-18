@@ -1,15 +1,20 @@
 <script lang="ts">
     import { AUTH_CHANNEL } from "#lib/auth.ts";
     import Seo from "#lib/components/site/Seo.svelte";
+    import { page } from "$app/state";
     import { onMount } from "svelte";
+
+    const guild = page.url.searchParams.get("guild");
+    const invite = guild !== null || page.url.searchParams.has("invite");
 
     onMount(() => {
         const channel = new BroadcastChannel(AUTH_CHANNEL);
         channel.postMessage("changed");
         channel.close();
         window.close();
-        setTimeout(() => location.replace("/"), 200);
+        // Only a window a script opened can close itself, so one opened by hand moves on instead
+        setTimeout(() => location.replace(invite ? "/guild" : "/"), 200);
     });
 </script>
 
-<Seo title="Signed in" description="You're signed in to Square. This window closes on its own." />
+<Seo title={guild ? "Square added" : invite ? "Square not added" : "Signed in"} description="This window closes on its own." />

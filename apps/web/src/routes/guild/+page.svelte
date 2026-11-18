@@ -1,6 +1,6 @@
 <script lang="ts">
     import { ripple } from "#lib/attachments/ripple.ts";
-    import { openPopup } from "#lib/auth.ts";
+    import { openInvitePopup } from "#lib/auth.ts";
     import Seo from "#lib/components/site/Seo.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
@@ -10,7 +10,6 @@
     import { focusRing } from "#lib/components/ui/styles.ts";
     import { frames } from "#lib/discord/animated.ts";
     import { plural } from "#lib/format.ts";
-    import { refreshAll } from "$app/navigation";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
     import MaterialSymbolsArrowForwardRounded from "~icons/material-symbols/arrow-forward-rounded";
     import MaterialSymbolsMusicNoteRounded from "~icons/material-symbols/music-note-rounded";
@@ -26,12 +25,6 @@
     const guilds = $derived(data.guilds.filter(matches));
     const invitable = $derived(data.invitable.filter(matches));
     const searchable = $derived(data.guilds.length + data.invitable.length > 8);
-
-    function invite(event: MouseEvent & { currentTarget: HTMLAnchorElement }) {
-        addEventListener("focus", () => refreshAll(), { once: true });
-        if (event.ctrlKey || event.metaKey || event.shiftKey) return;
-        if (openPopup(event.currentTarget.href, "square-invite")) event.preventDefault();
-    }
 </script>
 
 <Seo title="Your servers" description="Pick a server to set Square up in it, or add Square to a new one." />
@@ -54,7 +47,7 @@
                         class="flex-1 md:w-64 md:flex-none"
                     />
                 {/if}
-                <Button href={data.inviteUrl} target="_blank" rel="noopener" onclick={invite}>
+                <Button href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}>
                     <MaterialSymbolsAddRounded />Add to server
                 </Button>
             </div>
@@ -117,7 +110,7 @@
                     <h2 class="font-display text-2xl font-semibold tracking-tight">Square isn't in any of your servers yet</h2>
                     <p class="max-w-md text-gray-400">Add it to a server you manage, or ask a server owner to add it.</p>
                 </div>
-                <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={invite}>
+                <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}>
                     <MaterialSymbolsAddRounded />Add Square
                 </Button>
             </div>
@@ -137,7 +130,7 @@
                             href={guild.inviteUrl}
                             target="_blank"
                             rel="noopener"
-                            onclick={invite}
+                            onclick={openInvitePopup}
                             class={["group ripple flex items-center gap-4 rounded-3xl bg-gray-900 p-2 pr-4 hover:bg-gray-800", focusRing]}
                             {@attach ripple}
                         >

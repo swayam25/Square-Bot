@@ -344,9 +344,10 @@
     </div>
 {:else if lyricsQuery.error}
     <EmptyState
-        icon={MaterialSymbolsLyricsRounded}
+        tone="danger"
         title="Couldn't load lyrics"
-        text={lyricsQuery.error.status === 429 ? lyricsQuery.error.message : "The lyrics service didn't answer."}
+        text={lyricsQuery.error.status === 429 ? lyricsQuery.error.message : "The lyrics service didn't answer. Try again in a moment."}
+        retry={() => lyricsQuery.refresh()}
     />
 {:else if lyrics === null}
     <EmptyState icon={MaterialSymbolsLyricsRounded} title="No lyrics for this one" text="BetterLyrics and LRCLIB don't have this song yet." />

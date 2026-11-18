@@ -159,6 +159,21 @@ export type BotEmoji = {
 };
 
 /**
+ * BotPermissions
+ */
+export type BotPermissions = {
+    /**
+     * Discord permission bits as a decimal string
+     */
+    guild: string;
+    channels: {
+        [key: string]: string;
+    };
+    topRole: number;
+    features: Array<string>;
+};
+
+/**
  * BotProfile
  */
 export type BotProfile = {
@@ -171,7 +186,6 @@ export type BotProfile = {
     globalAvatarUrl: string;
     globalBannerUrl: string | null;
     bannerColor: string | null;
-    canNick: boolean;
 };
 
 /**
@@ -948,15 +962,6 @@ export type NativeRulePatch = {
 };
 
 /**
- * NativeRules
- */
-export type NativeRules = {
-    rules: Array<NativeRule>;
-    canManage: boolean;
-    canTimeout: boolean;
-};
-
-/**
  * Notes
  */
 export type Notes = {
@@ -1098,7 +1103,6 @@ export type Role = {
     color: string | null;
     position: number;
     managed: boolean;
-    assignable: boolean;
 };
 
 /**
@@ -1686,6 +1690,51 @@ export type GuildRolesResponses = {
 };
 
 export type GuildRolesResponse = GuildRolesResponses[keyof GuildRolesResponses];
+
+export type BotPermissionsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/permissions";
+};
+
+export type BotPermissionsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+};
+
+export type BotPermissionsError = BotPermissionsErrors[keyof BotPermissionsErrors];
+
+export type BotPermissionsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: BotPermissions;
+};
+
+export type BotPermissionsResponse = BotPermissionsResponses[keyof BotPermissionsResponses];
 
 export type GuildEmojisData = {
     body?: never;
@@ -4751,7 +4800,7 @@ export type ListNativeRulesResponses = {
     /**
      * Request fulfilled, document follows
      */
-    200: NativeRules;
+    200: Array<NativeRule>;
 };
 
 export type ListNativeRulesResponse = ListNativeRulesResponses[keyof ListNativeRulesResponses];

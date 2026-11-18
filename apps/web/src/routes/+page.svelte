@@ -1,7 +1,7 @@
 <script lang="ts">
     import swayamAvatar from "#lib/assets/discord/swayam.webp";
     import square from "#lib/assets/square.svg";
-    import { openLoginPopup } from "#lib/auth.ts";
+    import { openInvitePopup, openLoginPopup } from "#lib/auth.ts";
     import DiscordAccessories from "#lib/components/discord/DiscordAccessories.svelte";
     import DiscordActionRow from "#lib/components/discord/DiscordActionRow.svelte";
     import DiscordButton from "#lib/components/discord/DiscordButton.svelte";
@@ -103,7 +103,9 @@
                 The one Discord bot your server needs
             </h1>
             <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <Button variant="primary" size="lg" href={data.inviteUrl}><SimpleIconsDiscord />Add to Discord</Button>
+                <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}
+                    ><SimpleIconsDiscord />Add to Discord</Button
+                >
                 {#if data.user}
                     <Button size="lg" href="/guild"><MaterialSymbolsDashboardRounded />Open dashboard</Button>
                 {:else}
@@ -340,8 +342,12 @@
         <h2 id="join" class="max-w-2xl font-display text-4xl font-semibold tracking-tight text-balance md:text-6xl">Ready to bring Square in?</h2>
         <p class="max-w-md text-gray-400 md:text-lg">Add it in a few clicks, then set it up from Discord or the dashboard.</p>
         <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-            <Button variant="primary" size="lg" href={data.inviteUrl}><SimpleIconsDiscord />Add to Discord</Button>
-            <Button size="lg" href="https://github.com/swayam25/Square-Bot"><SimpleIconsGithub />View on GitHub</Button>
+            <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}
+                ><SimpleIconsDiscord />Add to Discord</Button
+            >
+            <Button size="lg" href="https://github.com/swayam25/Square-Bot" target="_blank" rel="noopener noreferrer"
+                ><SimpleIconsGithub />View on GitHub</Button
+            >
         </div>
     </section>
 

@@ -14,8 +14,9 @@
     import Toggle from "#lib/components/ui/Toggle.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { errorMessage } from "#lib/errors.ts";
+    import { SquarePermissions } from "#lib/permissions.ts";
     import { refetch } from "#lib/refetch.ts";
-    import { channelOptions, OFF, off, picked, roleOptions } from "#lib/settings/options.ts";
+    import { OFF, off, picked, roleOptions, usableChannels } from "#lib/settings/options.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import { afterNavigate } from "$app/navigation";
@@ -38,10 +39,12 @@
     afterNavigate(() => refetch(() => savedQuery));
     const rolesQuery = $derived(settings.guildRoles(guild));
     const channelsQuery = $derived(settings.guildChannels(guild));
+    const permsQuery = $derived(settings.botPermissions(guild));
 
     const saved = $derived(savedQuery.current!);
     const roles = $derived(rolesQuery.current!);
     const channels = $derived(channelsQuery.current!);
+    const perms = $derived(new SquarePermissions(permsQuery.current));
 
     let stayChannel = $derived<string | null>(saved.stayChannelId ?? OFF);
     let djMode = $derived(saved.djMode);
@@ -61,7 +64,8 @@
         djRoles = saved.djRoleIds;
     }
 
-    const voiceChoices = $derived([off(), ...channelOptions(channels, ["voice", "stage_voice"])]);
+    const voiceChannels = $derived(usableChannels(channels, perms, ["voice", "stage_voice"], "play", [saved.stayChannelId ?? null]));
+    const voiceChoices = $derived([off(), ...voiceChannels.options]);
     const roleChoices = $derived(roleOptions(roles, { keep: saved.djRoleIds }));
 
     const requestChannel = $derived(channels.find((channel) => channel.id === saved.requestChannelId));
@@ -85,7 +89,7 @@
 </script>
 
 <QueryGate
-    queries={[savedQuery, rolesQuery, channelsQuery]}
+    queries={[savedQuery, rolesQuery, channelsQuery, permsQuery]}
     title="Music"
     description="The request channel, 24/7 and who controls the player in {data.guild.name}."
     actions
@@ -141,8 +145,17 @@
                         </Tooltip>
                     </div>
                 {:else}
-                    <Tooltip content={dirty ? "Save or discard your changes first" : createsChannel} class="w-full">
-                        <Button variant="primary" class="w-full" loading={creating} disabled={dirty} onclick={createRequestChannel}>
+                    <Tooltip
+                        content={dirty ? "Save or discard your changes first" : (perms.reason("ManageChannels") ?? createsChannel)}
+                        class="w-full"
+                    >
+                        <Button
+                            variant="primary"
+                            class="w-full"
+                            loading={creating}
+                            disabled={dirty || !perms.has("ManageChannels")}
+                            onclick={createRequestChannel}
+                        >
                             {#if !creating}<MaterialSymbolsAddRounded />{/if}{creating ? "Creating…" : "Create channel"}
                         </Button>
                     </Tooltip>
@@ -153,7 +166,7 @@
                 description="Square stays in this voice channel even when nothing is playing."
                 icon={MaterialSymbolsAllInclusiveRounded}
             >
-                <Select title="24/7 channel" options={voiceChoices} bind:value={stayChannel} />
+                <Select title="24/7 channel" options={voiceChoices} note={voiceChannels.note} bind:value={stayChannel} />
             </SettingRow>
         </SettingGroup>
 

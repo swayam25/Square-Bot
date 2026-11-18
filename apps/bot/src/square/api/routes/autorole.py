@@ -69,6 +69,8 @@ async def update_autorole(client: Client, guild: discord.Guild, data: AutorolePa
     if data.delay is not UNSET:
         values["autorole_delay"] = data.delay
     if data.wait_for_screening is not UNSET:
+        if data.wait_for_screening and "MEMBER_VERIFICATION_GATE_ENABLED" not in guild.features:
+            raise SettingError("Rules screening is off in this server, so there's nothing to wait for.")
         values["autorole_screening"] = data.wait_for_screening
     if data.sticky is not UNSET:
         values["autorole_sticky"] = data.sticky

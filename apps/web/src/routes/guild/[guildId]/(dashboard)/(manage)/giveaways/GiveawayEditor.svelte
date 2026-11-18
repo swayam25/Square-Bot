@@ -18,7 +18,8 @@
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { customUrl } from "#lib/emoji/emoji.ts";
     import { dateTime } from "#lib/format.ts";
-    import { off, OFF, picked, roleOptions, textChannelOptions } from "#lib/settings/options.ts";
+    import type { SquarePermissions } from "#lib/permissions.ts";
+    import { givableRoles, off, OFF, picked, roleOptions, usableTextChannels } from "#lib/settings/options.ts";
     import { moduleSettings } from "#lib/settings/settings.remote.ts";
     import type { Channel, Person, Role } from "@square/api-client";
     import { MediaQuery } from "svelte/reactivity";
@@ -51,6 +52,7 @@
         you,
         channels,
         roles,
+        perms,
         problems,
         attempted,
         entries = 0,
@@ -64,6 +66,7 @@
         you: Person;
         channels: Channel[];
         roles: Role[];
+        perms: SquarePermissions;
         problems: Problems;
         attempted: boolean;
         entries?: number;
@@ -112,7 +115,9 @@
 
     const roleChoices = $derived(roleOptions(roles));
     const pingChoices = $derived([off("Nobody"), { value: guild.id, label: "@everyone", icon: MaterialSymbolsGroupRounded }, ...roleOptions(roles)]);
-    const winnerChoices = $derived([off("None"), ...roleOptions(roles, { assignable: true, keep: draft.winnerRoleId ? [draft.winnerRoleId] : [] })]);
+    const winnerRoles = $derived(givableRoles(roles, perms, draft.winnerRoleId ? [draft.winnerRoleId] : []));
+    const winnerChoices = $derived([off("None"), ...winnerRoles.options]);
+    const postChannels = $derived(usableTextChannels(channels, perms, "send", [draft.channelId]));
     const usedBonus = $derived(draft.bonusRoles.map((entry) => entry.roleId));
 
     const emoji = $derived.by(() => {
@@ -188,7 +193,8 @@
                     <Select
                         title="Channel"
                         placeholder="Pick a channel"
-                        options={textChannelOptions(channels)}
+                        options={postChannels.options}
+                        note={postChannels.note}
                         disabled={!!lock("channelId")}
                         error={error("channelId")}
                         bind:value={draft.channelId}
@@ -467,6 +473,7 @@
                     <Select
                         title="Winner role"
                         options={winnerChoices}
+                        note={winnerRoles.note}
                         disabled={!!lock("winnerRoleId")}
                         bind:value={() => draft.winnerRoleId ?? OFF, (next) => (draft.winnerRoleId = picked(next))}
                     />

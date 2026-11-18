@@ -5,6 +5,7 @@
     import Button from "#lib/components/ui/Button.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { errorMessage } from "#lib/errors.ts";
+    import { SquarePermissions } from "#lib/permissions.ts";
     import * as settings from "#lib/settings/settings.remote.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import { goto } from "$app/navigation";
@@ -20,6 +21,8 @@
     const guild = $derived(data.guild.id);
     const channelsQuery = $derived(settings.guildChannels(guild));
     const rolesQuery = $derived(settings.guildRoles(guild));
+    const permsQuery = $derived(settings.botPermissions(guild));
+    const perms = $derived(new SquarePermissions(permsQuery.current));
     const you = $derived({ id: data.user!.id, name: data.user!.name, avatarUrl: data.user!.avatarUrl ?? "" });
 
     let draft = $state(blankDraft());
@@ -48,7 +51,7 @@
     }
 </script>
 
-<QueryGate queries={[channelsQuery, rolesQuery]} title="New giveaway" description="Set it up, see it as it will look, then start it.">
+<QueryGate queries={[channelsQuery, rolesQuery, permsQuery]} title="New giveaway" description="Set it up, see it as it will look, then start it.">
     {#snippet skeleton()}<PageSkeleton
             groups={[
                 { rows: 4, title: true },
@@ -77,6 +80,7 @@
             {you}
             channels={channelsQuery.current ?? []}
             roles={rolesQuery.current ?? []}
+            {perms}
             {problems}
             {attempted}
         />

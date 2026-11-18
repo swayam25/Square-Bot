@@ -16,6 +16,7 @@ from typing import Annotated, Literal, get_args
 
 # Discord IDs go past JavaScript's safe integer range, so the API sends them as strings
 Snowflake = Annotated[str, msgspec.Meta(pattern=r"^\d{17,20}$", description="A Discord ID")]
+Bitfield = Annotated[str, msgspec.Meta(pattern=r"^\d+$", description="Discord permission bits as a decimal string")]
 
 ChannelKind = Literal["text", "news", "voice", "stage_voice", "category", "forum", "media"]
 _CHANNEL_KINDS: frozenset[str] = frozenset(get_args(ChannelKind))
@@ -72,13 +73,19 @@ class MentionedChannel(Schema):
     guild_icon_url: str | None
 
 
+class BotPermissions(Schema):
+    guild: Bitfield
+    channels: dict[Snowflake, Bitfield]
+    top_role: int
+    features: list[str]
+
+
 class Role(Schema):
     id: Snowflake
     name: str
     color: str | None
     position: int
     managed: bool
-    assignable: bool
 
 
 class Emoji(Schema):
@@ -442,7 +449,6 @@ class BotProfile(Schema):
     global_avatar_url: str
     global_banner_url: str | None
     banner_color: str | None
-    can_nick: bool
 
 
 class BotProfilePatch(Schema):
@@ -871,12 +877,6 @@ class NativeRule(Schema):
     exempt_channel_ids: list[Snowflake]
 
 
-class NativeRules(Schema):
-    rules: list[NativeRule]
-    can_manage: bool
-    can_timeout: bool
-
-
 class NativeRuleCreate(Schema):
     trigger: NativeTrigger
     name: NativeName
@@ -954,6 +954,10 @@ def guild_out(guild: discord.Guild, member: discord.Member) -> Guild:
     )
 
 
+def _listed_channels(guild: discord.Guild) -> list[tuple[discord.abc.GuildChannel, str]]:
+    return [(channel, kind) for channel in guild.channels if (kind := str(channel.type)) in _CHANNEL_KINDS]
+
+
 def channels_out(guild: discord.Guild) -> list[Channel]:
     return [
         Channel(
@@ -963,9 +967,18 @@ def channels_out(guild: discord.Guild) -> list[Channel]:
             parent_id=id_of(channel.category),
             position=channel.position,
         )
-        for channel in sorted(guild.channels, key=lambda channel: channel.position)
-        if (kind := str(channel.type)) in _CHANNEL_KINDS
+        for channel, kind in sorted(_listed_channels(guild), key=lambda listed: listed[0].position)
     ]
+
+
+def bot_permissions_out(guild: discord.Guild) -> BotPermissions:
+    me = guild.me
+    return BotPermissions(
+        guild=str(me.guild_permissions.value),
+        channels={str(channel.id): str(channel.permissions_for(me).value) for channel, _ in _listed_channels(guild)},
+        top_role=me.top_role.position,
+        features=list(guild.features),
+    )
 
 
 def mentioned_channel_out(channel: discord.abc.GuildChannel) -> MentionedChannel | None:
@@ -990,7 +1003,6 @@ def emojis_out(guild: discord.Guild) -> list[Emoji]:
 
 
 def roles_out(guild: discord.Guild) -> list[Role]:
-    top = guild.me.top_role
     return [
         Role(
             id=str(role.id),
@@ -998,7 +1010,6 @@ def roles_out(guild: discord.Guild) -> list[Role]:
             color=str(role.color) if role.color.value else None,
             position=role.position,
             managed=role.managed,
-            assignable=not role.managed and role < top,
         )
         for role in reversed(guild.roles)
         if not role.is_default()

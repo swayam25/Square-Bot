@@ -9,6 +9,7 @@ from square.api.auth import provide_guild
 from square.api.schemas import (
     Activity,
     ActivityDay,
+    BotPermissions,
     Channel,
     Emoji,
     Guild,
@@ -19,6 +20,7 @@ from square.api.schemas import (
     ServerStats,
     Snowflake,
     UserMatch,
+    bot_permissions_out,
     channels_out,
     emojis_out,
     guild_out,
@@ -46,6 +48,11 @@ async def guild_channels(guild: discord.Guild) -> list[Channel]:
 @get("/roles", summary="A server's roles, highest first, for pickers")
 async def guild_roles(guild: discord.Guild) -> list[Role]:
     return roles_out(guild)
+
+
+@get("/permissions", summary="What Square can do in a server: its permissions, top role and the server's features")
+async def bot_permissions(guild: discord.Guild) -> BotPermissions:
+    return bot_permissions_out(guild)
 
 
 @get("/emojis", summary="A server's custom emojis, for pickers")
@@ -188,6 +195,7 @@ router = Router(
     route_handlers=[
         guild_channels,
         guild_roles,
+        bot_permissions,
         guild_emojis,
         search_members,
         mentioned_users,
