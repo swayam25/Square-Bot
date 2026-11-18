@@ -181,15 +181,9 @@ class Devs(
             status=discord.Status[status.lower()],
             activity=discord.CustomActivity(name=activity) if activity else self.client.activity,
         )
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(
-                    f"{emoji.success} Status updated to `{status}`\n" + (f"```\n{activity}\n```" if activity else "")
-                ),
-                color=config.color.green,
-            )
+        await ctx.respond(
+            view=success_view(f"Status updated to `{status}`" + (f"\n```\n{activity}\n```" if activity else ""))
         )
-        await ctx.respond(view=view)
 
     @slash_command(guild_ids=config.owner_guild_ids, name="stats")
     @check.is_dev()

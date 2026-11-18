@@ -56,7 +56,7 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
                 ui.Container(
                     ui.TextDisplay("## Moved VC Members"),
                     ui.TextDisplay(
-                        f"Successfully moved {len(moved)} member(s) from {source.mention} to {to.mention}.\n"
+                        f"Successfully moved {len(moved)} member{'' if len(moved) == 1 else 's'} from {source.mention} to {to.mention}.\n"
                         f"{emoji.members_green} **Members**: {', '.join(moved)}"
                     ),
                     color=config.color.green,
@@ -64,14 +64,7 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
             )
             await ctx.respond(view=view)
         if failed:
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay("## Couldn't Move Some Members"),
-                    ui.TextDisplay(f"{emoji.bullet_red} **Members**: {', '.join(failed)}"),
-                    color=config.color.red,
-                )
-            )
-            await ctx.respond(view=view, ephemeral=True)
+            await ctx.respond(view=error_view(f"Couldn't move {', '.join(failed)}."), ephemeral=True)
 
     @staticmethod
     async def _check_target(ctx: discord.ApplicationContext, user: discord.Member) -> bool:

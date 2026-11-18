@@ -37,7 +37,6 @@ class ResetAllView(DesignerView):
         confirm.callback = self._confirm
         self.add_item(
             ui.Container(
-                ui.TextDisplay("## Reset Invites"),
                 ui.TextDisplay("This clears every member's invites and bonus in this server. It can't be undone."),
                 color=config.color.red,
             )

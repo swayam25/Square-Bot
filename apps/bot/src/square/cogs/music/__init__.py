@@ -13,7 +13,7 @@ from square.cogs.music.eq import Equalizer
 from square.cogs.music.listeners import Listeners
 from square.core import Client
 from square.core.cog import Cog
-from square.core.view import DesignerView
+from square.core.view import DesignerView, error_view
 from square.imaging import assets
 from square.imaging.templates import now_playing as track_card
 from square.music import controls, request
@@ -166,9 +166,7 @@ class Music(
         """Searches and plays a track from a given query."""
         bound = request.channel_id(ctx.guild.id)
         if bound is not None and ctx.channel.id != bound:
-            await ctx.respond(
-                view=container(f"{emoji.error} Play tracks from <#{bound}>.", config.color.red), ephemeral=True
-            )
+            await ctx.respond(view=error_view(f"Play tracks from <#{bound}>."), ephemeral=True)
             return
         quiet = bound is not None
         await ctx.defer(ephemeral=quiet)

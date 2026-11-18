@@ -147,7 +147,7 @@ class MassModeration(
                 ),
                 title="Mass Kicked Users",
                 summary="kicked",
-                error_title="Can't kick users",
+                error_title="Can't Kick Users",
                 fields=[("description", "Reason", reason or "No reason given")],
                 log_color=config.color.orange,
             )
@@ -186,7 +186,7 @@ class MassModeration(
                 ),
                 title="Mass Banned Users",
                 summary="banned",
-                error_title="Can't ban users",
+                error_title="Can't Ban Users",
                 fields=[
                     ("description", "Reason", reason or "No reason given"),
                     (
@@ -225,7 +225,7 @@ class MassModeration(
                 action=lambda u: ctx.guild.unban(u, reason=reason),
                 title="Mass Unbanned Users",
                 summary="unbanned",
-                error_title="Can't unban users",
+                error_title="Can't Unban Users",
                 fields=[("description", "Reason", reason or "No reason given")],
                 log_color=config.color.green,
             )
@@ -263,9 +263,9 @@ class MassModeration(
                 ctx,
                 *resolved,
                 action=timeout,
-                title="Mass Timed out Users",
+                title="Mass Timed Out Users",
                 summary="timed out",
-                error_title="Can't timeout users",
+                error_title="Can't Timeout Users",
                 fields=[
                     ("duration", "Duration", f"`{format_timedelta(dur, locale='en')}`"),
                     ("description", "Reason", reason or "No reason given"),
@@ -299,9 +299,9 @@ class MassModeration(
                 ctx,
                 *resolved,
                 action=untimeout,
-                title="Mass Untimed out Users",
+                title="Mass Untimed Out Users",
                 summary="untimed out",
-                error_title="Can't untimeout users",
+                error_title="Can't Untimeout Users",
                 fields=[("description", "Reason", reason or "No reason given")],
                 log_color=config.color.green,
             )
@@ -335,7 +335,7 @@ class MassModeration(
             action=lambda m: m.add_roles(*_roles) if add else m.remove_roles(*_roles),
             title=f"Mass {past.capitalize()} Roles",
             summary=f"{past} {len(_roles)} roles {prep}",
-            error_title=f"Can't {verb} roles",
+            error_title=f"Can't {verb.capitalize()} Roles",
             fields=[("role", "Roles", ", ".join(role.mention for role in _roles))],
             log_color=None,
         )

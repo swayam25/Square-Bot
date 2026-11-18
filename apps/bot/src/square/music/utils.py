@@ -2,7 +2,7 @@ import discord
 import re
 from collections.abc import Coroutine
 from discord import ui
-from square.core.view import DesignerView
+from square.core.view import DesignerView, error_view
 from square.music import store
 from square.music.core import SquarePlayer
 from square.utils import config
@@ -107,19 +107,15 @@ async def music_interaction_check(view: DesignerView, player: SquarePlayer, inte
         view.disable_all_items()
         await interaction.response.edit_message(view=view)
         await interaction.followup.send(
-            view=container(f"{emoji.error} Nothing is being played at the current moment.", config.color.red),
+            view=error_view("Nothing is being played at the current moment."),
             ephemeral=True,
         )
         return False
     elif not interaction.user.voice:
-        await interaction.response.send_message(
-            view=container(f"{emoji.error} Join a voice channel first.", config.color.red), ephemeral=True
-        )
+        await interaction.response.send_message(view=error_view("Join a voice channel first."), ephemeral=True)
         return False
     elif player.connected and interaction.user.voice.channel.id != player.channel.id:
-        await interaction.response.send_message(
-            view=container(f"{emoji.error} You are not in my voice channel.", config.color.red), ephemeral=True
-        )
+        await interaction.response.send_message(view=error_view("You are not in my voice channel."), ephemeral=True)
         return False
     else:
         return True

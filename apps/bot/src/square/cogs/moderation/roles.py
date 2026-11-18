@@ -79,21 +79,14 @@ class Roles:
 
         updated = len(members) - len(errors)
         if updated > 0:
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"## {past.capitalize()} Role"),
-                    ui.TextDisplay(f"{emoji.success} Successfully {past} {role.mention} {prep} `{updated}` {target}."),
-                    color=config.color.green,
-                )
-            )
-            await msg.edit(view=view)
+            await msg.edit(view=success_view(f"Successfully {past} {role.mention} {prep} `{updated}` {target}."))
         if errors:
             lines = [f"{emoji.bullet_red} {member}: {err}" for member, err in errors[:15]]
             if len(errors) > 15:
                 lines.append(f"{emoji.bullet_red} *...and `{len(errors) - 15}` more.*")
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay(f"## Can't {verb} role"),
+                    ui.TextDisplay(f"## Can't {verb.capitalize()} Role"),
                     ui.TextDisplay("\n".join(lines)),
                     color=config.color.red,
                 )

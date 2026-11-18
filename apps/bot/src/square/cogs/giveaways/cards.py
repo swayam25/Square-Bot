@@ -2,7 +2,7 @@
 
 import discord
 from discord import ui
-from square.core.view import DesignerView
+from square.core.view import DesignerView, error_view
 from square.db import cache
 from square.db.schema import GiveawayTable
 from square.modules import Module
@@ -112,8 +112,7 @@ def giveaway_card(giveaway: GiveawayTable, guild_id: int) -> DesignerView:
 
 def winners_card(giveaway: GiveawayTable, winner_ids: list[int], *, reroll: bool = False) -> DesignerView:
     if not winner_ids:
-        text = f"{emoji.error} Nobody could win **{giveaway.prize}**."
-        return DesignerView(ui.Container(ui.TextDisplay(text), color=config.color.red))
+        return error_view(f"Nobody could win **{giveaway.prize}**.")
     who = mentions(winner_ids)
     if reroll:
         text = f"{emoji.giveaway_green} Rerolled! Congratulations {who}, you won **{giveaway.prize}**."

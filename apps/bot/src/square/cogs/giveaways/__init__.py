@@ -230,11 +230,8 @@ class Giveaways(
         if not await actions.post(self.client, giveaway):
             await ctx.respond(view=error_view(f"I couldn't post the giveaway in {target.mention}."), ephemeral=True)
             return
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"{emoji.success} Started **{giveaway.prize}** in {target.mention}."),
-                color=config.color.green,
-            ),
+        view = success_view(f"Started **{giveaway.prize}** in {target.mention}.")
+        view.add_item(
             ui.ActionRow(
                 ui.Button(
                     label="Go to giveaway",

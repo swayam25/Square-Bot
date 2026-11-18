@@ -16,7 +16,6 @@ from square.db.schema import StarboardTable
 from square.imaging import assets
 from square.imaging.templates import starboard_card
 from square.modules import Module, ModuleOff
-from square.utils import config
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count
 
@@ -148,10 +147,8 @@ class Starboard(
         """Posts or removes a message on the starboards."""
         assert ctx.guild is not None
         if not starboard_db.boards(ctx.guild.id):
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.error} This server has no starboard yet."), color=config.color.red
-                ),
+            view = error_view("This server has no starboard yet.")
+            view.add_item(
                 ui.ActionRow(
                     ui.Button(
                         label="Open dashboard",
@@ -256,7 +253,7 @@ class Starboard(
         if not (boards := await self._boards(ctx, channel)):
             return
         posts = await starboard_db.top_posts([board.id for board in boards], user.id if user else None, TOP_SHOWN)
-        title = f"## Top of <#{boards[0].channel_id}>" if len(boards) == 1 else "## Top starred"
+        title = f"## Top of <#{boards[0].channel_id}>" if len(boards) == 1 else "## Top Starred"
         container = ui.Container(ui.TextDisplay(title))
         if not posts:
             container.add_item(ui.TextDisplay("Nothing has made it onto the board yet."))

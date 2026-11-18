@@ -198,7 +198,7 @@ class Moderation(
             messaged = await mod_dm.send(user, mod_dm.timed_out(ctx.guild, until, reason, ctx.author)) is not None
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay("## Timed out User"),
+                    ui.TextDisplay("## Timed Out User"),
                     ui.TextDisplay(
                         f"Successfully timed out {user.mention} (`{user.name}`).\n"
                         f"{emoji.duration_green} **Duration**: `{format_timedelta(dur, locale='en')}`\n"
@@ -237,7 +237,7 @@ class Moderation(
                 messaged = await mod_dm.send(user, dm) is not None
             view = DesignerView(
                 ui.Container(
-                    ui.TextDisplay("## Untimed out User"),
+                    ui.TextDisplay("## Untimed Out User"),
                     ui.TextDisplay(
                         f"Successfully untimed out {user.mention} (`{user.name}`).\n{emoji.description_green} **Reason**: {reason or 'No reason given'}"
                         + _dms_closed(messaged)

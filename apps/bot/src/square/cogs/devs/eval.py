@@ -90,15 +90,8 @@ class TaskManagerView(DesignerView):
 
     async def _delete_task(self, interaction: discord.Interaction, task_id: int):
         success = self.eval_cog.stop_task(task_id)
-        embed_view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(
-                    f"{emoji.success} Task `{task_id}` stopped."
-                    if success
-                    else f"{emoji.error} Task `{task_id}` not found."
-                ),
-                color=config.color.green if success else config.color.red,
-            )
+        embed_view = (
+            success_view(f"Task `{task_id}` stopped.") if success else error_view(f"Task `{task_id}` not found.")
         )
         self.build()
         await interaction.edit(view=self)
@@ -106,13 +99,9 @@ class TaskManagerView(DesignerView):
 
     async def _stop_all(self, interaction: discord.Interaction):
         stopped_count = self.eval_cog.stop_all_tasks()
-        self.clear_items()
-        container = ui.Container(
-            ui.TextDisplay(f"{emoji.success} Stopped `{stopped_count}` running eval task(s)."),
-            color=config.color.green,
+        await interaction.edit(
+            view=success_view(f"Stopped `{stopped_count}` running eval task{'' if stopped_count == 1 else 's'}.")
         )
-        self.add_item(container)
-        await interaction.edit(view=self)
         await interaction.delete_original_response(delay=5)
 
     async def _reload_tasks(self, interaction: discord.Interaction):
@@ -237,19 +226,12 @@ class Eval(Cog):
                 embed_view = error_view(f"Task `{task_id}` was cancelled.")
                 await ctx.send(view=embed_view)
         except Exception as e:
-            embed_view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"{emoji.error} Task `{task_id}` failed."),
-                    ui.TextDisplay(f"```\n{str(e)}\n```"),
-                    color=config.color.red,
-                )
-            )
-            await ctx.send(view=embed_view)
+            await ctx.send(view=error_view(f"Task `{task_id}` failed.\n```\n{e}\n```"))
         finally:
             running_tasks.pop(task_id, None)
 
     async def send_task_result(self, ctx, task_id, output, result):
-        response = f"{emoji.success} Task `{task_id}` completed.\n"
+        response = f"Task `{task_id}` completed.\n"
         if output:
             response += f"{emoji.console_green} **Output**:\n```sh\n{output}\n```\n"
         if result is not None:
@@ -264,8 +246,7 @@ class Eval(Cog):
             file = discord.File(BytesIO(full_content.encode()), filename=filename)
             return await ctx.send(file=file, delete_after=0.5)
         else:
-            view = DesignerView(ui.Container(ui.TextDisplay(response), color=config.color.green))
-            return await ctx.send(view=view, delete_after=0.5)
+            return await ctx.send(view=success_view(response), delete_after=0.5)
 
     async def handle_control_commands(self, ctx: commands.Context, code: str):
         code_lower = code.lower()
@@ -276,7 +257,7 @@ class Eval(Cog):
                 return await ctx.reply(view=view, mention_author=False)
 
             stopped_count = self.stop_all_tasks()
-            view = success_view(f"Stopped `{stopped_count}` running eval task(s).")
+            view = success_view(f"Stopped `{stopped_count}` running eval task{'' if stopped_count == 1 else 's'}.")
             return await ctx.reply(view=view, mention_author=False)
 
         elif code_lower in ["list", "tasks", "running"]:
@@ -311,11 +292,8 @@ class Eval(Cog):
         running_tasks[task_id] = (task, ctx)
         self.cleanup_completed_tasks()
 
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay(f"{emoji.success} Started eval task `{task_id}`."),
-                ui.TextDisplay("-# Use `eval list` to manage running tasks."),
-                color=config.color.green,
-            )
+        await ctx.reply(
+            view=success_view(f"Started eval task `{task_id}`.\n-# Use `eval list` to manage running tasks."),
+            mention_author=False,
+            delete_after=0.5,
         )
-        await ctx.reply(view=view, mention_author=False, delete_after=0.5)
