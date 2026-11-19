@@ -45,7 +45,7 @@ class Entry:
     tone: Tone = "theme"
     rows: list[Row] = field(default_factory=list)
     thumbnail: str | None = None
-    link: tuple[str, str] | None = None
+    jump: str | None = None  # A message URL, shown as a "Jump to message" button
     file: discord.File | None = None
     swatch: int | None = None  # A color shown as the thumbnail, like a role's
     channel_id: int | None = None
@@ -86,7 +86,7 @@ def swatch_file(color: int, filename: str) -> discord.File:
 
 
 def render(entry: Entry, swatch: str | None = None) -> list[ui.Item]:
-    """The card, plus its link button under it. `swatch` is the file name the color swatch was attached under."""
+    """The card, plus its jump button under it. `swatch` is the file name the color swatch was attached under."""
     header: list[ui.Item] = [ui.TextDisplay(f"## {entry.title}"), ui.TextDisplay(body(entry))]
     thumbnail = f"attachment://{swatch}" if swatch else entry.thumbnail
     items: list[ui.Item] = [ui.Section(*header, accessory=ui.Thumbnail(thumbnail))] if thumbnail else header
@@ -95,9 +95,17 @@ def render(entry: Entry, swatch: str | None = None) -> list[ui.Item]:
     card: list[ui.Item] = [
         ui.Container(*items, color=None if entry.tone == "theme" else getattr(config.color, entry.tone))
     ]
-    if entry.link:
-        label, url = entry.link
-        card.append(ui.ActionRow(ui.Button(label=label, url=url, style=discord.ButtonStyle.link)))
+    if entry.jump:
+        card.append(
+            ui.ActionRow(
+                ui.Button(
+                    label="Jump to message",
+                    emoji=emoji.messages_white,
+                    style=discord.ButtonStyle.link,
+                    url=entry.jump,
+                )
+            )
+        )
     return card
 
 
@@ -108,5 +116,5 @@ def file_count(entry: Entry) -> int:
 def cost(entry: Entry) -> tuple[int, int]:
     """(components, characters) the card takes up, for packing several into one message."""
     thumbnail = entry.thumbnail or entry.swatch is not None
-    components = 3 + (2 if thumbnail else 0) + (1 if entry.file else 0) + (2 if entry.link else 0)
+    components = 3 + (2 if thumbnail else 0) + (1 if entry.file else 0) + (2 if entry.jump else 0)
     return components, len(entry.title) + len(body(entry)) + 4

@@ -6,6 +6,7 @@ from square.cogs.starboard.source import Preview, Source, media_url
 from square.core.view import DesignerView
 from square.db.schema import StarboardPostTable, StarboardTable
 from square.utils import config
+from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count
 from typing import Any, NamedTuple
 
@@ -296,6 +297,7 @@ def post_card(
     jump = ui.ActionRow(
         ui.Button(
             label="Jump to message",
+            emoji=emoji.messages_white,
             style=discord.ButtonStyle.link,
             url=jump_url(guild_id, message.channel.id, message.id),
         )

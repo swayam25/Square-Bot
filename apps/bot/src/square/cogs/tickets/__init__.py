@@ -8,11 +8,19 @@ from discord.ext import commands
 from square.cogs.tickets import actions, cards, panel
 from square.core import Client
 from square.core.cog import Cog
-from square.core.view import DesignerView, error_view, modal, not_in_server, show_loading, success_view
+from square.core.view import (
+    DesignerView,
+    error_view,
+    modal,
+    module_off_view,
+    not_in_server,
+    show_loading,
+    success_view,
+)
 from square.db import cache
 from square.db.funcs.tickets import fetch_ticket, save_ticket
 from square.db.schema import TicketTable
-from square.modules import Module, ModuleOff
+from square.modules import Module
 from square.music.utils import delete_quietly
 
 
@@ -124,7 +132,7 @@ class Tickets(
         if not custom_id.startswith("ticket:"):
             return
         if interaction.guild_id and not cache.enabled(interaction.guild_id, Module.TICKETS):
-            await self._reply(interaction, error_view(str(ModuleOff(Module.TICKETS))))
+            await self._reply(interaction, module_off_view(interaction.guild_id, Module.TICKETS))
         elif custom_id == "ticket:open":
             await self._open_from_panel(interaction)
         elif custom_id.startswith("ticket:") and (context := await self._context(interaction)):

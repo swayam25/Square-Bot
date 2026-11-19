@@ -159,7 +159,7 @@ class WarningsList(DesignerView):
         if self.confirming:
             self.add_item(
                 ui.ActionRow(
-                    button(lambda i: self._confirm(i, False), label="Cancel"),
+                    button(lambda i: self._confirm(i, False), label="Cancel", emoji=emoji.close_white),
                     button(
                         self._clear,
                         label=f"Yes, clear {fmt_count(total)} {plural(total, 'warning')}",

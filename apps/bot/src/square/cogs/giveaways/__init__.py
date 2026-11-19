@@ -7,11 +7,11 @@ from discord.ext import commands
 from square.cogs.giveaways import actions, cards, files
 from square.core import Client
 from square.core.cog import Cog
-from square.core.view import DesignerView, error_view, success_view
+from square.core.view import DesignerView, error_view, module_off_view, success_view
 from square.db import cache
 from square.db.funcs import giveaways as giveaways_db
 from square.db.schema import GiveawayTable
-from square.modules import Module, ModuleOff
+from square.modules import Module
 from square.utils import config
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count, parse_duration
@@ -98,7 +98,7 @@ class Giveaways(
         if not guild or not isinstance(member, discord.Member):
             return
         if not cache.enabled(guild.id, Module.GIVEAWAYS):
-            await self._reply(interaction, error_view(str(ModuleOff(Module.GIVEAWAYS))))
+            await self._reply(interaction, module_off_view(guild.id, Module.GIVEAWAYS))
         elif custom_id == "giveaway:enter":
             await self._enter(interaction, member)
         elif custom_id.startswith("giveaway:leave:"):
@@ -234,6 +234,7 @@ class Giveaways(
             ui.ActionRow(
                 ui.Button(
                     label="Go to giveaway",
+                    emoji=emoji.giveaway_white,
                     style=discord.ButtonStyle.link,
                     url=f"https://discord.com/channels/{ctx.guild.id}/{target.id}/{giveaway.message_id}",
                 ),

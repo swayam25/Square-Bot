@@ -5,6 +5,7 @@ from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView
 from square.utils import config
+from square.utils.emoji import emoji
 
 
 class Settings(Cog, name="Settings", description="Server settings live on the dashboard.", order=5):
@@ -26,6 +27,7 @@ class Settings(Cog, name="Settings", description="Server settings live on the da
             ui.ActionRow(
                 ui.Button(
                     label="Open dashboard",
+                    emoji=emoji.settings_white,
                     style=discord.ButtonStyle.link,
                     url=f"{config.dashboard_url}/guild/{ctx.guild.id}",
                 )

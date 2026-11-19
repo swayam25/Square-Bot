@@ -8,14 +8,14 @@ from square import imaging
 from square.cogs.starboard import actions, cards
 from square.core import Client
 from square.core.cog import Cog
-from square.core.view import DesignerView, error_view, show_loading
+from square.core.view import DesignerView, error_view, module_off_view, show_loading
 from square.db import cache
 from square.db.funcs import starboard as starboard_db
 from square.db.funcs.starboard import emoji_key
 from square.db.schema import StarboardTable
 from square.imaging import assets
 from square.imaging.templates import starboard_card
-from square.modules import Module, ModuleOff
+from square.modules import Module
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count, plural
 
@@ -193,7 +193,7 @@ class Starboard(
         if not guild or not isinstance(member, discord.Member):
             return
         if not cache.enabled(guild.id, Module.STARBOARD):
-            await interaction.response.send_message(view=error_view(str(ModuleOff(Module.STARBOARD))), ephemeral=True)
+            await interaction.response.send_message(view=module_off_view(guild.id, Module.STARBOARD), ephemeral=True)
             return
         parts = custom_id.split(":")
         if len(parts) != 5 or not all(part.isdigit() for part in parts[2:]):
@@ -265,6 +265,7 @@ class Starboard(
             )
             jump = ui.Button(
                 label="Jump",
+                emoji=emoji.star_white,
                 style=discord.ButtonStyle.link,
                 url=cards.jump_url(ctx.guild.id, post.board.channel_id, post.post_id or 0),
             )
@@ -297,7 +298,15 @@ class Starboard(
         if message is None:
             shown = cards.stored_tally(post).emoji
             link = cards.jump_url(ctx.guild.id, post.board.channel_id, post.post_id or 0)
-            await ctx.respond(view=DesignerView(ui.Container(ui.TextDisplay(f"{shown} [See the post]({link})"))))
+            view = DesignerView(
+                ui.Container(
+                    ui.TextDisplay(f"{shown} I can't load the original message, but its post is on the board.")
+                ),
+                ui.ActionRow(
+                    ui.Button(label="Go to post", emoji=emoji.star_white, style=discord.ButtonStyle.link, url=link)
+                ),
+            )
+            await ctx.respond(view=view)
             return
         await ctx.respond(
             view=cards.post_card(

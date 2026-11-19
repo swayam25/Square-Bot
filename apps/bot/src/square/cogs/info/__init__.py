@@ -89,6 +89,7 @@ class UserInfo:
             url_buttons.append(
                 ui.Button(
                     label="View Profile",
+                    emoji=emoji.profile_white,
                     style=discord.ButtonStyle.link,
                     url=f"https://discord.com/users/{self.user.id}",
                 )
@@ -98,6 +99,7 @@ class UserInfo:
             url_buttons.append(
                 ui.Button(
                     label="Avatar URL",
+                    emoji=emoji.img_white,
                     style=discord.ButtonStyle.link,
                     url=self.user.guild_avatar.url
                     if (isinstance(self.user, discord.Member) and self.user.guild_avatar) and type == "server"
@@ -109,6 +111,7 @@ class UserInfo:
             url_buttons.append(
                 ui.Button(
                     label="Banner URL",
+                    emoji=emoji.img_white,
                     style=discord.ButtonStyle.link,
                     url=self.user.guild_banner.url
                     if (isinstance(self.user, discord.Member) and self.user.guild_banner) and type == "server"
@@ -335,6 +338,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
             ui.ActionRow(
                 ui.Button(
                     label="Open commands",
+                    emoji=emoji.console_white,
                     style=discord.ButtonStyle.link,
                     url=f"{config.dashboard_url}/commands",
                 )
@@ -394,6 +398,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
                         *[
                             ui.Button(
                                 label=fmt.upper(),
+                                emoji=emoji.img_white,
                                 style=discord.ButtonStyle.link,
                                 url=avatar.with_format(fmt).url,
                             )
@@ -461,9 +466,15 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
             )
         links = []
         if icon:
-            links.append(ui.Button(style=discord.ButtonStyle.link, label="Icon URL", url=icon.url))
+            links.append(
+                ui.Button(style=discord.ButtonStyle.link, label="Icon URL", emoji=emoji.img_white, url=icon.url)
+            )
         if ctx.guild.banner:
-            links.append(ui.Button(style=discord.ButtonStyle.link, label="Banner URL", url=ctx.guild.banner.url))
+            links.append(
+                ui.Button(
+                    style=discord.ButtonStyle.link, label="Banner URL", emoji=emoji.img_white, url=ctx.guild.banner.url
+                )
+            )
         await ctx.respond(view=DesignerView(container, *([ui.ActionRow(*links)] if links else [])))
 
     @info.command(name="emoji")
@@ -490,7 +501,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
                     ),
                 ),
                 ui.ActionRow(
-                    ui.Button(label="URL", style=discord.ButtonStyle.link, url=_emoji.url),
+                    ui.Button(label="URL", emoji=emoji.img_white, style=discord.ButtonStyle.link, url=_emoji.url),
                 ),
             )
             await ctx.respond(view=view)

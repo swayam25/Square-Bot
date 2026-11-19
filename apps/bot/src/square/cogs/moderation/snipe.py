@@ -2,7 +2,7 @@ import discord
 from discord import ui
 from discord.commands import option, slash_command
 from square import logs
-from square.core.view import DesignerView, button, error_view, show_loading
+from square.core.view import DesignerView, button, dashboard_row, error_view, show_loading
 from square.logs import memory
 from square.utils import config
 from square.utils.emoji import emoji
@@ -76,7 +76,9 @@ class SnipeView(DesignerView):
         ]
         if edited:
             url = f"https://discord.com/channels/{self.channel.guild.id}/{self.channel.id}/{saved.id}"
-            row.append(ui.Button(label="Jump to message", url=url, style=discord.ButtonStyle.link))
+            row.append(
+                ui.Button(label="Jump to message", emoji=emoji.messages_white, url=url, style=discord.ButtonStyle.link)
+            )
         if len(self.found) == 1:
             row = row[1:2] + row[3:]
         self.add_item(ui.ActionRow(*row))
@@ -120,11 +122,9 @@ class Snipe:
         guild = ctx.guild
         channel = channel or ctx.channel
         if not memory.active(guild.id):
-            link = f"{config.dashboard_url}/guild/{guild.id}/logs"
-            await ctx.respond(
-                view=error_view(f"Snipe needs the **Messages** log on. Turn it on in the [dashboard]({link})."),
-                ephemeral=True,
-            )
+            view = error_view("Snipe needs the **Messages** log on. Turn it on from the dashboard.")
+            view.add_item(dashboard_row(guild.id, "/logs"))
+            await ctx.respond(view=view, ephemeral=True)
             return
         if isinstance(ctx.author, discord.Member) and not channel.permissions_for(ctx.author).read_message_history:
             await ctx.respond(view=error_view(f"You can't read {channel.mention}."), ephemeral=True)

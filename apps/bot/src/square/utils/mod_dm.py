@@ -37,6 +37,7 @@ def view(
         ui.ActionRow(
             ui.Button(
                 label=label if len(label) <= LABEL_LIMIT else label[: LABEL_LIMIT - 1] + "…",
+                emoji=emoji.server_white,
                 url=f"https://discord.com/channels/{guild.id}",
                 disabled=not member,
             )

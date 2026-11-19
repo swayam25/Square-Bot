@@ -12,8 +12,9 @@
     import { focusRing } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { permissionNames } from "#lib/permissions.ts";
+    import { scrollToElement } from "#lib/scroll.ts";
     import { toast } from "#lib/toast.svelte.ts";
-    import { invalidateAll, replaceState } from "$app/navigation";
+    import { afterNavigate, invalidateAll, pushState, replaceState } from "$app/navigation";
     import { page } from "$app/state";
     import type { BotCommand, CommandOption } from "@square/api-client";
     import { onMount, type Component } from "svelte";
@@ -170,11 +171,37 @@
     });
 
     let active = $state<string | null>(null);
+    let pinned = false;
+
+    function go(id: string) {
+        const target = document.getElementById(id);
+        if (!target) return;
+        active = target.closest("section[id]")?.id ?? active;
+        pinned = true;
+        scrollToElement(target);
+    }
+
+    function jump(event: MouseEvent, id: string) {
+        if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        if (location.hash !== `#${id}`) pushState(`#${id}`, {});
+        go(id);
+    }
+
+    afterNavigate(({ type }) => {
+        const id = decodeURIComponent(location.hash.slice(1));
+        if (!id || !document.getElementById(id)) return;
+        const entry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+        if (type !== "link" && type !== "goto" && !(type === "enter" && entry?.type === "navigate")) return;
+        scrollTo({ top: 0, behavior: "instant" });
+        go(id);
+    });
 
     function spy(root: HTMLElement) {
         let frame = 0;
         const update = () => {
             frame = 0;
+            if (pinned) return;
             const sections = [...root.querySelectorAll<HTMLElement>("section[id]")];
             const bottom = innerHeight + scrollY >= document.documentElement.scrollHeight - 2;
             active =
@@ -183,13 +210,16 @@
                 null;
         };
         const schedule = () => (frame ||= requestAnimationFrame(update));
+        const unpin = () => (pinned = false);
         schedule();
         addEventListener("scroll", schedule, { passive: true });
         addEventListener("resize", schedule, { passive: true });
+        for (const type of ["wheel", "touchstart", "keydown", "pointerdown"]) addEventListener(type, unpin, { passive: true });
         return () => {
             cancelAnimationFrame(frame);
             removeEventListener("scroll", schedule);
             removeEventListener("resize", schedule);
+            for (const type of ["wheel", "touchstart", "keydown", "pointerdown"]) removeEventListener(type, unpin);
         };
     }
 
@@ -335,7 +365,7 @@
                 <ScrollRow class="lg:hidden">
                     {#each shown as category (category.id)}
                         {#if category.entries.length}
-                            <FilterChip checked={active === category.id} onclick={() => document.getElementById(category.id)?.scrollIntoView()}>
+                            <FilterChip checked={active === category.id} onclick={() => go(category.id)}>
                                 <category.look.icon />{category.name}
                             </FilterChip>
                         {/if}
@@ -347,6 +377,7 @@
                         <a
                             href="#{category.id}"
                             aria-disabled={!category.entries.length || undefined}
+                            onclick={(event) => jump(event, category.id)}
                             class={[
                                 "ripple flex h-10 items-center gap-3 rounded-2xl px-3 text-sm font-medium transition-colors [&>svg]:size-5 [&>svg]:shrink-0",
                                 current ? "bg-gray-900 text-gray-100" : "text-gray-400 hover:bg-gray-900 hover:text-gray-100",
@@ -451,7 +482,7 @@
                                             {@render head(command, perms, false, false)}
                                         {/if}
                                         <div
-                                            class="absolute top-2 right-2 flex gap-2 transition-opacity duration-200 ease-out group-focus-within/row:opacity-100 group-hover/row:opacity-100 max-sm:hidden pointer-fine:opacity-0"
+                                            class="absolute top-2 right-2 flex gap-2 transition-opacity duration-200 ease-out group-hover/row:opacity-100 group-has-focus-visible/row:opacity-100 max-sm:hidden pointer-fine:opacity-0"
                                         >
                                             {#if command.kind === "slash"}
                                                 <Tooltip content={copied === entry.id ? "Copied" : "Copy command"}>

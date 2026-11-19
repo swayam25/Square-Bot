@@ -137,10 +137,7 @@ class Logs(Cog):
         entry.add("owner", "Author", shown).add("channel", "Channel", f"<#{payload.channel_id}>")
         entry.add("note_red", "Before", old)
         entry.add("note", "After", f"\n{clip(content)}" if content else "Empty")
-        entry.link = (
-            "Jump to message",
-            f"https://discord.com/channels/{guild.id}/{payload.channel_id}/{payload.message_id}",
-        )
+        entry.jump = f"https://discord.com/channels/{guild.id}/{payload.channel_id}/{payload.message_id}"
         emit(guild, entry)
 
     @commands.Cog.listener()

@@ -147,7 +147,7 @@ def entry_for(client: Client, guild: discord.Guild, payload: discord.RawAuditLog
             entry.add("channel", "Channel", f"<#{channel_id}>").add(
                 "user", "Pinned By" if pinned else "Unpinned By", actor
             )
-            entry.link = ("Jump to message", f"https://discord.com/channels/{guild.id}/{channel_id}/{message_id}")
+            entry.jump = f"https://discord.com/channels/{guild.id}/{channel_id}/{message_id}"
             return entry
 
         case (

@@ -1,8 +1,9 @@
 from collections.abc import Awaitable, Callable
 from discord import AllowedMentions, ApplicationContext, ButtonStyle, Interaction, Member, User
-from discord.ui import Button, Container, DesignerModal, Item, Label, TextDisplay
+from discord.ui import ActionRow, Button, Container, DesignerModal, Item, Label, TextDisplay
 from discord.ui import DesignerView as BaseDesignerView
 from discord.ui.view import V
+from square.modules import Module, ModuleOff
 from square.utils import config
 from square.utils.emoji import emoji
 
@@ -88,6 +89,23 @@ async def show_loading(
 
 def error_view(text: str) -> DesignerView:
     return DesignerView(Container(TextDisplay(f"{emoji.error} {text}"), color=config.color.red))
+
+
+def dashboard_row(guild_id: int, path: str = "") -> ActionRow:
+    return ActionRow(
+        Button(
+            label="Open dashboard",
+            emoji=emoji.settings_white,
+            style=ButtonStyle.link,
+            url=f"{config.dashboard_url}/guild/{guild_id}{path}",
+        )
+    )
+
+
+def module_off_view(guild_id: int, module: Module) -> DesignerView:
+    view = error_view(str(ModuleOff(module)))
+    view.add_item(dashboard_row(guild_id))
+    return view
 
 
 def success_view(text: str) -> DesignerView:

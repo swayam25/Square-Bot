@@ -81,7 +81,6 @@ class TaskManagerView(DesignerView):
 
         for emoji_icon, label, callback, disabled in [
             (emoji.bin_white, "Stop All", self._stop_all, False),
-            (None, "‎ ", None, True),
             (emoji.reload_white, "Refresh", self._reload_tasks, False),
         ]:
             btn = ui.Button(emoji=emoji_icon, label=label, style=discord.ButtonStyle.grey, disabled=disabled)

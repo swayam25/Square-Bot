@@ -61,6 +61,7 @@ class Emoji:
     user_remove_white = Icon("➖")
     transcript_white = Icon("📄")
     messages_red = Icon("💬")
+    messages_white = Icon("💬")
     giveaway = Icon("🎉")
     giveaway_white = Icon("🎉")
     giveaway_green = Icon("🎉")
@@ -97,6 +98,7 @@ class Emoji:
     img = Icon("🖼️")
     img_red = Icon("🖼️")
     img_green = Icon("🖼️")
+    img_white = Icon("🖼️")
     date = Icon("📅")
     date_red = Icon("📅")
     date_green = Icon("📅")
@@ -142,6 +144,7 @@ class Emoji:
     archive_red = Icon("🗄️")
     server = Icon("🖥️")
     server_red = Icon("🖥️")
+    server_white = Icon("🖥️")
     boost = Icon("🚀")
 
     ping = Icon("🏓")
@@ -197,9 +200,11 @@ class Emoji:
     shutdown = Icon("🔴")
     console = Icon("🖥️")
     console_green = Icon("🖥️")
+    console_white = Icon("🖥️")
     bin_red = Icon("🗑️")
     bin_green = Icon("🗑️")
     bin_white = Icon("🗑️")
+    close_white = Icon("✖️")
 
 
 emoji = Emoji()

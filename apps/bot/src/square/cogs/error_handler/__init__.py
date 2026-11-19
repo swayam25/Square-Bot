@@ -14,7 +14,7 @@ from discord.ext import commands
 from square.cogs.error_handler.permissions import Refusal, explain
 from square.core import Client
 from square.core.cog import Cog
-from square.core.view import DesignerView
+from square.core.view import DesignerView, dashboard_row
 from square.modules import ModuleOff
 from square.utils import check, config
 from square.utils.emoji import emoji
@@ -215,6 +215,8 @@ class ErrorHandler(Cog):
         if file:
             items.append(ui.File("attachment://error.txt"))
         view = DesignerView(ui.Container(*items, color=config.color.red))
+        if isinstance(error, ModuleOff) and failure.guild:
+            view.add_item(dashboard_row(failure.guild.id))
         try:
             await failure.reply(view, file)
         except discord.HTTPException as exc:
