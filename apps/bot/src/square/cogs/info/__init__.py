@@ -437,7 +437,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
             ui.TextDisplay(
                 f"{emoji.mention} **Name**: {ctx.guild.name}\n"
                 f"{emoji.id} **ID**: `{ctx.guild.id}`\n"
-                f"{emoji.owner} **Owner**: <@{ctx.guild.owner_id}> (`{ctx.guild.owner.name if ctx.guild.owner else ctx.guild.owner_id}`)\n"
+                f"{emoji.crown} **Owner**: <@{ctx.guild.owner_id}> (`{ctx.guild.owner.name if ctx.guild.owner else ctx.guild.owner_id}`)\n"
                 f"{emoji.verification} **Verification Level**: {ctx.guild.verification_level.name.title()}\n"
                 f"{emoji.channel} **Total Channels**: `{len(ctx.guild.text_channels) + len(ctx.guild.voice_channels)}`"
                 f" `({len(ctx.guild.categories)} {plural(len(ctx.guild.categories), 'Category', 'Categories')} | {len(ctx.guild.text_channels)} Text | {len(ctx.guild.voice_channels)} Voice | {len(ctx.guild.stage_channels)} Stage)`\n"
@@ -482,7 +482,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
                             f"{emoji.img} **Is Animated?**: {'Yes' if _emoji.animated else 'No'}\n"
                             f"{emoji.bot} **Is Managed?**: {'Yes' if _emoji.managed else 'No'}\n"
                             f"{emoji.keyboard} **Is Usable?**: {'Yes' if _emoji.is_usable() else 'No'}\n"
-                            f"{emoji.description} **Usage**: `{icon}`\n"
+                            f"{emoji.note} **Usage**: `{icon}`\n"
                             f"{emoji.owner} **Uploaded By**: {f'{_emoji.user.mention} (`{_emoji.user.name}`)' if _emoji.user else 'Unknown'}\n"
                             f"{emoji.date} **Emoji Created**: {discord.utils.format_dt(_emoji.created_at, 'R')}"
                         ),

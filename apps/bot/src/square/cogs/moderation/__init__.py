@@ -3,9 +3,11 @@ from babel.dates import format_timedelta
 from discord import ui
 from discord.commands import message_command, option, slash_command, user_command
 from discord.ext import commands
+from square import logs
 from square.cogs.moderation.common import answer, dms_closed, field, outranked, prompt, result_view
 from square.cogs.moderation.purge import Purge
 from square.cogs.moderation.roles import Roles
+from square.cogs.moderation.snipe import Snipe
 from square.cogs.moderation.timeouts import TimeoutEnds
 from square.cogs.moderation.warnings import Warnings
 from square.core import Client
@@ -19,6 +21,7 @@ from square.utils.helpers import fmt_user, parse_duration
 class Moderation(
     Purge,
     Roles,
+    Snipe,
     Warnings,
     TimeoutEnds,
     Cog,
@@ -41,10 +44,11 @@ class Moderation(
             mod_dm.moderation_rows(reason, interaction.user),
             member=False,
         )
+        logs.acting(interaction.guild.id, discord.AuditLogAction.kick, user.id, interaction.user)
         messaged = await mod_dm.send_before(user, dm, user.kick(reason=reason))
         text = (
             f"Successfully kicked {user.mention} (`{user.name}`) from the server.\n"
-            f"{emoji.description_green} **Reason**: {reason or 'No reason given'}"
+            f"{emoji.note_green} **Reason**: {reason or 'No reason given'}"
         )
         await interaction.respond(view=result_view("Kicked User", user, text + dms_closed(messaged)))
 
@@ -73,6 +77,7 @@ class Moderation(
             mod_dm.moderation_rows(reason, interaction.user),
             member=False,
         )
+        logs.acting(interaction.guild.id, discord.AuditLogAction.ban, user.id, interaction.user)
         removal = interaction.guild.ban(user, reason=reason, delete_message_seconds=dur)
         # A user outside the server shares no server with the bot, so a DM can't reach them
         if isinstance(user, discord.Member):
@@ -84,7 +89,7 @@ class Moderation(
         text = (
             f"Successfully banned {user.mention} (`{user.name}`) from the server.\n"
             f"{emoji.id_green} **ID**: `{user.id}`\n"
-            f"{emoji.description_green} **Reason**: {reason or 'No reason given'}\n"
+            f"{emoji.note_green} **Reason**: {reason or 'No reason given'}\n"
             f"{emoji.bin_green} **Delete Message Duration**: {kept}"
         )
         await interaction.respond(view=result_view("Banned User", user, text + dms_closed(messaged)))
@@ -101,13 +106,14 @@ class Moderation(
             await interaction.respond(view=error_view(str(e)), ephemeral=True)
             return
         until = discord.utils.utcnow() + dur
+        logs.acting(interaction.guild.id, discord.AuditLogAction.member_update, user.id, interaction.user)
         await user.timeout(until, reason=reason)
         dm = mod_dm.timed_out(interaction.guild, until, reason, interaction.user)
         messaged = await mod_dm.send(user, dm) is not None
         text = (
             f"Successfully timed out {user.mention} (`{user.name}`).\n"
             f"{emoji.duration_green} **Duration**: `{format_timedelta(dur, locale='en')}`\n"
-            f"{emoji.description_green} **Reason**: {reason or 'No reason given'}"
+            f"{emoji.note_green} **Reason**: {reason or 'No reason given'}"
         )
         await interaction.respond(view=result_view("Timed Out User", user, text + dms_closed(messaged)))
 
@@ -215,6 +221,7 @@ class Moderation(
             else:
                 await ctx.respond(view=view, ephemeral=True)
             return
+        logs.acting(ctx.guild.id, discord.AuditLogAction.unban, found.id, ctx.author)
         await ctx.guild.unban(found, reason=reason)
         await ctx.respond(view=success_view(f"Successfully unbanned {found.mention} (`{found.name}`)."))
 
@@ -280,6 +287,7 @@ class Moderation(
             await ctx.respond(view=error_view(problem), ephemeral=True)
             return
         was_timed_out = user.timed_out
+        logs.acting(ctx.guild.id, discord.AuditLogAction.member_update, user.id, ctx.author)
         await user.timeout(None, reason=reason)
         messaged = True
         if was_timed_out:
@@ -288,7 +296,7 @@ class Moderation(
             messaged = await mod_dm.send(user, dm) is not None
         text = (
             f"Successfully untimed out {user.mention} (`{user.name}`).\n"
-            f"{emoji.description_green} **Reason**: {reason or 'No reason given'}"
+            f"{emoji.note_green} **Reason**: {reason or 'No reason given'}"
         )
         await ctx.respond(view=result_view("Untimed Out User", user, text + dms_closed(messaged)))
 
@@ -309,6 +317,9 @@ class Moderation(
         everyone = ctx.guild.default_role
         overwrite = channel.overwrites_for(everyone)
         overwrite.send_messages = allow
+        A = discord.AuditLogAction
+        for action in (A.overwrite_create, A.overwrite_update, A.overwrite_delete):
+            logs.acting(ctx.guild.id, action, channel.id, ctx.author)
         await channel.set_permissions(
             everyone,
             overwrite=None if overwrite.is_empty() else overwrite,
@@ -327,7 +338,7 @@ class Moderation(
             ui.Container(
                 ui.TextDisplay("## Channel Locked"),
                 ui.TextDisplay(
-                    f"Successfully locked {channel.mention}.\n{emoji.description_green} **Reason**: {reason or 'No reason given'}"
+                    f"Successfully locked {channel.mention}.\n{emoji.note_green} **Reason**: {reason or 'No reason given'}"
                 ),
                 color=config.color.green,
             )

@@ -5,6 +5,7 @@ from square.cogs.tickets import cards
 from square.core import Client
 from square.db import cache
 from square.db.funcs.tickets import set_ticket_panel
+from square.modules import Module
 from square.music.utils import delete_quietly
 
 STICK_DELAY = 3
@@ -15,6 +16,11 @@ _sticking: dict[int, asyncio.Task] = {}
 def is_panel_channel(guild_id: int, channel_id: int) -> bool:
     """A plain dict lookup: this runs for every message the bot sees."""
     return cache.get(guild_id).ticket_panel_channel_id == channel_id
+
+
+def _live(guild_id: int) -> bool:
+    """The panel stays where it is while Tickets is off, and catches up once it's back on."""
+    return cache.enabled(guild_id, Module.TICKETS)
 
 
 async def post(channel: discord.TextChannel) -> discord.Message:
@@ -67,6 +73,8 @@ async def adopt(client: Client, guild_id: int) -> None:
 
 async def adopt_all(client: Client) -> None:
     for guild_id in cache.guild_ids_with_ticket_panel():
+        if not _live(guild_id):
+            continue
         try:
             await adopt(client, guild_id)
         except Exception:
@@ -74,6 +82,8 @@ async def adopt_all(client: Client) -> None:
 
 
 def stick(channel: discord.TextChannel) -> None:
+    if not _live(channel.guild.id):
+        return
     if task := _sticking.pop(channel.guild.id, None):
         task.cancel()
     _sticking[channel.guild.id] = asyncio.create_task(_stick_later(channel))
@@ -83,7 +93,7 @@ async def _stick_later(channel: discord.TextChannel) -> None:
     await asyncio.sleep(STICK_DELAY)
     # Out of the dict before posting, so a message arriving mid-post schedules a new move instead of cancelling this one
     _sticking.pop(channel.guild.id, None)
-    if is_panel_channel(channel.guild.id, channel.id):
+    if is_panel_channel(channel.guild.id, channel.id) and _live(channel.guild.id):
         try:
             await post(channel)
         except discord.HTTPException:
@@ -92,7 +102,11 @@ async def _stick_later(channel: discord.TextChannel) -> None:
 
 async def repost_if_deleted(client: Client, guild_id: int, message_ids: Collection[int]) -> None:
     settings = cache.get(guild_id)
-    if settings.ticket_panel_message_id not in message_ids or settings.ticket_panel_channel_id is None:
+    if (
+        settings.ticket_panel_message_id not in message_ids
+        or settings.ticket_panel_channel_id is None
+        or not _live(guild_id)
+    ):
         return
     channel = client.get_channel(settings.ticket_panel_channel_id)
     if isinstance(channel, discord.TextChannel):

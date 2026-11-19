@@ -10,7 +10,7 @@ from litestar.openapi.plugins import ScalarRenderPlugin
 from litestar.openapi.spec import Components, SecurityScheme
 from litestar.types import Scope
 from square.api import live
-from square.api.auth import provide_actor, provide_client, secret_guard
+from square.api.auth import module_guard, provide_actor, provide_client, secret_guard
 from square.api.resolve import SettingError
 from square.api.routes import handlers
 from square.core import Client
@@ -34,7 +34,7 @@ def create_app(client: Client | None, *, secret: str, docs: bool) -> Litestar:
     api = Router(
         path="/",
         route_handlers=handlers,
-        guards=[secret_guard(secret)],
+        guards=[secret_guard(secret), module_guard],
         security=[{"secret": []}],
         dependencies={
             "client": Provide(provide_client, sync_to_thread=False),

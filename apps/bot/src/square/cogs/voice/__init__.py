@@ -1,6 +1,7 @@
 import asyncio
 import discord
 from discord import SlashCommandGroup, option, ui
+from square import logs
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView, error_view, not_in_server, success_view
@@ -45,6 +46,7 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
             view = error_view(f"{source.mention} has no members to move.")
             await ctx.respond(view=view, ephemeral=True)
             return
+        logs.acting(ctx.guild.id, discord.AuditLogAction.member_move, 0, ctx.author)
         results = await asyncio.gather(*(member.move_to(to) for member in members), return_exceptions=True)
         moved = [
             member.mention for member, result in zip(members, results, strict=True) if not isinstance(result, Exception)
@@ -95,6 +97,7 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
                 ephemeral=True,
             )
             return
+        logs.acting(ctx.guild.id, discord.AuditLogAction.member_update, user.id, ctx.author)
         await (user.edit(mute=value) if flag == "mute" else user.edit(deafen=value))
         await ctx.respond(
             view=success_view(f"Successfully {'' if value else 'un'}{word} {user.mention} (`{user.name}`) in voice.")
@@ -107,6 +110,7 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
         if not await self._check_target(ctx, user) or user.voice is None:
             return
         channel = user.voice.channel
+        logs.acting(ctx.guild.id, discord.AuditLogAction.member_disconnect, 0, ctx.author)
         await user.move_to(None)
         await ctx.respond(
             view=success_view(f"Successfully kicked {user.mention} (`{user.name}`) from {channel.mention}.")
@@ -156,6 +160,7 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
             await ctx.respond(view=view, ephemeral=True)
         else:
             channel = ctx.author.voice.channel
+            logs.acting(ctx.guild.id, discord.AuditLogAction.member_move, 0, ctx.author)
             await user.move_to(channel)
             view = success_view(f"Successfully pulled {user.mention} (`{user.name}`) into {channel.mention}.")
             await ctx.respond(view=view)

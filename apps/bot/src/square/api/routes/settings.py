@@ -26,6 +26,7 @@ from square.api.schemas import (
 )
 from square.cogs.giveaways import actions as giveaway_actions
 from square.cogs.tickets import cards
+from square.cogs.tickets.panel import adopt as adopt_panel
 from square.cogs.tickets.panel import post as post_panel
 from square.cogs.tickets.panel import unbind as unbind_panel
 from square.core import Client
@@ -37,13 +38,14 @@ from square.db.funcs import logs as logs_db
 from square.db.funcs import tickets as tickets_db
 from square.db.funcs.guild import add_guild
 from square.forget import forget_guild
+from square.logs.catalog import EVENTS, Log
 from square.modules import Module
 from square.music import request, stay
 from square.music.core import can_play_in, get_player
 from square.music.player import release_guild, render_player, stop_player
 from square.music.utils import delete_quietly
 from square.utils.invites import refresh as refresh_invites
-from square.utils.server_log import LogType
+from typing import Any
 
 
 def _notes(guild: discord.Guild, *notes: str | None) -> Notes:
@@ -51,61 +53,88 @@ def _notes(guild: discord.Guild, *notes: str | None) -> Notes:
 
 
 def _logs(guild: discord.Guild) -> LogSettings:
-    channels = cache.get(guild.id).log_channels
+    settings = cache.get(guild.id)
     return LogSettings(
         channels=LogChannels(
             **{
                 key: str(channel_id)
-                for key, channel_id in channels.items()
+                for key, channel_id in settings.log_channels.items()
                 if key in LogChannels.__struct_fields__ and guild.get_channel(channel_id)
             }
-        )
+        ),
+        disabled_events=[event for event in settings.log_disabled_events if event in EVENTS],  # type: ignore[misc]
+        ignored_channel_ids=[
+            str(channel_id)
+            for channel_id in settings.log_ignored_channel_ids
+            if guild.get_channel_or_thread(channel_id)
+        ],
+        ignored_role_ids=[str(role_id) for role_id in settings.log_ignored_role_ids if guild.get_role(role_id)],
+        skip_bots=settings.log_skip_bots,
     )
 
 
-async def _set_log_channels(
-    client: Client, guild: discord.Guild, changes: Mapping[LogType, discord.TextChannel | None]
-) -> None:
+async def _set_log_channels(guild: discord.Guild, changes: Mapping[Log, discord.TextChannel | None]) -> None:
     for channel in {channel for channel in changes.values() if channel}:
         perms = channel.permissions_for(guild.me)
         if not (perms.send_messages and perms.manage_webhooks):
             raise SettingError(f"Square needs `Send Messages` and `Manage Webhooks` in {channel.mention}.")
 
     by_channel: defaultdict[discord.TextChannel, list[str]] = defaultdict(list)
-    for log_type, channel in changes.items():
+    for log, channel in changes.items():
         if channel:
-            by_channel[channel].append(log_type.key)
+            by_channel[channel].append(log)
         else:
-            await logs_db.remove_log_channel(guild.id, log_type.key)
+            await logs_db.remove_log_channel(guild.id, log)
     for channel, keys in by_channel.items():
         await logs_db.set_all_log_channels(guild.id, keys, channel.id)
-    client.dispatch("log_channels_update", guild.id)
 
 
-async def _reset_logs(client: Client, guild: discord.Guild) -> None:
-    await logs_db.remove_log_channel(guild.id)
-    client.dispatch("log_channels_update", guild.id)
+def _ignored_channels(guild: discord.Guild, channel_ids: list[str]) -> list[int]:
+    found = [guild.get_channel_or_thread(int(channel_id)) for channel_id in dict.fromkeys(channel_ids)]
+    if any(channel is None for channel in found):
+        raise SettingError("One of those channels isn't in this server.")
+    return [channel.id for channel in found if channel]
 
 
-@get("/logs", summary="Where each kind of log goes")
+@get("/logs", summary="Where each log goes, which events are off and what is ignored", opt={"module": Module.LOGS})
 async def get_log_settings(guild: discord.Guild) -> LogSettings:
     return _logs(guild)
 
 
-@patch("/logs", summary="Send log types to channels, or turn them off", responses=REFUSED)
+@patch(
+    "/logs",
+    summary="Change where logs go, which events are off or what is ignored",
+    responses=REFUSED,
+    opt={"module": Module.LOGS},
+)
 async def update_log_settings(client: Client, guild: discord.Guild, data: LogPatch) -> LogSettings:
-    changes = {
-        log_type: resolve.text_channel(guild, channel_id)
-        for log_type in LogType
-        if (channel_id := getattr(data.channels, log_type.key)) is not UNSET
-    }
-    await _set_log_channels(client, guild, changes)
+    changes = {}
+    if data.channels is not UNSET:
+        changes = {
+            log: resolve.text_channel(guild, channel_id)
+            for log in Log
+            if (channel_id := getattr(data.channels, log)) is not UNSET
+        }
+    values: dict[str, Any] = {}
+    if data.disabled_events is not UNSET:
+        values["log_disabled_events"] = list(dict.fromkeys(data.disabled_events))
+    if data.ignored_channel_ids is not UNSET:
+        values["log_ignored_channel_ids"] = _ignored_channels(guild, data.ignored_channel_ids)
+    if data.ignored_role_ids is not UNSET:
+        values["log_ignored_role_ids"] = [role.id for role in resolve.roles(guild, data.ignored_role_ids)]
+    if data.skip_bots is not UNSET:
+        values["log_skip_bots"] = data.skip_bots
+    await _set_log_channels(guild, changes)
+    if values:
+        await logs_db.save_settings(guild.id, **values)
+    client.dispatch("log_channels_update", guild.id)
     return _logs(guild)
 
 
-@delete("/logs", summary="Turn every log off", status_code=200)
+@delete("/logs", summary="Turn every log off and clear the log settings", status_code=200, opt={"module": Module.LOGS})
 async def reset_log_settings(client: Client, guild: discord.Guild) -> LogSettings:
-    await _reset_logs(client, guild)
+    await logs_db.reset(guild.id)
+    client.dispatch("log_channels_update", guild.id)
     return _logs(guild)
 
 
@@ -118,25 +147,25 @@ async def _reset_invites(guild: discord.Guild) -> None:
     await invites_db.set_fake_days(guild.id, 7)
 
 
-@get("/invites", summary="Fake account age")
+@get("/invites", summary="Fake account age", opt={"module": Module.INVITES})
 async def get_invite_settings(guild: discord.Guild) -> InviteSettings:
     return _invites(guild)
 
 
-@patch("/invites", summary="Change the fake account age", responses=REFUSED)
+@patch("/invites", summary="Change the fake account age", responses=REFUSED, opt={"module": Module.INVITES})
 async def update_invite_settings(guild: discord.Guild, data: InvitePatch) -> InviteSettings:
     if data.fake_days is not UNSET:
         await invites_db.set_fake_days(guild.id, data.fake_days)
     return _invites(guild)
 
 
-@delete("/invites", summary="Reset the fake account age", status_code=200)
+@delete("/invites", summary="Reset the fake account age", status_code=200, opt={"module": Module.INVITES})
 async def reset_invite_settings(guild: discord.Guild) -> InviteSettings:
     await _reset_invites(guild)
     return _invites(guild)
 
 
-@delete("/invites/counts", summary="Reset everyone's invite counts", status_code=200)
+@delete("/invites/counts", summary="Reset everyone's invite counts", status_code=200, opt={"module": Module.INVITES})
 async def reset_invite_counts(guild: discord.Guild) -> InviteSettings:
     await invites_db.reset_invites(guild.id)
     return _invites(guild)
@@ -327,12 +356,12 @@ async def _reset_tickets(guild: discord.Guild, actor: discord.abc.User) -> str |
     return note
 
 
-@get("/tickets", summary="Ticket setup and panel")
+@get("/tickets", summary="Ticket setup and panel", opt={"module": Module.TICKETS})
 async def get_ticket_settings(guild: discord.Guild) -> TicketSettings:
     return _tickets(guild)
 
 
-@patch("/tickets", summary="Change ticket settings", responses=REFUSED)
+@patch("/tickets", summary="Change ticket settings", responses=REFUSED, opt={"module": Module.TICKETS})
 async def update_ticket_settings(guild: discord.Guild, data: TicketPatch) -> TicketSettings:
     settings = cache.get(guild.id)
     if any(
@@ -361,13 +390,15 @@ async def update_ticket_settings(guild: discord.Guild, data: TicketPatch) -> Tic
     return _tickets(guild)
 
 
-@delete("/tickets", summary="Reset ticket settings, removing the panel", status_code=200)
+@delete(
+    "/tickets", summary="Reset ticket settings, removing the panel", status_code=200, opt={"module": Module.TICKETS}
+)
 async def reset_ticket_settings(guild: discord.Guild, member: discord.Member) -> Notes:
     note = await _reset_tickets(guild, member)
     return _notes(guild, note)
 
 
-@post("/tickets/panel", summary="Create the ticket panel channel", responses=REFUSED)
+@post("/tickets/panel", summary="Create the ticket panel channel", responses=REFUSED, opt={"module": Module.TICKETS})
 async def create_ticket_panel(guild: discord.Guild) -> TicketSettings:
     """Creates a read-only channel holding the "Open a ticket" panel, kept up to date like the music card."""
     if channel := _ticket_panel_channel(guild):
@@ -401,7 +432,7 @@ async def create_ticket_panel(guild: discord.Guild) -> TicketSettings:
     return _tickets(guild)
 
 
-@delete("/tickets/panel", summary="Remove the ticket panel", status_code=200)
+@delete("/tickets/panel", summary="Remove the ticket panel", status_code=200, opt={"module": Module.TICKETS})
 async def remove_ticket_panel(guild: discord.Guild, member: discord.Member) -> Notes:
     note = await _remove_ticket_panel(guild, member)
     return _notes(guild, note)
@@ -420,6 +451,7 @@ async def get_module_settings(guild: discord.Guild) -> ModuleSettings:
 async def update_module_settings(client: Client, guild: discord.Guild, data: ModulePatch) -> ModuleSettings:
     invites_were_on = cache.enabled(guild.id, Module.INVITES)
     giveaways_were_on = cache.enabled(guild.id, Module.GIVEAWAYS)
+    tickets_were_on = cache.enabled(guild.id, Module.TICKETS)
     for module in Module:
         if (on := getattr(data, module.value)) is not UNSET:
             await guild_db.set_module(guild.id, module, on)
@@ -428,6 +460,8 @@ async def update_module_settings(client: Client, guild: discord.Guild, data: Mod
         await giveaway_actions.redraw_invite_rules(client, guild.id)
     if cache.enabled(guild.id, Module.GIVEAWAYS) and not giveaways_were_on:
         giveaway_actions.wake()
+    if cache.enabled(guild.id, Module.TICKETS) and not tickets_were_on:
+        await adopt_panel(client, guild.id)
     return _modules(guild)
 
 

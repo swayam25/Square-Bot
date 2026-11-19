@@ -35,12 +35,34 @@ RuleId = Annotated[str, Parameter(pattern=r"^\d{17,20}$", description="A Discord
 _RANGES: dict[str, tuple[tuple[int, int] | None, tuple[int, int] | None]] = {
     "media": (None, None),
     "invites": (None, None),
+    "masked_links": (None, None),
+    "new_members": ((1, 1440), None),
     "flood": ((2, 50), (2, 60)),
     "duplicates": ((1, 20), (5, 600)),
+    "mention_flood": ((2, 100), (5, 300)),
+    "file_flood": ((2, 50), (2, 60)),
+    "ghost_pings": (None, (5, 600)),
     "caps": ((50, 95), None),
     "emojis": ((1, 100), None),
+    "zalgo": ((2, 20), None),
+    "fonts": ((0, 90), None),
+    "repeated_chars": ((3, 50), None),
+    "lines": ((3, 100), None),
+    "invisible": (None, None),
 }
-_UNITS = {"flood": "messages", "duplicates": "repeats", "caps": "percent", "emojis": "emojis"}
+_UNITS = {
+    "new_members": "minutes",
+    "flood": "messages",
+    "duplicates": "repeats",
+    "mention_flood": "mentions",
+    "file_flood": "files",
+    "caps": "percent",
+    "emojis": "emojis",
+    "zalgo": "marks",
+    "fonts": "percent",
+    "repeated_chars": "characters",
+    "lines": "lines",
+}
 
 _TRIGGERS = {1: "keyword", 3: "spam", 4: "preset", 5: "mention_spam", 6: "member_profile"}
 _TRIGGER_IDS = {name: value for value, name in _TRIGGERS.items()}
@@ -65,7 +87,7 @@ def _square_rule(kind: str, rule: AutomodRuleTable | None) -> SquareRule:
             amount=amount,
             seconds=seconds,
             channel_ids=[],
-            delete=True,
+            delete=kind != "ghost_pings",
             warn=False,
             notify=True,
             exempt_role_ids=[],
@@ -115,7 +137,10 @@ def _channels(guild: discord.Guild, channel_ids: list[str]) -> list[int]:
 def _rule_values(guild: discord.Guild, rule: SquareRule) -> dict[str, Any]:
     label = LABELS[rule.kind]
     amount_range, seconds_range = _RANGES[rule.kind]
-    if rule.enabled and not (rule.delete or rule.warn):
+    ghost = rule.kind == "ghost_pings"
+    if rule.enabled and ghost and not (rule.notify or rule.warn):
+        raise SettingError(f"{label} needs to post who was pinged, warn, or both.")
+    if rule.enabled and not ghost and not (rule.delete or rule.warn):
         raise SettingError(f"{label} needs to delete the message, warn, or both.")
     media = [channel.id for value in dict.fromkeys(rule.channel_ids) if (channel := resolve.text_channel(guild, value))]
     if rule.kind == "media":
@@ -130,7 +155,7 @@ def _rule_values(guild: discord.Guild, rule: SquareRule) -> dict[str, Any]:
         "amount": _in_range(rule.amount, amount_range, f"{label} {_UNITS.get(rule.kind, '')}".strip()),
         "seconds": _in_range(rule.seconds, seconds_range, f"{label} seconds"),
         "channel_ids": media if rule.kind == "media" else [],
-        "delete_message": rule.delete,
+        "delete_message": rule.delete and not ghost,
         "warn": rule.warn,
         "notify": rule.notify,
         "exempt_role_ids": [role.id for role in resolve.roles(guild, rule.exempt_role_ids)],
@@ -395,8 +420,15 @@ async def test_automod(client: Client, guild: discord.Guild, data: AutomodTest) 
         if not rule.enabled or places & set(rule.exempt_channel_ids):
             continue
         label = LABELS[kind]
-        if kind in ("flood", "duplicates"):
+        if kind in rules.WINDOW_KINDS:
             skipped.append(f"{label} needs several messages in a row.")
+        elif kind == "ghost_pings":
+            skipped.append(f"{label} looks at deleted messages, which can't be tested here.")
+        elif kind == "new_members":
+            if rules.has_link(content):
+                minutes = rule.amount or 0
+                detail = f"Has a link, caught for anyone who joined under {minutes} {plural(minutes, 'minute')} ago"
+                hits.append(AutomodHit(source="square", rule=label, detail=detail))
         elif kind == "media":
             if channel and channel.id in rule.channel_ids and not rules.has_link(content):
                 hits.append(AutomodHit(source="square", rule=label, detail="No link, and files can't be tested here"))

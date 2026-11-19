@@ -12,6 +12,7 @@ from square.api.users import find_user
 from square.core import Client
 from square.db import cache
 from square.db.funcs import autorole as autorole_db
+from square.modules import Module
 from typing import Any
 
 
@@ -100,6 +101,7 @@ async def reset_autorole(client: Client, guild: discord.Guild) -> AutoroleSettin
 
 router = Router(
     "/guilds/{guild_id:str}/autorole",
+    opt={"module": Module.AUTOROLE},
     tags=["AutoRole"],
     exception_handlers={SettingError: refused},
     dependencies={"guild": Provide(provide_guild, sync_to_thread=False)},

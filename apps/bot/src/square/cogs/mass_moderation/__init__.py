@@ -6,10 +6,12 @@ from collections.abc import Awaitable, Callable
 from discord import ui
 from discord.commands import SlashCommandGroup, option
 from discord.ext import commands
+from square import logs
+from square.cogs.moderation.common import role_refusal
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView, error_view
-from square.utils import bans, config, mod_dm, server_log
+from square.utils import bans, config, mod_dm
 from square.utils.emoji import emoji
 from square.utils.helpers import parse_duration, plural
 
@@ -67,18 +69,15 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
         users: list[str],
         fields: list[tuple[str, str, str]],
         color: int | None,
-        moderator: discord.abc.User | None = None,
     ) -> DesignerView:
         suffix = {config.color.red: "_red", config.color.orange: "_orange", config.color.green: "_green"}.get(color, "")
 
         def icon(name: str) -> str:
             return getattr(emoji, f"{name}{suffix}")
 
-        lines = [] if moderator else [f"Successfully {summary} {len(users)} {plural(len(users), 'user')}."]
+        lines = [f"Successfully {summary} {len(users)} {plural(len(users), 'user')}."]
         lines += [f"{icon(name)} **{label}**: {value}" for name, label, value in fields]
         lines.append(f"{icon('user')} **Users**: {', '.join(users)}")
-        if moderator:
-            lines.append(f"{icon('owner')} **Moderator**: {moderator.mention} (`{moderator.name}`)")
         return DesignerView(
             ui.Container(
                 ui.TextDisplay(f"## {title}"),
@@ -97,9 +96,11 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
         summary: str,
         error_title: str,
         fields: list[tuple[str, str, str]],
-        log_color: int | None,
+        audit: discord.AuditLogAction,
     ):
         done: list[str] = []
+        for target in targets:
+            logs.acting(ctx.guild.id, audit, target.id, ctx.author)
         results = await asyncio.gather(*(action(target) for target in targets), return_exceptions=True)
         for target, result in zip(targets, results, strict=True):
             if isinstance(result, discord.HTTPException):
@@ -110,8 +111,6 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
                 done.append(f"{target.mention} (`{target.name}`)")
         if done:
             await ctx.respond(view=self._result_view(title, summary, done, fields, config.color.green))
-            log_view = self._result_view(title, summary, done, fields, log_color, moderator=ctx.author)
-            await server_log.send(self.client, ctx.guild, server_log.LogType.MODERATION, log_view)
         if errors:
             view = DesignerView(
                 ui.Container(
@@ -146,8 +145,8 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
                 title="Mass Kicked Users",
                 summary="kicked",
                 error_title="Can't Kick Users",
-                fields=[("description", "Reason", reason or "No reason given")],
-                log_color=config.color.orange,
+                fields=[("note", "Reason", reason or "No reason given")],
+                audit=discord.AuditLogAction.kick,
             )
 
     @mass.command(name="ban")
@@ -186,14 +185,14 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
                 summary="banned",
                 error_title="Can't Ban Users",
                 fields=[
-                    ("description", "Reason", reason or "No reason given"),
+                    ("note", "Reason", reason or "No reason given"),
                     (
                         "bin",
                         "Delete Message Duration",
                         f"`{format_timedelta(del_after, locale='en')}`" if del_after else "Kept all messages",
                     ),
                 ],
-                log_color=config.color.red,
+                audit=discord.AuditLogAction.ban,
             )
 
     @mass.command(name="unban")
@@ -224,8 +223,8 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
                 title="Mass Unbanned Users",
                 summary="unbanned",
                 error_title="Can't Unban Users",
-                fields=[("description", "Reason", reason or "No reason given")],
-                log_color=config.color.green,
+                fields=[("note", "Reason", reason or "No reason given")],
+                audit=discord.AuditLogAction.unban,
             )
 
     @mass.command(name="timeout")
@@ -266,9 +265,9 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
                 error_title="Can't Timeout Users",
                 fields=[
                     ("duration", "Duration", f"`{format_timedelta(dur, locale='en')}`"),
-                    ("description", "Reason", reason or "No reason given"),
+                    ("note", "Reason", reason or "No reason given"),
                 ],
-                log_color=config.color.orange,
+                audit=discord.AuditLogAction.member_update,
             )
 
     @mass.command(name="untimeout")
@@ -300,8 +299,8 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
                 title="Mass Untimed Out Users",
                 summary="untimed out",
                 error_title="Can't Untimeout Users",
-                fields=[("description", "Reason", reason or "No reason given")],
-                log_color=config.color.green,
+                fields=[("note", "Reason", reason or "No reason given")],
+                audit=discord.AuditLogAction.member_update,
             )
 
     async def _mass_role(self, ctx: discord.ApplicationContext, users: str, roles: str, add: bool):
@@ -318,8 +317,8 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
             except commands.BadArgument:
                 errors.append((f"`{role.replace('`', '')}`", "Role not found."))
                 continue
-            if _role.position >= ctx.guild.me.top_role.position:
-                errors.append((_role.mention, "Role has same or higher position than me."))
+            if refusal := role_refusal(ctx.author, _role):
+                errors.append((_role.mention, refusal))
             else:
                 _roles.append(_role)
         members: list[discord.Member] = []
@@ -335,7 +334,7 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
             summary=f"{past} {len(_roles)} {plural(len(_roles), 'role')} {prep}",
             error_title=f"Can't {verb.capitalize()} Roles",
             fields=[("role", "Roles", ", ".join(role.mention for role in _roles))],
-            log_color=None,
+            audit=discord.AuditLogAction.member_role_update,
         )
 
     @mass.command(name="role-add")

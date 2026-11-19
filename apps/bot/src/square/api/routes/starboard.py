@@ -17,6 +17,7 @@ from square.core import Client
 from square.db.funcs import starboard as starboard_db
 from square.db.funcs.starboard import emoji_key
 from square.db.schema import StarboardTable
+from square.modules import Module
 from typing import Annotated, Any
 
 BoardId = Annotated[int, Parameter(ge=1, le=2**31 - 1)]
@@ -157,6 +158,7 @@ async def delete_starboard(guild: discord.Guild, board_id: BoardId) -> None:
 
 router = Router(
     "/guilds/{guild_id:str}/starboards",
+    opt={"module": Module.STARBOARD},
     tags=["Starboard"],
     exception_handlers={SettingError: refused},
     dependencies={"guild": Provide(provide_guild, sync_to_thread=False)},

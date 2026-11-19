@@ -156,40 +156,42 @@
     <PageHeading title="Overview" description="What's happening in {data.guild.name} right now." actions={quickLinks} />
 
     {#if statsQuery}
-        <section aria-label="Server stats" class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
-            {#if stats}
-                {#each tiles as tile (tile.label)}
-                    <div class="flex min-w-0 flex-col gap-2 rounded-card bg-gray-900 p-4">
-                        <span class="flex items-center gap-2 text-sm text-gray-400"
-                            ><tile.icon class={["size-5 shrink-0", tile.tone]} />{tile.label}</span
-                        >
-                        <span class="truncate font-mono text-2xl font-semibold">{tile.value}</span>
-                        <span class="truncate text-xs text-gray-400"
-                            >{#if typeof tile.detail === "string"}{tile.detail}{:else}{@render tile.detail()}{/if}</span
-                        >
-                    </div>
-                {/each}
-            {:else if statsQuery.error}
-                <EmptyState
-                    tone="danger"
-                    card
-                    compact
-                    class="col-span-full"
-                    title="Couldn't load the server stats"
-                    text={statsQuery.error.message ?? "Square didn't answer. Try again in a moment."}
-                    retry={() => statsQuery.refresh()}
-                />
-            {:else}
-                {#each { length: 6 }, i (i)}
-                    <div aria-hidden="true" class="flex flex-col gap-2 rounded-card bg-gray-900 p-4">
-                        <span class="flex h-5 items-center gap-2"
-                            ><span class="size-5 skeleton rounded-md"></span><span class="h-4 w-16 skeleton rounded-md"></span></span
-                        >
-                        <span class="flex h-8 items-center"><span class="h-6 w-12 skeleton rounded-xl"></span></span>
-                        <span class="flex h-4 items-center"><span class="h-2 w-24 skeleton rounded-sm"></span></span>
-                    </div>
-                {/each}
-            {/if}
+        <section aria-label="Server stats" class="@container">
+            <div class="grid grid-cols-2 gap-4 @3xl:grid-cols-3 @min-[90rem]:grid-cols-6">
+                {#if stats}
+                    {#each tiles as tile (tile.label)}
+                        <div class="flex min-w-0 flex-col gap-2 rounded-card bg-gray-900 p-4">
+                            <span class="flex items-center gap-2 text-sm text-gray-400"
+                                ><tile.icon class={["size-5 shrink-0", tile.tone]} />{tile.label}</span
+                            >
+                            <span class="truncate font-mono text-2xl font-semibold">{tile.value}</span>
+                            <span class="truncate text-xs text-gray-400"
+                                >{#if typeof tile.detail === "string"}{tile.detail}{:else}{@render tile.detail()}{/if}</span
+                            >
+                        </div>
+                    {/each}
+                {:else if statsQuery.error}
+                    <EmptyState
+                        tone="danger"
+                        card
+                        compact
+                        class="col-span-full"
+                        title="Couldn't load the server stats"
+                        text={statsQuery.error.message ?? "Square didn't answer. Try again in a moment."}
+                        retry={() => statsQuery.refresh()}
+                    />
+                {:else}
+                    {#each { length: 6 }, i (i)}
+                        <div aria-hidden="true" class="flex flex-col gap-2 rounded-card bg-gray-900 p-4">
+                            <span class="flex h-5 items-center gap-2"
+                                ><span class="size-5 skeleton rounded-md"></span><span class="h-4 w-16 skeleton rounded-md"></span></span
+                            >
+                            <span class="flex h-8 items-center"><span class="h-6 w-12 skeleton rounded-xl"></span></span>
+                            <span class="flex h-4 items-center"><span class="h-2 w-24 skeleton rounded-sm"></span></span>
+                        </div>
+                    {/each}
+                {/if}
+            </div>
         </section>
     {/if}
 

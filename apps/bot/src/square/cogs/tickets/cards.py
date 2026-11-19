@@ -56,7 +56,7 @@ def controls(ticket: TicketTable, guild: discord.Guild) -> DesignerView:
                 ui.TextDisplay(f"## Ticket {label(ticket)}"),
                 ui.TextDisplay(f"Hey <@{ticket.opener_id}>, {staff} will be with you soon."),
                 ui.TextDisplay(
-                    f"{emoji.ticket} **Reason**: {ticket.reason}\n{emoji.claim} **Claimed By**: {_who(ticket.claimed_by)}"
+                    f"{emoji.note} **Reason**: {ticket.reason}\n{emoji.claim} **Claimed By**: {_who(ticket.claimed_by)}"
                 ),
             ),
             ui.ActionRow(
@@ -76,7 +76,7 @@ def controls(ticket: TicketTable, guild: discord.Guild) -> DesignerView:
     return DesignerView(
         ui.Container(
             ui.TextDisplay(f"## Ticket {label(ticket)} Closed"),
-            ui.TextDisplay(f"{emoji.lock_red} **Closed By**: {_who(ticket.closed_by, 'Unknown')}"),
+            ui.TextDisplay(f"{emoji.archive_red} **Closed By**: {_who(ticket.closed_by, 'Unknown')}"),
             color=config.color.red,
         ),
         ui.ActionRow(
@@ -107,7 +107,7 @@ def log_card(ticket: TicketTable, guild_id: int) -> DesignerView:
     if ticket.status == "open":
         lines = [
             f"{emoji.user} **Opened By**: {_who(ticket.opener_id)}",
-            f"{emoji.ticket} **Reason**: {ticket.reason}",
+            f"{emoji.note} **Reason**: {ticket.reason}",
             f"{emoji.claim} **Claimed By**: {_who(ticket.claimed_by)}",
             f"{emoji.channel} **Channel**: <#{ticket.channel_id}>",
             f"{emoji.date} **Opened**: {discord.utils.format_dt(ticket.created_at, 'R')}",
@@ -117,9 +117,9 @@ def log_card(ticket: TicketTable, guild_id: int) -> DesignerView:
         )
     lines = [
         f"{emoji.user_red} **Opened By**: {_who(ticket.opener_id)}",
-        f"{emoji.ticket_red} **Reason**: {ticket.reason}",
-        f"{emoji.support_red} **Claimed By**: {_who(ticket.claimed_by)}",
-        f"{emoji.lock_red} **Closed By**: {_who(ticket.closed_by, 'Unknown')}",
+        f"{emoji.note_red} **Reason**: {ticket.reason}",
+        f"{emoji.claim_red} **Claimed By**: {_who(ticket.claimed_by)}",
+        f"{emoji.archive_red} **Closed By**: {_who(ticket.closed_by, 'Unknown')}",
     ]
     if ticket.closed_at:
         open_for = format_timedelta(ticket.closed_at - ticket.created_at, locale="en")

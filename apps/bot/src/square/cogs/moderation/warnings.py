@@ -6,12 +6,13 @@ from contextlib import suppress
 from dataclasses import dataclass
 from discord import ui
 from discord.commands import option, slash_command, user_command
+from square import logs
 from square.cogs.moderation.common import answer, dms_closed, field, prompt, result_view
 from square.core import Client
 from square.core.view import DesignerView, button, error_view, not_in_server, show_loading, success_view
 from square.db.funcs import automod as automod_db
 from square.db.schema import WarningTable, WarnPunishmentTable
-from square.utils import config, mod_dm, server_log
+from square.utils import config, mod_dm
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count, plural
 
@@ -47,6 +48,9 @@ async def _punish(
     if not _can_punish(guild, member):
         return False
     reason = f"Reached {step.warnings} {plural(step.warnings, 'warning')}"
+    A = discord.AuditLogAction
+    action = {"timeout": A.member_update, "kick": A.kick, "ban": A.ban}[step.action]
+    logs.acting(guild.id, action, member.id, "Warning punishment")
     try:
         match step.action:
             case "timeout":
@@ -91,31 +95,13 @@ async def warn(
     if sent and step and not punished:
         with suppress(discord.HTTPException):
             await sent.edit(view=mod_dm.view(guild, "You got warned", config.color.orange, rows))
-    by = f"{moderator.mention} (`{moderator.name}`)" if moderator else "AutoMod"
-    await server_log.send(
-        client,
-        guild,
-        server_log.LogType.MODERATION,
-        DesignerView(
-            ui.Container(
-                ui.TextDisplay("## Member Warned"),
-                ui.TextDisplay(
-                    f"{emoji.user_orange} **Member**: {member.mention} (`{member.name}`)\n"
-                    f"{emoji.id_orange} **ID**: `{member.id}`\n"
-                    f"{emoji.owner_orange} **Moderator**: {by}\n"
-                    f"{emoji.description_orange} **Reason**: {reason or 'No reason given'}\n"
-                    f"{emoji.warning_orange} **Warnings**: {fmt_count(total)}"
-                    + (f"\n{emoji.mod_orange} **Punishment**: {punishment}" if punishment and punished else "")
-                    + (
-                        f"\n{emoji.mod_orange} **Punishment failed**: {punishment}"
-                        if punishment and not punished
-                        else ""
-                    )
-                ),
-                color=config.color.orange,
-            )
-        ),
-    )
+    entry = logs.Entry("warnings", "Member Warned", "orange", thumbnail=member.display_avatar.url)
+    entry.add("user", "Member", logs.person(member)).add("id", "ID", f"`{member.id}`")
+    entry.add("owner", "Moderator", logs.person(moderator) if moderator else "AutoMod")
+    entry.add("note", "Reason", reason or "No reason given").add("warning", "Warnings", fmt_count(total))
+    if punishment:
+        entry.add("mod", "Punishment" if punished else "Punishment failed", punishment)
+    logs.emit(guild, entry)
     return Warned(warning, total, punishment, punished, messaged)
 
 
@@ -214,7 +200,8 @@ class WarningsList(DesignerView):
     async def _remove(self, interaction: discord.Interaction, warning_id: int) -> None:
         if not await show_loading(self, interaction):
             return
-        await automod_db.remove_warning(self.guild.id, self.user.id, warning_id)
+        if await automod_db.remove_warning(self.guild.id, self.user.id, warning_id):
+            log_removed(self.guild, self.user, interaction.user, 1)
         await self._redraw(interaction)
 
     async def _confirm(self, interaction: discord.Interaction, confirming: bool) -> None:
@@ -227,6 +214,8 @@ class WarningsList(DesignerView):
         if not await show_loading(self, interaction):
             return
         count = await automod_db.clear_warnings(self.guild.id, self.user.id)
+        if count:
+            log_removed(self.guild, self.user, interaction.user, count)
         await interaction.edit_original_response(
             view=success_view(
                 f"Cleared {fmt_count(count)} {plural(count, 'warning')} from {self.user.mention} (`{self.user.name}`)."
@@ -234,6 +223,14 @@ class WarningsList(DesignerView):
             if count
             else self.empty()
         )
+
+
+def log_removed(guild: discord.Guild, user: discord.abc.User, moderator: discord.abc.User, count: int) -> None:
+    entry = logs.Entry("warnings", "Warnings Removed" if count > 1 else "Warning Removed", "green")
+    entry.thumbnail = user.display_avatar.url
+    entry.add("user", "Member", logs.person(user)).add("id", "ID", f"`{user.id}`")
+    entry.add("owner", "Moderator", logs.person(moderator)).add("warning", "Removed", fmt_count(count))
+    logs.emit(guild, entry)
 
 
 def refusal(moderator: discord.Member, member: discord.Member) -> str | None:
@@ -257,7 +254,7 @@ class Warnings:
         await interaction.response.defer()
         warned = await warn(self.client, interaction.guild, user, reason, interaction.user)
         lines = [
-            f"{emoji.description_green} **Reason**: {reason or 'No reason given'}",
+            f"{emoji.note_green} **Reason**: {reason or 'No reason given'}",
             f"{emoji.warning_green} **Warnings**: {fmt_count(warned.total)}",
         ]
         if warned.punishment:

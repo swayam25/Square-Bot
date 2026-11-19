@@ -23,7 +23,7 @@ from square.db.funcs.invites import (
 from square.imaging import assets
 from square.imaging.templates import invite_card, leaderboard
 from square.modules import Module
-from square.utils import config, invites, server_log
+from square.utils import config, invites
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count, plural
 
@@ -273,7 +273,7 @@ class Invites(
             ui.Container(
                 ui.TextDisplay(f"## How {user.display_name} Joined"),
                 ui.TextDisplay(
-                    f"{emoji.user} **Invited By**: <@{join.inviter_id}> (`{join.inviter_id}`)\n"
+                    f"{emoji.owner} **Invited By**: <@{join.inviter_id}> (`{join.inviter_id}`)\n"
                     f"{emoji.invite} **Code**: `{join.code or 'unknown'}`\n"
                     f"{emoji.date} **Joined**: {discord.utils.format_dt(join.joined_at, 'R')}"
                     + (f"\n{emoji.warning} **Counted As Fake**: account was too new" if join.fake else "")
@@ -314,24 +314,7 @@ class Invites(
             return
         used = await invites.used_invite(member)
         inviter_id, code = (used.inviter_id, used.code) if used else (None, None)
-        fake = await record_join(member.guild.id, member, inviter_id, code)
-        if inviter_id is None:
-            return
-        total = (await fetch_counts(member.guild.id, inviter_id)).total
-        view = DesignerView(
-            ui.Container(
-                ui.TextDisplay("## Invite Used"),
-                ui.TextDisplay(
-                    f"{emoji.joins_green} **Member**: {member.mention} (`{member.name}`)\n"
-                    f"{emoji.user_green} **Invited By**: <@{inviter_id}> (`{inviter_id}`)\n"
-                    f"{emoji.description_green} **Code**: `{code}`\n"
-                    f"{emoji.members_green} **Their Invites**: `{fmt_count(total)}`"
-                    + ("\n-# Counted as fake, the account is too new." if fake else "")
-                ),
-                color=config.color.green,
-            )
-        )
-        await server_log.send(self.client, member.guild, server_log.LogType.INVITES, view)
+        await record_join(member.guild.id, member, inviter_id, code)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):

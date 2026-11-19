@@ -615,6 +615,10 @@ export type LogChannels = {
     /**
      * A Discord ID
      */
+    automod?: string | null;
+    /**
+     * A Discord ID
+     */
     members?: string | null;
     /**
      * A Discord ID
@@ -623,27 +627,11 @@ export type LogChannels = {
     /**
      * A Discord ID
      */
-    channels?: string | null;
-    /**
-     * A Discord ID
-     */
-    roles?: string | null;
-    /**
-     * A Discord ID
-     */
-    server?: string | null;
-    /**
-     * A Discord ID
-     */
     voice?: string | null;
     /**
      * A Discord ID
      */
-    invites?: string | null;
-    /**
-     * A Discord ID
-     */
-    automod?: string | null;
+    server?: string | null;
     /**
      * A Discord ID
      */
@@ -661,6 +649,10 @@ export type LogChannelsPatch = {
     /**
      * A Discord ID
      */
+    automod?: string | null;
+    /**
+     * A Discord ID
+     */
     members?: string | null;
     /**
      * A Discord ID
@@ -669,27 +661,11 @@ export type LogChannelsPatch = {
     /**
      * A Discord ID
      */
-    channels?: string | null;
-    /**
-     * A Discord ID
-     */
-    roles?: string | null;
-    /**
-     * A Discord ID
-     */
-    server?: string | null;
-    /**
-     * A Discord ID
-     */
     voice?: string | null;
     /**
      * A Discord ID
      */
-    invites?: string | null;
-    /**
-     * A Discord ID
-     */
-    automod?: string | null;
+    server?: string | null;
     /**
      * A Discord ID
      */
@@ -700,7 +676,37 @@ export type LogChannelsPatch = {
  * LogPatch
  */
 export type LogPatch = {
-    channels: LogChannelsPatch;
+    channels?: LogChannelsPatch;
+    disabledEvents?: Array<
+        | "bans"
+        | "kicks"
+        | "timeouts"
+        | "warnings"
+        | "discord_rules"
+        | "square_rules"
+        | "joins"
+        | "leaves"
+        | "nicknames"
+        | "member_roles"
+        | "profiles"
+        | "edits"
+        | "deletes"
+        | "purges"
+        | "pins"
+        | "voice_activity"
+        | "voice_moderation"
+        | "channels"
+        | "roles"
+        | "server_profile"
+        | "emojis"
+        | "invites"
+        | "webhooks"
+        | "bots"
+        | "automod_rules"
+    >;
+    ignoredChannelIds?: Array<string>;
+    ignoredRoleIds?: Array<string>;
+    skipBots?: boolean;
 };
 
 /**
@@ -708,6 +714,36 @@ export type LogPatch = {
  */
 export type LogSettings = {
     channels: LogChannels;
+    disabledEvents: Array<
+        | "bans"
+        | "kicks"
+        | "timeouts"
+        | "warnings"
+        | "discord_rules"
+        | "square_rules"
+        | "joins"
+        | "leaves"
+        | "nicknames"
+        | "member_roles"
+        | "profiles"
+        | "edits"
+        | "deletes"
+        | "purges"
+        | "pins"
+        | "voice_activity"
+        | "voice_moderation"
+        | "channels"
+        | "roles"
+        | "server_profile"
+        | "emojis"
+        | "invites"
+        | "webhooks"
+        | "bots"
+        | "automod_rules"
+    >;
+    ignoredChannelIds: Array<string>;
+    ignoredRoleIds: Array<string>;
+    skipBots: boolean;
 };
 
 /**
@@ -1194,7 +1230,23 @@ export type SkipVote = {
  * SquareRule
  */
 export type SquareRule = {
-    kind: "media" | "invites" | "flood" | "duplicates" | "caps" | "emojis";
+    kind:
+        | "media"
+        | "invites"
+        | "masked_links"
+        | "new_members"
+        | "flood"
+        | "duplicates"
+        | "mention_flood"
+        | "file_flood"
+        | "ghost_pings"
+        | "caps"
+        | "emojis"
+        | "zalgo"
+        | "fonts"
+        | "repeated_chars"
+        | "lines"
+        | "invisible";
     enabled: boolean;
     amount: number | null;
     seconds: number | null;

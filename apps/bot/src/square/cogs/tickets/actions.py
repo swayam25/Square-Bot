@@ -3,12 +3,12 @@
 import asyncio
 import discord
 import logging
+from square import logs
 from square.cogs.tickets import cards, snapshot
 from square.core import Client
 from square.db import cache
 from square.db.funcs import tickets as db
 from square.db.schema import TicketTable
-from square.utils import server_log
 from square.utils.helpers import fmt_user
 
 log = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ async def open_ticket(
     except discord.HTTPException:
         # Needs `pin_messages`, which `manage_messages` stopped covering. A ticket still works without the pin.
         log.warning("Couldn't pin the card of ticket %s in guild %s", ticket.number, guild.id)
-    log_id = await server_log.post(client, guild, server_log.LogType.TICKETS, cards.log_card(ticket, guild.id))
+    log_id = await logs.post(guild, logs.Log.TICKETS, cards.log_card(ticket, guild.id))
     await db.save_ticket(ticket, control_message_id=message.id, log_message_id=log_id)
     return channel
 
@@ -119,9 +119,7 @@ async def refresh(client: Client, guild: discord.Guild, ticket: TicketTable) -> 
         except discord.HTTPException:
             log.warning("Couldn't update the controls of ticket %s in guild %s", ticket.number, guild.id)
     if ticket.log_message_id and ticket.status == "open":
-        await server_log.edit(
-            client, guild, server_log.LogType.TICKETS, ticket.log_message_id, cards.log_card(ticket, guild.id)
-        )
+        await logs.edit(guild, logs.Log.TICKETS, ticket.log_message_id, cards.log_card(ticket, guild.id))
 
 
 async def claim(client: Client, guild: discord.Guild, ticket: TicketTable, member: discord.Member) -> str:
@@ -169,11 +167,9 @@ async def save_transcript(guild: discord.Guild, channel: discord.TextChannel, ti
 
 async def _log(client: Client, guild: discord.Guild, ticket: TicketTable) -> None:
     card = cards.log_card(ticket, guild.id)
-    if ticket.log_message_id and await server_log.edit(
-        client, guild, server_log.LogType.TICKETS, ticket.log_message_id, card
-    ):
+    if ticket.log_message_id and await logs.edit(guild, logs.Log.TICKETS, ticket.log_message_id, card):
         return
-    log_id = await server_log.post(client, guild, server_log.LogType.TICKETS, card)
+    log_id = await logs.post(guild, logs.Log.TICKETS, card)
     await db.save_ticket(ticket, log_message_id=log_id)
 
 
@@ -211,7 +207,5 @@ async def delete(
     await save_transcript(guild, channel, ticket)
     await db.save_ticket(ticket, status="deleted")
     if ticket.log_message_id:
-        await server_log.edit(
-            client, guild, server_log.LogType.TICKETS, ticket.log_message_id, cards.log_card(ticket, guild.id)
-        )
+        await logs.edit(guild, logs.Log.TICKETS, ticket.log_message_id, cards.log_card(ticket, guild.id))
     await channel.delete(reason=f"Ticket deleted by {fmt_user(by)}")

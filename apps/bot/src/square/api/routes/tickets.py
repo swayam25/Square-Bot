@@ -14,6 +14,7 @@ from square.cogs.tickets import actions, cards, files, snapshot
 from square.core import Client
 from square.db.funcs import tickets as tickets_db
 from square.db.schema import TicketTable
+from square.modules import Module
 from tortoise.expressions import Q
 from typing import Annotated, Literal
 
@@ -235,6 +236,7 @@ async def ticket_file(
 
 router = Router(
     "/guilds/{guild_id:str}/tickets",
+    opt={"module": Module.TICKETS},
     tags=["Tickets"],
     exception_handlers={SettingError: refused},
     dependencies={

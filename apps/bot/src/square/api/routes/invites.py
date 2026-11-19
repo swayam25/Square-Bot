@@ -18,6 +18,7 @@ from square.api.schemas import (
 from square.api.users import find_user, people_of
 from square.core import Client
 from square.db.funcs import invites as invites_db
+from square.modules import Module
 from typing import Annotated, Literal
 
 PAGE_SIZE = 25
@@ -111,6 +112,7 @@ async def change_bonus(guild: discord.Guild, data: BonusChange) -> list[Bonus]:
 
 router = Router(
     "/guilds/{guild_id:str}/invites",
+    opt={"module": Module.INVITES},
     tags=["Invites"],
     exception_handlers={SettingError: refused},
     dependencies={

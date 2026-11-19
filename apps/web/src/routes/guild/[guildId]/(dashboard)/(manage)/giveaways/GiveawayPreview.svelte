@@ -13,14 +13,14 @@
     import { formatCount } from "#lib/format.ts";
     import type { Channel, Person } from "@square/api-client";
     import type { Component } from "svelte";
-    import MaterialSymbolsAdd2Rounded from "~icons/material-symbols/add-2-rounded";
+    import MaterialSymbolsAddBoxRounded from "~icons/material-symbols/add-box-rounded";
     import MaterialSymbolsBookmarkRounded from "~icons/material-symbols/bookmark-rounded";
+    import MaterialSymbolsCalendarTodayRounded from "~icons/material-symbols/calendar-today-rounded";
     import MaterialSymbolsCelebrationRounded from "~icons/material-symbols/celebration-rounded";
     import MaterialSymbolsCrownRounded from "~icons/material-symbols/crown-rounded";
-    import MaterialSymbolsGroupsRounded from "~icons/material-symbols/groups-rounded";
+    import MaterialSymbolsDisabledByDefaultRounded from "~icons/material-symbols/disabled-by-default-rounded";
     import MaterialSymbolsHistoryRounded from "~icons/material-symbols/history-rounded";
     import MaterialSymbolsLinkRounded from "~icons/material-symbols/link-rounded";
-    import MaterialSymbolsPasskeyRounded from "~icons/material-symbols/passkey-rounded";
     import MaterialSymbolsPersonRounded from "~icons/material-symbols/person-rounded";
     import { validUrl, type Draft, type GiveawayStatus } from "./giveaway.ts";
 
@@ -74,12 +74,12 @@
             return [
                 { icon: MaterialSymbolsCrownRounded, text: `**${winners.length === 1 ? "Winner" : "Winners"}**: ${who}`, color: "text-embed-orange" },
                 { icon: MaterialSymbolsPersonRounded, text: `**Hosted By**: <@${host.id}>` },
-                { icon: MaterialSymbolsHistoryRounded, text: `**Ended**: <t:${seconds(endedAt ?? draft.endsAt ?? Date.now())}:R>` },
+                { icon: MaterialSymbolsCalendarTodayRounded, text: `**Ended**: <t:${seconds(endedAt ?? draft.endsAt ?? Date.now())}:R>` },
             ];
         }
         const ends = seconds(draft.endsAt ?? Date.now());
         const result: Line[] = [
-            { icon: MaterialSymbolsHistoryRounded, text: `**Ends**: <t:${ends}:R>` },
+            { icon: MaterialSymbolsCalendarTodayRounded, text: `**Ends**: <t:${ends}:R>` },
             { icon: MaterialSymbolsCrownRounded, text: `**Winners**: \`${draft.winnerCount ?? 1}\``, color: "text-embed-orange" },
             { icon: MaterialSymbolsPersonRounded, text: `**Hosted By**: <@${host.id}>` },
         ];
@@ -88,11 +88,16 @@
             const label = required.length === 1 ? "Needs" : draft.requireAllRoles ? "Needs All Of" : "Needs One Of";
             result.push({ icon: MaterialSymbolsBookmarkRounded, text: `**${label}**: ${roleList(required)}` });
         }
-        if (draft.blockedRoleIds.length) result.push({ icon: MaterialSymbolsPasskeyRounded, text: `**Not For**: ${roleList(draft.blockedRoleIds)}` });
+        if (draft.blockedRoleIds.length)
+            result.push({
+                icon: MaterialSymbolsDisabledByDefaultRounded,
+                text: `**Not For**: ${roleList(draft.blockedRoleIds)}`,
+                color: "text-embed-red",
+            });
         if (draft.minAccountDays)
             result.push({ icon: MaterialSymbolsPersonRounded, text: `**Account Age**: at least ${days(draft.minAccountDays)}` });
         if (draft.minMemberDays)
-            result.push({ icon: MaterialSymbolsGroupsRounded, text: `**In Server For**: at least ${days(draft.minMemberDays)}` });
+            result.push({ icon: MaterialSymbolsHistoryRounded, text: `**In Server For**: at least ${days(draft.minMemberDays)}` });
         if (invites && draft.minInvites)
             result.push({
                 icon: MaterialSymbolsLinkRounded,
@@ -101,7 +106,7 @@
         const bonus = draft.bonusRoles.filter((entry) => entry.roleId && entry.entries);
         if (bonus.length) {
             const text = bonus.map((entry) => `${role(entry.roleId!)} \`+${entry.entries}\``).join(", ");
-            result.push({ icon: MaterialSymbolsAdd2Rounded, text: `**Bonus Entries**: ${text}` });
+            result.push({ icon: MaterialSymbolsAddBoxRounded, text: `**Bonus Entries**: ${text}` });
         }
         return result;
     });

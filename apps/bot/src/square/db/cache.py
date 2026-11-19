@@ -32,6 +32,10 @@ class GuildSettings:
     ticket_panel_message_id: int | None = None
     ticket_max_open: int = 1
     ticket_confirm_close: bool = True
+    log_disabled_events: list[str] = field(default_factory=list)
+    log_ignored_channel_ids: list[int] = field(default_factory=list)
+    log_ignored_role_ids: list[int] = field(default_factory=list)
+    log_skip_bots: bool = True
     dj_roles: list[int] = field(default_factory=list)
     log_channels: dict[str, int] = field(default_factory=dict)
     autorole_users: dict[int, list[int]] = field(default_factory=dict)

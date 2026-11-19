@@ -2,8 +2,8 @@ import asyncio
 import discord
 from square.core import Client
 from square.db import cache
+from square.logs.catalog import Log
 from square.modules import Module
-from square.utils.server_log import LogType
 from typing import NamedTuple
 
 
@@ -31,11 +31,11 @@ async def _tracked_guild_ids() -> set[int]:
 
     NOTE: Any new feature showing inviters must be added here & in `_wants_tracking`.
     """
-    return cache.guild_ids_with_log(LogType.MEMBERS.key) | cache.guild_ids_with_module(Module.INVITES)
+    return cache.guild_ids_with_log(Log.MEMBERS) | cache.guild_ids_with_module(Module.INVITES)
 
 
 async def _wants_tracking(guild_id: int) -> bool:
-    return cache.enabled(guild_id, Module.INVITES) or cache.log_channel(guild_id, LogType.MEMBERS.key) is not None
+    return cache.enabled(guild_id, Module.INVITES) or cache.log_channel(guild_id, Log.MEMBERS) is not None
 
 
 async def _fetch(guild: discord.Guild) -> dict[str, InviteUse] | None:

@@ -10,6 +10,7 @@
     import type { Channel, Role, SquareRule } from "@square/api-client";
     import MaterialSymbolsChatErrorRounded from "~icons/material-symbols/chat-error-rounded";
     import MaterialSymbolsDeleteRounded from "~icons/material-symbols/delete-rounded";
+    import MaterialSymbolsLockPersonRounded from "~icons/material-symbols/lock-person-rounded";
     import MaterialSymbolsShieldPersonRounded from "~icons/material-symbols/shield-person-rounded";
     import MaterialSymbolsTagRounded from "~icons/material-symbols/tag-rounded";
     import MaterialSymbolsTimerRounded from "~icons/material-symbols/timer-rounded";
@@ -26,6 +27,7 @@
     }: { rule: SquareRule; mode: Mode; channels: Channel[]; roles: Role[]; problems: SquareProblems; perms: SquarePermissions } = $props();
 
     const kind = $derived(KINDS[rule.kind]);
+    const ghost = $derived(rule.kind === "ghost_pings");
     const roleChoices = $derived(roleOptions(roles));
     const exemptChannels = $derived(channelOptions(channels, ["text", "news", "forum", "voice", "stage_voice", "category"]));
     const mediaChannels = $derived(textChannelOptions(channels));
@@ -88,11 +90,22 @@
                 />
             </SettingRow>
         {/if}
-        <SettingRow label="Delete the message" description="Square removes it right away." icon={MaterialSymbolsDeleteRounded} layout="inline">
-            <Tooltip content={perms.reason("ManageMessages")}>
-                <Toggle label="Delete the message" disabled={!perms.has("ManageMessages") && !rule.delete} bind:checked={rule.delete} />
-            </Tooltip>
-        </SettingRow>
+        {#if ghost}
+            {#if !perms.has("ViewAuditLog")}
+                <SettingRow
+                    label="Square can't see who deleted it"
+                    description="Without the View Audit Log permission, a moderator or bot deleting a ping counts as a ghost ping too."
+                    icon={MaterialSymbolsLockPersonRounded}
+                    tone="danger"
+                />
+            {/if}
+        {:else}
+            <SettingRow label="Delete the message" description="Square removes it right away." icon={MaterialSymbolsDeleteRounded} layout="inline">
+                <Tooltip content={perms.reason("ManageMessages")}>
+                    <Toggle label="Delete the message" disabled={!perms.has("ManageMessages") && !rule.delete} bind:checked={rule.delete} />
+                </Tooltip>
+            </SettingRow>
+        {/if}
         <SettingRow
             label="Warn them"
             description="Adds a warning, which counts toward the punishments."
@@ -102,12 +115,14 @@
             <Toggle label="Warn them" bind:checked={rule.warn} />
         </SettingRow>
         <SettingRow
-            label="Tell them"
-            description="A short note in the channel that goes away after 10 seconds."
+            label={ghost ? "Post who was pinged" : "Tell them"}
+            description={ghost
+                ? "A note in the channel naming who pinged whom, without pinging them again. It stays."
+                : "A short note in the channel that goes away after 10 seconds."}
             icon={MaterialSymbolsChatErrorRounded}
             layout="inline"
         >
-            <Toggle label="Tell them" bind:checked={rule.notify} />
+            <Toggle label={ghost ? "Post who was pinged" : "Tell them"} bind:checked={rule.notify} />
         </SettingRow>
         {#if mode === "advanced"}
             <SettingRow label="Skip roles" description="People with these roles are never caught." icon={MaterialSymbolsShieldPersonRounded}>

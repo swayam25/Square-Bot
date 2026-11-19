@@ -15,6 +15,17 @@ def outranked(moderator: discord.Member, user: discord.Member | discord.User) ->
     return None
 
 
+def role_refusal(moderator: discord.Member, role: discord.Role) -> str | None:
+    """Why `moderator` can't give or take `role` through the bot. Matches Discord's own rule for doing it by hand."""
+    if role.is_default() or role.managed:
+        return "Given role can't be assigned manually."
+    if role >= role.guild.me.top_role:
+        return "Given role position is same or higher than my role."
+    if moderator != role.guild.owner and role >= moderator.top_role:
+        return "Given role position is same or higher than your role."
+    return None
+
+
 def dms_closed(messaged: bool) -> str:
     return "" if messaged else "\n-# They have DMs closed, so they weren't told."
 

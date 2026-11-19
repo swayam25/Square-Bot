@@ -21,7 +21,7 @@ def _icon(name: str, color: int) -> str:
 def moderation_rows(reason: str | None, moderator: discord.abc.User | None) -> list[Row]:
     """`moderator` is None when AutoMod acts."""
     by = f"{moderator.mention} (`{moderator.name}`)" if moderator else "AutoMod"
-    return [("description", "Reason", reason or "No reason given"), ("owner", "Moderator", by)]
+    return [("note", "Reason", reason or "No reason given"), ("owner", "Moderator", by)]
 
 
 def view(

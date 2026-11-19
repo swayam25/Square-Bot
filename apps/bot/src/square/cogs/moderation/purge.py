@@ -4,6 +4,7 @@ import discord
 from collections.abc import Callable
 from discord.abc import Snowflake
 from discord.commands import SlashCommandGroup, message_command, option
+from square import logs
 from square.core import Client
 from square.core.view import error_view, success_view
 from square.utils.helpers import fmt_user, plural
@@ -80,6 +81,7 @@ class Purge:
             await ctx.respond(view=error_view("Messages can't be purged in this channel."), ephemeral=True)
             return
         await ctx.defer(ephemeral=True)
+        logs.acting(ctx.guild.id, discord.AuditLogAction.message_bulk_delete, channel.id, ctx.author)
         deleted, skipped = await purge_messages(channel, reason=f"Purged by {fmt_user(ctx.author)}", **kwargs)
         note = f"\n-# Skipped `{skipped}` older than 14 days, Discord can't bulk delete those." if skipped else ""
         await ctx.respond(

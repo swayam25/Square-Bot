@@ -590,6 +590,7 @@ async def remove_entrants(client: Client, guild: discord.Guild, giveaway_id: Giv
 
 router = Router(
     "/guilds/{guild_id:str}/giveaways",
+    opt={"module": Module.GIVEAWAYS},
     tags=["Giveaways"],
     exception_handlers={SettingError: refused},
     dependencies={

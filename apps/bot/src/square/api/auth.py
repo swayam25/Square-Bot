@@ -11,7 +11,10 @@ from litestar.exceptions import (
 from litestar.handlers import BaseRouteHandler
 from litestar.params import Parameter
 from litestar.types import Guard
+from square.api.resolve import SettingError
 from square.core import Client
+from square.db import cache
+from square.modules import Module
 from typing import Annotated
 
 
@@ -24,6 +27,19 @@ def secret_guard(secret: str) -> Guard:
             raise NotAuthorizedException()
 
     return guard
+
+
+def module_guard(connection: ASGIConnection, handler: BaseRouteHandler) -> None:
+    """Refuses a route marked with `opt={"module": ...}` while that module is off, like its commands do."""
+    module: Module | None = handler.opt.get("module")
+    guild_id, actor = connection.path_params.get("guild_id"), connection.headers.get("x-actor-id", "")
+    if not module or not guild_id or cache.enabled(int(guild_id), module):
+        return
+    client: Client | None = connection.app.state.client
+    guild = client.get_guild(int(guild_id)) if client else None
+    # Outsiders fall through to the usual "Guild not found", so this never reveals a server's modules to them
+    if guild and actor.isdigit() and guild.get_member(int(actor)):
+        raise SettingError(f"{module.label} is turned off in this server.")
 
 
 def provide_client(state: State) -> Client:

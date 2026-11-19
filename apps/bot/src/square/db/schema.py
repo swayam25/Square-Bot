@@ -26,6 +26,10 @@ class GuildTable(Model):
     ticket_max_open = fields.IntField(default=1)
     ticket_confirm_close = fields.BooleanField(default=True)
     ticket_next_number = fields.IntField(default=1)
+    log_disabled_events: list[str] = fields.JSONField(default=list)
+    log_ignored_channel_ids: list[int] = fields.JSONField(default=list)  # Categories cover their channels
+    log_ignored_role_ids: list[int] = fields.JSONField(default=list)
+    log_skip_bots = fields.BooleanField(default=True)
 
     log_channels: fields.ReverseRelation[LogChannelTable]
     dj_roles: fields.ReverseRelation[DJRoleTable]
@@ -320,9 +324,9 @@ class AutomodRuleTable(Model):
     guild: fields.ForeignKeyRelation[GuildTable] = fields.ForeignKeyField(
         "models.GuildTable", related_name="automod_rules", on_delete=fields.CASCADE
     )
-    kind = fields.CharField(max_length=16)  # media, invites, flood, duplicates, caps or emojis
+    kind = fields.CharField(max_length=16)  # One of cogs.automod.rules.KINDS
     enabled = fields.BooleanField(default=True)
-    amount = fields.IntField(null=True)  # The rule's limit: messages, repeats, percent of capitals or emojis
+    amount = fields.IntField(null=True)  # The rule's limit: messages, repeats, percent, minutes and so on
     seconds = fields.IntField(null=True)
     channel_ids: list[int] = fields.JSONField(default=list)  # Media-only channels
     delete_message = fields.BooleanField(default=True)

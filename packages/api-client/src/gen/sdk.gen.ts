@@ -502,7 +502,7 @@ export const serverStats = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Turn every log off
+ * Turn every log off and clear the log settings
  */
 export const resetLogSettings = <ThrowOnError extends boolean = false>(
     options: Options<ResetLogSettingsData, ThrowOnError>,
@@ -514,7 +514,7 @@ export const resetLogSettings = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Where each kind of log goes
+ * Where each log goes, which events are off and what is ignored
  */
 export const getLogSettings = <ThrowOnError extends boolean = false>(
     options: Options<GetLogSettingsData, ThrowOnError>,
@@ -526,7 +526,7 @@ export const getLogSettings = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Send log types to channels, or turn them off
+ * Change where logs go, which events are off or what is ignored
  */
 export const updateLogSettings = <ThrowOnError extends boolean = false>(
     options: Options<UpdateLogSettingsData, ThrowOnError>,

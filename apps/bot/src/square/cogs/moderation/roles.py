@@ -3,6 +3,8 @@ import time
 from collections.abc import Callable
 from discord import ui
 from discord.commands import SlashCommandGroup, option
+from square import logs
+from square.cogs.moderation.common import role_refusal
 from square.core import Client
 from square.core.view import DesignerView, error_view, not_in_server, success_view
 from square.utils import config
@@ -29,16 +31,8 @@ class Roles:
         target: str,
         check: Callable[[discord.Member], bool],
     ):
-        error = None
-        if role.is_default() or role.managed:
-            error = "Given role can't be assigned manually."
-        elif role.position >= ctx.guild.me.top_role.position:
-            error = "Given role position is same or higher than my role."
-        elif ctx.author != ctx.guild.owner and role.position >= ctx.author.top_role.position:
-            error = "Given role position is same or higher than your role."
-        if error:
-            view = error_view(f"{error}")
-            await ctx.respond(view=view, ephemeral=True)
+        if error := role_refusal(ctx.author, role):
+            await ctx.respond(view=error_view(error), ephemeral=True)
             return
 
         verb, past, prep = ("add", "added", "to") if add else ("remove", "removed", "from")
@@ -64,6 +58,7 @@ class Roles:
         last_edit = time.monotonic()
         for count, member in enumerate(members, start=1):
             try:
+                logs.acting(ctx.guild.id, discord.AuditLogAction.member_role_update, member.id, ctx.author)
                 if add:
                     await member.add_roles(role, reason=reason)
                 else:
@@ -111,10 +106,10 @@ class Roles:
             view = error_view("Given user has same role or higher role than you.")
             await ctx.respond(view=view, ephemeral=True)
             return
-        if role.position >= ctx.guild.me.top_role.position:
-            view = error_view("Given role position is same or higher than my role.")
-            await ctx.respond(view=view, ephemeral=True)
+        if error := role_refusal(ctx.author, role):
+            await ctx.respond(view=error_view(error), ephemeral=True)
             return
+        logs.acting(ctx.guild.id, discord.AuditLogAction.member_role_update, user.id, ctx.author)
         await user.add_roles(role)
         view = success_view(f"Successfully added {role.mention} to {user.mention} (`{user.name}`).")
         await ctx.respond(view=view)
@@ -148,10 +143,10 @@ class Roles:
             view = error_view("Given user has same role or higher role than you.")
             await ctx.respond(view=view, ephemeral=True)
             return
-        if role.position >= ctx.guild.me.top_role.position:
-            view = error_view("Given role position is same or higher than my role.")
-            await ctx.respond(view=view, ephemeral=True)
+        if error := role_refusal(ctx.author, role):
+            await ctx.respond(view=error_view(error), ephemeral=True)
             return
+        logs.acting(ctx.guild.id, discord.AuditLogAction.member_role_update, user.id, ctx.author)
         await user.remove_roles(role)
         view = success_view(f"Successfully removed {role.mention} from {user.mention} (`{user.name}`).")
         await ctx.respond(view=view)

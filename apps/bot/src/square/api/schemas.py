@@ -11,11 +11,11 @@ from square.cogs.moderation.warnings import MAX_REASON
 from square.cogs.tickets.snapshot import Transcript
 from square.core import Client
 from square.core.cog import Cog
+from square.logs.catalog import Event, Log
 from square.modules import Module
 from square.music import dj, store
 from square.music.core import SquarePlayer, get_player, requester_id
 from square.music.history import history_tracks
-from square.utils.server_log import LogType
 from typing import Annotated, Literal, get_args
 
 # Discord IDs go past JavaScript's safe integer range, so the API sends them as strings
@@ -430,44 +430,51 @@ class AutorolePatch(Schema):
 
 class LogChannels(Schema):
     moderation: Snowflake | None = None
+    automod: Snowflake | None = None
     members: Snowflake | None = None
     messages: Snowflake | None = None
-    channels: Snowflake | None = None
-    roles: Snowflake | None = None
-    server: Snowflake | None = None
     voice: Snowflake | None = None
-    invites: Snowflake | None = None
-    automod: Snowflake | None = None
+    server: Snowflake | None = None
     tickets: Snowflake | None = None
 
 
 class LogChannelsPatch(Schema):
-    """Log types to change. `null` turns one off."""
+    """Logs to change. `null` turns one off."""
 
     moderation: Snowflake | None | UnsetType = UNSET
+    automod: Snowflake | None | UnsetType = UNSET
     members: Snowflake | None | UnsetType = UNSET
     messages: Snowflake | None | UnsetType = UNSET
-    channels: Snowflake | None | UnsetType = UNSET
-    roles: Snowflake | None | UnsetType = UNSET
-    server: Snowflake | None | UnsetType = UNSET
     voice: Snowflake | None | UnsetType = UNSET
-    invites: Snowflake | None | UnsetType = UNSET
-    automod: Snowflake | None | UnsetType = UNSET
+    server: Snowflake | None | UnsetType = UNSET
     tickets: Snowflake | None | UnsetType = UNSET
 
 
-# A new `LogType` needs a field in both structs above, so the bot refuses to start until it has one
+# A new `Log` needs a field in both structs above, so the bot refuses to start until it has one
 for _struct in (LogChannels, LogChannelsPatch):
-    if set(_struct.__struct_fields__) != {log_type.key for log_type in LogType}:
-        raise RuntimeError(f"{_struct.__name__} must have exactly one field per LogType key")
+    if set(_struct.__struct_fields__) != set(Log):
+        raise RuntimeError(f"{_struct.__name__} must have exactly one field per Log")
+
+MAX_LOG_IGNORED_CHANNELS = 50
+MAX_LOG_IGNORED_ROLES = 25
 
 
 class LogSettings(Schema):
     channels: LogChannels
+    disabled_events: list[Event]
+    ignored_channel_ids: list[Snowflake]  # A category covers its channels
+    ignored_role_ids: list[Snowflake]
+    skip_bots: bool
 
 
 class LogPatch(Schema):
-    channels: LogChannelsPatch
+    channels: LogChannelsPatch | UnsetType = UNSET
+    disabled_events: Annotated[list[Event], msgspec.Meta(max_length=len(get_args(Event)))] | UnsetType = UNSET
+    ignored_channel_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_LOG_IGNORED_CHANNELS)] | UnsetType = (
+        UNSET
+    )
+    ignored_role_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_LOG_IGNORED_ROLES)] | UnsetType = UNSET
+    skip_bots: bool | UnsetType = UNSET
 
 
 class InviteSettings(Schema):
@@ -898,7 +905,24 @@ MAX_NATIVE_ROLES = 20
 MAX_NATIVE_CHANNELS = 50
 NATIVE_LIMITS = {"keyword": 6, "spam": 1, "preset": 1, "mention_spam": 1, "member_profile": 1}
 
-RuleKind = Literal["media", "invites", "flood", "duplicates", "caps", "emojis"]
+RuleKind = Literal[
+    "media",
+    "invites",
+    "masked_links",
+    "new_members",
+    "flood",
+    "duplicates",
+    "mention_flood",
+    "file_flood",
+    "ghost_pings",
+    "caps",
+    "emojis",
+    "zalgo",
+    "fonts",
+    "repeated_chars",
+    "lines",
+    "invisible",
+]
 PunishAction = Literal["timeout", "kick", "ban"]
 TimeoutSeconds = Annotated[int, msgspec.Meta(ge=60, le=MAX_TIMEOUT_SECONDS)]
 NativeTrigger = Literal["keyword", "spam", "preset", "mention_spam", "member_profile"]
@@ -911,7 +935,7 @@ NativePattern = Annotated[str, msgspec.Meta(min_length=1, max_length=260)]
 class SquareRule(Schema):
     kind: RuleKind
     enabled: bool
-    amount: int | None  # Messages, repeats, percent of capitals or emojis, depending on the kind
+    amount: int | None  # The rule's limit: messages, repeats, percent, minutes and so on, depending on the kind
     seconds: int | None
     channel_ids: Annotated[list[Snowflake], msgspec.Meta(max_length=MAX_MEDIA_CHANNELS)]  # Media-only channels
     delete: bool

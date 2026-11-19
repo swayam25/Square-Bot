@@ -2,15 +2,25 @@ import { plural } from "#lib/format.ts";
 import type { NativeRule, NativeRulePatch, Punishment, SquareRule } from "@square/api-client";
 import type { Component } from "svelte";
 import MaterialSymbolsAlternateEmailRounded from "~icons/material-symbols/alternate-email-rounded";
+import MaterialSymbolsAttachFileRounded from "~icons/material-symbols/attach-file-rounded";
 import MaterialSymbolsBadgeRounded from "~icons/material-symbols/badge-rounded";
 import MaterialSymbolsBoltRounded from "~icons/material-symbols/bolt-rounded";
+import MaterialSymbolsBrandFamilyRounded from "~icons/material-symbols/brand-family-rounded";
 import MaterialSymbolsContentCopyRounded from "~icons/material-symbols/content-copy-rounded";
+import MaterialSymbolsGlyphsRounded from "~icons/material-symbols/glyphs-rounded";
 import MaterialSymbolsLinkOffRounded from "~icons/material-symbols/link-off-rounded";
 import MaterialSymbolsMatchWordRounded from "~icons/material-symbols/match-word-rounded";
+import MaterialSymbolsNotesRounded from "~icons/material-symbols/notes-rounded";
+import MaterialSymbolsNotificationMultipleRounded from "~icons/material-symbols/notification-multiple-rounded";
+import MaterialSymbolsNotificationsOffRounded from "~icons/material-symbols/notifications-off-rounded";
 import MaterialSymbolsPermMediaRounded from "~icons/material-symbols/perm-media-rounded";
+import MaterialSymbolsPersonAlertRounded from "~icons/material-symbols/person-alert-rounded";
+import MaterialSymbolsPhishingRounded from "~icons/material-symbols/phishing-rounded";
 import MaterialSymbolsPolicyRounded from "~icons/material-symbols/policy-rounded";
+import MaterialSymbolsRepeatRounded from "~icons/material-symbols/repeat-rounded";
 import MaterialSymbolsSentimentSatisfiedRounded from "~icons/material-symbols/sentiment-satisfied-rounded";
 import MaterialSymbolsTextFieldsRounded from "~icons/material-symbols/text-fields-rounded";
+import MaterialSymbolsVisibilityOffRounded from "~icons/material-symbols/visibility-off-rounded";
 
 export type Kind = SquareRule["kind"];
 export type Trigger = NativeRule["trigger"];
@@ -29,6 +39,17 @@ export const KINDS: Record<Kind, { label: string; description: string; icon: Com
         description: "Invites to other servers. Invites to this server are fine.",
         icon: MaterialSymbolsLinkOffRounded,
     },
+    masked_links: {
+        label: "Masked links",
+        description: "Links whose text shows one site but open another, a common phishing trick.",
+        icon: MaterialSymbolsPhishingRounded,
+    },
+    new_members: {
+        label: "Links from new members",
+        description: "Links and files from people who joined a short while ago. Scam accounts do this.",
+        icon: MaterialSymbolsPersonAlertRounded,
+        amount: { label: "New for minutes", description: "Anyone who joined less than this long ago is caught.", min: 1, max: 1440 },
+    },
     flood: {
         label: "Message flood",
         description: "Someone sending too many messages too fast.",
@@ -38,10 +59,30 @@ export const KINDS: Record<Kind, { label: string; description: string; icon: Com
     },
     duplicates: {
         label: "Repeated messages",
-        description: "The same message sent again and again.",
+        description: "The same message sent again and again, in one channel or across several.",
         icon: MaterialSymbolsContentCopyRounded,
         amount: { label: "Repeats allowed", description: "Sending it more often than this is caught.", min: 1, max: 20 },
         seconds: { label: "Within seconds", description: "How far back Square counts.", min: 5, max: 600 },
+    },
+    mention_flood: {
+        label: "Mention flood",
+        description: "Lots of pings spread over several messages. Discord's Mention spam only counts one message.",
+        icon: MaterialSymbolsNotificationMultipleRounded,
+        amount: { label: "Mentions allowed", description: "The next one over this is caught.", min: 2, max: 100 },
+        seconds: { label: "Within seconds", description: "How far back Square counts.", min: 5, max: 300 },
+    },
+    file_flood: {
+        label: "File spam",
+        description: "Too many files and stickers in a short time.",
+        icon: MaterialSymbolsAttachFileRounded,
+        amount: { label: "Files allowed", description: "The next one over this is caught.", min: 2, max: 50 },
+        seconds: { label: "Within seconds", description: "How far back Square counts.", min: 2, max: 60 },
+    },
+    ghost_pings: {
+        label: "Ghost pings",
+        description: "Someone pings people, then deletes the message soon after.",
+        icon: MaterialSymbolsNotificationsOffRounded,
+        seconds: { label: "Deleted within seconds", description: "Deleting it later than this is fine.", min: 5, max: 600 },
     },
     caps: {
         label: "Capital letters",
@@ -54,6 +95,40 @@ export const KINDS: Record<Kind, { label: string; description: string; icon: Com
         description: "Too many emojis in one message, custom ones included.",
         icon: MaterialSymbolsSentimentSatisfiedRounded,
         amount: { label: "Most emojis", description: "More than this in one message is caught.", min: 1, max: 100 },
+    },
+    zalgo: {
+        label: "Zalgo text",
+        description: "Letters buried under stacked accent marks.",
+        icon: MaterialSymbolsGlyphsRounded,
+        amount: {
+            label: "Most marks per letter",
+            description: "More than this on one letter is caught. Some languages stack 2.",
+            min: 2,
+            max: 20,
+        },
+    },
+    fonts: {
+        label: "Fancy fonts",
+        description: "Math, fullwidth, circled and small caps letters. They slip past word filters.",
+        icon: MaterialSymbolsBrandFamilyRounded,
+        amount: { label: "Most fancy letters", description: "Percent of letters. More than this is caught, 0 catches any.", min: 0, max: 90 },
+    },
+    repeated_chars: {
+        label: "Repeated characters",
+        description: "The same character over and over, like aaaaaaaaaa or !!!!!!!!!!. Code and emojis are left alone.",
+        icon: MaterialSymbolsRepeatRounded,
+        amount: { label: "Most in a row", description: "More than this in a row is caught.", min: 3, max: 50 },
+    },
+    lines: {
+        label: "Walls of text",
+        description: "Messages with too many lines.",
+        icon: MaterialSymbolsNotesRounded,
+        amount: { label: "Most lines", description: "More than this in one message is caught.", min: 3, max: 100 },
+    },
+    invisible: {
+        label: "Invisible characters",
+        description: "Zero-width and blank characters used to hide words or send empty messages.",
+        icon: MaterialSymbolsVisibilityOffRounded,
     },
 };
 
@@ -149,7 +224,9 @@ export function squareProblems(rule: SquareRule): SquareProblems {
     if (kind.amount && !whole(rule.amount, kind.amount.min, kind.amount.max)) found.amount = `Pick ${kind.amount.min} to ${kind.amount.max}`;
     if (kind.seconds && !whole(rule.seconds, kind.seconds.min, kind.seconds.max)) found.seconds = `Pick ${kind.seconds.min} to ${kind.seconds.max}`;
     if (rule.kind === "media" && !rule.channelIds.length) found.channels = "Pick at least one channel";
-    if (!rule.delete && !rule.warn) found.actions = "Delete the message, warn, or both";
+    if (rule.kind === "ghost_pings") {
+        if (!rule.notify && !rule.warn) found.actions = "Post who was pinged, warn, or both";
+    } else if (!rule.delete && !rule.warn) found.actions = "Delete the message, warn, or both";
     return found;
 }
 

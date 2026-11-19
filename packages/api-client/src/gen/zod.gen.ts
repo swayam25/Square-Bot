@@ -361,14 +361,11 @@ export const zJoinDay = z.object({
  */
 export const zLogChannels = z.object({
     moderation: z.string().nullish(),
+    automod: z.string().nullish(),
     members: z.string().nullish(),
     messages: z.string().nullish(),
-    channels: z.string().nullish(),
-    roles: z.string().nullish(),
-    server: z.string().nullish(),
     voice: z.string().nullish(),
-    invites: z.string().nullish(),
-    automod: z.string().nullish(),
+    server: z.string().nullish(),
     tickets: z.string().nullish(),
 });
 
@@ -377,14 +374,11 @@ export const zLogChannels = z.object({
  */
 export const zLogChannelsPatch = z.object({
     moderation: z.string().nullish(),
+    automod: z.string().nullish(),
     members: z.string().nullish(),
     messages: z.string().nullish(),
-    channels: z.string().nullish(),
-    roles: z.string().nullish(),
-    server: z.string().nullish(),
     voice: z.string().nullish(),
-    invites: z.string().nullish(),
-    automod: z.string().nullish(),
+    server: z.string().nullish(),
     tickets: z.string().nullish(),
 });
 
@@ -392,7 +386,42 @@ export const zLogChannelsPatch = z.object({
  * LogPatch
  */
 export const zLogPatch = z.object({
-    channels: zLogChannelsPatch,
+    channels: zLogChannelsPatch.optional(),
+    disabledEvents: z
+        .array(
+            z.enum([
+                "bans",
+                "kicks",
+                "timeouts",
+                "warnings",
+                "discord_rules",
+                "square_rules",
+                "joins",
+                "leaves",
+                "nicknames",
+                "member_roles",
+                "profiles",
+                "edits",
+                "deletes",
+                "purges",
+                "pins",
+                "voice_activity",
+                "voice_moderation",
+                "channels",
+                "roles",
+                "server_profile",
+                "emojis",
+                "invites",
+                "webhooks",
+                "bots",
+                "automod_rules",
+            ]),
+        )
+        .max(25)
+        .optional(),
+    ignoredChannelIds: z.array(z.string()).max(50).optional(),
+    ignoredRoleIds: z.array(z.string()).max(25).optional(),
+    skipBots: z.boolean().optional(),
 });
 
 /**
@@ -400,6 +429,38 @@ export const zLogPatch = z.object({
  */
 export const zLogSettings = z.object({
     channels: zLogChannels,
+    disabledEvents: z.array(
+        z.enum([
+            "bans",
+            "kicks",
+            "timeouts",
+            "warnings",
+            "discord_rules",
+            "square_rules",
+            "joins",
+            "leaves",
+            "nicknames",
+            "member_roles",
+            "profiles",
+            "edits",
+            "deletes",
+            "purges",
+            "pins",
+            "voice_activity",
+            "voice_moderation",
+            "channels",
+            "roles",
+            "server_profile",
+            "emojis",
+            "invites",
+            "webhooks",
+            "bots",
+            "automod_rules",
+        ]),
+    ),
+    ignoredChannelIds: z.array(z.string()),
+    ignoredRoleIds: z.array(z.string()),
+    skipBots: z.boolean(),
 });
 
 /**
@@ -961,7 +1022,24 @@ export const zSkipVote = z.object({
  * SquareRule
  */
 export const zSquareRule = z.object({
-    kind: z.enum(["media", "invites", "flood", "duplicates", "caps", "emojis"]),
+    kind: z.enum([
+        "media",
+        "invites",
+        "masked_links",
+        "new_members",
+        "flood",
+        "duplicates",
+        "mention_flood",
+        "file_flood",
+        "ghost_pings",
+        "caps",
+        "emojis",
+        "zalgo",
+        "fonts",
+        "repeated_chars",
+        "lines",
+        "invisible",
+    ]),
     enabled: z.boolean(),
     amount: z.int().nullable(),
     seconds: z.int().nullable(),
@@ -977,7 +1055,7 @@ export const zSquareRule = z.object({
  * AutomodPatch
  */
 export const zAutomodPatch = z.object({
-    rules: z.array(zSquareRule).max(6).optional(),
+    rules: z.array(zSquareRule).max(16).optional(),
     punishments: z.array(zPunishment).max(10).optional(),
 });
 

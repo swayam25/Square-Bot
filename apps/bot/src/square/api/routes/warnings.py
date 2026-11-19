@@ -113,15 +113,25 @@ async def give_warning(client: Client, guild: discord.Guild, member: discord.Mem
 
 
 @delete("/people/{user_id:str}/{warning_id:int}", summary="Remove one warning", status_code=204, responses=REFUSED)
-async def remove_warning(guild: discord.Guild, member: discord.Member, user_id: UserId, warning_id: int) -> None:
+async def remove_warning(
+    client: Client, guild: discord.Guild, member: discord.Member, user_id: UserId, warning_id: int
+) -> None:
     _moderator(member)
-    await automod_db.remove_warning(guild.id, int(user_id), warning_id)
+    if await automod_db.remove_warning(guild.id, int(user_id), warning_id) and (
+        user := await find_user(client, guild, int(user_id))
+    ):
+        warn_cog.log_removed(guild, user, member, 1)
 
 
 @delete("/people/{user_id:str}", summary="Remove every warning one person has", status_code=200, responses=REFUSED)
-async def clear_warnings(guild: discord.Guild, member: discord.Member, user_id: UserId) -> WarningsCleared:
+async def clear_warnings(
+    client: Client, guild: discord.Guild, member: discord.Member, user_id: UserId
+) -> WarningsCleared:
     _moderator(member)
-    return WarningsCleared(cleared=await automod_db.clear_warnings(guild.id, int(user_id)))
+    cleared = await automod_db.clear_warnings(guild.id, int(user_id))
+    if cleared and (user := await find_user(client, guild, int(user_id))):
+        warn_cog.log_removed(guild, user, member, cleared)
+    return WarningsCleared(cleared=cleared)
 
 
 router = Router(

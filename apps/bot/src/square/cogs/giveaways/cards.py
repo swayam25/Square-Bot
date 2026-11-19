@@ -66,11 +66,11 @@ def _rules(giveaway: GiveawayTable, guild_id: int) -> list[str]:
         label = "Needs" if len(required) == 1 else "Needs All Of" if giveaway.require_all_roles else "Needs One Of"
         lines.append(f"{emoji.role} **{label}**: {roles}")
     if blocked := giveaway.blocked_role_ids:
-        lines.append(f"{emoji.perms} **Not For**: {', '.join(role_mention(guild_id, role_id) for role_id in blocked)}")
+        lines.append(f"{emoji.error} **Not For**: {', '.join(role_mention(guild_id, role_id) for role_id in blocked)}")
     if giveaway.min_account_days:
         lines.append(f"{emoji.user} **Account Age**: at least {days(giveaway.min_account_days)}")
     if giveaway.min_member_days:
-        lines.append(f"{emoji.members} **In Server For**: at least {days(giveaway.min_member_days)}")
+        lines.append(f"{emoji.duration} **In Server For**: at least {days(giveaway.min_member_days)}")
     if needs_invites(giveaway, guild_id):
         lines.append(f"{emoji.invite} **Invites**: at least {invites(giveaway.min_invites)}")
     if bonus := giveaway.bonus_roles:
@@ -94,11 +94,11 @@ def giveaway_card(giveaway: GiveawayTable, guild_id: int) -> DesignerView:
         lines = [
             f"{emoji.crown} **{plural(len(giveaway.winner_ids), 'Winner')}**: {winners}",
             f"{emoji.user} **Hosted By**: <@{giveaway.host_id}>",
-            f"{emoji.duration} **Ended**: {discord.utils.format_dt(ended_at, 'R')}",
+            f"{emoji.date} **Ended**: {discord.utils.format_dt(ended_at, 'R')}",
         ]
     else:
         lines = [
-            f"{emoji.duration} **Ends**: {discord.utils.format_dt(giveaway.ends_at, 'R')}",
+            f"{emoji.date} **Ends**: {discord.utils.format_dt(giveaway.ends_at, 'R')}",
             f"{emoji.crown} **Winners**: `{giveaway.winner_count}`",
             f"{emoji.user} **Hosted By**: <@{giveaway.host_id}>",
             *_rules(giveaway, guild_id),

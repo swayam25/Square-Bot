@@ -1149,7 +1149,7 @@
         "tags": [
           "Settings"
         ],
-        "summary": "Where each kind of log goes",
+        "summary": "Where each log goes, which events are off and what is ignored",
         "operationId": "get_log_settings",
         "parameters": [
           {
@@ -1239,7 +1239,7 @@
         "tags": [
           "Settings"
         ],
-        "summary": "Turn every log off",
+        "summary": "Turn every log off and clear the log settings",
         "operationId": "reset_log_settings",
         "parameters": [
           {
@@ -1329,7 +1329,7 @@
         "tags": [
           "Settings"
         ],
-        "summary": "Send log types to channels, or turn them off",
+        "summary": "Change where logs go, which events are off or what is ignored",
         "operationId": "update_log_settings",
         "parameters": [
           {
@@ -11675,7 +11675,7 @@
                 "type": "array"
               }
             ],
-            "maxItems": 6
+            "maxItems": 16
           },
           "punishments": {
             "oneOf": [
@@ -13635,6 +13635,18 @@
             "pattern": "^\\d{17,20}$",
             "description": "A Discord ID"
           },
+          "automod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
           "members": {
             "oneOf": [
               {
@@ -13659,42 +13671,6 @@
             "pattern": "^\\d{17,20}$",
             "description": "A Discord ID"
           },
-          "channels": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "roles": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "server": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
           "voice": {
             "oneOf": [
               {
@@ -13707,19 +13683,7 @@
             "pattern": "^\\d{17,20}$",
             "description": "A Discord ID"
           },
-          "invites": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "automod": {
+          "server": {
             "oneOf": [
               {
                 "type": "string"
@@ -13762,6 +13726,18 @@
             "pattern": "^\\d{17,20}$",
             "description": "A Discord ID"
           },
+          "automod": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d{17,20}$",
+            "description": "A Discord ID"
+          },
           "members": {
             "oneOf": [
               {
@@ -13786,42 +13762,6 @@
             "pattern": "^\\d{17,20}$",
             "description": "A Discord ID"
           },
-          "channels": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "roles": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "server": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
           "voice": {
             "oneOf": [
               {
@@ -13834,19 +13774,7 @@
             "pattern": "^\\d{17,20}$",
             "description": "A Discord ID"
           },
-          "invites": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "pattern": "^\\d{17,20}$",
-            "description": "A Discord ID"
-          },
-          "automod": {
+          "server": {
             "oneOf": [
               {
                 "type": "string"
@@ -13878,24 +13806,145 @@
       "LogPatch": {
         "properties": {
           "channels": {
-            "$ref": "#/components/schemas/LogChannelsPatch"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/LogChannelsPatch"
+              }
+            ]
+          },
+          "disabledEvents": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "bans",
+                    "kicks",
+                    "timeouts",
+                    "warnings",
+                    "discord_rules",
+                    "square_rules",
+                    "joins",
+                    "leaves",
+                    "nicknames",
+                    "member_roles",
+                    "profiles",
+                    "edits",
+                    "deletes",
+                    "purges",
+                    "pins",
+                    "voice_activity",
+                    "voice_moderation",
+                    "channels",
+                    "roles",
+                    "server_profile",
+                    "emojis",
+                    "invites",
+                    "webhooks",
+                    "bots",
+                    "automod_rules"
+                  ]
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 25
+          },
+          "ignoredChannelIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 50
+          },
+          "ignoredRoleIds": {
+            "oneOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "maxItems": 25
+          },
+          "skipBots": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              }
+            ]
           }
         },
         "type": "object",
-        "required": [
-          "channels"
-        ],
+        "required": [],
         "title": "LogPatch"
       },
       "LogSettings": {
         "properties": {
           "channels": {
             "$ref": "#/components/schemas/LogChannels"
+          },
+          "disabledEvents": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "bans",
+                "kicks",
+                "timeouts",
+                "warnings",
+                "discord_rules",
+                "square_rules",
+                "joins",
+                "leaves",
+                "nicknames",
+                "member_roles",
+                "profiles",
+                "edits",
+                "deletes",
+                "purges",
+                "pins",
+                "voice_activity",
+                "voice_moderation",
+                "channels",
+                "roles",
+                "server_profile",
+                "emojis",
+                "invites",
+                "webhooks",
+                "bots",
+                "automod_rules"
+              ]
+            },
+            "type": "array"
+          },
+          "ignoredChannelIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ignoredRoleIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "skipBots": {
+            "type": "boolean"
           }
         },
         "type": "object",
         "required": [
-          "channels"
+          "channels",
+          "disabledEvents",
+          "ignoredChannelIds",
+          "ignoredRoleIds",
+          "skipBots"
         ],
         "title": "LogSettings"
       },
@@ -15422,10 +15471,20 @@
             "enum": [
               "media",
               "invites",
+              "masked_links",
+              "new_members",
               "flood",
               "duplicates",
+              "mention_flood",
+              "file_flood",
+              "ghost_pings",
               "caps",
-              "emojis"
+              "emojis",
+              "zalgo",
+              "fonts",
+              "repeated_chars",
+              "lines",
+              "invisible"
             ]
           },
           "enabled": {
