@@ -16,8 +16,8 @@
     import square from "#lib/assets/square.svg";
     import { openInvitePopup } from "#lib/auth.ts";
     import MaterialSymbolsBugReportRounded from "~icons/material-symbols/bug-report-rounded";
+    import MaterialSymbolsCodeBlocksRounded from "~icons/material-symbols/code-blocks-rounded";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
-    import MaterialSymbolsTerminalRounded from "~icons/material-symbols/terminal-rounded";
     import SimpleIconsDiscord from "~icons/simple-icons/discord";
     import SimpleIconsGithub from "~icons/simple-icons/github";
     import SimpleIconsOpensourceinitiative from "~icons/simple-icons/opensourceinitiative";
@@ -28,7 +28,7 @@
     const links = $derived([
         { href: inviteUrl, label: "Add to Discord", icon: SimpleIconsDiscord, popup: true },
         { href: "/guild", label: "Dashboard", icon: MaterialSymbolsDashboardRounded },
-        { href: "/commands", label: "Commands", icon: MaterialSymbolsTerminalRounded },
+        { href: "/commands", label: "Commands", icon: MaterialSymbolsCodeBlocksRounded },
         { href: REPO, label: "GitHub", icon: SimpleIconsGithub, external: true },
         { href: `${REPO}/issues/new`, label: "Report a bug", icon: MaterialSymbolsBugReportRounded, external: true },
     ]);

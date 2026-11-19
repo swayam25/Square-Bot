@@ -24,6 +24,7 @@
     import MaterialSymbolsCelebrationRounded from "~icons/material-symbols/celebration-rounded";
     import MaterialSymbolsCheckRounded from "~icons/material-symbols/check-rounded";
     import MaterialSymbolsChevronRightRounded from "~icons/material-symbols/chevron-right-rounded";
+    import MaterialSymbolsCodeBlocksRounded from "~icons/material-symbols/code-blocks-rounded";
     import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
     import MaterialSymbolsContentCopyRounded from "~icons/material-symbols/content-copy-rounded";
     import MaterialSymbolsGroupsRounded from "~icons/material-symbols/groups-rounded";
@@ -38,7 +39,6 @@
     import MaterialSymbolsSettingsRounded from "~icons/material-symbols/settings-rounded";
     import MaterialSymbolsShieldRounded from "~icons/material-symbols/shield-rounded";
     import MaterialSymbolsStarRounded from "~icons/material-symbols/star-rounded";
-    import MaterialSymbolsTerminalRounded from "~icons/material-symbols/terminal-rounded";
     import MaterialSymbolsToggleOnRounded from "~icons/material-symbols/toggle-on-rounded";
     import type { PageProps } from "./$types";
 
@@ -58,7 +58,7 @@
         Giveaways: { icon: MaterialSymbolsCelebrationRounded, ink: "text-violet-300", fill: "text-violet-500/20", lobes: 8 },
         Starboard: { icon: MaterialSymbolsStarRounded, ink: "text-amber-400", fill: "text-amber-400/10", lobes: 5 },
     };
-    const FALLBACK: Look = { icon: MaterialSymbolsTerminalRounded, ink: "text-gray-100", fill: "text-white/10", lobes: 6 };
+    const FALLBACK: Look = { icon: MaterialSymbolsCodeBlocksRounded, ink: "text-gray-100", fill: "text-white/10", lobes: 6 };
 
     const TYPES: Record<CommandOption["type"], string> = {
         string: "Text",
