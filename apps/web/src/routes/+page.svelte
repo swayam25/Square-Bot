@@ -127,9 +127,7 @@
                 <img src={square} alt="" class="size-16" />
                 <span class="font-display text-5xl font-semibold tracking-tight">Square</span>
             </div>
-            <h1 class="max-w-xl font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-                The one Discord bot your server needs
-            </h1>
+            <h1 class="max-w-xl font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">The one Discord bot you need</h1>
             <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}
                     ><SimpleIconsDiscord />Add to Discord</Button
@@ -162,9 +160,7 @@
             <Shape lobes={16} depth={0.04} class="absolute -bottom-32 -left-24 -z-10 size-80 text-gray-800" />
             <div class="grid gap-12 lg:grid-cols-[1fr_2fr]">
                 <div class="flex flex-col gap-4">
-                    <h2 id="features" class="font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">
-                        Everything your server needs
-                    </h2>
+                    <h2 id="features" class="font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">Everything you need</h2>
                     <p class="text-gray-400">One bot for music, community, growth and safety, set up from Discord or the web.</p>
                 </div>
                 <ul class="grid gap-x-8 gap-y-10 sm:grid-cols-2">

@@ -5,7 +5,7 @@
     import type { APIComponentEmbed, APIComponentEmbedButton, APIMessageComponentEmoji } from "discord-api-types/v10";
 
     const SITE = "Square";
-    const TAGLINE = "The one Discord bot your server needs";
+    const TAGLINE = "The one Discord bot you need";
 
     let { title, description, noindex = false }: { title?: string; description?: string; noindex?: boolean } = $props();
 
