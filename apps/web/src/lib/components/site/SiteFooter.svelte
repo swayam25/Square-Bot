@@ -15,12 +15,13 @@
 <script lang="ts">
     import square from "#lib/assets/square.svg";
     import { openInvitePopup } from "#lib/auth.ts";
+    import FooterWordmark from "#lib/components/site/FooterWordmark.svelte";
     import MaterialSymbolsBugReportRounded from "~icons/material-symbols/bug-report-rounded";
     import MaterialSymbolsCodeBlocksRounded from "~icons/material-symbols/code-blocks-rounded";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
     import SimpleIconsDiscord from "~icons/simple-icons/discord";
+    import SimpleIconsGit from "~icons/simple-icons/git";
     import SimpleIconsGithub from "~icons/simple-icons/github";
-    import SimpleIconsOpensourceinitiative from "~icons/simple-icons/opensourceinitiative";
 
     let { inviteUrl }: { inviteUrl: string } = $props();
 
@@ -45,12 +46,11 @@
                     <img src={square} alt="" class="size-8" />
                     <span class="font-display text-2xl font-semibold">Square</span>
                 </a>
-                <span class="flex gap-1 text-gray-400">
-                    <SimpleIconsOpensourceinitiative class="size-4" />
-                    <p class="max-w-xs text-xs">Open source discord bot</p>
-                </span>
+                <p class="flex items-center gap-1.5 text-sm text-gray-400">
+                    <SimpleIconsGit class="size-4 shrink-0" />Open source Discord bot
+                </p>
             </div>
-            <nav aria-label="Footer" class="grid w-fit grid-cols-2 gap-x-8 gap-y-4 text-sm">
+            <nav aria-label="Footer" class="grid w-fit grid-flow-col grid-rows-3 gap-x-8 gap-y-4 text-sm">
                 {#each links as link (link.label)}
                     <a
                         href={link.href}
@@ -63,18 +63,12 @@
             </nav>
         </div>
 
-        <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 pt-12 text-xs text-gray-500 sm:flex-row sm:justify-between md:px-6">
-            <span>© {new Date().getFullYear()} Square. Not affiliated with Discord.</span>
+        <div class="mx-auto max-w-6xl px-4 pt-16 md:px-6">
+            <FooterWordmark />
         </div>
 
-        <div aria-hidden="true" class="flex justify-center pt-4 select-none">
-            {#each [..."SQUARE"] as letter, index (index)}
-                <span
-                    class="inline-block translate-y-[18%] font-display text-[22vw] leading-[0.8] font-bold text-gray-800 transition-[translate,color] duration-400 ease-spring hover:translate-y-0 hover:text-accent/20 lg:text-[256px]"
-                >
-                    {letter}
-                </span>
-            {/each}
+        <div class="mx-auto max-w-6xl px-4 pt-4 pb-8 text-xs text-gray-500 md:px-6">
+            © {new Date().getFullYear()} Square. Not affiliated with Discord.
         </div>
     </div>
 </footer>

@@ -6,9 +6,8 @@
 
     const SITE = "Square";
     const TAGLINE = "The one Discord bot your server needs";
-    const ABOUT = "Music with a live web player, tickets, invites, moderation and logs.";
 
-    let { title, description = ABOUT, noindex = false }: { title?: string; description?: string; noindex?: boolean } = $props();
+    let { title, description, noindex = false }: { title?: string; description?: string; noindex?: boolean } = $props();
 
     const origin = $derived(page.url.origin);
     const url = $derived(origin + (page.url.pathname === "/" ? "/" : page.url.pathname.replace(/\/$/, "")));
@@ -25,7 +24,7 @@
             accent_color: 0x1fceec,
             components: [
                 { type: 12, items: [{ media: { url: image }, description: `${SITE} banner` }] },
-                { type: 10, content: `## [${title ?? SITE}](${url})\n${TAGLINE}\n-# ${description}` },
+                { type: 10, content: `## [${title ?? SITE}](${url})\n${TAGLINE}${description ? `\n-# ${description}` : ""}` },
                 {
                     type: 1,
                     components: [
@@ -44,7 +43,7 @@
 
 <svelte:head>
     <title>{title ? `${title} · ${SITE}` : `${SITE} · ${TAGLINE}`}</title>
-    <meta name="description" content={description} />
+    <meta name="description" content={description ?? TAGLINE} />
     <meta name="robots" content={hidden ? "noindex, nofollow" : "index, follow, max-image-preview:large"} />
     {#if !hidden}<link rel="canonical" href={url} />{/if}
     <link rel="icon" href={square} type="image/svg+xml" />
@@ -55,7 +54,7 @@
     <meta property="og:site_name" content={SITE} />
     <meta property="og:url" content={url} />
     <meta property="og:title" content={title ?? SITE} />
-    <meta property="og:description" content={description} />
+    <meta property="og:description" content={description ?? TAGLINE} />
     <meta property="og:image" content={image} />
     <meta property="og:image:type" content="image/gif" />
     <meta property="og:image:width" content="1280" />

@@ -6,6 +6,7 @@
     import DiscordActionRow from "#lib/components/discord/DiscordActionRow.svelte";
     import DiscordButton from "#lib/components/discord/DiscordButton.svelte";
     import DiscordContainer from "#lib/components/discord/DiscordContainer.svelte";
+    import DiscordMarkdown from "#lib/components/discord/DiscordMarkdown.svelte";
     import DiscordMedia from "#lib/components/discord/DiscordMedia.svelte";
     import DiscordMessage from "#lib/components/discord/DiscordMessage.svelte";
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
@@ -18,21 +19,40 @@
     import SiteFooter from "#lib/components/site/SiteFooter.svelte";
     import Button from "#lib/components/ui/Button.svelte";
     import Shape from "#lib/components/ui/Shape.svelte";
+    import { setDiscord } from "#lib/discord/context.ts";
     import { EMOJI } from "#lib/discord/markdown.ts";
     import { demo, time, TRACKS } from "#lib/music/demo.svelte.ts";
+    import MaterialSymbolsAddBoxRounded from "~icons/material-symbols/add-box-rounded";
+    import MaterialSymbolsCalendarTodayRounded from "~icons/material-symbols/calendar-today-rounded";
+    import MaterialSymbolsCelebrationRounded from "~icons/material-symbols/celebration-rounded";
     import MaterialSymbolsCheckCircleRounded from "~icons/material-symbols/check-circle-rounded";
-    import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
+    import MaterialSymbolsCrownRounded from "~icons/material-symbols/crown-rounded";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
     import MaterialSymbolsDescriptionRounded from "~icons/material-symbols/description-rounded";
+    import MaterialSymbolsForumRounded from "~icons/material-symbols/forum-rounded";
     import MaterialSymbolsMusicNoteRounded from "~icons/material-symbols/music-note-rounded";
     import MaterialSymbolsPersonAddRounded from "~icons/material-symbols/person-add-rounded";
+    import MaterialSymbolsPersonRounded from "~icons/material-symbols/person-rounded";
     import MaterialSymbolsShieldRounded from "~icons/material-symbols/shield-rounded";
+    import MaterialSymbolsStarRounded from "~icons/material-symbols/star-rounded";
     import MaterialSymbolsTuneRounded from "~icons/material-symbols/tune-rounded";
     import SimpleIconsDiscord from "~icons/simple-icons/discord";
     import SimpleIconsGithub from "~icons/simple-icons/github";
     import type { PageProps } from "./$types";
 
     let { data }: PageProps = $props();
+
+    const SWAYAM = "1";
+    const GENERAL = "2";
+    const BOOSTER = "3";
+    setDiscord({
+        user: (id) => (id === SWAYAM ? { name: "Swayam" } : null),
+        role: (id) => (id === BOOSTER ? { id, name: "Server Booster", color: "#f47fff" } : null),
+        channel: (id) => (id === GENERAL ? { name: "general" } : null),
+        fileUrl: (file) => file.url,
+    });
+
+    const loaded = Math.floor(Date.now() / 1000);
 
     const features = [
         {
@@ -44,10 +64,18 @@
             ink: "text-accent",
         },
         {
-            name: "Tickets",
-            text: "Private tickets from a panel, with claiming and transcripts.",
-            icon: MaterialSymbolsConfirmationNumberRounded,
+            name: "Giveaways",
+            text: "Timed giveaways with entry rules, bonus entries for chosen roles and rerolls.",
+            icon: MaterialSymbolsCelebrationRounded,
             lobes: 4,
+            fill: "text-pink-400/10",
+            ink: "text-pink-400",
+        },
+        {
+            name: "Starboard",
+            text: "Messages that collect enough stars get reposted to a board, under their author's name.",
+            icon: MaterialSymbolsStarRounded,
+            lobes: 5,
             fill: "text-amber-400/10",
             ink: "text-amber-400",
         },
@@ -71,7 +99,7 @@
             name: "Logs",
             text: "Ten kinds of server events, each sent to the channel you pick.",
             icon: MaterialSymbolsDescriptionRounded,
-            lobes: 5,
+            lobes: 9,
             fill: "text-white/10",
             ink: "text-gray-100",
         },
@@ -137,11 +165,11 @@
                     <h2 id="features" class="font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">
                         Everything your server needs
                     </h2>
-                    <p class="text-gray-400">One bot for music, support, growth and safety, set up from Discord or the web.</p>
+                    <p class="text-gray-400">One bot for music, community, growth and safety, set up from Discord or the web.</p>
                 </div>
                 <ul class="grid gap-x-8 gap-y-10 sm:grid-cols-2">
                     {#each features as feature (feature.name)}
-                        <li class="group flex gap-4">
+                        <li class="group flex gap-4 last:odd:sm:col-span-2">
                             <span class="relative flex size-14 shrink-0 items-center justify-center">
                                 <Shape
                                     lobes={feature.lobes}
@@ -300,27 +328,76 @@
         <article class="grid items-center gap-12 lg:grid-cols-2">
             {@render story(
                 2,
-                MaterialSymbolsConfirmationNumberRounded,
-                "text-amber-400",
-                "Tickets",
-                "Support without the mess",
-                "Members open a private ticket from one panel. Staff claim it, and Square keeps a transcript when it closes.",
-                ["One button to open a ticket", "Claiming for staff", "Transcripts of every ticket"],
+                MaterialSymbolsCelebrationRounded,
+                "text-pink-400",
+                "Giveaways",
+                "Giveaways that run themselves",
+                "Pick a prize and an end time. Members enter with one button, and Square draws the winners when it ends.",
+                [
+                    "Entry rules for roles, account age and invites",
+                    "Schedule them to start later",
+                    "Bonus entries for chosen roles",
+                    "A role for winners, plus rerolls",
+                ],
             )}
             <div class="relative isolate">
-                <Shape lobes={4} depth={0.2} class="absolute -top-12 -right-10 -z-10 size-48 rotate-12 text-amber-400/10" />
+                <Shape lobes={4} depth={0.2} class="absolute -top-12 -right-10 -z-10 size-48 rotate-12 text-pink-400/10" />
                 <span aria-hidden="true" class="absolute -bottom-4 -left-8 -z-10 h-8 w-20 rotate-12 rounded-xl bg-accent/20"></span>
-                <DiscordWindow channel="support">
+                <DiscordWindow channel="giveaways">
                     <DiscordMessage>
                         <DiscordAccessories>
                             <DiscordContainer>
-                                <h2 class="mb-2 text-xl leading-snug font-bold text-dc-strong">Need Help?</h2>
-                                <p>Press the button below to open a ticket. Staff will reply in a private channel.</p>
+                                <DiscordMarkdown text="## Mechanical keyboard" />
+                                <div>
+                                    <p>
+                                        <MaterialSymbolsCalendarTodayRounded class={[EMOJI, "text-accent"]} />
+                                        <DiscordMarkdown inline text="**Ends**: <t:{loaded + 2 * 86400}:R>" />
+                                    </p>
+                                    <p>
+                                        <MaterialSymbolsCrownRounded class={[EMOJI, "text-embed-orange"]} />
+                                        <DiscordMarkdown inline text="**Winners**: `2`" />
+                                    </p>
+                                    <p>
+                                        <MaterialSymbolsPersonRounded class={[EMOJI, "text-accent"]} />
+                                        <DiscordMarkdown inline text="**Hosted By**: <@{SWAYAM}>" />
+                                    </p>
+                                    <p>
+                                        <MaterialSymbolsAddBoxRounded class={[EMOJI, "text-accent"]} />
+                                        <DiscordMarkdown inline text={`**Bonus Entries**: <@&${BOOSTER}> \`+2\``} />
+                                    </p>
+                                </div>
                             </DiscordContainer>
                             <DiscordActionRow>
-                                <DiscordButton style="primary"
-                                    ><MaterialSymbolsConfirmationNumberRounded class="size-[1.375em]" />Open a ticket</DiscordButton
-                                >
+                                <DiscordButton style="primary"><MaterialSymbolsCelebrationRounded class="size-[1.375em]" />Enter · 128</DiscordButton>
+                            </DiscordActionRow>
+                        </DiscordAccessories>
+                    </DiscordMessage>
+                </DiscordWindow>
+            </div>
+        </article>
+
+        <article class="grid items-center gap-12 lg:grid-cols-2">
+            {@render story(
+                3,
+                MaterialSymbolsStarRounded,
+                "text-amber-400",
+                "Starboard",
+                "Your server's best moments, kept",
+                "When a message collects enough stars, Square reposts it to the board with its author's name and picture.",
+                ["Custom emoji for voting", "Downvotes that take posts back off", "Only the channels you pick"],
+            )}
+            <div class="relative isolate">
+                <Shape lobes={5} depth={0.16} class="absolute -top-12 -left-12 -z-10 size-56 text-amber-400/10" />
+                <Shape lobes={6} depth={0.14} class="absolute -right-6 -bottom-8 -z-10 size-20 text-violet-500/30" />
+                <DiscordWindow channel="starboard">
+                    <DiscordMessage name="Swayam" avatar={swayamAvatar}>
+                        <DiscordAccessories>
+                            <DiscordContainer color="var(--color-embed-orange)">
+                                <DiscordMarkdown text="Just finished my desk setup, what do you all think?" />
+                                <DiscordMarkdown text="-# ⭐ **24** · <@{SWAYAM}> · <#{GENERAL}> · <t:{loaded - 2 * 3600}:R>" />
+                            </DiscordContainer>
+                            <DiscordActionRow>
+                                <DiscordButton href=""><MaterialSymbolsForumRounded class="size-[1.375em]" />Jump to message</DiscordButton>
                             </DiscordActionRow>
                         </DiscordAccessories>
                     </DiscordMessage>

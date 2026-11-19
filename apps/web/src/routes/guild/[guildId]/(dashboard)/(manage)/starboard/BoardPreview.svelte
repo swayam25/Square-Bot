@@ -9,6 +9,7 @@
     import { setGuildDiscord } from "#lib/discord/guild.svelte.ts";
     import { formatCount } from "#lib/format.ts";
     import type { Channel, Person } from "@square/api-client";
+    import MaterialSymbolsForumRounded from "~icons/material-symbols/forum-rounded";
     import type { Draft } from "./board.ts";
 
     let { draft, guild, you, channels }: { draft: Draft; guild: string; you: Person; channels: Channel[] } = $props();
@@ -43,7 +44,9 @@
                 <DiscordMarkdown text={footer} />
             </DiscordContainer>
             <DiscordActionRow>
-                <DiscordButton href="https://discord.com/channels/{guild}">Jump to message</DiscordButton>
+                <DiscordButton href="https://discord.com/channels/{guild}"
+                    ><MaterialSymbolsForumRounded class="size-[1.375em]" />Jump to message</DiscordButton
+                >
             </DiscordActionRow>
         </DiscordAccessories>
     </DiscordMessage>
