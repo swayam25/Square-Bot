@@ -1,9 +1,9 @@
-import datetime
 import discord
 from babel.dates import format_timedelta
 from discord import ui
-from discord.commands import option, slash_command
+from discord.commands import message_command, option, slash_command, user_command
 from discord.ext import commands
+from square.cogs.moderation.common import answer, dms_closed, field, outranked, prompt, result_view
 from square.cogs.moderation.purge import Purge
 from square.cogs.moderation.roles import Roles
 from square.cogs.moderation.timeouts import TimeoutEnds
@@ -16,10 +16,6 @@ from square.utils.emoji import emoji
 from square.utils.helpers import fmt_user, parse_duration
 
 
-def _dms_closed(messaged: bool) -> str:
-    return "" if messaged else "\n-# They have DMs closed, so they weren't told."
-
-
 class Moderation(
     Purge,
     Roles,
@@ -28,12 +24,92 @@ class Moderation(
     Cog,
     name="Moderation",
     description="Moderate your server & keep it managed by using commands.",
-    emoji=emoji.mod,
     order=1,
 ):
     def __init__(self, client: Client):
         self.client = client
         self.timeout_ends = {}
+
+    async def _kick(self, interaction: discord.Interaction, user: discord.Member, reason: str | None) -> None:
+        if problem := outranked(interaction.user, user):
+            await interaction.respond(view=error_view(problem), ephemeral=True)
+            return
+        dm = mod_dm.view(
+            interaction.guild,
+            "You got kicked",
+            config.color.orange,
+            mod_dm.moderation_rows(reason, interaction.user),
+            member=False,
+        )
+        messaged = await mod_dm.send_before(user, dm, user.kick(reason=reason))
+        text = (
+            f"Successfully kicked {user.mention} (`{user.name}`) from the server.\n"
+            f"{emoji.description_green} **Reason**: {reason or 'No reason given'}"
+        )
+        await interaction.respond(view=result_view("Kicked User", user, text + dms_closed(messaged)))
+
+    async def _ban(
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member | discord.User,
+        delete_messages: str | None,
+        reason: str | None,
+    ) -> None:
+        if problem := outranked(interaction.user, user):
+            await interaction.respond(view=error_view(problem), ephemeral=True)
+            return
+        del_after = None
+        if delete_messages and delete_messages != "0":
+            try:
+                del_after = parse_duration(delete_messages, max_duration="7d")
+            except ValueError as e:
+                await interaction.respond(view=error_view(str(e)), ephemeral=True)
+                return
+        dur = int(del_after.total_seconds()) if del_after else None
+        dm = mod_dm.view(
+            interaction.guild,
+            "You got banned",
+            config.color.red,
+            mod_dm.moderation_rows(reason, interaction.user),
+            member=False,
+        )
+        removal = interaction.guild.ban(user, reason=reason, delete_message_seconds=dur)
+        # A user outside the server shares no server with the bot, so a DM can't reach them
+        if isinstance(user, discord.Member):
+            messaged = await mod_dm.send_before(user, dm, removal)
+        else:
+            await removal
+            messaged = True
+        kept = f"`{format_timedelta(del_after, locale='en')}`" if del_after else "Kept all messages"
+        text = (
+            f"Successfully banned {user.mention} (`{user.name}`) from the server.\n"
+            f"{emoji.id_green} **ID**: `{user.id}`\n"
+            f"{emoji.description_green} **Reason**: {reason or 'No reason given'}\n"
+            f"{emoji.bin_green} **Delete Message Duration**: {kept}"
+        )
+        await interaction.respond(view=result_view("Banned User", user, text + dms_closed(messaged)))
+
+    async def _timeout(
+        self, interaction: discord.Interaction, user: discord.Member, duration: str, reason: str | None
+    ) -> None:
+        if problem := outranked(interaction.user, user):
+            await interaction.respond(view=error_view(problem), ephemeral=True)
+            return
+        try:
+            dur = parse_duration(duration)
+        except ValueError as e:
+            await interaction.respond(view=error_view(str(e)), ephemeral=True)
+            return
+        until = discord.utils.utcnow() + dur
+        await user.timeout(until, reason=reason)
+        dm = mod_dm.timed_out(interaction.guild, until, reason, interaction.user)
+        messaged = await mod_dm.send(user, dm) is not None
+        text = (
+            f"Successfully timed out {user.mention} (`{user.name}`).\n"
+            f"{emoji.duration_green} **Duration**: `{format_timedelta(dur, locale='en')}`\n"
+            f"{emoji.description_green} **Reason**: {reason or 'No reason given'}"
+        )
+        await interaction.respond(view=result_view("Timed Out User", user, text + dms_closed(messaged)))
 
     @slash_command(name="kick")
     @discord.default_permissions(kick_members=True)
@@ -41,37 +117,30 @@ class Moderation(
     @option("reason", description="Enter the reason for kicking the user", required=False)
     async def kick(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Kicks the mentioned user."""
-        if await not_in_server(ctx, user):
-            return
-        if user == ctx.author:
-            view = error_view("You cannot use it on yourself")
-            await ctx.respond(view=view, ephemeral=True)
-        elif isinstance(user, discord.Member) and user.top_role.position >= ctx.author.top_role.position:
-            view = error_view("Given user has same role or higher role than you")
-            await ctx.respond(view=view, ephemeral=True)
-        else:
-            dm = mod_dm.view(
-                ctx.guild,
-                "You got kicked",
-                config.color.orange,
-                mod_dm.moderation_rows(reason, ctx.author),
-                member=False,
-            )
-            messaged = await mod_dm.send_before(user, dm, user.kick(reason=reason))
-            view = DesignerView(
-                ui.Container(
-                    ui.Section(
-                        ui.TextDisplay("## Kicked User"),
-                        ui.TextDisplay(
-                            f"Successfully kicked {user.mention} (`{user.name}`) from the server.\n{emoji.description_green} **Reason**: {reason or 'No reason given'}"
-                            + _dms_closed(messaged)
-                        ),
-                        accessory=ui.Thumbnail(url=user.display_avatar.url),
-                    ),
-                    color=config.color.green,
-                )
-            )
-            await ctx.respond(view=view)
+        if not await not_in_server(ctx, user):
+            await self._kick(ctx.interaction, user, reason)
+
+    async def _ask_kick(self, ctx: discord.ApplicationContext, user: discord.Member | discord.User) -> None:
+        reason = field(long=True)
+        await prompt(ctx, user, f"Kick {user.name}", {"Reason": reason}, lambda i: self._kick(i, user, answer(reason)))
+
+    @user_command(
+        name="Kick",
+        default_member_permissions=discord.Permissions(kick_members=True),
+        contexts={discord.InteractionContextType.guild},
+    )
+    async def kick_member(self, ctx: discord.ApplicationContext, user: discord.Member | discord.User):
+        """Kicks a member, asking for a reason first."""
+        await self._ask_kick(ctx, user)
+
+    @message_command(
+        name="Kick",
+        default_member_permissions=discord.Permissions(kick_members=True),
+        contexts={discord.InteractionContextType.guild},
+    )
+    async def kick_author(self, ctx: discord.ApplicationContext, message: discord.Message):
+        """Kicks the message's author, asking for a reason first."""
+        await self._ask_kick(ctx, message.author)
 
     @slash_command(name="ban")
     @discord.default_permissions(ban_members=True)
@@ -89,49 +158,38 @@ class Moderation(
         delete_messages: str = "7d",
         reason: str = None,
     ):
-        """Bans the a user from the server."""
-        if user == ctx.author:
-            view = error_view("You cannot use it on yourself")
-            await ctx.respond(view=view, ephemeral=True)
-        elif isinstance(user, discord.Member) and user.top_role.position >= ctx.author.top_role.position:
-            view = error_view("Given user has same role or higher role than you")
-            await ctx.respond(view=view, ephemeral=True)
-        else:
-            dur, del_after = None, None
-            if delete_messages and delete_messages != "0":
-                del_after = parse_duration(delete_messages, max_duration="7d")
-                dur = int(del_after.total_seconds()) if del_after else None
-            dm = mod_dm.view(
-                ctx.guild,
-                "You got banned",
-                config.color.red,
-                mod_dm.moderation_rows(reason, ctx.author),
-                member=False,
-            )
-            removal = ctx.guild.ban(user, reason=reason, delete_message_seconds=dur)
-            # A user outside the server shares no server with the bot, so a DM can't reach them
-            if isinstance(user, discord.Member):
-                messaged = await mod_dm.send_before(user, dm, removal)
-            else:
-                await removal
-                messaged = True
-            view = DesignerView(
-                ui.Container(
-                    ui.Section(
-                        ui.TextDisplay("## Banned User"),
-                        ui.TextDisplay(
-                            f"Successfully banned {user.mention} (`{user.name}`) from the server.\n"
-                            f"{emoji.id_green} **ID**: `{user.id}`\n"
-                            f"{emoji.description_green} **Reason**: {reason or 'No reason given'}\n"
-                            f"{emoji.bin_green} **Delete Message Duration**: {f'`{format_timedelta(del_after, locale="en")}`' if del_after else 'Kept all messages'}"
-                            + _dms_closed(messaged)
-                        ),
-                        accessory=ui.Thumbnail(url=user.display_avatar.url),
-                    ),
-                    color=config.color.green,
-                )
-            )
-            await ctx.respond(view=view)
+        """Bans a user from the server."""
+        await self._ban(ctx.interaction, user, delete_messages, reason)
+
+    async def _ask_ban(self, ctx: discord.ApplicationContext, user: discord.Member | discord.User) -> None:
+        delete = field(value="7d", placeholder="1h, 1d, 7d at most, or 0 to keep them", max_length=16)
+        reason = field(long=True)
+        await prompt(
+            ctx,
+            user,
+            f"Ban {user.name}",
+            {"Delete their messages from the last": delete, "Reason": reason},
+            lambda i: self._ban(i, user, answer(delete), answer(reason)),
+            members_only=False,
+        )
+
+    @user_command(
+        name="Ban",
+        default_member_permissions=discord.Permissions(ban_members=True),
+        contexts={discord.InteractionContextType.guild},
+    )
+    async def ban_member(self, ctx: discord.ApplicationContext, user: discord.Member | discord.User):
+        """Bans a user, asking for a reason and how many of their messages to delete first."""
+        await self._ask_ban(ctx, user)
+
+    @message_command(
+        name="Ban",
+        default_member_permissions=discord.Permissions(ban_members=True),
+        contexts={discord.InteractionContextType.guild},
+    )
+    async def ban_author(self, ctx: discord.ApplicationContext, message: discord.Message):
+        """Bans the message's author, asking for a reason and how many of their messages to delete first."""
+        await self._ask_ban(ctx, message.author)
 
     @slash_command(name="unban")
     @discord.default_permissions(ban_members=True)
@@ -178,36 +236,37 @@ class Moderation(
         self, ctx: discord.ApplicationContext, user: discord.Member, duration: str, reason: str = None
     ):
         """Timeouts the mentioned user."""
-        if await not_in_server(ctx, user):
-            return
-        if user == ctx.author:
-            view = error_view("You cannot use it on yourself.")
-            await ctx.respond(view=view, ephemeral=True)
-        elif user.top_role.position >= ctx.author.top_role.position:
-            view = error_view("Given user has same role or higher role than you.")
-            await ctx.respond(view=view, ephemeral=True)
-        else:
-            try:
-                dur: datetime.timedelta = parse_duration(duration)
-            except ValueError as e:
-                view = error_view(f"{e}")
-                await ctx.respond(view=view, ephemeral=True)
-                return
-            until = discord.utils.utcnow() + dur
-            await user.timeout(until, reason=reason)
-            messaged = await mod_dm.send(user, mod_dm.timed_out(ctx.guild, until, reason, ctx.author)) is not None
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay("## Timed Out User"),
-                    ui.TextDisplay(
-                        f"Successfully timed out {user.mention} (`{user.name}`).\n"
-                        f"{emoji.duration_green} **Duration**: `{format_timedelta(dur, locale='en')}`\n"
-                        f"{emoji.description_green} **Reason**: {reason or 'No reason given'}" + _dms_closed(messaged)
-                    ),
-                    color=config.color.green,
-                )
-            )
-            await ctx.respond(view=view)
+        if not await not_in_server(ctx, user):
+            await self._timeout(ctx.interaction, user, duration, reason)
+
+    async def _ask_timeout(self, ctx: discord.ApplicationContext, user: discord.Member | discord.User) -> None:
+        duration = field(required=True, placeholder="10m, 1h, 1d, 2w", max_length=16)
+        reason = field(long=True)
+        await prompt(
+            ctx,
+            user,
+            f"Time out {user.name}",
+            {"Duration": duration, "Reason": reason},
+            lambda i: self._timeout(i, user, answer(duration) or "", answer(reason)),
+        )
+
+    @user_command(
+        name="Timeout",
+        default_member_permissions=discord.Permissions(moderate_members=True),
+        contexts={discord.InteractionContextType.guild},
+    )
+    async def timeout_member(self, ctx: discord.ApplicationContext, user: discord.Member | discord.User):
+        """Times out a member, asking for how long and why first."""
+        await self._ask_timeout(ctx, user)
+
+    @message_command(
+        name="Timeout",
+        default_member_permissions=discord.Permissions(moderate_members=True),
+        contexts={discord.InteractionContextType.guild},
+    )
+    async def timeout_author(self, ctx: discord.ApplicationContext, message: discord.Message):
+        """Times out the message's author, asking for how long and why first."""
+        await self._ask_timeout(ctx, message.author)
 
     @slash_command(name="untimeout")
     @discord.default_permissions(moderate_members=True)
@@ -217,35 +276,21 @@ class Moderation(
         """Untimeouts the mentioned user."""
         if await not_in_server(ctx, user):
             return
-        if user == ctx.author:
-            view = error_view("You cannot use it on yourself")
-            await ctx.respond(view=view, ephemeral=True)
-        elif user.top_role.position >= ctx.author.top_role.position:
-            view = error_view("Given user has same role or higher role than you")
-            await ctx.respond(view=view, ephemeral=True)
-        else:
-            was_timed_out = user.timed_out
-            await user.timeout(None, reason=reason)
-            messaged = True
-            if was_timed_out:
-                dm = mod_dm.view(
-                    ctx.guild,
-                    "Your timeout was removed",
-                    config.color.green,
-                    mod_dm.moderation_rows(reason, ctx.author),
-                )
-                messaged = await mod_dm.send(user, dm) is not None
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay("## Untimed Out User"),
-                    ui.TextDisplay(
-                        f"Successfully untimed out {user.mention} (`{user.name}`).\n{emoji.description_green} **Reason**: {reason or 'No reason given'}"
-                        + _dms_closed(messaged)
-                    ),
-                    color=config.color.green,
-                )
-            )
-            await ctx.respond(view=view)
+        if problem := outranked(ctx.author, user):
+            await ctx.respond(view=error_view(problem), ephemeral=True)
+            return
+        was_timed_out = user.timed_out
+        await user.timeout(None, reason=reason)
+        messaged = True
+        if was_timed_out:
+            rows = mod_dm.moderation_rows(reason, ctx.author)
+            dm = mod_dm.view(ctx.guild, "Your timeout was removed", config.color.green, rows)
+            messaged = await mod_dm.send(user, dm) is not None
+        text = (
+            f"Successfully untimed out {user.mention} (`{user.name}`).\n"
+            f"{emoji.description_green} **Reason**: {reason or 'No reason given'}"
+        )
+        await ctx.respond(view=result_view("Untimed Out User", user, text + dms_closed(messaged)))
 
     @staticmethod
     async def _set_send_messages(

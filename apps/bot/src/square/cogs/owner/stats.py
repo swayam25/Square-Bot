@@ -9,7 +9,7 @@ from babel.dates import format_timedelta
 from collections import defaultdict, deque
 from discord import ui
 from importlib.metadata import version
-from square.cogs.devs.term import Term
+from square.cogs.owner.term import Term
 from square.core import Client
 from square.core.view import DesignerView, show_loading
 from square.music.core import fetch_node_info

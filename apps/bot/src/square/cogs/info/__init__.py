@@ -7,6 +7,7 @@ from discord.commands import SlashCommandGroup, option, slash_command
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView, error_view
+from square.utils import config
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count, member_counts, plural
 from typing import Literal
@@ -318,9 +319,28 @@ class InfoView(DesignerView):
         await interaction.edit(view=self)
 
 
-class Info(Cog, name="Info", description="See some info about bot and others.", emoji=emoji.info, order=4):
+class Info(Cog, name="Info", description="See some info about bot and others.", order=4):
     def __init__(self, client: Client):
         self.client = client
+
+    @slash_command(name="help")
+    async def help(self, ctx: discord.ApplicationContext):
+        """Links to every command on the website."""
+        view = DesignerView(
+            ui.Container(
+                ui.TextDisplay(
+                    "## Commands\nEvery command I have, with its options and the permissions it needs, is on the website."
+                ),
+            ),
+            ui.ActionRow(
+                ui.Button(
+                    label="Open commands",
+                    style=discord.ButtonStyle.link,
+                    url=f"{config.dashboard_url}/commands",
+                )
+            ),
+        )
+        await ctx.respond(view=view, ephemeral=True)
 
     @slash_command(name="ping")
     async def ping(self, ctx: discord.ApplicationContext):

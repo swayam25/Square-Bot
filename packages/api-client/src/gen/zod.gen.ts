@@ -151,6 +151,32 @@ export const zChannel = z.object({
 });
 
 /**
+ * CommandOption
+ */
+export const zCommandOption = z.object({
+    name: z.string(),
+    type: z.enum(["string", "integer", "number", "boolean", "user", "channel", "role", "mentionable", "attachment"]),
+    description: z.string(),
+    required: z.boolean(),
+    choices: z.array(z.string()),
+    channelTypes: z.array(z.enum(["text", "news", "voice", "stage_voice", "category", "forum", "media"])),
+    min: z.union([z.int(), z.number()]).nullable(),
+    max: z.union([z.int(), z.number()]).nullable(),
+    autocomplete: z.boolean(),
+});
+
+/**
+ * BotCommand
+ */
+export const zBotCommand = z.object({
+    name: z.string(),
+    kind: z.enum(["slash", "message", "user"]),
+    description: z.string(),
+    options: z.array(zCommandOption),
+    permissions: z.string().nullable(),
+});
+
+/**
  * Done
  */
 export const zDone = z.object({
@@ -542,6 +568,21 @@ export const zMessageSend = z.object({
     username: z.string().nullish(),
     avatarUrl: z.string().nullish(),
     files: z.array(zMessageUpload).max(10).optional(),
+});
+
+/**
+ * Module
+ */
+export const zModule = z.enum(["logs", "tickets", "invites", "giveaways", "starboard", "autorole"]);
+
+/**
+ * CommandCategory
+ */
+export const zCommandCategory = z.object({
+    name: z.string(),
+    description: z.string(),
+    module: zModule.nullable(),
+    commands: z.array(zBotCommand),
 });
 
 /**
@@ -1411,6 +1452,11 @@ export const zWarningsCleared = z.object({
  * Request fulfilled, document follows
  */
 export const zBotEmojisResponse = z.record(z.string(), zBotEmoji);
+
+/**
+ * Request fulfilled, document follows
+ */
+export const zBotCommandsResponse = z.array(zCommandCategory);
 
 export const zMyGuildsHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),

@@ -147,6 +147,20 @@ export type BonusRole = {
 };
 
 /**
+ * BotCommand
+ */
+export type BotCommand = {
+    name: string;
+    kind: "slash" | "message" | "user";
+    description: string;
+    options: Array<CommandOption>;
+    /**
+     * Discord permission bits as a decimal string
+     */
+    permissions: string | null;
+};
+
+/**
  * BotEmoji
  */
 export type BotEmoji = {
@@ -219,6 +233,31 @@ export type Channel = {
      */
     parentId: string | null;
     position: number;
+};
+
+/**
+ * CommandCategory
+ */
+export type CommandCategory = {
+    name: string;
+    description: string;
+    module: Module | null;
+    commands: Array<BotCommand>;
+};
+
+/**
+ * CommandOption
+ */
+export type CommandOption = {
+    name: string;
+    type: "string" | "integer" | "number" | "boolean" | "user" | "channel" | "role" | "mentionable" | "attachment";
+    description: string;
+    required: boolean;
+    choices: Array<string>;
+    channelTypes: Array<"text" | "news" | "voice" | "stage_voice" | "category" | "forum" | "media">;
+    min: number | number | null;
+    max: number | number | null;
+    autocomplete: boolean;
 };
 
 /**
@@ -847,6 +886,11 @@ export type MessageUpload = {
      */
     data: string;
 };
+
+/**
+ * Module
+ */
+export type Module = "logs" | "tickets" | "invites" | "giveaways" | "starboard" | "autorole";
 
 /**
  * ModulePatch
@@ -1634,6 +1678,22 @@ export type BotEmojisResponses = {
 };
 
 export type BotEmojisResponse = BotEmojisResponses[keyof BotEmojisResponses];
+
+export type BotCommandsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/commands";
+};
+
+export type BotCommandsResponses = {
+    /**
+     * Request fulfilled, document follows
+     */
+    200: Array<CommandCategory>;
+};
+
+export type BotCommandsResponse = BotCommandsResponses[keyof BotCommandsResponses];
 
 export type MyGuildsData = {
     body?: never;

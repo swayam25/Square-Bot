@@ -14,14 +14,12 @@ from square.db.funcs.tickets import fetch_ticket, save_ticket
 from square.db.schema import TicketTable
 from square.modules import Module, ModuleOff
 from square.music.utils import delete_quietly
-from square.utils.emoji import emoji
 
 
 class Tickets(
     Cog,
     name="Tickets",
     description="Need help? Open a ticket and ask.",
-    emoji=emoji.ticket,
     order=7,
     module=Module.TICKETS,
 ):

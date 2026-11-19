@@ -48,7 +48,6 @@ class Music(
     Cog,
     name="Music",
     description="Wanna chill? Just play music & enjoy.",
-    emoji=emoji.music,
     order=6,
 ):
     block_lines = 10

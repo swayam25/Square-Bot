@@ -182,7 +182,6 @@ class Invites(
     Cog,
     name="Invites",
     description="See who invited whom, with leaderboards.",
-    emoji=emoji.invite,
     order=8,
     module=Module.INVITES,
 ):

@@ -41,6 +41,37 @@
         ]
       }
     },
+    "/commands": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "The bot's public commands by category, for the commands page",
+        "operationId": "bot_commands",
+        "responses": {
+          "200": {
+            "description": "Request fulfilled, document follows",
+            "headers": {},
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CommandCategory"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false,
+        "security": [
+          {
+            "secret": []
+          }
+        ]
+      }
+    },
     "/me/guilds": {
       "get": {
         "tags": [
@@ -11983,6 +12014,51 @@
         ],
         "title": "BonusRole"
       },
+      "BotCommand": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "slash",
+              "message",
+              "user"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/CommandOption"
+            },
+            "type": "array"
+          },
+          "permissions": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "pattern": "^\\d+$",
+            "description": "Discord permission bits as a decimal string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "description",
+          "kind",
+          "name",
+          "options",
+          "permissions"
+        ],
+        "title": "BotCommand"
+      },
       "BotEmoji": {
         "properties": {
           "name": {
@@ -12237,6 +12313,130 @@
           "type"
         ],
         "title": "Channel"
+      },
+      "CommandCategory": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "module": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Module"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "commands": {
+            "items": {
+              "$ref": "#/components/schemas/BotCommand"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "required": [
+          "commands",
+          "description",
+          "module",
+          "name"
+        ],
+        "title": "CommandCategory"
+      },
+      "CommandOption": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "string",
+              "integer",
+              "number",
+              "boolean",
+              "user",
+              "channel",
+              "role",
+              "mentionable",
+              "attachment"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "choices": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "channelTypes": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "text",
+                "news",
+                "voice",
+                "stage_voice",
+                "category",
+                "forum",
+                "media"
+              ]
+            },
+            "type": "array"
+          },
+          "min": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "autocomplete": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "required": [
+          "autocomplete",
+          "channelTypes",
+          "choices",
+          "description",
+          "max",
+          "min",
+          "name",
+          "required",
+          "type"
+        ],
+        "title": "CommandOption"
       },
       "Done": {
         "properties": {
@@ -14216,6 +14416,18 @@
           "name"
         ],
         "title": "MessageUpload"
+      },
+      "Module": {
+        "type": "string",
+        "enum": [
+          "logs",
+          "tickets",
+          "invites",
+          "giveaways",
+          "starboard",
+          "autorole"
+        ],
+        "title": "Module"
       },
       "ModulePatch": {
         "properties": {

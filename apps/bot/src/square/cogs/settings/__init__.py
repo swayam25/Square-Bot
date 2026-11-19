@@ -5,12 +5,9 @@ from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView
 from square.utils import config
-from square.utils.emoji import emoji
 
 
-class Settings(
-    Cog, name="Settings", description="Server settings live on the dashboard.", emoji=emoji.settings, order=5
-):
+class Settings(Cog, name="Settings", description="Server settings live on the dashboard.", order=5):
     def __init__(self, client: Client):
         self.client = client
 

@@ -17,6 +17,7 @@ from square.api.routes import (
 
 handlers = [
     system.bot_emojis,
+    system.bot_commands,
     guilds.my_guilds,
     guilds.router,
     settings.router,

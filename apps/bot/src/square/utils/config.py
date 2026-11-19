@@ -42,7 +42,6 @@ class _Config(msgspec.Struct, rename="kebab", forbid_unknown_fields=True, kw_onl
     owner_id: int
     owner_guild_ids: list[int]
     system_channel_id: int
-    support_server_url: str
     dashboard_url: str
     bot_token: str
     database_url: str
@@ -90,7 +89,6 @@ _config = _load()
 owner_id: int = _config.owner_id
 owner_guild_ids: list[int] = _config.owner_guild_ids
 system_channel_id: int = _config.system_channel_id
-support_server_url: str = _config.support_server_url
 dashboard_url: str = _config.dashboard_url.rstrip("/")
 bot_token: str = _config.bot_token
 db_url: str = _override_host(_config.database_url, "DB_HOST")

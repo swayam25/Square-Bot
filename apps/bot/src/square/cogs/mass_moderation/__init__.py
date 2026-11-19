@@ -14,9 +14,7 @@ from square.utils.emoji import emoji
 from square.utils.helpers import parse_duration, plural
 
 
-class MassModeration(
-    Cog, name="Mass Moderation", description="Moderate your server in bulk.", emoji=emoji.mass_mod, order=2
-):
+class MassModeration(Cog, name="Mass Moderation", description="Moderate your server in bulk.", order=2):
     def __init__(self, client: Client):
         self.client = client
 

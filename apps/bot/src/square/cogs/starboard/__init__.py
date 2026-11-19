@@ -37,7 +37,6 @@ class Starboard(
     Cog,
     name="Starboard",
     description="Keep the best messages on a board people vote for with reactions.",
-    emoji=emoji.star,
     order=10,
     module=Module.STARBOARD,
 ):

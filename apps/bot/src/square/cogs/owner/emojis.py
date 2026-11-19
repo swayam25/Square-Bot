@@ -241,7 +241,7 @@ class Emojis:
     client: Client
 
     @slash_command(guild_ids=config.owner_guild_ids, name="emoji")
-    @check.is_dev()
+    @check.is_owner()
     async def emoji_panel(self, ctx: discord.ApplicationContext):
         """Checks the app's emojis against emojis/ and syncs them."""
         await ctx.defer()

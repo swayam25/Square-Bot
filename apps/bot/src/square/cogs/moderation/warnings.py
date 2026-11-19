@@ -5,7 +5,8 @@ from babel.dates import format_timedelta
 from contextlib import suppress
 from dataclasses import dataclass
 from discord import ui
-from discord.commands import option, slash_command
+from discord.commands import option, slash_command, user_command
+from square.cogs.moderation.common import answer, dms_closed, field, prompt, result_view
 from square.core import Client
 from square.core.view import DesignerView, button, error_view, not_in_server, show_loading, success_view
 from square.db.funcs import automod as automod_db
@@ -249,19 +250,12 @@ def refusal(moderator: discord.Member, member: discord.Member) -> str | None:
 class Warnings:
     client: Client
 
-    @slash_command(name="warn")
-    @discord.default_permissions(moderate_members=True)
-    @option("user", description="Mention the user whom you want to warn")
-    @option("reason", description="Enter the reason for the warning", required=False, max_length=MAX_REASON)
-    async def warn_user(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = ""):
-        """Warns the mentioned user. Enough warnings set off the punishments from the dashboard."""
-        if await not_in_server(ctx, user):
+    async def _warn(self, interaction: discord.Interaction, user: discord.Member, reason: str) -> None:
+        if problem := refusal(interaction.user, user):
+            await interaction.respond(view=error_view(problem), ephemeral=True)
             return
-        if problem := refusal(ctx.author, user):
-            await ctx.respond(view=error_view(problem), ephemeral=True)
-            return
-        await ctx.defer()
-        warned = await warn(self.client, ctx.guild, user, reason, ctx.author)
+        await interaction.response.defer()
+        warned = await warn(self.client, interaction.guild, user, reason, interaction.user)
         lines = [
             f"{emoji.description_green} **Reason**: {reason or 'No reason given'}",
             f"{emoji.warning_green} **Warnings**: {fmt_count(warned.total)}",
@@ -273,19 +267,36 @@ class Warnings:
                 else f"{emoji.mod_green} **Punishment failed**: I couldn't apply `{warned.punishment}`, "
                 "their role is above mine or I'm missing the permission."
             )
-        if not warned.messaged:
-            lines.append("-# They have DMs closed, so they weren't told.")
-        view = DesignerView(
-            ui.Container(
-                ui.Section(
-                    ui.TextDisplay("## Warned User"),
-                    ui.TextDisplay(f"Warned {user.mention} (`{user.name}`).\n" + "\n".join(lines)),
-                    accessory=ui.Thumbnail(url=user.display_avatar.url),
-                ),
-                color=config.color.green,
-            )
+        text = f"Warned {user.mention} (`{user.name}`).\n" + "\n".join(lines) + dms_closed(warned.messaged)
+        await interaction.respond(
+            view=result_view("Warned User", user, text), allowed_mentions=discord.AllowedMentions.none()
         )
-        await ctx.respond(view=view, allowed_mentions=discord.AllowedMentions.none())
+
+    @slash_command(name="warn")
+    @discord.default_permissions(moderate_members=True)
+    @option("user", description="Mention the user whom you want to warn")
+    @option("reason", description="Enter the reason for the warning", required=False, max_length=MAX_REASON)
+    async def warn_user(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = ""):
+        """Warns the mentioned user. Enough warnings set off the punishments from the dashboard."""
+        if not await not_in_server(ctx, user):
+            await self._warn(ctx.interaction, user, reason)
+
+    @user_command(
+        name="Warn",
+        default_member_permissions=discord.Permissions(moderate_members=True),
+        contexts={discord.InteractionContextType.guild},
+    )
+    async def warn_app(self, ctx: discord.ApplicationContext, user: discord.Member):
+        """Warns a member, asking for a reason first."""
+        reason = field(long=True, max_length=MAX_REASON)
+        await prompt(
+            ctx,
+            user,
+            f"Warn {user.name}",
+            {"Reason": reason},
+            lambda i: self._warn(i, user, answer(reason) or ""),
+            refuse=refusal,
+        )
 
     @slash_command(name="warnings")
     @discord.default_permissions(moderate_members=True)

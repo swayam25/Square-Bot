@@ -7,9 +7,12 @@
     import Button from "#lib/components/ui/Button.svelte";
     import Popup from "#lib/components/ui/Popup.svelte";
     import { focusRing, menuRow } from "#lib/components/ui/styles.ts";
+    import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { mobile } from "#lib/media.ts";
     import { page } from "$app/state";
     import MaterialSymbolsLoginRounded from "~icons/material-symbols/login-rounded";
     import MaterialSymbolsPlayShapesRounded from "~icons/material-symbols/play-shapes-rounded";
+    import MaterialSymbolsTerminalRounded from "~icons/material-symbols/terminal-rounded";
 
     const user = $derived(page.data.user);
 </script>
@@ -23,6 +26,11 @@
             <span class="font-display text-xl font-semibold">Square</span>
         </a>
         <span class="flex-1"></span>
+        <Tooltip content={mobile.current ? "Commands" : null}>
+            <Button variant="ghost" href="/commands" class="max-md:w-12 max-md:px-0">
+                <MaterialSymbolsTerminalRounded /><span class="max-md:sr-only">Commands</span>
+            </Button>
+        </Tooltip>
         {#if user}
             <Popup
                 title="Your account"

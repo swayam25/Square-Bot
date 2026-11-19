@@ -4,19 +4,18 @@ import os
 import sys
 import time
 from discord import ui
-from discord.commands import SlashCommandGroup, option, slash_command
+from discord.commands import option, slash_command
 from discord.ext import commands
 from importlib.metadata import version
 from square.cogs import extensions
-from square.cogs.devs.emojis import Emojis
-from square.cogs.devs.eval import Eval
-from square.cogs.devs.guilds import Guilds
-from square.cogs.devs.stats import StatsView
 from square.cogs.info import start_time
+from square.cogs.owner.emojis import Emojis
+from square.cogs.owner.eval import Eval
+from square.cogs.owner.guilds import Guilds
+from square.cogs.owner.stats import StatsView
 from square.core import Client
 from square.core.cog import Cog
-from square.core.view import DesignerView, error_view, success_view
-from square.db.funcs.dev import add_dev, fetch_dev_ids, remove_dev
+from square.core.view import DesignerView, success_view
 from square.utils import check, config, temp
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count
@@ -41,15 +40,12 @@ def _reload_imaging() -> None:
             importlib.reload(module)
 
 
-class Devs(
+class Owner(
     Guilds,
     Emojis,
     Cog,
-    name="Devs",
-    description="For developers to manage the bot.",
-    emoji=emoji.console,
-    order=99,
-    dev_only=True,
+    name="Owner",
+    description="Tools only the bot owner can use.",
 ):
     def __init__(self, client: Client):
         self.client = client
@@ -81,50 +77,8 @@ class Devs(
         )
         await channel.send(view=view)
 
-    dev = SlashCommandGroup(guild_ids=config.owner_guild_ids, name="dev", description="Developer related commands.")
-
-    @dev.command(name="add")
-    @check.is_owner()
-    @option("user", description="Mention the user whom you want to add to dev")
-    async def add_dev(self, ctx: discord.ApplicationContext, user: discord.Member):
-        """Adds a bot dev."""
-        await add_dev(user.id)
-        view = success_view(f"Added {user.mention} (`{user.name}`) to dev.")
-        await ctx.respond(view=view)
-
-    @dev.command(name="remove")
-    @check.is_owner()
-    @option("user", description="Mention the user whom you want to remove from dev")
-    async def remove_dev(self, ctx: discord.ApplicationContext, user: discord.Member):
-        """Removes a bot dev."""
-        await remove_dev(user.id)
-        view = success_view(f"Removed {user.mention} (`{user.name}`) from dev.")
-        await ctx.respond(view=view)
-
-    @dev.command(name="list")
-    @check.is_owner()
-    async def list_devs(self, ctx: discord.ApplicationContext):
-        """Shows bot devs."""
-        num = 0
-        devs_list = ""
-        dev_ids = await fetch_dev_ids()
-        for ids in dev_ids:
-            num += 1
-            dev_mention = f"<@{ids}> (`{ids}`)"
-            devs_list += f"`{num}.` {dev_mention}\n"
-        if devs_list:
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay("## Dev List"),
-                    ui.TextDisplay(devs_list),
-                )
-            )
-        else:
-            view = error_view("No devs found.")
-        await ctx.respond(view=view)
-
     @slash_command(guild_ids=config.owner_guild_ids, name="restart")
-    @check.is_dev()
+    @check.is_owner()
     async def restart(self, ctx: discord.ApplicationContext):
         """Restarts the bot."""
         await self.client.change_presence(
@@ -140,7 +94,7 @@ class Devs(
         os.execv(sys.executable, [sys.executable, "-m", "square"])
 
     @slash_command(guild_ids=config.owner_guild_ids, name="reload-cogs")
-    @check.is_dev()
+    @check.is_owner()
     async def reload_cogs(self, ctx: discord.ApplicationContext):
         """Reloads the bot cogs."""
         view = DesignerView(
@@ -172,7 +126,7 @@ class Devs(
         await self.client.close()
 
     @slash_command(guild_ids=config.owner_guild_ids, name="status")
-    @check.is_dev()
+    @check.is_owner()
     @option("status", description="Set the bot status", choices=["Online", "Idle", "DND", "Invisible"])
     @option("activity", description="Set the bot activity", max_length=128)
     async def set_status(self, ctx: discord.ApplicationContext, status: str, activity: str = None):
@@ -186,7 +140,7 @@ class Devs(
         )
 
     @slash_command(guild_ids=config.owner_guild_ids, name="stats")
-    @check.is_dev()
+    @check.is_owner()
     async def stats(self, ctx: discord.ApplicationContext):
         """Shows bot, host & lavalink node stats."""
         await ctx.defer()
@@ -196,5 +150,5 @@ class Devs(
 
 
 def setup(client: Client):
-    client.add_cog(Devs(client))
+    client.add_cog(Owner(client))
     client.add_cog(Eval(client))

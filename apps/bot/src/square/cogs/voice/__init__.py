@@ -10,7 +10,7 @@ from square.utils.helpers import plural
 from typing import Literal
 
 
-class Voice(Cog, name="Voice", description="Move, mute and manage voice members.", emoji=emoji.voice, order=3):
+class Voice(Cog, name="Voice", description="Move, mute and manage voice members.", order=3):
     def __init__(self, client: Client):
         self.client = client
 

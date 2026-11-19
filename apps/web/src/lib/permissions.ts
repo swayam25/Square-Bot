@@ -66,6 +66,13 @@ const list = new Intl.ListFormat("en", { type: "conjunction" });
 
 export const permissionName = (name: Permission) => PERMISSIONS[name][1];
 
+export function permissionNames(bits: string) {
+    const value = BigInt(bits);
+    return Object.values(PERMISSIONS)
+        .filter(([bit]) => value & (1n << BigInt(bit)))
+        .map(([, name]) => name);
+}
+
 function holds(bits: bigint | undefined, need: Permission[]) {
     if (bits === undefined) return false;
     if (bits & ADMINISTRATOR) return true;

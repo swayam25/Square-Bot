@@ -1,6 +1,8 @@
 import discord
+import inspect
 import msgspec
 import time
+from discord.commands import ApplicationCommand, MessageCommand, SlashCommand, SlashCommandGroup, UserCommand
 from msgspec import UNSET, UnsetType
 from sonolink import QueueMode
 from sonolink.models import Playable, Playlist
@@ -8,6 +10,7 @@ from square.api import resolve
 from square.cogs.moderation.warnings import MAX_REASON
 from square.cogs.tickets.snapshot import Transcript
 from square.core import Client
+from square.core.cog import Cog
 from square.modules import Module
 from square.music import dj, store
 from square.music.core import SquarePlayer, get_player, requester_id
@@ -47,6 +50,33 @@ class BotEmoji(Schema):
     name: str
     id: Snowflake | UnsetType = UNSET
     animated: bool = False
+
+
+class CommandOption(Schema):
+    name: str
+    type: Literal["string", "integer", "number", "boolean", "user", "channel", "role", "mentionable", "attachment"]
+    description: str
+    required: bool
+    choices: list[str]
+    channel_types: list[ChannelKind]
+    min: int | float | None
+    max: int | float | None
+    autocomplete: bool
+
+
+class BotCommand(Schema):
+    name: str
+    kind: Literal["slash", "message", "user"]
+    description: str
+    options: list[CommandOption]
+    permissions: Bitfield | None
+
+
+class CommandCategory(Schema):
+    name: str
+    description: str
+    module: Module | None
+    commands: list[BotCommand]
 
 
 class Guild(Schema):
@@ -1031,6 +1061,68 @@ def bot_permissions_out(guild: discord.Guild) -> BotPermissions:
         top_role=me.top_role.position,
         features=list(guild.features),
     )
+
+
+def _option_out(option: discord.Option) -> CommandOption:
+    return CommandOption(
+        name=option.name,
+        type=option.input_type.name,
+        description=option.description,
+        required=option.required,
+        choices=[choice.name for choice in option.choices],
+        channel_types=[kind for kind in map(str, option.channel_types) if kind in _CHANNEL_KINDS],
+        min=option.min_value,
+        max=option.max_value,
+        autocomplete=bool(option.autocomplete),
+    )
+
+
+def _permissions(command: ApplicationCommand) -> str | None:
+    while command.parent:
+        command = command.parent
+    bits = command.default_member_permissions
+    return str(bits.value) if bits else None
+
+
+def _commands(cog: Cog) -> list[BotCommand]:
+    found: list[BotCommand] = []
+    for command in cog.get_commands():
+        # Prefix commands and commands synced to set guilds are the owner's own tools
+        if not isinstance(command, ApplicationCommand) or command.guild_ids:
+            continue
+        if isinstance(command, MessageCommand | UserCommand):
+            found.append(
+                BotCommand(
+                    name=command.name,
+                    kind="message" if isinstance(command, MessageCommand) else "user",
+                    description=(inspect.getdoc(command.callback) or "").partition("\n")[0],
+                    options=[],
+                    permissions=_permissions(command),
+                )
+            )
+            continue
+        subs = command.walk_commands() if isinstance(command, SlashCommandGroup) else [command]
+        found += [
+            BotCommand(
+                name=sub.qualified_name,
+                kind="slash",
+                description=sub.description,
+                options=[_option_out(option) for option in sub.options],
+                permissions=_permissions(sub),
+            )
+            for sub in subs
+            if isinstance(sub, SlashCommand)
+        ]
+    return found
+
+
+def commands_out(client: Client) -> list[CommandCategory]:
+    cogs = sorted((cog for cog in client.cogs.values() if isinstance(cog, Cog)), key=lambda cog: cog.category_order)
+    return [
+        CommandCategory(name=cog.qualified_name, description=cog.description, module=cog.__cog_module__, commands=found)
+        for cog in cogs
+        if (found := _commands(cog))
+    ]
 
 
 def mentioned_channel_out(channel: discord.abc.GuildChannel) -> MentionedChannel | None:

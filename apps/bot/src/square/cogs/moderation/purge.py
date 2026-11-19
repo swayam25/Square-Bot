@@ -3,7 +3,7 @@ import datetime
 import discord
 from collections.abc import Callable
 from discord.abc import Snowflake
-from discord.commands import SlashCommandGroup, option
+from discord.commands import SlashCommandGroup, message_command, option
 from square.core import Client
 from square.core.view import error_view, success_view
 from square.utils.helpers import fmt_user, plural
@@ -20,6 +20,7 @@ async def purge_messages(
     check: Callable[[discord.Message], bool] | None = None,
     before: Snowflake | None = None,
     after: Snowflake | None = None,
+    oldest_first: bool | None = None,
     reason: str | None = None,
 ) -> tuple[int, int]:
     """
@@ -34,6 +35,7 @@ async def purge_messages(
         check: Only messages it returns True for are deleted.
         before: Only look at messages before this one.
         after: Only look at messages after this one.
+        oldest_first (bool | None): Read order, py-cord's default (oldest first when `after` is given) when None.
         reason (str | None): Shown in the audit log.
 
     Returns:
@@ -43,7 +45,7 @@ async def purge_messages(
     deletes: list[asyncio.Task[None]] = []
     batch: list[discord.Message] = []
     deleted = skipped = 0
-    async for message in channel.history(limit=limit, before=before, after=after):
+    async for message in channel.history(limit=limit, before=before, after=after, oldest_first=oldest_first):
         if check is not None and not check(message):
             continue
         if message.id < cutoff:
@@ -155,4 +157,20 @@ class Purge:
             limit=1000,
             after=discord.Object(low),
             before=discord.Object(high),
+        )
+
+    @message_command(
+        name="Purge until here",
+        default_member_permissions=discord.Permissions(manage_messages=True),
+        contexts={discord.InteractionContextType.guild},
+    )
+    async def purge_until(self, ctx: discord.ApplicationContext, message: discord.Message):
+        """Purges every message from the newest one down to this one, up to 1000."""
+        # Newest first, so past the cap the newest messages go and the oldest are what's left
+        await self._purge(
+            ctx,
+            " down to the one you picked",
+            limit=1000,
+            after=discord.Object(message.id - 1),
+            oldest_first=False,
         )

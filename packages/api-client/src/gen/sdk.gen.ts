@@ -6,6 +6,8 @@ import type {
     ActivityData,
     ActivityErrors,
     ActivityResponses,
+    BotCommandsData,
+    BotCommandsResponses,
     BotEmojisData,
     BotEmojisResponses,
     BotPermissionsData,
@@ -352,6 +354,18 @@ export const botEmojis = <ThrowOnError extends boolean = false>(
     (options?.client ?? client).get<BotEmojisResponses, unknown, ThrowOnError>({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/emojis",
+        ...options,
+    });
+
+/**
+ * The bot's public commands by category, for the commands page
+ */
+export const botCommands = <ThrowOnError extends boolean = false>(
+    options?: Options<BotCommandsData, ThrowOnError>,
+): RequestResult<BotCommandsResponses, unknown, ThrowOnError> =>
+    (options?.client ?? client).get<BotCommandsResponses, unknown, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/commands",
         ...options,
     });
 

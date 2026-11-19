@@ -15,7 +15,6 @@ from square.cogs.error_handler.permissions import Refusal, explain
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView
-from square.db.funcs.dev import fetch_dev_ids
 from square.modules import ModuleOff
 from square.utils import check, config
 from square.utils.emoji import emoji
@@ -40,7 +39,7 @@ class Failure:
 def _user_fault(error: BaseException) -> str | None:
     match error:
         case check.NotAuthorized():
-            return "This command is only for the bot's developers."
+            return "This command is only for my owner."
         case commands.CommandOnCooldown():
             wait = datetime.timedelta(seconds=math.ceil(error.retry_after))
             return f"You're going too fast. Try again in **{format_timedelta(wait, locale='en')}**."
@@ -100,15 +99,8 @@ def _code_location(error: BaseException) -> str:
     return "unknown"
 
 
-async def _is_dev(user: discord.abc.User | None) -> bool:
-    if user is None:
-        return False
-    if user.id == config.owner_id:
-        return True
-    try:
-        return user.id in await fetch_dev_ids()
-    except Exception:  # The database being down may be the error being handled
-        return False
+def _is_owner(user: discord.abc.User | None) -> bool:
+    return user is not None and user.id == config.owner_id
 
 
 def _interaction_reply(interaction: discord.Interaction) -> Callable[..., Awaitable[object]]:
@@ -148,7 +140,7 @@ class ErrorHandler(Cog):
             return
 
         async def text_reply(view: DesignerView, file: discord.File | None = None) -> None:
-            await ctx.reply(view=view, file=file, delete_after=None if file or await _is_dev(ctx.author) else 5)
+            await ctx.reply(view=view, file=file, delete_after=None if file or _is_owner(ctx.author) else 5)
 
         name = ctx.command.qualified_name if ctx.command else "unknown"
         await self._handle(error, Failure(f"{ctx.clean_prefix}{name}", ctx.author, ctx.guild, ctx.channel, text_reply))
@@ -211,7 +203,7 @@ class ErrorHandler(Cog):
                 context,
                 exc_info=error,
             )
-            if await _is_dev(failure.user):
+            if _is_owner(failure.user):
                 trace = "".join(traceback.format_exception(error))
                 if len(trace) <= TRACEBACK_LIMIT:
                     text += f"\n```py\n{trace}\n```"

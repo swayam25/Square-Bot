@@ -33,7 +33,6 @@ class Giveaways(
     Cog,
     name="Giveaways",
     description="Host giveaways that pick fair winners on time.",
-    emoji=emoji.giveaway,
     order=9,
     module=Module.GIVEAWAYS,
 ):
