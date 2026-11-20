@@ -6,7 +6,7 @@ from pathlib import Path
 log = logging.getLogger(__name__)
 
 CUSTOM_EMOJI_FILE_PATH = Path(".cache/emoji.json")
-EMOJI_DIR = Path("emojis")
+EMOJI_DIR = Path("assets/emojis")
 
 
 class Icon(discord.PartialEmoji):

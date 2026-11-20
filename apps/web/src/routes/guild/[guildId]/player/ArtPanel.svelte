@@ -47,8 +47,8 @@
 
     const videoId = $derived(track?.source === "youtube" && /^[\w-]{11}$/.test(track.identifier) ? track.identifier : null);
     let frame = $state<HTMLIFrameElement | null>(null);
-    // Captured once per video: later moves go through the player API instead of reloading the frame
-    const start = $derived.by(() => (videoId ? untrack(() => Math.floor(position / 1000)) : 0));
+    // Captured once per video and on each open: later moves go through the player API instead of reloading the frame
+    const start = $derived.by(() => (videoId && mode === "video" ? untrack(() => Math.floor(position / 1000)) : 0));
     const embed = $derived.by(() => {
         if (!videoId) return null;
         const params = new URLSearchParams({
@@ -85,7 +85,9 @@
         const now = performance.now();
         const want = position / 1000;
         const have = video.time + (video.state === 1 ? (now - video.at) / 1000 : 0);
-        if (force || (video.at && Math.abs(want - have) > DRIFT_S && now - corrected > SETTLE_MS)) {
+        // A buffering video's clock stands still, so it would only look behind
+        const steady = video.state === 1 || video.state === 2;
+        if (steady && video.at && Math.abs(want - have) > DRIFT_S && (force || now - corrected > SETTLE_MS)) {
             send("seekTo", [want, true]);
             corrected = now;
         }

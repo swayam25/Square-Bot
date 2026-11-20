@@ -163,23 +163,23 @@ The bot ships with a default set of Unicode emojis defined on the `Emoji` class 
 
 There are two ways to provide overrides: sync the bundled emojis, or write `.cache/emoji.json` by hand.
 
-### [Option 1] Sync [`apps/bot/emojis`](./apps/bot/emojis) (*recommended*)
+### [Option 1] Sync [`apps/bot/assets/emojis`](./apps/bot/assets/emojis) (*recommended*)
 
-The bot's emojis live in [`apps/bot/emojis`](./apps/bot/emojis) as full-resolution `.png`/`.gif` files, one per attribute (*e.g. `success.png` → the `success` attribute*).
+The bot's emojis live in [`apps/bot/assets/emojis`](./apps/bot/assets/emojis) as full-resolution `.png`/`.gif` files, one per attribute (*e.g. `success.png` → the `success` attribute*).
 
 Run **`/emoji`** to open a panel that compares the folder with the bot's app emojis: what's new, edited or removed, and any attribute without a file. **Sync** makes the app emojis match:
 - New files are uploaded and edited files are re-uploaded. Unchanged ones are left alone, so their IDs stay the same.
 - App emojis with no file are deleted.
 - `.cache/emoji.json` is rewritten, and the new emojis show up without a restart.
 
-To change an emoji, replace its file in `apps/bot/emojis`, then run `/emoji` and press **Sync**. To use your own set, swap in your own files with the same names.
+To change an emoji, replace its file in `apps/bot/assets/emojis`, then run `/emoji` and press **Sync**. To use your own set, swap in your own files with the same names.
 
 > [!NOTE]
 > Discord takes `.png`/`.gif` files up to 256 KB, named with 2-32 letters, digits or underscores. The panel lists files that break these rules and leaves them out of the sync.
 
 ```mermaid
 flowchart LR
-    A["apps/bot/emojis<br/>.png/.gif named after Emoji attributes"] --> B["/emoji → Sync"]
+    A["apps/bot/assets/emojis<br/>.png/.gif named after Emoji attributes"] --> B["/emoji → Sync"]
     B --> C[".cache/emoji.json"]
     C --> D["Emojis applied"]
 ```

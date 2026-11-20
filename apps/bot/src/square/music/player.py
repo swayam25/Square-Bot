@@ -35,7 +35,7 @@ DEFAULT_VOLUME = 100
 _VOTE_TIMEOUT = 60.0
 _VOTE_RESULT_LINGER = 5.0
 _UP_NEXT_LIMIT = 4
-IDLE_GIF = Path("idle.gif")
+IDLE_GIF = Path("assets/idle.gif")
 
 
 def idle_attachment() -> dict:
