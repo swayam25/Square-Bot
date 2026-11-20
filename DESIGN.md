@@ -24,12 +24,7 @@ How the dashboard, the landing page and the bot's image cards look. The code is 
 | status                  | `emerald-400` `amber-400` `red-400` | Success, warning, danger (fills at `/10`)           |
 | `dc-*`                  | Discord's dark theme                | Only inside things drawn to look like Discord       |
 
-```mermaid
-flowchart LR
-    page[gray-950 page] --> s1[gray-900 panel]
-    s1 --> s2[gray-800 card / field / popup]
-    s2 --> s3[gray-700 row / hover]
-```
+[![Surfaces](./assets/diagrams/surfaces.svg)](./assets/diagrams/surfaces.svg)
 
 Each layer sits a step lighter than the one under it, so a control is always lighter than what it sits on.
 
@@ -95,15 +90,7 @@ Discord mockups follow our shape only on their outer frame (`data-discord` root,
 
 ## Components
 
-```mermaid
-flowchart TD
-    styles[ui/styles.ts<br/>focusRing, field, menu rows] --> Input & Select & UserPicker & AccountMenu
-    Button --> Chip & ResetButton & ConfirmDialog & SaveBar
-    Picture --> Avatar & GuildIcon
-    QueryGate --> PageSkeleton --> TableSkeleton
-    SettingGroup --> SettingRow
-    DataTable --> TicketList & InvitesBoard[Invites leaderboard]
-```
+[![Components](./assets/diagrams/components.svg)](./assets/diagrams/components.svg)
 
 | Need                                  | Use                                                                                                                                                                                |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -128,12 +115,7 @@ flowchart TD
 - Lists that refresh in place show `TableSkeleton`. Pictures pulse until they load.
 - The full-screen loader only runs on first boot and on navigations slower than 400ms. It's the static logo over the player's wave, flowing in CSS so it moves before the page hydrates.
 
-```mermaid
-stateDiagram-v2
-    [*] --> Skeleton: query starts
-    Skeleton --> Content: ready
-    Skeleton --> EmptyState: error, with Try again
-```
+[![Loading states](./assets/diagrams/states.svg)](./assets/diagrams/states.svg)
 
 ## Motion
 
@@ -162,9 +144,6 @@ Springs are `--ease-spring` (small bounce) and `--ease-smooth` (none). Reduced m
 
 The bot draws the same cards as the website mockups (`discord/CardFrame`, `InviteCard`, `NowPlayingCard`). A card is drawn like the page: `gray-950` fill with `gray-900` tiles on it. Both sides share surfaces, chip size (h-8, 16px icons), radii and the wave progress bar.
 
-```mermaid
-flowchart LR
-    web[web mockup<br/>CardFrame] <-- same tokens --> bot[imaging/components.py<br/>Kit.card]
-```
+[![Shared tokens](./assets/diagrams/tokens.svg)](./assets/diagrams/tokens.svg)
 
 Any visual change to a card goes into both, then gets checked side by side. Discord's own green, red and orange stay on things shown inside Discord.

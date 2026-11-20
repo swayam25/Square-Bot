@@ -68,35 +68,13 @@ Any proxy that can put a login in front of a hostname works, for example:
 
 ## 🧭 How it fits together
 
-```mermaid
-flowchart LR
-    user([Browser]) --> proxy[Your reverse proxy<br/>TLS]
-    proxy -- edge network --> caddy[square<br/>Caddy]
-    caddy -- "/_app/immutable/*<br/>from disk" --> caddy
-    caddy --> web[web<br/>SvelteKit]
-    web --> redis[(Redis<br/>sessions, caches)]
-    web -- "API +<br/>WebSocket" --> bot[bot<br/>Pycord + Litestar]
-    bot --> db[(Postgres)]
-    bot --> storage[(RustFS<br/>files)]
-    proxy -- "edge network<br/>behind SSO" --> gateway[square-gateway<br/>Drizzle Gateway]
-    gateway --> db
-    proxy -- "edge network<br/>behind SSO" --> storage
-    bot --> lavalink[Lavalink nodes]
-    bot <--> discord([Discord])
-```
+[![How it fits together](./assets/diagrams/architecture.svg)](./assets/diagrams/architecture.svg)
 
 ## 🪇 Setup Lavalink
 
 The bot needs at least one [Lavalink](https://github.com/lavalink-devs/Lavalink) node to play music. Nodes are configured as `[[lavalink]]` tables in `config.toml`, you can add more than one and the bot fails over to a healthy node if one dies.
 
-```mermaid
-flowchart LR
-    A["Player needs a node"] --> B{"Any [[lavalink]]<br/>node online?"}
-    B -- No --> C["Music commands fail"]
-    B -- Yes --> D["Use a healthy node"]
-    D --> E["Active node dies"]
-    E --> F["Fail over to the next<br/>healthy node"]
-```
+[![Lavalink failover](./assets/diagrams/lavalink.svg)](./assets/diagrams/lavalink.svg)
 
 ### [Option 1] Use a free public node
 
@@ -177,12 +155,7 @@ To change an emoji, replace its file in `apps/bot/assets/emojis`, then run `/emo
 > [!NOTE]
 > Discord takes `.png`/`.gif` files up to 256 KB, named with 2-32 letters, digits or underscores. The panel lists files that break these rules and leaves them out of the sync.
 
-```mermaid
-flowchart LR
-    A["apps/bot/assets/emojis<br/>.png/.gif named after Emoji attributes"] --> B["/emoji → Sync"]
-    B --> C[".cache/emoji.json"]
-    C --> D["Emojis applied"]
-```
+[![Emoji sync](./assets/diagrams/emojis.svg)](./assets/diagrams/emojis.svg)
 
 ### [Option 2] Write `.cache/emoji.json` manually
 
