@@ -189,7 +189,7 @@
                     {/each}
                 </ul>
             {:else}
-                <p class="px-2 text-sm text-gray-400">Search for a song, or paste a YouTube, Spotify or Apple Music link.</p>
+                <p class="px-2 text-sm text-gray-400">Search for a song, or paste a link from any supported source.</p>
             {/if}
         </div>
         <OverlayScrollbar viewport={list} inset={16} />

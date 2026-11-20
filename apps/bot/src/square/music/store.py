@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import html
 import time
 from dataclasses import dataclass
 from square.core.view import DesignerView
@@ -36,7 +37,7 @@ def failure(guild_id: int) -> Failure | None:
 
 
 def record_failure(guild_id: int, title: str, reason: str | None) -> None:
-    _failures[guild_id] = Failure(title=title, reason=reason or None, at=round(time.time() * 1000))
+    _failures[guild_id] = Failure(title=html.unescape(title), reason=reason or None, at=round(time.time() * 1000))
 
 
 def play_ch(

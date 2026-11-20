@@ -61,18 +61,18 @@
     });
 </script>
 
-<div class={["flex max-w-full rounded-control-lg bg-gray-800 p-1 md:rounded-2xl", className]}>
+<div class={["flex max-w-full rounded-control-lg bg-gray-800 md:rounded-2xl", className]}>
     <div
         bind:this={track}
         role="tablist"
         aria-label={label}
-        class="edge-fade-x relative flex min-w-0 flex-1 scrollbar-none overflow-x-auto overscroll-x-contain [&::-webkit-scrollbar]:hidden"
+        class="edge-fade-x relative flex min-w-0 flex-1 scrollbar-none overflow-x-auto overscroll-x-contain rounded-[inherit] p-1 [&::-webkit-scrollbar]:hidden"
         {@attach edgeFade("x")}
     >
         {#if bar}
             <span
                 aria-hidden="true"
-                class={["pointer-events-none absolute inset-y-0 left-0 rounded-2xl md:rounded-xl", pill, settled && "slide"]}
+                class={["pointer-events-none absolute inset-y-1 left-0 rounded-2xl md:rounded-xl", pill, settled && "slide"]}
                 style="width: {bar.w}px; transform: translateX({bar.x}px)"
             ></span>
         {/if}

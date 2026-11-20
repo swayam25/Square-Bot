@@ -1,4 +1,5 @@
 import discord
+import html
 import inspect
 import msgspec
 import time
@@ -1242,7 +1243,7 @@ def _track(player: SquarePlayer | None, track: Playable) -> Track:
     rid = requester_id(player, track) if player else None
     return Track(
         identifier=track.identifier,
-        title=track.title,
+        title=html.unescape(track.title),
         author=track.author,
         uri=track.uri,
         artwork_url=track.artwork,

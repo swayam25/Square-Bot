@@ -64,7 +64,14 @@ def _artwork(ui: Kit, data: bytes | None, size: float, radius: float) -> Node:
     if image := open_image(data):
         return Picture(_trim_letterbox(image), size, radius=radius)
     t = ui.theme
-    return Box(ui.icon("music", size * 0.4, t.accent), fill=t.surface, radius=radius, width=size, height=size)
+    return Box(
+        ui.icon("music", size * 0.4, t.accent),
+        padding=size * 0.3,
+        fill=t.surface,
+        radius=radius,
+        width=size,
+        height=size,
+    )
 
 
 def _up_next(ui: Kit, data: NowPlaying) -> Box:
