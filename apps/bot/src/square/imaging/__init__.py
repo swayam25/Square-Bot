@@ -15,9 +15,10 @@ WIDTH = 720
 _renders: asyncio.Semaphore = globals().get("_renders") or asyncio.Semaphore(1)
 
 
-def _root[T](template: Template[T], data: T, accent: int | None) -> Box:
+def _root[T](template: Template[T], data: T, accent: int | None, bare: bool = False) -> Box:
     ui = Kit(theme.theme(accent))
-    return ui.card(template(ui, data))
+    node = template(ui, data)
+    return Box(node, fill=ui.theme.bg, align="stretch") if bare else ui.card(node)
 
 
 def measure[T](template: Template[T], data: T, *, width: float = WIDTH) -> float:
@@ -33,19 +34,30 @@ async def tallest[T](template: Template[T], datas: list[T], *, width: float = WI
         return await asyncio.to_thread(measure_all)
 
 
-def render_png[T](
-    template: Template[T], data: T, *, width: float = WIDTH, height: float = 0, accent: int | None = None
-) -> bytes:
-    root = _root(template, data, accent)
+def _draw[T](template: Template[T], data: T, *, width: float, height: float, accent: int | None, bare: bool) -> Canvas:
+    root = _root(template, data, accent, bare)
     height = max(root.measure(width), height)
     canvas = Canvas(width, height)
     root.draw(canvas, 0, 0, width, height)
-    return canvas.to_png()
+    return canvas
+
+
+def render_png[T](
+    template: Template[T],
+    data: T,
+    *,
+    width: float = WIDTH,
+    height: float = 0,
+    accent: int | None = None,
+    bare: bool = False,
+) -> bytes:
+    """`bare` skips the card's padding, for templates that run to the edges."""
+    return _draw(template, data, width=width, height=height, accent=accent, bare=bare).to_png()
 
 
 async def render[T](
-    template: Template[T], data: T, *, filename: str, width: float = WIDTH, height: float = 0
+    template: Template[T], data: T, *, filename: str, width: float = WIDTH, height: float = 0, bare: bool = False
 ) -> discord.File:
     async with _renders:
-        png = await asyncio.to_thread(render_png, template, data, width=width, height=height)
+        png = await asyncio.to_thread(render_png, template, data, width=width, height=height, bare=bare)
     return discord.File(BytesIO(png), filename=filename)

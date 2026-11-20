@@ -27,7 +27,7 @@ class Settings(Cog, name="Settings", description="Server settings live on the da
             ui.ActionRow(
                 ui.Button(
                     label="Open dashboard",
-                    emoji=emoji.settings_white,
+                    emoji=emoji.dashboard_white,
                     style=discord.ButtonStyle.link,
                     url=f"{config.dashboard_url}/guild/{ctx.guild.id}",
                 )

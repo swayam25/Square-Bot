@@ -5,7 +5,7 @@ from babel.dates import format_timedelta
 from contextlib import suppress
 from dataclasses import dataclass
 from discord import ui
-from discord.commands import option, slash_command, user_command
+from discord.commands import message_command, option, slash_command, user_command
 from square import logs
 from square.cogs.moderation.common import answer, dms_closed, field, prompt, result_view
 from square.core import Client
@@ -278,13 +278,7 @@ class Warnings:
         if not await not_in_server(ctx, user):
             await self._warn(ctx.interaction, user, reason)
 
-    @user_command(
-        name="Warn",
-        default_member_permissions=discord.Permissions(moderate_members=True),
-        contexts={discord.InteractionContextType.guild},
-    )
-    async def warn_app(self, ctx: discord.ApplicationContext, user: discord.Member):
-        """Warns a member, asking for a reason first."""
+    async def _ask_warn(self, ctx: discord.ApplicationContext, user: discord.Member | discord.User) -> None:
         reason = field(long=True, max_length=MAX_REASON)
         await prompt(
             ctx,
@@ -294,6 +288,24 @@ class Warnings:
             lambda i: self._warn(i, user, answer(reason) or ""),
             refuse=refusal,
         )
+
+    @user_command(
+        name="Warn",
+        default_member_permissions=discord.Permissions(moderate_members=True),
+        contexts={discord.InteractionContextType.guild},
+    )
+    async def warn_app(self, ctx: discord.ApplicationContext, user: discord.Member):
+        """Warns a member, asking for a reason first."""
+        await self._ask_warn(ctx, user)
+
+    @message_command(
+        name="Warn",
+        default_member_permissions=discord.Permissions(moderate_members=True),
+        contexts={discord.InteractionContextType.guild},
+    )
+    async def warn_author(self, ctx: discord.ApplicationContext, message: discord.Message):
+        """Warns the message's author, asking for a reason first."""
+        await self._ask_warn(ctx, message.author)
 
     @slash_command(name="warnings")
     @discord.default_permissions(moderate_members=True)

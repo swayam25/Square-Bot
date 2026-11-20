@@ -26,6 +26,7 @@ client = Client(
     command_prefix="",
     help_command=None,
     default_command_contexts={discord.InteractionContextType.guild},
+    default_command_integration_types={discord.IntegrationType.guild_install},
 )
 invites.setup(client)
 

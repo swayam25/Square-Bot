@@ -54,6 +54,23 @@ def _mod_entry(event: Any, title: str, tone: Tone, guild: discord.Guild, client:
     return entry
 
 
+def _expression_picture(guild: discord.Guild, target_id: int, sticker: bool, changes: list[dict] | None) -> str | None:
+    if not sticker:
+        found = guild.get_emoji(target_id)
+        return found.url if found else f"{discord.Asset.BASE}/emojis/{target_id}.png"
+    found = next((item for item in guild.stickers if item.id == target_id), None)
+    if found:
+        kind = found.format
+    elif (raw := diff.value(changes, "format_type")) is not None:
+        kind = discord.enums.try_enum(discord.StickerFormatType, raw)
+    else:
+        return None
+    if not isinstance(kind, discord.StickerFormatType) or kind is discord.StickerFormatType.lottie:
+        return None
+    base = "https://media.discordapp.net" if kind is discord.StickerFormatType.gif else discord.Asset.BASE
+    return f"{base}/stickers/{target_id}.{kind.file_extension}"
+
+
 def _roles_text(values: list[dict] | None) -> str | None:
     return ", ".join(f"<@&{role['id']}>" for role in values) if values else None
 
@@ -216,6 +233,8 @@ def entry_for(client: Client, guild: discord.Guild, payload: discord.RawAuditLog
             name = diff.value(changes, "name", old=deleted)
             found = None if sticker else guild.get_emoji(payload.target_id or 0)
             entry = Entry("emojis", f"{'Sticker' if sticker else 'Emoji'} {verb}", tone)
+            if not deleted and payload.target_id:
+                entry.thumbnail = _expression_picture(guild, payload.target_id, sticker, changes)
             entry.add("img", "Sticker" if sticker else "Emoji", f"{found} `{name}`" if found else f"`{name}`")
             if not (created or deleted):
                 entry.rows += diff.rows(changes)

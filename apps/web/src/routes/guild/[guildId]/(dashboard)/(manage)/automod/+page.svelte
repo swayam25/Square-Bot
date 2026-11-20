@@ -29,7 +29,7 @@
     import MaterialSymbolsScienceRounded from "~icons/material-symbols/science-rounded";
     import MaterialSymbolsShieldRounded from "~icons/material-symbols/shield-rounded";
     import MaterialSymbolsWarningRounded from "~icons/material-symbols/warning-rounded";
-    import SimpleIconsDiscord from "~icons/simple-icons/discord";
+    import ThesvgDiscord from "~icons/thesvg/discord";
     import type { PageProps } from "./$types";
     import * as remote from "./automod.remote.ts";
     import {
@@ -249,7 +249,7 @@
         <Tabs
             label="AutoMod"
             tabs={[
-                { value: "discord", label: "Discord rules", icon: SimpleIconsDiscord, count: nativeRules.length },
+                { value: "discord", label: "Discord rules", icon: ThesvgDiscord, count: nativeRules.length },
                 { value: "square", label: "Square rules", icon: MaterialSymbolsShieldRounded, count: rules.filter((rule) => rule.enabled).length },
                 { value: "warnings", label: "Warnings", icon: MaterialSymbolsWarningRounded },
                 { value: "test", label: "Test", icon: MaterialSymbolsScienceRounded },
@@ -268,7 +268,7 @@
                 {:else if !current}
                     <EmptyState
                         card
-                        icon={SimpleIconsDiscord}
+                        icon={ThesvgDiscord}
                         title="No Discord rules yet"
                         text="Discord runs these itself, so they work even while Square is offline."
                     >

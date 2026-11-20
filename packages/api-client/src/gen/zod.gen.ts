@@ -174,6 +174,7 @@ export const zBotCommand = z.object({
     description: z.string(),
     options: z.array(zCommandOption),
     permissions: z.string().nullable(),
+    install: z.enum(["server", "both", "account"]),
 });
 
 /**

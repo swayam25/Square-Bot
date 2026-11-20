@@ -13,7 +13,6 @@
     import InviteCard from "#lib/components/discord/InviteCard.svelte";
     import Mention from "#lib/components/discord/Mention.svelte";
     import NowPlayingCard from "#lib/components/discord/NowPlayingCard.svelte";
-    import BrandIcon from "#lib/components/music/BrandIcon.svelte";
     import PlayerPreview from "#lib/components/music/PlayerPreview.svelte";
     import Seo from "#lib/components/site/Seo.svelte";
     import SiteFooter from "#lib/components/site/SiteFooter.svelte";
@@ -22,6 +21,7 @@
     import { setDiscord } from "#lib/discord/context.ts";
     import { EMOJI } from "#lib/discord/markdown.ts";
     import { demo, time, TRACKS } from "#lib/music/demo.svelte.ts";
+    import MaterialSymbolsAccountCircleRounded from "~icons/material-symbols/account-circle-rounded";
     import MaterialSymbolsAddBoxRounded from "~icons/material-symbols/add-box-rounded";
     import MaterialSymbolsCalendarTodayRounded from "~icons/material-symbols/calendar-today-rounded";
     import MaterialSymbolsCelebrationRounded from "~icons/material-symbols/celebration-rounded";
@@ -36,8 +36,9 @@
     import MaterialSymbolsShieldRounded from "~icons/material-symbols/shield-rounded";
     import MaterialSymbolsStarRounded from "~icons/material-symbols/star-rounded";
     import MaterialSymbolsTuneRounded from "~icons/material-symbols/tune-rounded";
-    import SimpleIconsDiscord from "~icons/simple-icons/discord";
-    import SimpleIconsGithub from "~icons/simple-icons/github";
+    import ThesvgColorYoutube from "~icons/thesvg-color/youtube";
+    import ThesvgDiscord from "~icons/thesvg/discord";
+    import ThesvgGithub from "~icons/thesvg/github";
     import type { PageProps } from "./$types";
 
     let { data }: PageProps = $props();
@@ -128,14 +129,23 @@
                 <span class="font-display text-5xl font-semibold tracking-tight">Square</span>
             </div>
             <h1 class="max-w-xl font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">The one Discord bot you need</h1>
-            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <div class="grid w-full max-w-md grid-cols-1 gap-2 sm:grid-cols-2">
                 <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}
-                    ><SimpleIconsDiscord />Add to Discord</Button
+                    ><ThesvgDiscord />Add to server</Button
+                >
+                <Button size="lg" href={data.installUrl} target="_blank" rel="noopener" onclick={openInvitePopup}
+                    ><MaterialSymbolsAccountCircleRounded />Add to account</Button
                 >
                 {#if data.user}
-                    <Button size="lg" href="/guild"><MaterialSymbolsDashboardRounded />Open dashboard</Button>
+                    <Button size="lg" href="/guild" class="sm:col-span-2"><MaterialSymbolsDashboardRounded />Open dashboard</Button>
                 {:else}
-                    <Button size="lg" href="/login" data-sveltekit-reload onclick={(event) => openLoginPopup() && event.preventDefault()}>
+                    <Button
+                        size="lg"
+                        href="/login"
+                        data-sveltekit-reload
+                        onclick={(event) => openLoginPopup() && event.preventDefault()}
+                        class="sm:col-span-2"
+                    >
                         <MaterialSymbolsDashboardRounded />Open dashboard
                     </Button>
                 {/if}
@@ -235,7 +245,7 @@
                         <DiscordAccessories>
                             <DiscordContainer color="var(--color-embed-red)">
                                 <p>
-                                    <BrandIcon brand="youtube" class={EMOJI} /> Added
+                                    <ThesvgColorYoutube aria-hidden="true" class={EMOJI} /> Added
                                     <span class="text-dc-link"><strong>{demo.track.title}</strong> by <strong>{demo.track.author}</strong></span>
                                     [{time(demo.track.duration)}].
                                 </p>
@@ -272,7 +282,7 @@
                                 </DiscordMedia>
                             </DiscordContainer>
                             <DiscordActionRow>
-                                <DiscordButton href=""><BrandIcon brand="youtube" class="size-[1.375em]" />Open on YouTube</DiscordButton>
+                                <DiscordButton href=""><ThesvgColorYoutube aria-hidden="true" class="size-[1.375em]" />Open on YouTube</DiscordButton>
                             </DiscordActionRow>
                         </DiscordAccessories>
                     </DiscordMessage>
@@ -414,15 +424,18 @@
         </div>
         <h2 id="join" class="max-w-2xl font-display text-4xl font-semibold tracking-tight text-balance md:text-6xl">Ready to bring Square in?</h2>
         <p class="max-w-md text-gray-400 md:text-lg">Add it in a few clicks, then set it up from Discord or the dashboard.</p>
-        <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <div class="grid w-full max-w-md grid-cols-1 gap-2 sm:grid-cols-2">
             <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}
-                ><SimpleIconsDiscord />Add to Discord</Button
+                ><ThesvgDiscord />Add to server</Button
             >
-            <Button size="lg" href="https://github.com/swayam25/Square-Bot" target="_blank" rel="noopener noreferrer"
-                ><SimpleIconsGithub />View on GitHub</Button
+            <Button size="lg" href={data.installUrl} target="_blank" rel="noopener" onclick={openInvitePopup}
+                ><MaterialSymbolsAccountCircleRounded />Add to account</Button
+            >
+            <Button size="lg" href="https://github.com/swayam25/Square-Bot" target="_blank" rel="noopener noreferrer" class="sm:col-span-2"
+                ><ThesvgGithub />View on GitHub</Button
             >
         </div>
     </section>
 
-    <SiteFooter inviteUrl={data.inviteUrl} />
+    <SiteFooter inviteUrl={data.inviteUrl} installUrl={data.installUrl} />
 </div>

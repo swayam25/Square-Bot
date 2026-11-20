@@ -67,9 +67,16 @@ class Snapshot:
         ]
 
     @property
+    def unlinked(self) -> list[str]:
+        known = set(get_emoji_names())
+        return [
+            name for name, app_emoji in self.remote.items() if name in known and getattr(emoji, name).id != app_emoji.id
+        ]
+
+    @property
     def pending(self) -> bool:
         # No files at all means a missing folder, not "delete every emoji"
-        return bool(self.files) and bool(self.new or self.edited or self.removed)
+        return bool(self.files) and bool(self.new or self.edited or self.removed or self.unlinked)
 
 
 def _read_assets() -> tuple[dict[str, bytes], dict[str, str], dict[str, str], dict[str, dict]]:
@@ -152,6 +159,7 @@ class EmojiPanel(DesignerView):
             ("New", snap.new),
             ("Edited", snap.edited),
             ("Removed", [app_emoji.name for app_emoji in snap.removed]),
+            ("Not linked", snap.unlinked),
         )
         issues = (
             ("No file", [name for name in known if name not in snap.files and name not in snap.skipped]),
@@ -209,6 +217,7 @@ class EmojiPanel(DesignerView):
         self.snap = snap = await scan(self.bot)
         counts = {"new": len(snap.new), "edited": len(snap.edited), "removed": len(snap.removed)}
         total, done = sum(counts.values()), 0
+        counts["linked"] = len(snap.unlinked)
 
         def step() -> None:
             nonlocal done

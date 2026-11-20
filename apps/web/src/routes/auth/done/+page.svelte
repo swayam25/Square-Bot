@@ -6,6 +6,7 @@
 
     const guild = page.url.searchParams.get("guild");
     const invite = guild !== null || page.url.searchParams.has("invite");
+    const install = page.url.searchParams.get("install");
 
     onMount(() => {
         const channel = new BroadcastChannel(AUTH_CHANNEL);
@@ -17,4 +18,7 @@
     });
 </script>
 
-<Seo title={guild ? "Square added" : invite ? "Square not added" : "Signed in"} description="This window closes on its own." />
+<Seo
+    title={guild || install === "added" ? "Square added" : invite || install ? "Square not added" : "Signed in"}
+    description="This window closes on its own."
+/>

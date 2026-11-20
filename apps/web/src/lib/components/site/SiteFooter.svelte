@@ -2,22 +2,31 @@
     import square from "#lib/assets/square.svg";
     import { openInvitePopup } from "#lib/auth.ts";
     import FooterLedge from "#lib/components/site/FooterLedge.svelte";
+    import type { Component } from "svelte";
+    import MaterialSymbolsAccountCircleRounded from "~icons/material-symbols/account-circle-rounded";
     import MaterialSymbolsBugReportRounded from "~icons/material-symbols/bug-report-rounded";
     import MaterialSymbolsCodeBlocksRounded from "~icons/material-symbols/code-blocks-rounded";
     import MaterialSymbolsDashboardRounded from "~icons/material-symbols/dashboard-rounded";
-    import SimpleIconsDiscord from "~icons/simple-icons/discord";
-    import SimpleIconsGit from "~icons/simple-icons/git";
-    import SimpleIconsGithub from "~icons/simple-icons/github";
+    import ThesvgDiscord from "~icons/thesvg/discord";
+    import ThesvgGit from "~icons/thesvg/git";
+    import ThesvgGithub from "~icons/thesvg/github";
 
-    let { inviteUrl }: { inviteUrl: string } = $props();
+    let { inviteUrl, installUrl }: { inviteUrl: string; installUrl: string } = $props();
+
+    type Link = { href: string; label: string; icon: Component; popup?: boolean; external?: boolean };
 
     const REPO = "https://github.com/swayam25/Square-Bot";
-    const links = $derived([
-        { href: inviteUrl, label: "Add to Discord", icon: SimpleIconsDiscord, popup: true },
-        { href: "/guild", label: "Dashboard", icon: MaterialSymbolsDashboardRounded },
-        { href: "/commands", label: "Commands", icon: MaterialSymbolsCodeBlocksRounded },
-        { href: REPO, label: "GitHub", icon: SimpleIconsGithub, external: true },
-        { href: `${REPO}/issues/new`, label: "Report a bug", icon: MaterialSymbolsBugReportRounded, external: true },
+    const columns: Link[][] = $derived([
+        [
+            { href: inviteUrl, label: "Add to server", icon: ThesvgDiscord, popup: true },
+            { href: installUrl, label: "Add to account", icon: MaterialSymbolsAccountCircleRounded, popup: true },
+            { href: "/guild", label: "Dashboard", icon: MaterialSymbolsDashboardRounded },
+            { href: "/commands", label: "Commands", icon: MaterialSymbolsCodeBlocksRounded },
+        ],
+        [
+            { href: REPO, label: "GitHub", icon: ThesvgGithub, external: true },
+            { href: `${REPO}/issues/new`, label: "Report a bug", icon: MaterialSymbolsBugReportRounded, external: true },
+        ],
     ]);
 </script>
 
@@ -33,18 +42,23 @@
                     <span class="font-display text-2xl font-semibold">Square</span>
                 </a>
                 <p class="flex items-center gap-1.5 font-mono text-sm text-gray-400">
-                    <SimpleIconsGit class="size-4 shrink-0" />Open source Discord bot
+                    <ThesvgGit class="size-4 shrink-0" />Open source Discord bot
                 </p>
             </div>
-            <nav aria-label="Footer" class="grid w-fit grid-flow-col grid-rows-3 gap-x-8 gap-y-4 font-mono text-sm">
-                {#each links as link (link.label)}
-                    <a
-                        href={link.href}
-                        target={link.popup || link.external ? "_blank" : undefined}
-                        rel={link.popup ? "noopener" : link.external ? "noopener noreferrer" : undefined}
-                        onclick={link.popup ? openInvitePopup : undefined}
-                        class="flex items-center gap-2 text-gray-400 duration-200 hover:text-gray-100"><link.icon class="size-4" />{link.label}</a
-                    >
+            <nav aria-label="Footer" class="flex w-fit gap-x-8 font-mono text-sm">
+                {#each columns as column, index (index)}
+                    <div class="flex flex-col gap-4">
+                        {#each column as link (link.label)}
+                            <a
+                                href={link.href}
+                                target={link.popup || link.external ? "_blank" : undefined}
+                                rel={link.popup ? "noopener" : link.external ? "noopener noreferrer" : undefined}
+                                onclick={link.popup ? openInvitePopup : undefined}
+                                class="flex items-center gap-2 text-gray-400 duration-200 hover:text-gray-100"
+                                ><link.icon class="size-4" />{link.label}</a
+                            >
+                        {/each}
+                    </div>
                 {/each}
             </nav>
         </div>

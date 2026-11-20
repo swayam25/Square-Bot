@@ -9,11 +9,15 @@ from square.utils.helpers import fmt_count
 _ARTWORK = 160
 _COVER = 32
 _FILTERS_SHOWN = 2
-_LOGOS = {"youtube", "spotify", "soundcloud"}
+_LOGOS = {"youtube", "spotify", "soundcloud", "applemusic", "deezer", "bandcamp", "twitch", "vimeo"}
 _LABELS = {
     "youtube": "YouTube",
     "spotify": "Spotify",
     "soundcloud": "SoundCloud",
+    "applemusic": "Apple Music",
+    "deezer": "Deezer",
+    "bandcamp": "Bandcamp",
+    "vimeo": "Vimeo",
     "http": "Link",
     "local": "Local file",
     "twitch": "Twitch",

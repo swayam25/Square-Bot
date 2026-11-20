@@ -49,6 +49,8 @@ def _user_fault(error: BaseException) -> str | None:
             return f"I need **{fmt_perms(error.missing_permissions)}** to do that. Ask a server admin to grant it."
         case commands.NoPrivateMessage():
             return "This only works in a server."
+        case check.NotInServer():
+            return "This only works in servers I'm in. Ask a server admin to add me."
         case commands.PrivateMessageOnly():
             return "This only works in DMs."
         case commands.MaxConcurrencyReached():

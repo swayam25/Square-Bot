@@ -16,6 +16,7 @@ from square.modules import Module
 from square.music import dj, store
 from square.music.core import SquarePlayer, get_player, requester_id
 from square.music.history import history_tracks
+from square.utils import check
 from typing import Annotated, Literal, get_args
 
 # Discord IDs go past JavaScript's safe integer range, so the API sends them as strings
@@ -70,6 +71,7 @@ class BotCommand(Schema):
     description: str
     options: list[CommandOption]
     permissions: Bitfield | None
+    install: Literal["server", "both", "account"]
 
 
 class CommandCategory(Schema):
@@ -1108,6 +1110,17 @@ def _permissions(command: ApplicationCommand) -> str | None:
     return str(bits.value) if bits else None
 
 
+def _install(command: ApplicationCommand) -> Literal["server", "both", "account"]:
+    if check.bot_in_server in command.checks:
+        return "server"
+    while command.parent:
+        command = command.parent
+    types = command.integration_types or {discord.IntegrationType.guild_install}
+    if discord.IntegrationType.user_install not in types:
+        return "server"
+    return "both" if discord.IntegrationType.guild_install in types else "account"
+
+
 def _commands(cog: Cog) -> list[BotCommand]:
     found: list[BotCommand] = []
     for command in cog.get_commands():
@@ -1122,6 +1135,7 @@ def _commands(cog: Cog) -> list[BotCommand]:
                     description=(inspect.getdoc(command.callback) or "").partition("\n")[0],
                     options=[],
                     permissions=_permissions(command),
+                    install=_install(command),
                 )
             )
             continue
@@ -1133,6 +1147,7 @@ def _commands(cog: Cog) -> list[BotCommand]:
                 description=sub.description,
                 options=[_option_out(option) for option in sub.options],
                 permissions=_permissions(sub),
+                install=_install(sub),
             )
             for sub in subs
             if isinstance(sub, SlashCommand)

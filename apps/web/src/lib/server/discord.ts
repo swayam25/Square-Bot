@@ -98,6 +98,35 @@ export function inviteUrl(origin: string, guildId?: string) {
     return url;
 }
 
+export const INSTALL_STATE = "install";
+
+// Adds Square to the user's own account, so its anywhere commands work in every server and DM
+export function installUrl(origin: string) {
+    const url = new URL(OAuth2Routes.authorizationURL);
+    url.search = new URLSearchParams({
+        client_id: DISCORD_CLIENT_ID,
+        integration_type: "1",
+        scope: OAuth2Scopes.ApplicationsCommands,
+        response_type: "code",
+        redirect_uri: new URL("/auth/callback", origin).href,
+        state: INSTALL_STATE,
+    }).toString();
+    return url;
+}
+
+// Discord adds the app to the account only once the install link's code is redeemed. The install URL is fixed (the link
+// card shares it too), so there's no PKCE verifier to send, and the token that comes back is never kept
+export async function redeemInstall(code: string, redirectUri: string) {
+    const credentials = btoa(`${encodeURIComponent(DISCORD_CLIENT_ID)}:${encodeURIComponent(DISCORD_CLIENT_SECRET)}`);
+    const response = await fetch(OAuth2Routes.tokenURL, {
+        method: "POST",
+        headers: { Authorization: `Basic ${credentials}`, "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ grant_type: "authorization_code", code, redirect_uri: redirectUri }),
+        signal: AbortSignal.timeout(5_000),
+    });
+    return response.ok;
+}
+
 export function avatarUrl(user: { id: string; avatar: string | null }) {
     return user.avatar ? RouteBases.cdn + CDNRoutes.userAvatar(user.id, user.avatar, ImageFormat.WebP) + "?size=128" : null;
 }

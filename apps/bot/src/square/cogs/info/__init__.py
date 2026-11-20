@@ -4,10 +4,11 @@ import time
 from babel.dates import format_timedelta
 from discord import ui
 from discord.commands import SlashCommandGroup, option, slash_command
+from discord.ext import commands
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import DesignerView, error_view
-from square.utils import config
+from square.utils import check, config
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count, member_counts, plural
 from typing import Literal
@@ -27,7 +28,8 @@ class UserInfo:
         self.user = user
 
     async def get_user_info(self, type: Literal["main", "server"] = "server") -> tuple[list[str], list[ui.Button]]:
-        if isinstance(self.user, discord.User):
+        # A user install runs in servers I'm not in, where only the global profile can be fetched
+        if isinstance(self.user, discord.User) or not self.client.get_guild(self.ctx.guild.id):
             self.user = await self.client.fetch_user(self.user.id)
         else:
             self.user = await self.ctx.guild.fetch_member(self.user.id)
@@ -156,9 +158,10 @@ class InfoView(DesignerView):
 
         info_lines, url_buttons = await self.user_info.get_user_info(type)
         row = ui.ActionRow()
-        if isinstance(self.user_info.user, discord.Member) and (
+        has_switch = isinstance(self.user_info.user, discord.Member) and (
             self.user_info.user.guild_avatar or self.user_info.user.guild_banner
-        ):
+        )
+        if has_switch:
             if type == "server":
                 btn = ui.Button(
                     emoji=emoji.profile_white,
@@ -202,8 +205,13 @@ class InfoView(DesignerView):
         if banner_url:
             cont.add_item(ui.MediaGallery(discord.MediaGalleryItem(url=banner_url)))
 
-        if url_buttons:
-            cont.add_item(ui.ActionRow(*list(url_buttons)))
+        # The switch buttons sit below the card, so links only stay inside when there are some to keep them with
+        if has_switch:
+            if url_buttons:
+                cont.add_item(ui.ActionRow(*url_buttons))
+        else:
+            for button in url_buttons:
+                row.add_item(button)
 
         self.add_item(cont)
         if row.children:
@@ -326,7 +334,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
     def __init__(self, client: Client):
         self.client = client
 
-    @slash_command(name="help")
+    @slash_command(name="help", **check.ANYWHERE)
     async def help(self, ctx: discord.ApplicationContext):
         """Links to every command on the website."""
         view = DesignerView(
@@ -346,7 +354,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         )
         await ctx.respond(view=view, ephemeral=True)
 
-    @slash_command(name="ping")
+    @slash_command(name="ping", **check.ANYWHERE)
     async def ping(self, ctx: discord.ApplicationContext):
         """Shows heartbeats of the bot."""
         view = DesignerView(
@@ -356,7 +364,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         )
         await ctx.respond(view=view)
 
-    @slash_command(name="uptime")
+    @slash_command(name="uptime", **check.ANYWHERE)
     async def uptime(self, ctx: discord.ApplicationContext):
         """Shows bot's uptime."""
         dur = datetime.timedelta(seconds=int(round(time.time() - start_time)))
@@ -368,7 +376,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         )
         await ctx.respond(view=view)
 
-    @slash_command(name="avatar")
+    @slash_command(name="avatar", **check.ANYWHERE)
     @option("user", description="Mention the user whose avatar you want to see", required=False)
     async def avatar(self, ctx: discord.ApplicationContext, user: discord.Member = None):
         """Shows the avatar of the mentioned user."""
@@ -390,33 +398,33 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
                 custom_id=f"{type}_profile_btn",
             )
             profile_btn.callback = profile_btn_callback
-            view = DesignerView(
-                ui.Container(
-                    ui.TextDisplay(f"## {user.display_name}'s Avatar"),
-                    ui.MediaGallery(discord.MediaGalleryItem(url=avatar.url)),
-                    ui.ActionRow(
-                        *[
-                            ui.Button(
-                                label=fmt.upper(),
-                                emoji=emoji.img_white,
-                                style=discord.ButtonStyle.link,
-                                url=avatar.with_format(fmt).url,
-                            )
-                            for fmt in ["png", "jpg", "webp"]
-                        ]
-                    ),
-                ),
-                ctx=ctx,
-                check_author_interaction=True,
+            links = ui.ActionRow(
+                *[
+                    ui.Button(
+                        label=fmt.upper(),
+                        emoji=emoji.img_white,
+                        style=discord.ButtonStyle.link,
+                        url=avatar.with_format(fmt).url,
+                    )
+                    for fmt in ["png", "jpg", "webp"]
+                ]
             )
+            container = ui.Container(
+                ui.TextDisplay(f"## {user.display_name}'s Avatar"),
+                ui.MediaGallery(discord.MediaGalleryItem(url=avatar.url)),
+                *([links] if guild_avatar else []),
+            )
+            view = DesignerView(container, ctx=ctx, check_author_interaction=True)
             if guild_avatar:
                 view.add_item(ui.ActionRow(profile_btn))
+            else:
+                view.add_item(links)
             return view
 
         view = await get_view()
         await ctx.respond(view=view)
 
-    info = SlashCommandGroup(name="info", description="Info related commands.")
+    info = SlashCommandGroup(name="info", description="Info related commands.", **check.ANYWHERE)
 
     @info.command(name="user")
     @option("user", description="Mention the user whose info you want to see")
@@ -428,6 +436,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         await ctx.respond(view=view)
 
     @info.command(name="server")
+    @commands.check(check.bot_in_server)
     async def server_info(self, ctx: discord.ApplicationContext):
         """Shows info of the current server."""
         animated_emojis = len([e for e in ctx.guild.emojis if e.animated])
@@ -478,6 +487,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         await ctx.respond(view=DesignerView(container, *([ui.ActionRow(*links)] if links else [])))
 
     @info.command(name="emoji")
+    @commands.check(check.bot_in_server)
     @option("icon", description="Enter the emoji")
     async def emoji_info(self, ctx: discord.ApplicationContext, icon: discord.Emoji):
         """Shows info of the given emoji."""

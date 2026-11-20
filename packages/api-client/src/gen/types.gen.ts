@@ -158,6 +158,7 @@ export type BotCommand = {
      * Discord permission bits as a decimal string
      */
     permissions: string | null;
+    install: "server" | "both" | "account";
 };
 
 /**

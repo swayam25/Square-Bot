@@ -240,7 +240,7 @@ class Giveaways(
                 ),
                 ui.Button(
                     label="Customize",
-                    emoji=emoji.settings_white,
+                    emoji=emoji.dashboard_white,
                     style=discord.ButtonStyle.link,
                     url=cards.dashboard_url(ctx.guild.id, giveaway.id),
                 ),

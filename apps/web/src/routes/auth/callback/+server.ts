@@ -1,15 +1,28 @@
-import { exchangeCode, fetchUser, INVITE_STATE } from "#lib/server/discord.ts";
+import { exchangeCode, fetchUser, INSTALL_STATE, INVITE_STATE, redeemInstall } from "#lib/server/discord.ts";
 import { takeOAuthCookies } from "#lib/server/oauth-cookies.ts";
 import { createSession, deleteSession } from "#lib/server/session.ts";
 import { error, redirect } from "@sveltejs/kit";
 import * as oauth from "oauth4webapi";
 import type { RequestHandler } from "./$types";
 
+async function finishInstall(url: URL) {
+    // No code means the user cancelled on Discord's page
+    const code = url.searchParams.get("code");
+    if (!code) return false;
+    const added = await redeemInstall(code, new URL("/auth/callback", url).href).catch(() => false);
+    if (!added) console.warn("Discord install rejected");
+    return added;
+}
+
 export const GET: RequestHandler = async ({ cookies, url }) => {
     // A finished or cancelled bot invite, not a login. Its code is never exchanged, the bot needs no user token
     if (url.searchParams.get("state") === INVITE_STATE) {
         const guild = url.searchParams.get("guild_id");
         redirect(303, guild && /^\d{17,20}$/.test(guild) ? `/auth/done?guild=${guild}` : "/auth/done?invite");
+    }
+
+    if (url.searchParams.get("state") === INSTALL_STATE) {
+        redirect(303, `/auth/done?install=${(await finishInstall(url)) ? "added" : "cancelled"}`);
     }
 
     const login = takeOAuthCookies(cookies);

@@ -25,6 +25,10 @@
         youtube: "YouTube",
         spotify: "Spotify",
         soundcloud: "SoundCloud",
+        applemusic: "Apple Music",
+        deezer: "Deezer",
+        bandcamp: "Bandcamp",
+        vimeo: "Vimeo",
         http: "Link",
         local: "Local file",
         twitch: "Twitch",
@@ -34,10 +38,10 @@
 
 <script lang="ts">
     import CardFrame from "#lib/components/discord/CardFrame.svelte";
-    import BrandIcon, { brandOf } from "#lib/components/music/BrandIcon.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Chip from "#lib/components/ui/Chip.svelte";
     import WavyProgress from "#lib/components/ui/WavyProgress.svelte";
+    import { brandOf, LOGOS } from "#lib/music/brands.ts";
     import MaterialSymbolsAutoplayRounded from "~icons/material-symbols/autoplay-rounded";
     import MaterialSymbolsEqualizerRounded from "~icons/material-symbols/equalizer-rounded";
     import MaterialSymbolsMusicNoteRounded from "~icons/material-symbols/music-note-rounded";
@@ -51,7 +55,8 @@
 
     let { data }: { data: NowPlaying } = $props();
 
-    const logo = $derived(brandOf(data.source));
+    const brand = $derived(brandOf(data.source));
+    const Logo = $derived(brand && LOGOS[brand]);
     const looping = $derived(data.loop !== "Disabled");
     const filters = $derived.by(() => {
         const shown = data.filters.slice(0, FILTERS_SHOWN).join(" · ");
@@ -83,7 +88,7 @@
                     <Chip tone="accent"><MaterialSymbolsPauseRounded />Playing</Chip>
                 {/if}
                 <Chip>
-                    {#if logo}<BrandIcon brand={logo} class="size-4" />{:else}<MaterialSymbolsMusicNoteRounded />{/if}
+                    {#if Logo}<Logo aria-hidden="true" class="size-4 shrink-0" />{:else}<MaterialSymbolsMusicNoteRounded />{/if}
                     {LABELS[data.source] ?? (data.source ? data.source[0].toUpperCase() + data.source.slice(1) : "Music")}
                 </Chip>
             </div>

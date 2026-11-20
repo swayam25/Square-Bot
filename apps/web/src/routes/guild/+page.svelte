@@ -111,7 +111,7 @@
                     <p class="max-w-md text-gray-400">Add it to a server you manage, or ask a server owner to add it.</p>
                 </div>
                 <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}>
-                    <MaterialSymbolsAddRounded />Add Square
+                    <MaterialSymbolsAddRounded />Add to server
                 </Button>
             </div>
         {/if}

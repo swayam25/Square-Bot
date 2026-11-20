@@ -48,7 +48,8 @@ export async function streamFile(request: Request, fetch: Fetch): Promise<Respon
         "content-type": inline ? type : "application/octet-stream",
         "content-disposition": inline ? disposition || "inline" : disposition.startsWith("attachment") ? disposition : "attachment",
         "x-content-type-options": "nosniff",
-        "content-security-policy": "default-src 'none'; sandbox",
+        // The browser's own viewer loads the file under this policy, in CORS mode. `sandbox` would make the page's origin opaque and the browser would drop its own video, so scripts are blocked by `default-src` instead
+        "content-security-policy": "default-src 'none'; img-src 'self'; media-src 'self'",
         "cache-control": "private, max-age=86400, immutable",
     });
     for (const name of PASSED) {

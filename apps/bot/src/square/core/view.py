@@ -95,7 +95,7 @@ def dashboard_row(guild_id: int, path: str = "") -> ActionRow:
     return ActionRow(
         Button(
             label="Open dashboard",
-            emoji=emoji.settings_white,
+            emoji=emoji.dashboard_white,
             style=ButtonStyle.link,
             url=f"{config.dashboard_url}/guild/{guild_id}{path}",
         )

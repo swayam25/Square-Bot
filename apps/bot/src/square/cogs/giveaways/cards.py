@@ -149,7 +149,7 @@ def dashboard_row(guild_id: int, giveaway_id: int | None = None, label: str = "O
     return ui.ActionRow(
         ui.Button(
             label=label,
-            emoji=emoji.settings_white,
+            emoji=emoji.dashboard_white,
             style=discord.ButtonStyle.link,
             url=dashboard_url(guild_id, giveaway_id),
         )

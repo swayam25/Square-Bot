@@ -12047,11 +12047,20 @@
             ],
             "pattern": "^\\d+$",
             "description": "Discord permission bits as a decimal string"
+          },
+          "install": {
+            "type": "string",
+            "enum": [
+              "server",
+              "both",
+              "account"
+            ]
           }
         },
         "type": "object",
         "required": [
           "description",
+          "install",
           "kind",
           "name",
           "options",

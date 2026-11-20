@@ -4,6 +4,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageOps
 from square.imaging import fonts
 from square.imaging.theme import RGB
 from square.imaging.tokens import CORNER_SHAPE, Radius, TextStyle
+from typing import Literal
 
 SCALE = 2  # Output pixels per px, so images stay sharp on high-DPI screens
 # Pillow's shapes have no antialiasing, so everything is drawn this many times larger and downsampled once
@@ -96,6 +97,21 @@ def _mask(size: tuple[int, int], radii: tuple[float, ...], exponents: tuple[floa
     return big.resize(size, Image.Resampling.BOX)
 
 
+def _fade(size: tuple[int, int], side: Literal["left", "right"], share: float = 0.6) -> Image.Image:
+    """An alpha ramp that eases the picture out over the `share` of its width nearest `side`."""
+    w, h = size
+    start = w * (1 - share)
+    ramp = []
+    for i in range(w):
+        t = min(max((i - start) / (w - start), 0), 1)
+        ramp.append(round(255 * (1 - t * t * (3 - 2 * t))))
+    if side == "left":
+        ramp.reverse()
+    strip = Image.new("L", (w, 1))
+    strip.putdata(ramp)
+    return strip.resize((w, h), Image.Resampling.NEAREST)
+
+
 class Canvas:
     def __init__(self, width: float, height: float, background: RGB | None = None):
         self.width, self.height = width, height
@@ -156,11 +172,23 @@ class Canvas:
         mask = big.resize((x1 - x0, y1 - y0), Image.Resampling.BOX)
         self._image.paste((*color, 255), (x0, y0, x1, y1), mask)
 
-    def picture(self, image: Image.Image, x: float, y: float, w: float, h: float, *, radius: float = 0) -> None:
+    def picture(
+        self,
+        image: Image.Image,
+        x: float,
+        y: float,
+        w: float,
+        h: float,
+        *,
+        radius: float = 0,
+        fade: Literal["left", "right"] | None = None,
+    ) -> None:
         size = (round(w * _K), round(h * _K))
         fitted = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
         radii, exponents = _corners(radius, w, h)
         mask = _mask(size, tuple(r * _K for r in radii), exponents)
+        if fade:
+            mask = ImageChops.multiply(mask, _fade(size, fade))
         self._image.alpha_composite(
             Image.composite(fitted, Image.new("RGBA", size), ImageChops.multiply(mask, fitted.getchannel("A"))),
             (round(x * _K), round(y * _K)),

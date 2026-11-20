@@ -1,4 +1,4 @@
-import { avatarUrl, inviteUrl } from "#lib/server/discord.ts";
+import { avatarUrl, installUrl, inviteUrl } from "#lib/server/discord.ts";
 import { squareEmojis } from "#lib/server/emojis.ts";
 import type { LayoutServerLoad } from "./$types";
 
@@ -12,6 +12,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
             avatarUrl: avatarUrl(user),
         },
         inviteUrl: inviteUrl(url.origin).href,
+        installUrl: installUrl(url.origin).href,
         squareEmojis: await squareEmojis(),
     };
 };

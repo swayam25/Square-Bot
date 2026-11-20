@@ -12,7 +12,6 @@
 
 <script lang="ts">
     import { ripple } from "#lib/attachments/ripple.ts";
-    import BrandIcon from "#lib/components/music/BrandIcon.svelte";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import FilterChip from "#lib/components/ui/FilterChip.svelte";
     import Input from "#lib/components/ui/Input.svelte";
@@ -21,6 +20,7 @@
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { errorMessage } from "#lib/errors.ts";
     import { plural, time } from "#lib/format.ts";
+    import { LOGOS } from "#lib/music/brands.ts";
     import * as music from "#lib/music/music.remote.ts";
     import type { SearchResults } from "@square/api-client";
     import { SvelteSet } from "svelte/reactivity";
@@ -120,8 +120,9 @@
 
     <ScrollRow role="radiogroup" aria-label="Search on" class="shrink-0 px-4 md:px-6">
         {#each SOURCES as option (option.value)}
+            {@const Logo = LOGOS[option.value]}
             <FilterChip checked={source === option.value} onclick={() => pick(option.value)}>
-                <BrandIcon brand={option.value} class="size-4" />{option.label}
+                <Logo aria-hidden="true" class="size-4 shrink-0" />{option.label}
             </FilterChip>
         {/each}
     </ScrollRow>

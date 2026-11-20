@@ -15,7 +15,7 @@
     const hidden = $derived(noindex || page.status >= 400 || /^\/(guild|auth)(\/|$)/.test(page.route.id ?? ""));
 
     function button(label: string, href: string | undefined, emoji: APIMessageComponentEmoji | undefined): APIComponentEmbedButton[] {
-        return href ? [{ type: 2, style: 5, label, url: href, ...(emoji && { emoji }) }] : [];
+        return href ? [{ type: 2, style: 5, label, url: href, ...(emoji?.id && { emoji }) }] : [];
     }
 
     const card: APIComponentEmbed = $derived({
@@ -28,8 +28,9 @@
                 {
                     type: 1,
                     components: [
-                        ...button("Add to Discord", page.data.inviteUrl, page.data.squareEmojis?.user_add_white),
-                        ...button("Open dashboard", `${origin}/guild`, page.data.squareEmojis?.settings_white),
+                        ...button("Add to server", page.data.inviteUrl, page.data.squareEmojis?.discord_white),
+                        ...button("Add to account", page.data.installUrl, page.data.squareEmojis?.account_white),
+                        ...button("Open dashboard", `${origin}/guild`, page.data.squareEmojis?.dashboard_white),
                     ],
                 },
             ],

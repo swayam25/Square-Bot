@@ -14,7 +14,9 @@ type ChipTone = Literal["neutral", "muted", "on", "accent", "success", "warning"
 
 @lru_cache(maxsize=128)
 def load_icon(name: str, color: RGB | None = None) -> Image.Image:
-    with Image.open(EMOJI_DIR / f"{name}.png") as image:
+    # Tinted icons draw from the `_white` file when there is one, the source of truth for recolored icons
+    white = EMOJI_DIR / f"{name}_white.png"
+    with Image.open(white if color is not None and white.exists() else EMOJI_DIR / f"{name}.png") as image:
         image = image.convert("RGBA")
     if color is None:
         return image

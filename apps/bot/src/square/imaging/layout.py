@@ -46,9 +46,79 @@ class Text(Node):
         )
 
 
+def _break_word(word: str, style: TextStyle, width: float) -> list[str]:
+    pieces, piece = [], ""
+    for char in word:
+        if piece and text_width(piece + char, style) > width:
+            pieces.append(piece)
+            piece = ""
+        piece += char
+    return [*pieces, piece] if piece else pieces
+
+
+def wrap(text: str, style: TextStyle, width: float) -> list[str]:
+    lines: list[str] = []
+    for paragraph in text.split("\n"):
+        line = ""
+        for word in paragraph.split():
+            candidate = f"{line} {word}" if line else word
+            if text_width(candidate, style) <= width:
+                line = candidate
+                continue
+            if line:
+                lines.append(line)
+            *full, line = _break_word(word, style, width) or [""]
+            lines += full
+        lines.append(line)
+    return lines
+
+
+class Paragraph(Node):
+    """
+    Wrapped text in the largest of `styles` that fits `max_height`.
+
+    Text that doesn't fit even the last style is cut to the lines that fit, ending in an ellipsis.
+    """
+
+    def __init__(
+        self, text: str, styles: tuple[TextStyle, ...], color: RGB, max_height: float, *, align: Align = "start"
+    ):
+        self.text, self.styles, self.color, self.max_height, self.align = text, styles, color, max_height, align
+
+    def _layout(self, width: float) -> tuple[TextStyle, list[str]]:
+        for style in self.styles:
+            lines = wrap(self.text, style, width)
+            if len(lines) * style.line_height <= self.max_height:
+                return style, lines
+        style = self.styles[-1]
+        lines = wrap(self.text, style, width)[: max(int(self.max_height // style.line_height), 1)]
+        lines[-1] = fit_text(lines[-1] + "…", style, width)
+        return style, lines
+
+    def measure(self, width: float) -> float:
+        style, lines = self._layout(width)
+        return len(lines) * style.line_height
+
+    def draw(self, canvas: Canvas, x: float, y: float, width: float, height: float) -> None:
+        style, lines = self._layout(width)
+        top = y + (height - len(lines) * style.line_height) / 2
+        for line in lines:
+            free = width - text_width(line, style)
+            canvas.text(x + _offset(self.align, free), top, line, style, self.color)
+            top += style.line_height
+
+
 class Picture(Node):
-    def __init__(self, image: Image.Image, width: float, height: float | None = None, *, radius: float = 0):
-        self.image, self.width, self.height, self.radius = image, width, height or width, radius
+    def __init__(
+        self,
+        image: Image.Image,
+        width: float,
+        height: float | None = None,
+        *,
+        radius: float = 0,
+        fade: Literal["left", "right"] | None = None,
+    ):
+        self.image, self.width, self.height, self.radius, self.fade = image, width, height or width, radius, fade
 
     def measure(self, width: float) -> float:
         return self.height
@@ -57,7 +127,8 @@ class Picture(Node):
         return self.width
 
     def draw(self, canvas: Canvas, x: float, y: float, width: float, height: float) -> None:
-        canvas.picture(self.image, x, y + (height - self.height) / 2, self.width, self.height, radius=self.radius)
+        top = y + (height - self.height) / 2
+        canvas.picture(self.image, x, top, self.width, self.height, radius=self.radius, fade=self.fade)
 
 
 class Stack(Node):

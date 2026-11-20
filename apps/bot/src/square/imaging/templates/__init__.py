@@ -2,7 +2,7 @@ from collections.abc import Callable
 from io import BytesIO
 from PIL import Image, ImageDraw
 from square.imaging import Template
-from square.imaging.templates import invite_card, leaderboard, now_playing, starboard_card
+from square.imaging.templates import invite_card, leaderboard, now_playing, quote_card, starboard_card
 
 
 def sample_leaderboard() -> leaderboard.Leaderboard:
@@ -99,9 +99,21 @@ def sample_starboard_card() -> starboard_card.StarboardCard:
     )
 
 
+def sample_quote_card() -> quote_card.QuoteCard:
+    return quote_card.QuoteCard(
+        text="ship it on friday, what could possibly go wrong 🚀 the tests passed on my machine and that counts",
+        name="𝓶𝓸𝓬𝓱𝓲",
+        username="mochi.dev",
+        avatar=_sample_artwork(),
+    )
+
+
 PREVIEWS: dict[str, tuple[Template, Callable[[], object]]] = {
     "invite_card": (invite_card.build, sample_invite_card),
     "leaderboard": (leaderboard.build, sample_leaderboard),
     "now_playing": (now_playing.build, sample_now_playing),
+    "quote_card": (quote_card.build, sample_quote_card),
     "starboard_card": (starboard_card.build, sample_starboard_card),
 }
+
+BARE = {"quote_card"}

@@ -1,11 +1,11 @@
 <script lang="ts">
     import { ripple } from "#lib/attachments/ripple.ts";
-    import BrandIcon, { brandOf, type Brand } from "#lib/components/music/BrandIcon.svelte";
     import Avatar from "#lib/components/ui/Avatar.svelte";
     import Cover from "#lib/components/ui/Cover.svelte";
     import GuildIcon from "#lib/components/ui/GuildIcon.svelte";
     import Segmented from "#lib/components/ui/Segmented.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { brandOf, LOGOS, type Brand } from "#lib/music/brands.ts";
     import type { PlayerState } from "@square/api-client";
     import { untrack } from "svelte";
     import MaterialSymbolsArrowBackRounded from "~icons/material-symbols/arrow-back-rounded";
@@ -37,9 +37,13 @@
         spotify: "Spotify",
         apple_music: "Apple Music",
         soundcloud: "SoundCloud",
+        deezer: "Deezer",
+        bandcamp: "Bandcamp",
+        twitch: "Twitch",
+        vimeo: "Vimeo",
     };
     const brand = $derived(track ? brandOf(track.source) : undefined);
-    const source = $derived(brand ? { brand, label: LABELS[brand] } : undefined);
+    const source = $derived(brand ? { logo: LOGOS[brand], label: LABELS[brand] } : undefined);
 
     const videoId = $derived(track?.source === "youtube" && /^[\w-]{11}$/.test(track.identifier) ? track.identifier : null);
     let frame = $state<HTMLIFrameElement | null>(null);
@@ -230,7 +234,7 @@
                     <span
                         class="flex h-10 items-center gap-2 rounded-2xl bg-black/30 px-4 text-sm font-semibold backdrop-blur-xl max-sm:w-10 max-sm:justify-center max-sm:px-0"
                     >
-                        <BrandIcon brand={source.brand} class="size-5" /><span class="max-sm:sr-only">{source.label}</span>
+                        <source.logo aria-hidden="true" class="size-5 shrink-0" /><span class="max-sm:sr-only">{source.label}</span>
                     </span>
                 {/if}
                 {#if track}

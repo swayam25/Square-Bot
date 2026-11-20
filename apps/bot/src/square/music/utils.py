@@ -15,6 +15,11 @@ def get_source(source_name: str | None) -> dict:
         "spotify": {"emoji": emoji.spotify, "color": config.color.green},
         "youtube": {"emoji": emoji.youtube, "color": config.color.red},
         "soundcloud": {"emoji": emoji.soundcloud, "color": config.color.orange},
+        "applemusic": {"emoji": emoji.applemusic, "color": config.color.red},
+        "deezer": {"emoji": emoji.deezer, "color": config.color.theme},
+        "bandcamp": {"emoji": emoji.bandcamp, "color": config.color.theme},
+        "twitch": {"emoji": emoji.twitch, "color": config.color.theme},
+        "vimeo": {"emoji": emoji.vimeo, "color": config.color.theme},
         "_": {"emoji": emoji.music, "color": config.color.theme},
     }
 

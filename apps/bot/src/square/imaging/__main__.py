@@ -2,7 +2,7 @@ import argparse
 import time
 from pathlib import Path
 from square.imaging import render_png
-from square.imaging.templates import PREVIEWS
+from square.imaging.templates import BARE, PREVIEWS
 
 
 def main() -> None:
@@ -15,7 +15,7 @@ def main() -> None:
     template, sample = PREVIEWS[args.template]
     accent = int(args.accent.lstrip("#"), 16) if args.accent else None
     start = time.perf_counter()
-    png = render_png(template, sample(), accent=accent)
+    png = render_png(template, sample(), accent=accent, bare=args.template in BARE)
     elapsed = (time.perf_counter() - start) * 1000
 
     args.out.mkdir(parents=True, exist_ok=True)

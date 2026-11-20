@@ -1,5 +1,6 @@
 <script lang="ts">
     import { ripple } from "#lib/attachments/ripple.ts";
+    import { openInvitePopup } from "#lib/auth.ts";
     import Seo from "#lib/components/site/Seo.svelte";
     import SiteFooter from "#lib/components/site/SiteFooter.svelte";
     import Button from "#lib/components/ui/Button.svelte";
@@ -22,12 +23,15 @@
     import { prefersReducedMotion } from "svelte/motion";
     import { SvelteSet } from "svelte/reactivity";
     import { slide } from "svelte/transition";
+    import MaterialSymbolsAccountCircleRounded from "~icons/material-symbols/account-circle-rounded";
     import MaterialSymbolsCelebrationRounded from "~icons/material-symbols/celebration-rounded";
     import MaterialSymbolsCheckRounded from "~icons/material-symbols/check-rounded";
     import MaterialSymbolsChevronRightRounded from "~icons/material-symbols/chevron-right-rounded";
     import MaterialSymbolsCodeBlocksRounded from "~icons/material-symbols/code-blocks-rounded";
     import MaterialSymbolsConfirmationNumberRounded from "~icons/material-symbols/confirmation-number-rounded";
     import MaterialSymbolsContentCopyRounded from "~icons/material-symbols/content-copy-rounded";
+    import MaterialSymbolsDataObjectRounded from "~icons/material-symbols/data-object-rounded";
+    import MaterialSymbolsFormatQuoteRounded from "~icons/material-symbols/format-quote-rounded";
     import MaterialSymbolsGroupsRounded from "~icons/material-symbols/groups-rounded";
     import MaterialSymbolsInfoRounded from "~icons/material-symbols/info-rounded";
     import MaterialSymbolsLinkRounded from "~icons/material-symbols/link-rounded";
@@ -35,6 +39,7 @@
     import MaterialSymbolsMicRounded from "~icons/material-symbols/mic-rounded";
     import MaterialSymbolsMusicNoteRounded from "~icons/material-symbols/music-note-rounded";
     import MaterialSymbolsPersonAddRounded from "~icons/material-symbols/person-add-rounded";
+    import MaterialSymbolsPublicRounded from "~icons/material-symbols/public-rounded";
     import MaterialSymbolsRightClickRounded from "~icons/material-symbols/right-click-rounded";
     import MaterialSymbolsSearchRounded from "~icons/material-symbols/search-rounded";
     import MaterialSymbolsSettingsRounded from "~icons/material-symbols/settings-rounded";
@@ -58,6 +63,8 @@
         Invites: { icon: MaterialSymbolsPersonAddRounded, ink: "text-emerald-400", fill: "text-emerald-400/10", lobes: 6 },
         Giveaways: { icon: MaterialSymbolsCelebrationRounded, ink: "text-violet-300", fill: "text-violet-500/20", lobes: 8 },
         Starboard: { icon: MaterialSymbolsStarRounded, ink: "text-amber-400", fill: "text-amber-400/10", lobes: 5 },
+        Quote: { icon: MaterialSymbolsFormatQuoteRounded, ink: "text-emerald-400", fill: "text-emerald-400/10", lobes: 7 },
+        Utility: { icon: MaterialSymbolsDataObjectRounded, ink: "text-violet-300", fill: "text-violet-500/20", lobes: 5 },
     };
     const FALLBACK: Look = { icon: MaterialSymbolsCodeBlocksRounded, ink: "text-gray-100", fill: "text-white/10", lobes: 6 };
 
@@ -81,6 +88,7 @@
         forum: "forum",
         media: "media",
     };
+    const INSTALLS: Record<BotCommand["install"], string> = { server: "", both: "Anywhere", account: "Account only" };
     const either = new Intl.ListFormat("en", { type: "disjunction" });
 
     const slug = (value: string) => value.toLowerCase().replaceAll(" ", "-");
@@ -98,7 +106,7 @@
                     command,
                     perms,
                     id: command.kind === "slash" ? `/${slug(command.name)}` : `${command.kind}/${slug(command.name)}`,
-                    text: [command.name, command.description, category.name, ...perms].join(" ").toLowerCase(),
+                    text: [command.name, command.description, category.name, ...perms, INSTALLS[command.install]].join(" ").toLowerCase(),
                     options: command.options
                         .map((option) => [option.name, option.description, ...option.choices].join(" "))
                         .join(" ")
@@ -303,8 +311,20 @@
                     </code>
                     <Chip size="sm" tone="muted">Right-click a {command.kind === "message" ? "message" : "member"}</Chip>
                 {/if}
-                {#if perms.length}
+                {#if perms.length || command.install !== "server"}
                     <span class="flex flex-wrap gap-2 sm:ml-auto">
+                        {#if command.install === "both"}
+                            <Tooltip
+                                lazy
+                                content="Works in servers with Square. Add Square to your account and it also works in DMs and servers without Square"
+                            >
+                                <Chip size="sm" tone="muted"><MaterialSymbolsPublicRounded />{@render marked(INSTALLS.both)}</Chip>
+                            </Tooltip>
+                        {:else if command.install === "account"}
+                            <Tooltip lazy content="Only for people who added Square to their account. Then it works in every server and DM">
+                                <Chip size="sm" tone="muted"><MaterialSymbolsAccountCircleRounded />{@render marked(INSTALLS.account)}</Chip>
+                            </Tooltip>
+                        {/if}
                         {#each perms as perm (perm)}
                             <Tooltip lazy content="Only members with {perm} see this, unless a server admin changes it under Integrations">
                                 <Chip size="sm" tone="muted"><MaterialSymbolsLockRounded />{@render marked(perm)}</Chip>
@@ -330,6 +350,17 @@
                 <span aria-hidden="true">·</span>
                 <span class="flex items-center gap-2">{@render token("name", true)} required</span>
                 <span class="flex items-center gap-2">{@render token("name", false)} optional</span>
+                <span aria-hidden="true">·</span>
+                <a
+                    href={data.installUrl}
+                    target="_blank"
+                    rel="noopener"
+                    onclick={openInvitePopup}
+                    class="flex flex-wrap items-center gap-2 text-gray-400 transition-colors hover:text-gray-100"
+                    ><Chip size="sm" tone="muted"><MaterialSymbolsPublicRounded />{INSTALLS.both}</Chip>
+                    <Chip size="sm" tone="muted"><MaterialSymbolsAccountCircleRounded />{INSTALLS.account}</Chip>
+                    <span>work everywhere after you add Square to your account</span></a
+                >
             </p>
         {/if}
     </header>
@@ -524,4 +555,4 @@
     {/if}
 </div>
 
-<SiteFooter inviteUrl={data.inviteUrl} />
+<SiteFooter inviteUrl={data.inviteUrl} installUrl={data.installUrl} />

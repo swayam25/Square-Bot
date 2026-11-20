@@ -19,8 +19,9 @@
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@iconify-json/material-symbols": "^1.2.98",
-        "@iconify-json/simple-icons": "^1.2.102",
         "@iconify-json/svg-spinners": "^1.2.4",
+        "@iconify-json/thesvg": "^1.2.16",
+        "@iconify-json/thesvg-color": "^1.2.28",
         "@sveltejs/adapter-node": "^6.0.2",
         "@sveltejs/kit": "^3.2.0",
         "@sveltejs/vite-plugin-svelte": "^7.2.0",
