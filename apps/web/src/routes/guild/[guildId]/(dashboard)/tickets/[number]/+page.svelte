@@ -67,6 +67,10 @@
             <p class="text-xs font-medium text-dc-muted">
                 {plural(transcript.messages.length, "message")} • Saved
                 <DiscordTooltip content={fullTime(transcript.savedAt)}><time>{dateTime.format(transcript.savedAt)}</time></DiscordTooltip>
+                {#if ticket.removesAt}
+                    • Kept until
+                    <DiscordTooltip content={fullTime(ticket.removesAt)}><time>{dateTime.format(ticket.removesAt)}</time></DiscordTooltip>
+                {/if}
             </p>
         </div>
     {/if}

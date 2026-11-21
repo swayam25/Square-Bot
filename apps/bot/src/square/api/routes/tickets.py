@@ -64,6 +64,8 @@ async def _entries(client: Client, guild: discord.Guild, tickets: list[TicketTab
                 reason=ticket.reason,
                 created_at=_ms(ticket.created_at),
                 closed_at=_ms(ticket.closed_at) if ticket.closed_at else None,
+                deleted_at=_ms(ticket.deleted_at) if ticket.deleted_at else None,
+                removes_at=_ms(ticket.deleted_at + actions.DELETED_KEEP) if ticket.deleted_at else None,
                 messages=ticket.message_count,
             )
         )

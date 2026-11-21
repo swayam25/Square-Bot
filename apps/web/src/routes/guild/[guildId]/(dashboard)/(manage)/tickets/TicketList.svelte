@@ -284,6 +284,10 @@
             <div class="grid grid-cols-2 gap-2">
                 <Fact label="Opened" value={dateTime.format(detail.createdAt)} />
                 <Fact label="Closed" value={detail.closedAt ? dateTime.format(detail.closedAt) : "Still open"} />
+                {#if detail.deletedAt && detail.removesAt}
+                    <Fact label="Deleted" value={dateTime.format(detail.deletedAt)} />
+                    <Fact label="Kept until" value={dateTime.format(detail.removesAt)} />
+                {/if}
             </div>
 
             <div class="flex flex-col gap-2">
@@ -340,7 +344,7 @@
                     {/if}
                     <ResetButton
                         title="Delete ticket {detail.label}?"
-                        description="Square saves the transcript one last time and deletes the ticket's channel. The ticket and its transcript stay here until you remove them for good."
+                        description="Square saves the transcript one last time and deletes the ticket's channel. The ticket and its transcript stay here for 7 days, then Square removes them for good."
                         label="Delete"
                         busy="Deleting…"
                         done="Ticket deleted"
@@ -391,6 +395,10 @@
             <Button variant="danger" onclick={() => purgeAll(list.deleted)}><MaterialSymbolsDeleteForeverRounded />Delete all</Button>
         {/if}
     </div>
+
+    {#if status === "deleted"}
+        <p class="text-sm text-gray-400">Deleted tickets stay here with their transcripts for 7 days, then Square removes them for good.</p>
+    {/if}
 
     {#if listQuery.error}
         <EmptyState

@@ -91,6 +91,8 @@ async def remove_ticket_member(ticket: TicketTable, user_id: int) -> None:
 async def save_ticket(ticket: TicketTable, **changes) -> None:
     if changes.get("status") == "closed":
         changes.setdefault("closed_at", discord.utils.utcnow())
+    if changes.get("status") == "deleted":
+        changes.setdefault("deleted_at", discord.utils.utcnow())
     for name, value in changes.items():
         setattr(ticket, name, value)
     await ticket.save(update_fields=list(changes))
@@ -148,6 +150,16 @@ async def purge_deleted_tickets(guild_id: int) -> list[int]:
         ids = list(await deleted.select_for_update().values_list("id", flat=True))
         await TicketTable.filter(id__in=ids).using_db(conn).delete()
     return ids
+
+
+async def purge_expired_tickets(before: datetime) -> dict[int, list[int]]:
+    """Removes the tickets deleted before `before`, and returns their IDs by guild for the file purge."""
+    rows = await TicketTable.filter(status="deleted", deleted_at__lt=before).values_list("guild__guild_id", "id")
+    await TicketTable.filter(id__in=[ticket_id for _, ticket_id in rows]).delete()
+    removed: dict[int, list[int]] = {}
+    for guild_id, ticket_id in rows:
+        removed.setdefault(guild_id, []).append(ticket_id)
+    return removed
 
 
 async def ticket_times_since(guild_id: int, since: datetime) -> tuple[list[datetime], list[datetime]]:

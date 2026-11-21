@@ -380,6 +380,8 @@ class TicketEntry(Schema):
     reason: str
     created_at: int  # Unix ms
     closed_at: int | None
+    deleted_at: int | None
+    removes_at: int | None  # When a deleted ticket is removed for good
     messages: int | None
 
 

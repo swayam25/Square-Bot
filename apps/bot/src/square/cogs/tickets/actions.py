@@ -3,6 +3,7 @@
 import asyncio
 import discord
 import logging
+from datetime import timedelta
 from square import logs
 from square.cogs.tickets import cards, snapshot
 from square.core import Client
@@ -26,6 +27,7 @@ MEMBER = discord.PermissionOverwrite(**_MEMBER_PERMISSIONS)
 STAFF = discord.PermissionOverwrite(**_MEMBER_PERMISSIONS, manage_messages=True)
 BOT = discord.PermissionOverwrite(**_MEMBER_PERMISSIONS, manage_messages=True, manage_channels=True)
 _renames: dict[int, asyncio.Task] = {}
+DELETED_KEEP = timedelta(days=7)
 
 
 def is_support(member: discord.Member) -> bool:
@@ -202,7 +204,7 @@ async def delete(
     channel: discord.TextChannel,
     by: discord.Member,
 ) -> None:
-    """Deletes the channel. The ticket and its transcript stay until someone removes them on the dashboard."""
+    """Deletes the channel. The ticket and its transcript stay on the dashboard for `DELETED_KEEP`."""
     # Staff can keep talking in a closed ticket, so this is the last chance to save those messages
     await save_transcript(guild, channel, ticket)
     await db.save_ticket(ticket, status="deleted")

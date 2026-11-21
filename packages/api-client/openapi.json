@@ -15915,6 +15915,26 @@
               }
             ]
           },
+          "deletedAt": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "removesAt": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "messages": {
             "oneOf": [
               {
@@ -15950,12 +15970,14 @@
           "closedAt",
           "closedBy",
           "createdAt",
+          "deletedAt",
           "label",
           "messages",
           "number",
           "opener",
           "people",
           "reason",
+          "removesAt",
           "status"
         ],
         "title": "TicketDetail"
@@ -16027,6 +16049,26 @@
               }
             ]
           },
+          "deletedAt": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "removesAt": {
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "messages": {
             "oneOf": [
               {
@@ -16045,11 +16087,13 @@
           "claimedBy",
           "closedAt",
           "createdAt",
+          "deletedAt",
           "label",
           "messages",
           "number",
           "opener",
           "reason",
+          "removesAt",
           "status"
         ],
         "title": "TicketEntry"

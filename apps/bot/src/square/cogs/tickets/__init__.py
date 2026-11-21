@@ -2,10 +2,11 @@ import asyncio
 import discord
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
+from datetime import UTC, datetime
 from discord import ui
 from discord.commands import SlashCommandGroup, option
-from discord.ext import commands
-from square.cogs.tickets import actions, cards, panel
+from discord.ext import commands, tasks
+from square.cogs.tickets import actions, cards, files, panel
 from square.core import Client
 from square.core.cog import Cog
 from square.core.view import (
@@ -18,7 +19,7 @@ from square.core.view import (
     success_view,
 )
 from square.db import cache
-from square.db.funcs.tickets import fetch_ticket, save_ticket
+from square.db.funcs.tickets import fetch_ticket, purge_expired_tickets, save_ticket
 from square.db.schema import TicketTable
 from square.modules import Module
 from square.music.utils import delete_quietly
@@ -35,6 +36,20 @@ class Tickets(
         self.client = client
         self._adopting: asyncio.Task | None = None
         self._busy: set[int] = set()
+        self.expire.start()
+
+    def cog_unload(self):
+        self.expire.cancel()
+
+    @tasks.loop(hours=1)
+    async def expire(self):
+        removed = await purge_expired_tickets(datetime.now(UTC) - actions.DELETED_KEEP)
+        for guild_id, ticket_ids in removed.items():
+            await files.purge(guild_id, ticket_ids)
+
+    @expire.before_loop
+    async def _before_expire(self):
+        await self.client.wait_until_ready()
 
     ticket = SlashCommandGroup(name="ticket", description="Ticket commands.")
 

@@ -1136,6 +1136,8 @@ export const zTicketDetail = z.object({
     reason: z.string(),
     createdAt: z.int(),
     closedAt: z.int().nullable(),
+    deletedAt: z.int().nullable(),
+    removesAt: z.int().nullable(),
     messages: z.int().nullable(),
     closedBy: zPerson.nullable(),
     people: z.array(zPerson),
@@ -1155,6 +1157,8 @@ export const zTicketEntry = z.object({
     reason: z.string(),
     createdAt: z.int(),
     closedAt: z.int().nullable(),
+    deletedAt: z.int().nullable(),
+    removesAt: z.int().nullable(),
     messages: z.int().nullable(),
 });
 

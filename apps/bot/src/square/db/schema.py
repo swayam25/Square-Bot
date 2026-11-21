@@ -150,6 +150,7 @@ class TicketTable(Model):
     log_message_id = fields.BigIntField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
     closed_at = fields.DatetimeField(null=True)
+    deleted_at = fields.DatetimeField(null=True)
     message_count = fields.IntField(null=True)
     participant_ids: list[int] = fields.JSONField(default=list)
 

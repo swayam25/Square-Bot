@@ -1336,6 +1336,8 @@ export type TicketDetail = {
     reason: string;
     createdAt: number;
     closedAt: number | null;
+    deletedAt: number | null;
+    removesAt: number | null;
     messages: number | null;
     closedBy: Person | null;
     people: Array<Person>;
@@ -1358,6 +1360,8 @@ export type TicketEntry = {
     reason: string;
     createdAt: number;
     closedAt: number | null;
+    deletedAt: number | null;
+    removesAt: number | null;
     messages: number | null;
 };
 
