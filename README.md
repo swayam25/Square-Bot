@@ -15,13 +15,13 @@ The one Discord bot you need.
 
 ## 💫 Prerequisites
 
-| Tool                                                                                                                                     | Version | Purpose                                             |
-| ---------------------------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------------- |
-| [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/)  | 20.10+  | To run the bot in a containerized environment.      |
-| [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)              | 2.50+   | To clone the repository and manage version control. |
-| [![Just](https://img.shields.io/badge/Just-%23EF4041?style=for-the-badge&logo=just&logoColor=%23FFFFFF)](https://github.com/casey/just)  | 1.27+   | A command runner for the project's recipes.         |
-| [![Node.js](https://img.shields.io/badge/Node.js-%235FA04E?style=for-the-badge&logo=nodedotjs&logoColor=%23FFFFFF)](https://nodejs.org/) | 24+     | Runs `just init` and the dashboard tooling.         |
-| [![pnpm](https://img.shields.io/badge/pnpm-%23F69220?style=for-the-badge&logo=pnpm&logoColor=%23FFFFFF)](https://pnpm.io/)               | 12+     | Installs the JavaScript packages.                   |
+| Tool                                                                                                                                     | Version |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/)  | 20.10+  |
+| [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)              | 2.50+   |
+| [![Just](https://img.shields.io/badge/Just-%23EF4041?style=for-the-badge&logo=just&logoColor=%23FFFFFF)](https://github.com/casey/just)  | 1.27+   |
+| [![Node.js](https://img.shields.io/badge/Node.js-%235FA04E?style=for-the-badge&logo=nodedotjs&logoColor=%23FFFFFF)](https://nodejs.org/) | 24+     |
+| [![pnpm](https://img.shields.io/badge/pnpm-%23F69220?style=for-the-badge&logo=pnpm&logoColor=%23FFFFFF)](https://pnpm.io/)               | 12+     |
 
 ## 🚀 Production
 
