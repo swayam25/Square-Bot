@@ -1,5 +1,5 @@
 <script lang="ts">
-    import banner from "#lib/assets/banner.gif";
+    import banner from "#lib/assets/banner.png";
     import square from "#lib/assets/square.svg";
     import { page } from "$app/state";
     import type { APIComponentEmbed, APIComponentEmbedButton, APIMessageComponentEmoji } from "discord-api-types/v10";
@@ -57,7 +57,7 @@
     <meta property="og:title" content={title ?? SITE} />
     <meta property="og:description" content={description ?? TAGLINE} />
     <meta property="og:image" content={image} />
-    <meta property="og:image:type" content="image/gif" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1280" />
     <meta property="og:image:height" content="640" />
     <meta property="og:image:alt" content="{SITE} banner" />

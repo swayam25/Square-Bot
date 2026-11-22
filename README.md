@@ -1,27 +1,17 @@
 <div align="center">
 
-![Square Bot](./assets/banner.gif)
+![Square Bot](./assets/banner.svg)
 
-# Square Bot
-
-The one Discord bot you need.
-
-[![Python Version](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fswayam25%2FSquare-Bot%2Fmain%2Fapps%2Fbot%2Fpyproject.toml&style=for-the-badge&logo=python&logoColor=%23FFFFFF&labelColor=%233776AB&color=%23000000)](https://www.python.org/downloads)
-[![Pycord Version](https://img.shields.io/badge/pycord-v2.8.1-%23000000?style=for-the-badge&logo=python&logoColor=%23FFFFFF&labelColor=%235865F2)](https://github.com/Pycord-Development/pycord)
-[![GitHub Release](https://img.shields.io/github/v/release/swayam25/Square-Bot?style=for-the-badge&logo=github&logoColor=%23FFFFFF&labelColor=%230D1117&color=%23000000)](https://github.com/swayam25/Square-Bot/releases)
-[![GitHub License](https://img.shields.io/github/license/swayam25/Square-Bot?style=for-the-badge&logo=gnu&logoColor=%23FFFFFF&labelColor=%23A32D2A&color=%23000000)](https://github.com/swayam25/Square-Bot/blob/main/LICENSE)
+![Python](https://shieldcn.dev/badge/Python-v3.14.svg?size=sm&brand=python)
+![Pycord](https://shieldcn.dev/badge/Pycord-v2.8.1.svg?size=sm&color=5865f2&logo=python)
+![SonoLink](https://shieldcn.dev/badge/SonoLink-v1.4.1.svg?size=sm&color=275c96&logo=lu:AudioWaveform)
+![Node.js](https://shieldcn.dev/badge/Node.js-v24.svg?size=sm&color=5fa04e&logo=nodedotjs)
+![Runs on Linux](https://shieldcn.dev/badge/Runs%20on-Linux-FCC624.svg?logo=linux&logoColor=000)
+![Release](https://www.shieldcn.dev/github/release/swayam25/Square-Bot.svg?size=sm)
+![CI](https://www.shieldcn.dev/github/ci/swayam25/Square-Bot.svg?variant=secondary&size=sm)
+![License](https://www.shieldcn.dev/github/license/swayam25/Square-Bot.svg?variant=ghost&size=sm)
 
 </div>
-
-## 💫 Prerequisites
-
-| Tool                                                                                                                                     | Version |
-| ---------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| [![Docker](https://img.shields.io/badge/Docker-%232560FF?style=for-the-badge&logo=docker&logoColor=%23FFFFFF)](https://www.docker.com/)  | 20.10+  |
-| [![Git](https://img.shields.io/badge/Git-%23F05133?style=for-the-badge&logo=git&logoColor=%23FFFFFF)](https://git-scm.com/)              | 2.50+   |
-| [![Just](https://img.shields.io/badge/Just-%23EF4041?style=for-the-badge&logo=just&logoColor=%23FFFFFF)](https://github.com/casey/just)  | 1.27+   |
-| [![Node.js](https://img.shields.io/badge/Node.js-%235FA04E?style=for-the-badge&logo=nodedotjs&logoColor=%23FFFFFF)](https://nodejs.org/) | 24+     |
-| [![pnpm](https://img.shields.io/badge/pnpm-%23F69220?style=for-the-badge&logo=pnpm&logoColor=%23FFFFFF)](https://pnpm.io/)               | 12+     |
 
 ## 🚀 Production
 
