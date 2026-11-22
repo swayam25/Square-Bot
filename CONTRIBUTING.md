@@ -17,7 +17,7 @@ Thanks for wanting to help out! Whether it's a bug fix, a new feature, or a docs
     ```
 
 > [!TIP]
-> Check [configuration](./README.md#-configuration) section for details on the configuration keys.
+> Check the [configuration](./README.md#-configuration) section for details on the configuration keys.
 
 3. Run the bot and the dashboard
 

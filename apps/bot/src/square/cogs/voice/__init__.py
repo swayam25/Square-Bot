@@ -104,7 +104,7 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
         )
 
     @vc.command(name="kick")
-    @option("user", description="Mention the user whom you want to kick from voice.")
+    @option("user", description="Who to kick from voice.")
     async def kick(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Kicks a member from their voice channel."""
         if not await self._check_target(ctx, user) or user.voice is None:
@@ -117,31 +117,31 @@ class Voice(Cog, name="Voice", description="Move, mute and manage voice members.
         )
 
     @vc.command(name="mute")
-    @option("user", description="Mention the user whom you want to mute in voice.")
+    @option("user", description="Who to mute in voice.")
     async def mute(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Server mutes a member in their voice channel."""
         await self._set_voice_flag(ctx, user, "mute", True)
 
     @vc.command(name="unmute")
-    @option("user", description="Mention the user whom you want to unmute in voice.")
+    @option("user", description="Who to unmute in voice.")
     async def unmute(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Server unmutes a member in their voice channel."""
         await self._set_voice_flag(ctx, user, "mute", False)
 
     @vc.command(name="deaf")
-    @option("user", description="Mention the user whom you want to deafen in voice.")
+    @option("user", description="Who to deafen in voice.")
     async def deaf(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Server deafens a member in their voice channel."""
         await self._set_voice_flag(ctx, user, "deafen", True)
 
     @vc.command(name="undeaf")
-    @option("user", description="Mention the user whom you want to undeafen in voice.")
+    @option("user", description="Who to undeafen in voice.")
     async def undeaf(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Server undeafens a member in their voice channel."""
         await self._set_voice_flag(ctx, user, "deafen", False)
 
     @vc.command(name="pull")
-    @option("user", description="Mention the user whom you want to pull into your voice channel.")
+    @option("user", description="Who to pull into your voice channel.")
     async def pull(self, ctx: discord.ApplicationContext, user: discord.Member):
         """Pulls a member into your voice channel."""
         if await not_in_server(ctx, user):

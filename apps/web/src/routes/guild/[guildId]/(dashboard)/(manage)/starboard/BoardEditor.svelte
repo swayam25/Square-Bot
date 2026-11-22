@@ -103,7 +103,7 @@
         <SettingGroup title="Votes">
             <SettingRow
                 label="Vote emojis"
-                description="Each emoji is counted on its own, they don't add up. A post shows the one with the most votes."
+                description="Each emoji is counted on its own. They don't add up. A post shows the one with the most votes."
                 icon={MaterialSymbolsStarRounded}
                 layout="below"
             >
@@ -130,7 +130,7 @@
             </SettingRow>
             <SettingRow
                 label="Remove when votes drop"
-                description="Off, a post stays once it made it, whatever happens to its votes."
+                description="Off, a post stays once it has made it, whatever happens to its votes."
                 icon={MaterialSymbolsTrendingDownRounded}
                 layout="inline"
             >

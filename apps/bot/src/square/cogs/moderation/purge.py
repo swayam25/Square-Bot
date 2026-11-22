@@ -90,28 +90,28 @@ class Purge:
         )
 
     @purge.command(name="any")
-    @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
+    @option("amount", description="How many messages to check.", min_value=1, max_value=1000)
     async def purge_any(self, ctx: discord.ApplicationContext, amount: int):
-        """Purges the amount of given messages."""
+        """Purges the newest messages."""
         await self._purge(ctx, "", limit=amount)
 
     @purge.command(name="humans")
-    @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
+    @option("amount", description="How many messages to check.", min_value=1, max_value=1000)
     async def purge_humans(self, ctx: discord.ApplicationContext, amount: int):
-        """Purges the amount of given messages sent by humans."""
+        """Purges messages sent by humans."""
         await self._purge(ctx, " sent by humans", limit=amount, check=lambda m: not m.author.bot)
 
     @purge.command(name="bots")
-    @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
+    @option("amount", description="How many messages to check.", min_value=1, max_value=1000)
     async def purge_bots(self, ctx: discord.ApplicationContext, amount: int):
-        """Purges the amount of given messages sent by bots."""
+        """Purges messages sent by bots."""
         await self._purge(ctx, " sent by bots", limit=amount, check=lambda m: m.author.bot)
 
     @purge.command(name="user")
-    @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
-    @option("user", description="Mention the user whose messages you want to purge.")
+    @option("amount", description="How many messages to check.", min_value=1, max_value=1000)
+    @option("user", description="Whose messages to purge.")
     async def purge_user(self, ctx: discord.ApplicationContext, amount: int, user: discord.Member):
-        """Purges the amount of given messages sent by the mentioned user."""
+        """Purges messages sent by a user."""
         await self._purge(
             ctx,
             f" sent by {user.mention} (`{user.name}`)",
@@ -120,19 +120,19 @@ class Purge:
         )
 
     @purge.command(name="contains")
-    @option("amount", description="Enter an integer.", min_value=1, max_value=1000)
-    @option("phrase", description="Enter the phrase to purge messages containing it.")
+    @option("amount", description="How many messages to check.", min_value=1, max_value=1000)
+    @option("phrase", description="Purge messages that contain this.")
     async def purge_contains(self, ctx: discord.ApplicationContext, amount: int, phrase: str):
-        """Purges the amount of given messages containing the given phrase."""
+        """Purges messages that contain a phrase."""
         needle = phrase.lower()
         await self._purge(ctx, f" containing `{phrase}`", limit=amount, check=lambda m: needle in m.content.lower())
 
     # Message IDs are strings: Discord's integer options can't hold a 64-bit snowflake
     @purge.command(name="after")
-    @option("message_id", description="Enter the message ID after which you want to purge messages.")
-    @option("amount", description="Enter an integer.", min_value=1, max_value=1000, required=False)
+    @option("message_id", description="Purge messages sent after this message ID.")
+    @option("amount", description="How many messages to check.", min_value=1, max_value=1000, required=False)
     async def purge_after(self, ctx: discord.ApplicationContext, message_id: str, amount: int = 1000):
-        """Purges the amount of given messages after the given message ID."""
+        """Purges messages sent after a message ID."""
         if not message_id.isdigit():
             await ctx.respond(view=error_view("Message ID must be a valid integer."), ephemeral=True)
             return
@@ -141,14 +141,12 @@ class Purge:
     @purge.command(name="from-to")
     @option(
         "from",
-        description="Enter the message ID from which you want to purge messages.",
+        description="The message ID to start at.",
         parameter_name="from_message_id",
     )
-    @option(
-        "to", description="Enter the message ID to which you want to purge messages.", parameter_name="to_message_id"
-    )
+    @option("to", description="The message ID to stop at.", parameter_name="to_message_id")
     async def purge_from_to(self, ctx: discord.ApplicationContext, from_message_id: str, to_message_id: str):
-        """Purges the messages between the given message IDs."""
+        """Purges the messages between two message IDs."""
         if not from_message_id.isdigit() or not to_message_id.isdigit():
             await ctx.respond(view=error_view("Message IDs must be valid integers."), ephemeral=True)
             return

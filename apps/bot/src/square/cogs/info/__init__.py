@@ -330,7 +330,7 @@ class InfoView(DesignerView):
         await interaction.edit(view=self)
 
 
-class Info(Cog, name="Info", description="See some info about bot and others.", order=4):
+class Info(Cog, name="Info", description="Look up users, servers, emojis and the bot.", order=4):
     def __init__(self, client: Client):
         self.client = client
 
@@ -356,7 +356,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
 
     @slash_command(name="ping", **check.ANYWHERE)
     async def ping(self, ctx: discord.ApplicationContext):
-        """Shows heartbeats of the bot."""
+        """Shows the bot's heartbeat."""
         view = DesignerView(
             ui.Container(
                 ui.TextDisplay(f"{emoji.ping} **Ping**: `{round(self.client.latency * 1000)} ms`"),
@@ -366,7 +366,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
 
     @slash_command(name="uptime", **check.ANYWHERE)
     async def uptime(self, ctx: discord.ApplicationContext):
-        """Shows bot's uptime."""
+        """Shows the bot's uptime."""
         dur = datetime.timedelta(seconds=int(round(time.time() - start_time)))
         dur = format_timedelta(dur, locale="en")
         view = DesignerView(
@@ -377,9 +377,9 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
         await ctx.respond(view=view)
 
     @slash_command(name="avatar", **check.ANYWHERE)
-    @option("user", description="Mention the user whose avatar you want to see", required=False)
+    @option("user", description="Whose avatar to show. Defaults to you.", required=False)
     async def avatar(self, ctx: discord.ApplicationContext, user: discord.Member = None):
-        """Shows the avatar of the mentioned user."""
+        """Shows a user's avatar."""
         if not user:
             user = ctx.author
         guild_avatar = user.guild_avatar if isinstance(user, discord.Member) else None
@@ -427,9 +427,9 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
     info = SlashCommandGroup(name="info", description="Info related commands.", **check.ANYWHERE)
 
     @info.command(name="user")
-    @option("user", description="Mention the user whose info you want to see")
+    @option("user", description="The user to look up.")
     async def user_info(self, ctx: discord.ApplicationContext, user: discord.Member | discord.User):
-        """Shows info of the mentioned user."""
+        """Shows info about a user."""
         await ctx.defer()
         view = InfoView(self.client, ctx, user)
         await view.build()
@@ -438,7 +438,7 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
     @info.command(name="server")
     @commands.check(check.bot_in_server)
     async def server_info(self, ctx: discord.ApplicationContext):
-        """Shows info of the current server."""
+        """Shows info about this server."""
         animated_emojis = len([e for e in ctx.guild.emojis if e.animated])
         static_emojis = len(ctx.guild.emojis) - animated_emojis
 
@@ -488,9 +488,9 @@ class Info(Cog, name="Info", description="See some info about bot and others.", 
 
     @info.command(name="emoji")
     @commands.check(check.bot_in_server)
-    @option("icon", description="Enter the emoji")
+    @option("icon", description="The emoji to look up.")
     async def emoji_info(self, ctx: discord.ApplicationContext, icon: discord.Emoji):
-        """Shows info of the given emoji."""
+        """Shows info about an emoji."""
         try:
             _emoji = await ctx.guild.fetch_emoji(icon.id)
             view = DesignerView(

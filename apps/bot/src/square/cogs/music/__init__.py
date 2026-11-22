@@ -163,9 +163,9 @@ class Music(
             await ctx.respond(view=container(content, color))
 
     @slash_command(name="play")
-    @option("query", description="Enter your track name/link or playlist link", autocomplete=search)
+    @option("query", description="A track name, or a track or playlist link.", autocomplete=search)
     async def play(self, ctx: discord.ApplicationContext, query: str):
-        """Searches and plays a track from a given query."""
+        """Searches for a track and plays it."""
         bound = request.channel_id(ctx.guild.id)
         if bound is not None and ctx.channel.id != bound:
             await ctx.respond(view=error_view(f"Play tracks from <#{bound}>."), ephemeral=True)
@@ -184,7 +184,7 @@ class Music(
 
     @slash_command(name="now-playing")
     async def now_playing(self, ctx: discord.ApplicationContext):
-        """Shows currently playing track."""
+        """Shows the track playing now."""
         player = await self.ensure_voice(ctx)
         if not player:
             return
@@ -244,7 +244,7 @@ class Music(
         await self._control(ctx, controls.stop(ctx.guild, ctx.author))
 
     @slash_command(name="seek")
-    @option("duration", description="How far to jump, forwards or backwards. Ex: 10s, +1min, -30s, -1min20s etc....")
+    @option("duration", description="How far to jump, forwards or backwards, like 10s, +1min or -1min20s.")
     async def seek(self, ctx: discord.ApplicationContext, duration: str):
         """Seeks forwards or backwards in the current track."""
         offset_ms = int(parse_duration(duration, signed=True).total_seconds() * 1000)
@@ -252,11 +252,11 @@ class Music(
 
     @slash_command(name="skip")
     async def skip(self, ctx: discord.ApplicationContext):
-        """Skips the current playing track, or opens a vote when you aren't a DJ."""
+        """Skips the current track, or opens a vote when you aren't a DJ."""
         await self._control(ctx, controls.skip(ctx.guild, ctx.author, channel=ctx.channel))
 
     @slash_command(name="skip-to")
-    @option("track", description="Enter your track index number to skip", autocomplete=track_autocomplete)
+    @option("track", description="The track to skip to.", autocomplete=track_autocomplete)
     async def skip_to(self, ctx: discord.ApplicationContext, track: str):
         """Skips to a given track in the queue."""
         await self._control(ctx, controls.jump(ctx.guild, ctx.author, self._queue_index(track)))
@@ -272,13 +272,13 @@ class Music(
         await self._control(ctx, controls.set_paused(ctx.guild, ctx.author, False))
 
     @slash_command(name="volume")
-    @option("volume", description="Enter your volume amount from 1 - 100", min_value=1, max_value=100)
+    @option("volume", description="The volume, from 1 to 100.", min_value=1, max_value=100)
     async def volume(self, ctx: discord.ApplicationContext, volume: int):
-        """Changes the player's volume 1 - 100."""
+        """Changes the player's volume."""
         await self._control(ctx, controls.set_volume(ctx.guild, ctx.author, volume))
 
     @slash_command(name="queue")
-    @option("page", description="Enter queue page number", default=1, required=False, min_value=1)
+    @option("page", description="The page to show.", default=1, required=False, min_value=1)
     async def queue(self, ctx: discord.ApplicationContext, page: int = 1):
         """Shows the player's queue."""
         player = await self.ensure_voice(ctx)
@@ -286,7 +286,7 @@ class Music(
             await ctx.respond(view=QueueListView(client=self.client, source=ctx, page=page), ephemeral=True)
 
     @slash_command(name="history")
-    @option("page", description="Enter history page number", default=1, required=False, min_value=1)
+    @option("page", description="The page to show.", default=1, required=False, min_value=1)
     async def history(self, ctx: discord.ApplicationContext, page: int = 1):
         """Shows the tracks played so far, newest first."""
         player = await self.ensure_voice(ctx)
@@ -304,7 +304,7 @@ class Music(
 
     @slash_command(name="shuffle")
     async def shuffle(self, ctx: discord.ApplicationContext):
-        """Toggle shuffle for the player's queue."""
+        """Toggles shuffle for the player's queue."""
         await self._control(ctx, controls.set_shuffle(ctx.guild, ctx.author))
 
     @slash_command(name="autoplay")
@@ -313,15 +313,15 @@ class Music(
         await self._control(ctx, controls.set_autoplay(ctx.guild, ctx.author))
 
     @slash_command(name="loop")
-    @option("mode", description="Enter loop mode", choices=list(loop_modes))
+    @option("mode", description="What to repeat.", choices=list(loop_modes))
     async def loop(self, ctx: discord.ApplicationContext, mode: str):
         """Loops the current track or the whole queue."""
         await self._control(ctx, controls.set_loop(ctx.guild, ctx.author, self.loop_modes[mode]))
 
     @slash_command(name="remove")
-    @option("track", description="Select the track to remove", autocomplete=track_autocomplete)
+    @option("track", description="The track to remove.", autocomplete=track_autocomplete)
     async def remove(self, ctx: discord.ApplicationContext, track: str):
-        """Removes a track from the player's queue with the given index."""
+        """Removes a track from the player's queue."""
         await self._control(ctx, controls.remove(ctx.guild, ctx.author, self._queue_index(track)))
 
 

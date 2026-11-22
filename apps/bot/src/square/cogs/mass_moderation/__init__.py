@@ -122,10 +122,10 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
             await ctx.respond(view=view, ephemeral=True)
 
     @mass.command(name="kick")
-    @option("users", description='Mention the users whom you want to kick. Use " " to separate users.', required=True)
-    @option("reason", description="Enter the reason for kicking the user", required=False)
+    @option("users", description="Who to kick. Separate them with spaces.", required=True)
+    @option("reason", description="Why they're kicked.", required=False)
     async def mass_kick_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
-        """Kicks mentioned users."""
+        """Kicks the mentioned users."""
         await ctx.defer()
         if resolved := await self._resolve(ctx, users, "kick"):
             await self._run(
@@ -150,13 +150,13 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
             )
 
     @mass.command(name="ban")
-    @option("users", description='Mention the users whom you want to ban. Use " " to separate users.', required=True)
+    @option("users", description="Who to ban. Separate them with spaces.", required=True)
     @option(
         "delete_messages",
-        description="Enter the duration of messages to delete. Ex: 1min, 2h, 7d (default), 0 (disable) etc...",
+        description="How far back to delete their messages, like 1h or 7d (default). 0 deletes none.",
         required=False,
     )
-    @option("reason", description="Enter the reason for banning the user", required=False)
+    @option("reason", description="Why they're banned.", required=False)
     async def mass_ban_users(
         self, ctx: discord.ApplicationContext, users: str, delete_messages: str = "7d", reason: str = None
     ):
@@ -198,12 +198,12 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
     @mass.command(name="unban")
     @option(
         "users",
-        description='Enter the usernames or IDs of the users you want to unban. Use " " to separate them.',
+        description="Usernames or IDs to unban. Separate them with spaces.",
         required=True,
     )
-    @option("reason", description="Enter the reason for unbanning the user", required=False)
+    @option("reason", description="Why they're unbanned.", required=False)
     async def mass_unban_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
-        """Unbans mentioned users."""
+        """Unbans the given users."""
         await ctx.defer()
         banned = await bans.banned_users(ctx.guild)
 
@@ -228,13 +228,11 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
             )
 
     @mass.command(name="timeout")
-    @option(
-        "users", description='Mention the users whom you want to timeout. Use " " to separate users.', required=True
-    )
-    @option("duration", description="Enter the duration of timeout. Ex: 1d, 2w etc...")
-    @option("reason", description="Enter the reason for user timeout", required=False)
+    @option("users", description="Who to time out. Separate them with spaces.", required=True)
+    @option("duration", description="How long it lasts, like 10min, 1d or 2w.")
+    @option("reason", description="Why they're timed out.", required=False)
     async def mass_timeout_users(self, ctx: discord.ApplicationContext, users: str, duration: str, reason: str = None):
-        """Timeouts mentioned users."""
+        """Times out the mentioned users."""
         await ctx.defer()
         try:
             dur: datetime.timedelta = parse_duration(duration)
@@ -271,12 +269,10 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
             )
 
     @mass.command(name="untimeout")
-    @option(
-        "users", description='Mention the users whom you want to untimeout. Use " " to separate users.', required=True
-    )
-    @option("reason", description="Enter the reason for user timeout", required=False)
+    @option("users", description="Whose timeouts to remove. Separate them with spaces.", required=True)
+    @option("reason", description="Why their timeouts are removed.", required=False)
     async def mass_untimeout_users(self, ctx: discord.ApplicationContext, users: str, reason: str = None):
-        """Untimeouts mentioned users."""
+        """Removes the mentioned users' timeouts."""
         await ctx.defer()
 
         async def untimeout(member: discord.Member) -> None:
@@ -340,31 +336,31 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
     @mass.command(name="role-add")
     @option(
         "users",
-        description='Mention the users whom you want to add the role. Use " " to separate users.',
+        description="Who gets the roles. Separate them with spaces.",
         required=True,
     )
     @option(
         "roles",
-        description='Mention the roles which you will add to the users. Use " " to separate roles.',
+        description="The roles to give. Separate them with spaces.",
         required=True,
     )
     async def mass_role_add(self, ctx: discord.ApplicationContext, users: str, roles: str):
-        """Adds mentioned roles to mentioned users."""
+        """Adds the mentioned roles to the mentioned users."""
         await self._mass_role(ctx, users, roles, add=True)
 
     @mass.command(name="role-remove")
     @option(
         "users",
-        description='Mention the users whom you want to remove the role. Use " " to separate users.',
+        description="Who loses the roles. Separate them with spaces.",
         required=True,
     )
     @option(
         "roles",
-        description='Mention the roles which you will remove from the users. Use " " to separate roles.',
+        description="The roles to take away. Separate them with spaces.",
         required=True,
     )
     async def mass_role_remove(self, ctx: discord.ApplicationContext, users: str, roles: str):
-        """Removes mentioned roles from mentioned users."""
+        """Removes the mentioned roles from the mentioned users."""
         await self._mass_role(ctx, users, roles, add=False)
 
 

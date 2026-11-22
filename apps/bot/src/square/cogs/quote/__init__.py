@@ -74,7 +74,7 @@ class Quote(Cog, name="Quote", description="Turn messages into quote images.", o
         await self._send(ctx, text, message.author)
 
     @slash_command(name="quote", **check.ANYWHERE)
-    @option("text", description="What they said", max_length=MAX_TEXT)
+    @option("text", description="What they said.", max_length=MAX_TEXT)
     @option("user", description="Who said it. Defaults to you.", required=False)
     async def quote(self, ctx: discord.ApplicationContext, text: str, user: discord.User = None):
         """Turns your text into a quote image."""

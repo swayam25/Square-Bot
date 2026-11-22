@@ -271,8 +271,8 @@ class Warnings:
 
     @slash_command(name="warn")
     @discord.default_permissions(moderate_members=True)
-    @option("user", description="Mention the user whom you want to warn")
-    @option("reason", description="Enter the reason for the warning", required=False, max_length=MAX_REASON)
+    @option("user", description="Who to warn.")
+    @option("reason", description="Why they're warned.", required=False, max_length=MAX_REASON)
     async def warn_user(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = ""):
         """Warns the mentioned user. Enough warnings set off the punishments from the dashboard."""
         if not await not_in_server(ctx, user):
@@ -309,7 +309,7 @@ class Warnings:
 
     @slash_command(name="warnings")
     @discord.default_permissions(moderate_members=True)
-    @option("user", description="Mention the user whose warnings you want to see")
+    @option("user", description="Whose warnings to show.")
     async def warnings(self, ctx: discord.ApplicationContext, user: discord.User):
         """Shows a user's warnings, with buttons to remove one or clear them all."""
         view = WarningsList(ctx.guild, user)

@@ -102,14 +102,17 @@ class Snipe:
     @discord.default_permissions(manage_messages=True)
     @option(
         "type",
-        description="Deleted or edited messages",
+        description="Deleted or edited messages.",
         choices=[discord.OptionChoice("Deleted", "deleted"), discord.OptionChoice("Edited", "edited")],
         default="deleted",
         parameter_name="kind",
     )
-    @option("user", description="Only messages from this person", required=False)
+    @option("user", description="Only messages from this person.", required=False)
     @option(
-        "channel", description="Another channel. Leave empty for this one", required=False, channel_types=SNIPE_CHANNELS
+        "channel",
+        description="Another channel. Leave empty for this one.",
+        required=False,
+        channel_types=SNIPE_CHANNELS,
     )
     async def snipe(
         self,

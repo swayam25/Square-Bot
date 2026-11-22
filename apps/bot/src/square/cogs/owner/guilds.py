@@ -128,7 +128,7 @@ class Guilds:
     @check.is_owner()
     @option(
         "guild",
-        description="Enter the guild name",
+        description="The server's name.",
         autocomplete=lambda self, ctx: [
             guild.name for guild in self.client.guilds if not any(guild.id == g for g in config.owner_guild_ids)
         ],
@@ -147,7 +147,7 @@ class Guilds:
     @check.is_owner()
     @option(
         "guild",
-        description="Enter the guild name",
+        description="The server's name.",
         autocomplete=lambda self, ctx: [
             guild.name for guild in self.client.guilds if not any(guild.id == g for g in config.owner_guild_ids)
         ],

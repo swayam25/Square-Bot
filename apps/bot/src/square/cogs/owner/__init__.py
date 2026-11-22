@@ -110,7 +110,7 @@ class Owner(
     @slash_command(guild_ids=config.owner_guild_ids, name="shutdown")
     @check.is_owner()
     async def shutdown(self, ctx: discord.ApplicationContext):
-        """Shutdowns the bot."""
+        """Shuts down the bot."""
         await self.client.change_presence(
             status=discord.Status.dnd,
             activity=None,
@@ -127,8 +127,8 @@ class Owner(
 
     @slash_command(guild_ids=config.owner_guild_ids, name="status")
     @check.is_owner()
-    @option("status", description="Set the bot status", choices=["Online", "Idle", "DND", "Invisible"])
-    @option("activity", description="Set the bot activity", max_length=128)
+    @option("status", description="The status to set.", choices=["Online", "Idle", "DND", "Invisible"])
+    @option("activity", description="The activity to show. Leave empty to keep the current one.", max_length=128)
     async def set_status(self, ctx: discord.ApplicationContext, status: str, activity: str = None):
         """Sets the bot status."""
         await self.client.change_presence(
@@ -142,7 +142,7 @@ class Owner(
     @slash_command(guild_ids=config.owner_guild_ids, name="stats")
     @check.is_owner()
     async def stats(self, ctx: discord.ApplicationContext):
-        """Shows bot, host & lavalink node stats."""
+        """Shows bot, host and Lavalink node stats."""
         await ctx.defer()
         view = StatsView(self.client, ctx)
         await view.build()

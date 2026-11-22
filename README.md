@@ -27,7 +27,7 @@
     ```
 
 > [!TIP]
-> Check [configuration](#-configuration) section for details on the configuration keys.
+> Check the [configuration](#-configuration) section for details on the configuration keys.
 
 3. Build the images and start the stack
     ```sh
@@ -62,7 +62,7 @@ Any proxy that can put a login in front of a hostname works, for example:
 
 ## 🪇 Setup Lavalink
 
-The bot needs at least one [Lavalink](https://github.com/lavalink-devs/Lavalink) node to play music. Nodes are configured as `[[lavalink]]` tables in `config.toml`, you can add more than one and the bot fails over to a healthy node if one dies.
+The bot needs at least one [Lavalink](https://github.com/lavalink-devs/Lavalink) node to play music. Nodes are configured as `[[lavalink]]` tables in `config.toml`. You can add more than one, and the bot fails over to a healthy node if one dies.
 
 [![Lavalink failover](./assets/diagrams/lavalink.svg)](./assets/diagrams/lavalink.svg)
 
@@ -80,7 +80,7 @@ There's a [community-maintained list](https://lavalink.darrennathanael.com) of f
 Running your own node gives you full control over performance, uptime, and audio sources. See the [Lavalink docs](https://lavalink.dev) for setup.
 
 > [!NOTE]
-> Lavalink is a separate service, it isn't bundled in this repo's `docker-compose` files. Run it on its own (same host or elsewhere) and point a `[[lavalink]]` table at it.
+> Lavalink is a separate service. It isn't bundled in this repo's `docker-compose` files. Run it on its own (same host or elsewhere) and point a `[[lavalink]]` table at it.
 
 > [!WARNING]
 > It's best to host Lavalink on a **different VPS** than the one running the bot itself. Most big-name cloud providers (AWS, GCP, Azure, DigitalOcean, etc.) have their IP ranges rate-limited or blocked by YouTube, so playback breaks even though the node itself is perfectly healthy. A smaller, less popular host tends to dodge this.
@@ -93,9 +93,9 @@ The bot reads `apps/bot/config.toml` and the dashboard reads `apps/web/.env` (`.
 | ----------------------- | ----------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `owner-id`              |                         | `int`         | The Discord ID of the bot owner.                                                                                                                |
 | `owner-guild-ids`       |                         | `list[int]`   | A list of Discord IDs of the owner's guilds. Owner-only commands are created only in these guilds.                                              |
-| `system-channel-id`     |                         | `int`         | The Discord ID of the system channel where the bot will send startup, guild join/leave etc... messages.                                         |
+| `system-channel-id`     |                         | `int`         | The Discord ID of the system channel where the bot will send startup, guild join/leave and other messages.                                     |
 | `dashboard-url`         |                         | `str`         | The dashboard's public address. Links in Discord point here.                                                                                    |
-| `bot-token`             |                         | `str`         | Discord Bot Token. Get this from developer portal.                                                                                              |
+| `bot-token`             |                         | `str`         | The Discord bot token. Get this from the Developer Portal.                                                                                      |
 | `database-url`          |                         | `str`         | The URL for the PostgreSQL database.                                                                                                            |
 | `log-level`             |                         | `str`         | *Optional.* `DEBUG`, `INFO` (default), `WARNING` or `ERROR`. The `SQUARE_LOG_LEVEL` environment variable overrides it.                          |
 | `log-file`              |                         | `bool`        | *Optional.* Also write logs to `.cache/logs/square.log`, rotated at 5 × 5 MB. Defaults to `false`.                                              |
@@ -120,8 +120,8 @@ The bot reads `apps/bot/config.toml` and the dashboard reads `apps/web/.env` (`.
 | `lavalink.host`         |                         | `str`         | The host of the Lavalink server.                                                                                                                |
 | `lavalink.port`         |                         | `int`         | The port of the Lavalink server.                                                                                                                |
 | `lavalink.password`     |                         | `str`         | The password for the Lavalink server.                                                                                                           |
-| `lavalink.secure`       |                         | `bool`        | Whether to use secure connection (wss) for Lavalink.                                                                                            |
-| `lavalink.regions`      |                         | `list[str]`   | Optional. Discord voice regions this node serves, e.g. `["india"]`.                                                                             |
+| `lavalink.secure`       |                         | `bool`        | Whether to use a secure connection (wss) for Lavalink.                                                                                          |
+| `lavalink.regions`      |                         | `list[str]`   | *Optional.* Discord voice regions this node serves, e.g. `["india"]`.                                                                           |
 
 ## ✨ Custom Emojis
 

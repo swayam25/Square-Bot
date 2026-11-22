@@ -26,7 +26,7 @@ class Moderation(
     TimeoutEnds,
     Cog,
     name="Moderation",
-    description="Moderate your server & keep it managed by using commands.",
+    description="Kick, ban, time out and warn people, purge messages and lock channels.",
     order=1,
 ):
     def __init__(self, client: Client):
@@ -119,8 +119,8 @@ class Moderation(
 
     @slash_command(name="kick")
     @discord.default_permissions(kick_members=True)
-    @option("user", description="Mention the user whom you want to kick")
-    @option("reason", description="Enter the reason for kicking the user", required=False)
+    @option("user", description="Who to kick.")
+    @option("reason", description="Why they're kicked.", required=False)
     async def kick(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
         """Kicks the mentioned user."""
         if not await not_in_server(ctx, user):
@@ -150,13 +150,13 @@ class Moderation(
 
     @slash_command(name="ban")
     @discord.default_permissions(ban_members=True)
-    @option("user", description="Mention the user whom you want to ban.")
+    @option("user", description="Who to ban.")
     @option(
         "delete_messages",
-        description="Enter the duration of messages to delete. Ex: 1min, 2h, 7d (default), 0 (disable) etc...",
+        description="How far back to delete their messages, like 1h or 7d (default). 0 deletes none.",
         required=False,
     )
-    @option("reason", description="Enter the reason for banning the user.", required=False)
+    @option("reason", description="Why they're banned.", required=False)
     async def ban(
         self,
         ctx: discord.ApplicationContext,
@@ -201,10 +201,10 @@ class Moderation(
     @discord.default_permissions(ban_members=True)
     @option(
         "user",
-        description="Enter the username or ID of the user you want to unban",
+        description="The username or ID to unban.",
         autocomplete=bans.autocomplete,
     )
-    @option("reason", description="Enter the reason for unbanning the user", required=False)
+    @option("reason", description="Why they're unbanned.", required=False)
     async def unban(self, ctx: discord.ApplicationContext, user: str, reason: str = None):
         """Unbans a user by their username or ID."""
         found = bans.find_cached(ctx.guild.id, user)
@@ -236,9 +236,9 @@ class Moderation(
 
     @slash_command(name="timeout")
     @discord.default_permissions(moderate_members=True)
-    @option("user", description="Mention the user whom you want to timeout")
-    @option("duration", description="Enter the duration of timeout. Ex: 1d, 2w etc...")
-    @option("reason", description="Enter the reason for user timeout", required=False)
+    @option("user", description="Who to time out.")
+    @option("duration", description="How long it lasts, like 10min, 1d or 2w.")
+    @option("reason", description="Why they're timed out.", required=False)
     async def timeout_user(
         self, ctx: discord.ApplicationContext, user: discord.Member, duration: str, reason: str = None
     ):
@@ -277,10 +277,10 @@ class Moderation(
 
     @slash_command(name="untimeout")
     @discord.default_permissions(moderate_members=True)
-    @option("user", description="Mention the user whom you want to untimeout")
-    @option("reason", description="Enter the reason for user timeout", required=False)
+    @option("user", description="Whose timeout to remove.")
+    @option("reason", description="Why their timeout is removed.", required=False)
     async def untimeout_user(self, ctx: discord.ApplicationContext, user: discord.Member, reason: str = None):
-        """Untimeouts the mentioned user."""
+        """Removes a member's timeout."""
         if await not_in_server(ctx, user):
             return
         if problem := outranked(ctx.author, user):
@@ -329,7 +329,7 @@ class Moderation(
 
     @slash_command(name="lock")
     @discord.default_permissions(manage_channels=True)
-    @option("reason", description="Enter the reason for locking the channel", required=False)
+    @option("reason", description="Why the channel is locked.", required=False)
     async def lock(self, ctx: discord.ApplicationContext, reason: str = None):
         """Locks the current channel."""
         if not (channel := await self._set_send_messages(ctx, False)):

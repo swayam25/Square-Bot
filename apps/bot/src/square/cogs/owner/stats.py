@@ -219,7 +219,7 @@ class StatsView(DesignerView):
             ("Square", f"v{version('square')}"),
             ("Python", f"v{platform.python_version()}"),
             ("Pycord", f"v{discord.__version__}"),
-            ("Sonolink", f"v{sonolink.__version__}"),
+            ("SonoLink", f"v{sonolink.__version__}"),
             ("PID", f"{self.process.pid}"),
             ("Threads", f"{self.process.num_threads():,}"),
             ("RSS", fmt_memory(rss)),
