@@ -103,7 +103,7 @@ class Listeners:
             await repaint_deleted_card(self.client, payload.guild_id, payload.message_ids)
 
     @commands.Cog.listener()
-    async def on_sonolink_node_ready(self, event: sonolink.gateway.ReadyEvent):
+    async def on_sonolink_node_ready(self, event: sonolink.ReadyEvent):
         node = event.node
         _, latency = await fetch_node_info(node)
         log.info("Node %s connected · %s%s", node.id, latency, " · resumed" if event.resumed else "")
@@ -162,7 +162,7 @@ class Listeners:
         log.warning("Node %s disconnected, reconnecting", node.id)
 
     @commands.Cog.listener()
-    async def on_sonolink_track_start(self, player: SquarePlayer, event: sonolink.gateway.TrackStartEvent):
+    async def on_sonolink_track_start(self, player: SquarePlayer, event: sonolink.TrackStartEvent):
         guild_id = player.guild.id
         if not await player.settle(event.track, time.monotonic()):
             return
@@ -178,7 +178,7 @@ class Listeners:
         start_progress(self.client, guild_id)
 
     @commands.Cog.listener()
-    async def on_sonolink_track_end(self, player: SquarePlayer, event: sonolink.gateway.TrackEndEvent):
+    async def on_sonolink_track_end(self, player: SquarePlayer, event: sonolink.TrackEndEvent):
         if event.reason not in (sonolink.TrackEndReason.FINISHED, sonolink.TrackEndReason.LOAD_FAILED):
             return
         if player.current is None and not len(player.queue):
@@ -191,7 +191,7 @@ class Listeners:
         self.client.dispatch("music_update", guild_id)
 
     @commands.Cog.listener()
-    async def on_sonolink_track_exception(self, player: SquarePlayer, event: sonolink.gateway.TrackExceptionEvent):
+    async def on_sonolink_track_exception(self, player: SquarePlayer, event: sonolink.TrackExceptionEvent):
         track = event.track
         reason = _cause(event.exception.message)
         self._report_failure(player.guild.id, track, reason)
@@ -202,7 +202,7 @@ class Listeners:
         )
 
     @commands.Cog.listener()
-    async def on_sonolink_track_stuck(self, player: SquarePlayer, event: sonolink.gateway.TrackStuckEvent):
+    async def on_sonolink_track_stuck(self, player: SquarePlayer, event: sonolink.TrackStuckEvent):
         track = event.track
         # A track that already moved on was handled by Lavalink, and skipping now would cost the next one.
         if player.current != track:

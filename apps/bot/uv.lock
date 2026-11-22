@@ -1397,7 +1397,7 @@ wheels = [
 
 [[package]]
 name = "sonolink"
-version = "1.4.0"
+version = "1.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1405,9 +1405,9 @@ dependencies = [
     { name = "packaging" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d6/de/000355cb9708ef535fbf93d3a58cae20373ebbd4cdeed1b0ac997957a7ae/sonolink-1.4.0.tar.gz", hash = "sha256:4f7e8edc4c0e0ddad84f0786608bb670456c6e96a8d31da40af6ed389dd1c6a6", size = 81531, upload-time = "2026-09-16T20:01:23.831Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/d4/ebdf55101a79551e723912c485c2212b610d889bb87de89c4d3e444e099f/sonolink-1.4.1.tar.gz", hash = "sha256:b480eafd8af7d3e3cd5365acbb6148911b5e33ed05853ddc8dfd3330146bf0d9", size = 83879, upload-time = "2026-11-07T12:23:27.222Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c7/cb/464e04cf8ff782a9900797b1c6a64a82f725f478203833d435b513127617/sonolink-1.4.0-py3-none-any.whl", hash = "sha256:bda8690dcea4f4ae96b69308f0986a8689943500f4970f18b74b49d2c85cd23c", size = 151063, upload-time = "2026-09-16T20:01:22.519Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/b2/516c1d10c37ebccb3907e2ee21d69457e8b6161ebc44f55b412c05aec81f/sonolink-1.4.1-py3-none-any.whl", hash = "sha256:4e46e12b2ace942232eec38588d7e6e61288f426b472671e0f8216034a85fe65", size = 139462, upload-time = "2026-11-07T12:23:25.537Z" },
 ]
 
 [package.optional-dependencies]
@@ -1460,7 +1460,7 @@ requires-dist = [
     { name = "psutil", specifier = ">=7.2.2" },
     { name = "py-cord", extras = ["speed", "voice"], specifier = ">=2.8.1" },
     { name = "rich", specifier = ">=15.0.0" },
-    { name = "sonolink", extras = ["speed"], specifier = ">=1.4.0" },
+    { name = "sonolink", extras = ["speed"], specifier = ">=1.4.1" },
     { name = "tortoise-orm", extras = ["asyncpg"], specifier = ">=1.1.9" },
     { name = "uvicorn", specifier = ">=0.54.0" },
     { name = "uvloop", marker = "sys_platform != 'win32'", specifier = ">=0.23.0" },
