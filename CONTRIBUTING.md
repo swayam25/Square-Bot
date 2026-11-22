@@ -2,15 +2,6 @@
 
 Thanks for wanting to help out! Whether it's a bug fix, a new feature, or a docs tweak, here's what you need to get a local copy running and how we like changes to land.
 
-## 💫 Prerequisites
-
-Everything in the [README's prerequisites](./README.md#-prerequisites), plus a couple of things only needed for development:
-
-| Tool                                                                                                                                    | Version | Purpose                                           |
-| --------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------- |
-| [![Python](https://img.shields.io/badge/Python-%233776AB?style=for-the-badge&logo=python&logoColor=%23FFFFFF)](https://www.python.org/) | 3.14+   | The programming language used to develop the bot. |
-| [![UV](https://img.shields.io/badge/UV-%23DE5FE9?style=for-the-badge&logo=uv&logoColor=%23FFFFFF)](https://docs.astral.sh/uv/)          | 0.13+   | A modern Python package manager for development.  |
-
 ## 🛸 Local Development
 
 1. Clone the repository
@@ -19,7 +10,7 @@ Everything in the [README's prerequisites](./README.md#-prerequisites), plus a c
     cd square
     ```
 
-2. Set up the project
+2. Set up the project, then fill in the empty keys in `apps/bot/config.toml` and `apps/web/.env`
 
     ```sh
     just init --dev
@@ -37,7 +28,7 @@ Everything in the [README's prerequisites](./README.md#-prerequisites), plus a c
 > [!TIP]
 > Drizzle Gateway starts with the other services, at http://localhost:4983. So does RustFS, with its console at http://localhost:9001/rustfs/console/ (`square` / `youcannotpass`).
 
-1. Stop it when done
+4. Stop it when done
 
     ```sh
     just down --dev

@@ -21,7 +21,7 @@
     cd square
     ```
 
-2. Set up the config
+2. Create the config, then fill in the empty keys in `apps/bot/config.toml` and `apps/web/.env.production`
     ```sh
     just init
     ```

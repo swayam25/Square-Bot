@@ -15,12 +15,25 @@ _prep: _cache
     @pnpm install
     @printf '\033[42m\033[30m  OK  \033[0m \033[32mDone\033[0m\n'
 
-# Ask for the required settings and write the bot and dashboard config (--dev for local services)
+# Create the bot and dashboard config from the examples (--dev for local development)
 init *args: _cache
     #!/usr/bin/env bash
     set -euo pipefail
-    if [[ "{{ args }}" == *--dev* ]]; then just _prep; else pnpm install --frozen-lockfile; fi
-    pnpm run init {{ args }}
+    bot=apps/bot/config.toml
+    env=apps/web/.env.production
+    if [[ "{{ args }}" == *--dev* ]]; then
+        env=apps/web/.env
+        just _prep
+    fi
+    if [[ -e $bot || -e $env ]]; then
+        read -rp "$bot or $env already exists. Overwrite? [y/N] " reply || true
+        [[ ${reply:-} == [yY]* ]] || { printf '\033[42m\033[30m  OK  \033[0m \033[32mKept the existing config\033[0m\n'; exit 0; }
+    fi
+    secret=$(od -An -tx1 -N32 /dev/urandom | tr -d ' \n')
+    umask 077
+    sed -e '/^# Uncomment to serve the API/d' -e '/^# \[api\]/,/^# docs/s/^# //' -e "s/^secret = \"\"/secret = \"$secret\"/" apps/bot/config.example.toml > "$bot"
+    sed -e "s/^BOT_API_SECRET=$/BOT_API_SECRET=$secret/" apps/web/.env.example > "$env"
+    printf '\033[42m\033[30m  OK  \033[0m \033[32mWrote %s and %s, fill in the empty keys\033[0m\n' "$bot" "$env"
 
 # Rebuild and deploy the production stack (--dev for local services)
 up *args: _cache
