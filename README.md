@@ -2,16 +2,21 @@
 
 ![Square Bot](./assets/banner.svg)
 
-![Python](https://shieldcn.dev/badge/Python-v3.14.svg?size=sm&brand=python)
-![Pycord](https://shieldcn.dev/badge/Pycord-v2.8.1.svg?size=sm&color=5865f2&logo=python)
-![SonoLink](https://shieldcn.dev/badge/SonoLink-v1.4.1.svg?size=sm&color=275c96&logo=lu:AudioWaveform)
-![Node.js](https://shieldcn.dev/badge/Node.js-v24.svg?size=sm&color=5fa04e&logo=nodedotjs)
-![Runs on Linux](https://shieldcn.dev/badge/Runs%20on-Linux-FCC624.svg?logo=linux&logoColor=000)
-![Release](https://www.shieldcn.dev/github/release/swayam25/Square-Bot.svg?size=sm)
-![CI](https://www.shieldcn.dev/github/ci/swayam25/Square-Bot.svg?variant=secondary&size=sm)
-![License](https://www.shieldcn.dev/github/license/swayam25/Square-Bot.svg?variant=ghost&size=sm)
+[![Pycord](https://shieldcn.dev/badge/Pycord-v2.8.1.svg?color=5865f2&logo=python)](https://pycord.dev)
+[![SonoLink](https://shieldcn.dev/badge/SonoLink-v1.4.1.svg?color=275c96&logo=lu:AudioWaveform)](https://github.com/sonolink/sonolink)
+[![Litestar](https://shieldcn.dev/badge/Litestar-v2.25.0.svg?color=edb641&logo=lu:Star&logoColor=202235&labelTextColor=202235&valueColor=202235)](https://litestar.dev)
+[![SvelteKit](https://shieldcn.dev/badge/SvelteKit-v3.2.0.svg?brand=svelte)](https://svelte.dev/docs/kit)
+
+[![Runs on Linux](https://shieldcn.dev/badge/Runs%20on-Linux-FCC624.svg?logo=linux&logoColor=000)](https://kernel.org)
+[![Release](https://shieldcn.dev/github/release/swayam25/Square-Bot.svg)](https://github.com/swayam25/Square-Bot/releases/latest)
+[![License](https://shieldcn.dev/github/license/swayam25/Square-Bot.svg?variant=ghost)](./LICENSE)
 
 </div>
+
+## 📦 Prerequisites
+
+[![Docker](https://shieldcn.dev/badge/Docker-v23%2B.svg?brand=docker)](https://docs.docker.com/engine/install/)
+[![Just](https://shieldcn.dev/badge/Just-v1.23%2B.svg?logo=lu:SquareTerminal&variant=secondary)](https://just.systems/man/en/packages.html)
 
 ## 🚀 Production
 
@@ -93,7 +98,7 @@ The bot reads `apps/bot/config.toml` and the dashboard reads `apps/web/.env` (`.
 | ----------------------- | ----------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `owner-id`              |                         | `int`         | The Discord ID of the bot owner.                                                                                                                |
 | `owner-guild-ids`       |                         | `list[int]`   | A list of Discord IDs of the owner's guilds. Owner-only commands are created only in these guilds.                                              |
-| `system-channel-id`     |                         | `int`         | The Discord ID of the system channel where the bot will send startup, guild join/leave and other messages.                                     |
+| `system-channel-id`     |                         | `int`         | The Discord ID of the system channel where the bot will send startup, guild join/leave and other messages.                                      |
 | `dashboard-url`         |                         | `str`         | The dashboard's public address. Links in Discord point here.                                                                                    |
 | `bot-token`             |                         | `str`         | The Discord bot token. Get this from the Developer Portal.                                                                                      |
 | `database-url`          |                         | `str`         | The URL for the PostgreSQL database.                                                                                                            |

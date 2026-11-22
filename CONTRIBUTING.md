@@ -2,6 +2,16 @@
 
 Thanks for wanting to help out! Whether it's a bug fix, a new feature, or a docs tweak, here's what you need to get a local copy running and how we like changes to land.
 
+## 📦 Prerequisites
+
+[![Python](https://shieldcn.dev/badge/Python-v3.14.svg?brand=python)](https://www.python.org/downloads/)
+[![uv](https://shieldcn.dev/badge/uv-v0.13.5.svg?brand=uv)](https://docs.astral.sh/uv/getting-started/installation/)
+[![Node.js](https://shieldcn.dev/badge/Node.js-v24.svg?color=5fa04e&logo=nodedotjs)](https://nodejs.org/en/download)
+[![pnpm](https://shieldcn.dev/badge/pnpm-v12.16.1.svg?brand=pnpm)](https://pnpm.io/installation)
+
+[![Docker](https://shieldcn.dev/badge/Docker-v23%2B.svg?brand=docker)](https://docs.docker.com/engine/install/)
+[![Just](https://shieldcn.dev/badge/Just-v1.23%2B.svg?logo=lu:SquareTerminal&variant=secondary)](https://just.systems/man/en/packages.html)
+
 ## 🛸 Local Development
 
 1. Clone the repository
