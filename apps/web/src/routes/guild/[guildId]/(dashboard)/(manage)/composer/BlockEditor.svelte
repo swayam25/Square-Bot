@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import { sortable } from "#lib/attachments/sortable.ts";
     import ColorField from "#lib/components/fields/ColorField.svelte";
     import DiscordTextField from "#lib/components/fields/DiscordTextField.svelte";
@@ -8,7 +9,6 @@
     import { focusRing } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
     import { plural } from "#lib/format.ts";
-    import { mobile } from "#lib/media.ts";
     import { toast } from "#lib/toast.svelte.ts";
     import { flushSync } from "svelte";
     import { slide } from "svelte/transition";
@@ -161,16 +161,17 @@
                     placement="bottom-end"
                     contentClass="w-64"
                     triggerClass={[
-                        "flex size-12 shrink-0 items-center justify-center rounded-control-lg text-gray-400 hover:bg-gray-800 hover:text-gray-100 md:size-10 md:rounded-2xl",
+                        "ripple flex size-12 shrink-0 items-center justify-center rounded-control-lg text-gray-400 hover:bg-gray-800 hover:text-gray-100 md:size-10 md:rounded-2xl",
                         focusRing,
                     ]}
                 >
                     {#snippet trigger()}<MaterialSymbolsDriveFileMoveRounded class="size-5" />{/snippet}
-                    <div class={["flex flex-col gap-1", mobile.current && "px-4 pb-4"]}>
+                    <div class="flex flex-col gap-1">
                         {#if parent}
                             <button
                                 type="button"
-                                class="ripple flex h-10 items-center rounded-xl px-4 text-left text-sm font-medium hover:bg-white/10"
+                                class="ripple flex h-12 items-center rounded-control-lg px-4 text-left text-sm font-medium hover:bg-white/10 md:h-10 md:rounded-xl"
+                                {@attach ripple}
                                 onclick={() => composer.move(block as Piece, null)}
                             >
                                 Out of the container
@@ -180,7 +181,8 @@
                             {#if container !== parent}
                                 <button
                                     type="button"
-                                    class="ripple flex h-10 items-center gap-2 rounded-xl px-4 text-left text-sm font-medium hover:bg-white/10"
+                                    class="ripple flex h-12 items-center gap-2 rounded-control-lg px-4 text-left text-sm font-medium hover:bg-white/10 md:h-10 md:rounded-xl"
+                                    {@attach ripple}
                                     onclick={() => composer.move(block as Piece, container)}
                                 >
                                     <span class="size-3 shrink-0 rounded-full bg-gray-600" style:background-color={container.color ?? undefined}

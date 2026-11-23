@@ -1,9 +1,9 @@
 import type { Attachment } from "svelte/attachments";
 
-// Needs the `ripple` utility from `layout.css`, which clips the wave to the element
+// Needs the `ripple` utility from `layout.css`, which clips the wave to the element. Without it nothing happens, so overlay triggers can always carry this
 export const ripple: Attachment<HTMLElement> = (node) => {
     function press(event: PointerEvent) {
-        if (event.button !== 0 || node.matches(":disabled, [aria-disabled='true']")) return;
+        if (event.button !== 0 || !node.classList.contains("ripple") || node.matches(":disabled, [aria-disabled='true']")) return;
         if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
         const box = node.getBoundingClientRect();

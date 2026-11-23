@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import { sortable } from "#lib/attachments/sortable.ts";
     import ConfirmDialog from "#lib/components/dashboard/ConfirmDialog.svelte";
     import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
@@ -305,6 +306,7 @@
                                         "aria-pressed:bg-accent/10 aria-pressed:text-accent",
                                         focusRing,
                                     ]}
+                                    {@attach ripple}
                                     onclick={() => usePreset(entry)}
                                 >
                                     {#if entry.key === "server"}

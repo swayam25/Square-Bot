@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Popup from "#lib/components/ui/Popup.svelte";
     import { focusRing } from "#lib/components/ui/styles.ts";
     import { mobile } from "#lib/media.ts";
@@ -28,7 +29,7 @@
     ]}
 >
     {#snippet trigger()}<MaterialSymbolsAddRounded class="size-4" />{label}{/snippet}
-    <div class={["flex flex-col gap-1", mobile.current && "px-4 pb-4"]}>
+    <div class="flex flex-col gap-1">
         {#each kinds as kind (kind)}
             {@const { icon: Icon, hint } = KINDS[kind]}
             {@const full = composer.full(create(kind, composer.mediaRoom > 0))}
@@ -39,6 +40,7 @@
                     "ripple flex w-full items-center gap-4 rounded-xl px-4 py-2 text-left hover:bg-white/10 disabled:pointer-events-none disabled:opacity-50",
                     mobile.current && "min-h-12 rounded-control-lg",
                 ]}
+                {@attach ripple}
                 onclick={() => add(kind)}
             >
                 <Icon class="size-5 shrink-0 text-accent" />

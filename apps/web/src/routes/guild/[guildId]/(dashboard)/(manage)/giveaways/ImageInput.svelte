@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Button from "#lib/components/ui/Button.svelte";
     import Input from "#lib/components/ui/Input.svelte";
     import Picture from "#lib/components/ui/Picture.svelte";
@@ -74,6 +75,7 @@
                 "ripple flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-control-lg bg-gray-800 hover:bg-gray-700 md:size-10 md:rounded-2xl [&>svg]:size-5",
                 focusRing,
             ]}
+            {@attach ripple}
         >
             <MaterialSymbolsUploadRounded />
         </FileUpload.Trigger>

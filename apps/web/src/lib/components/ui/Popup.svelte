@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Drawer from "#lib/components/ui/Drawer.svelte";
     import Portal from "#lib/components/ui/Portal.svelte";
     import { mobile } from "#lib/media.ts";
@@ -37,7 +38,7 @@
     <Drawer bind:open {title} {trigger} {triggerClass} {disabled} {plain} {finalFocus} {children} />
 {:else}
     <Popover.Root bind:open positioning={{ placement, gutter: 8 }} finalFocusEl={finalFocus}>
-        <Popover.Trigger class={triggerClass} {disabled}>{@render trigger()}</Popover.Trigger>
+        <Popover.Trigger class={triggerClass} {disabled} {@attach ripple}>{@render trigger()}</Popover.Trigger>
         <Portal>
             <Popover.Positioner class="z-60">
                 <Popover.Content

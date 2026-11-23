@@ -1,5 +1,6 @@
 <script lang="ts">
     import { edgeFade } from "#lib/attachments/edge-fade.ts";
+    import { ripple } from "#lib/attachments/ripple.ts";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import GuildIcon from "#lib/components/ui/GuildIcon.svelte";
     import Input from "#lib/components/ui/Input.svelte";
@@ -323,6 +324,7 @@
                             "ripple flex size-12 shrink-0 items-center justify-center rounded-control-lg hover:bg-white/10 md:size-10 md:rounded-2xl",
                             focusRing,
                         ]}
+                        {@attach ripple}
                         onclick={() => (toneOpen = !toneOpen)}
                     >
                         <span class="font-emoji text-2xl/none">{TONES[tone]}</span>
@@ -356,6 +358,7 @@
                                         "ripple flex size-10 items-center justify-center rounded-2xl hover:bg-white/10 aria-pressed:bg-accent/20 md:size-8 md:rounded-xl",
                                         focusRing,
                                     ]}
+                                    {@attach ripple}
                                     onclick={() => setTone(index)}
                                 >
                                     <span class="font-emoji text-2xl/none">{hand}</span>

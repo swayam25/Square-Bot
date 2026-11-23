@@ -12,6 +12,7 @@
 </script>
 
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Popup from "#lib/components/ui/Popup.svelte";
     import { field, focusRing } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
@@ -102,6 +103,7 @@
                             "ripple flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-control-lg bg-gray-700 text-gray-100 hover:bg-gray-600 md:size-10 md:rounded-2xl [&>svg]:size-5",
                             focusRing,
                         ]}
+                        {@attach ripple}
                     >
                         <MaterialSymbolsColorizeRounded />
                     </ColorPicker.EyeDropperTrigger>

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import { overlays } from "#lib/components/ui/overlays.svelte.ts";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
     import Portal from "#lib/components/ui/Portal.svelte";
@@ -55,7 +56,7 @@
     finalFocusEl={finalFocus}
 >
     {#if trigger}
-        <Drawer.Trigger class={triggerClass} {disabled}>{@render trigger()}</Drawer.Trigger>
+        <Drawer.Trigger class={triggerClass} {disabled} {@attach ripple}>{@render trigger()}</Drawer.Trigger>
     {/if}
     <Portal>
         <Drawer.Backdrop

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ripple } from "#lib/attachments/ripple.ts";
     import Drawer from "#lib/components/ui/Drawer.svelte";
     import { overlays } from "#lib/components/ui/overlays.svelte.ts";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
@@ -40,7 +41,7 @@
 {:else}
     <Dialog.Root bind:open closeOnEscape={dismissable} closeOnInteractOutside={dismissable}>
         {#if trigger}
-            <Dialog.Trigger class={triggerClass}>{@render trigger()}</Dialog.Trigger>
+            <Dialog.Trigger class={triggerClass} {@attach ripple}>{@render trigger()}</Dialog.Trigger>
         {/if}
         <Portal>
             <Dialog.Backdrop
