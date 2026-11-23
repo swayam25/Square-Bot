@@ -3,7 +3,7 @@ name: square
 services:
   db:
     image: postgres:16-alpine
-    container_name: square_db
+    container_name: square-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -21,7 +21,7 @@ services:
 
   redis:
     image: redis:8-alpine
-    container_name: square_redis
+    container_name: square-redis
     restart: unless-stopped
     ports:
       - "127.0.0.1:6379:6379"
@@ -35,7 +35,7 @@ services:
 
   storage:
     image: rustfs/rustfs:1.0.4@sha256:ed9210d6411d77ffceb70d94b964a3cb7d225983368bc25bebe01e995293dcc2
-    container_name: square_storage
+    container_name: square-storage
     restart: unless-stopped
     environment:
       RUSTFS_ACCESS_KEY: square
@@ -57,7 +57,7 @@ services:
 
   gateway:
     image: ghcr.io/drizzle-team/gateway:latest@sha256:3f09490584ad97cb5fa6d2a7335b405b8ac96e3b17a427830930f4ff70fe3993
-    container_name: square_gateway
+    container_name: square-gateway
     restart: unless-stopped
     environment:
       DATABASE_URL_Square: postgresql://postgres:youcannotpass@db:5432/square

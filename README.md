@@ -47,11 +47,11 @@ Square publishes no ports. The services a browser needs join the `edge` Docker n
 
 | Container        | Port   | What it is                                                                             | Who should reach it | Its own login                     |
 | ---------------- | ------ | -------------------------------------------------------------------------------------- | ------------------- | --------------------------------- |
-| `square`         | `80`   | The dashboard                                                                          | Everyone            | Discord                           |
+| `square-caddy`   | `80`   | The dashboard                                                                          | Everyone            | Discord                           |
 | `square-gateway` | `4983` | [Drizzle Gateway](https://gateway.drizzle.team), a browser and editor for the database | Admins, behind SSO  | None                              |
 | `square-storage` | `9001` | [RustFS](https://rustfs.com) console, a browser for stored files                       | Admins, behind SSO  | The storage access and secret key |
 
-Route nothing else. The bot's API, Postgres and Redis stay on the stack's private network, and RustFS's S3 API on `9000` is only for the bot.
+Route nothing else. Postgres and Redis stay on the stack's private network, and RustFS's S3 API on `9000` is only for the bot. The bot joins `edge` only to reach a Lavalink node on the same host, so never route its API on `8080`.
 
 > [!WARNING]
 > Drizzle Gateway has no login of its own, so anyone who finds its hostname can read and change every table. The RustFS console signs in with the storage keys from `docker-compose.prod.yml`, which default to `square` / `youcannotpass`. Put both behind SSO.
@@ -85,7 +85,7 @@ There's a [community-maintained list](https://lavalink.darrennathanael.com) of f
 Running your own node gives you full control over performance, uptime, and audio sources. See the [Lavalink docs](https://lavalink.dev) for setup.
 
 > [!NOTE]
-> Lavalink is a separate service. It isn't bundled in this repo's `docker-compose` files. Run it on its own (same host or elsewhere) and point a `[[lavalink]]` table at it.
+> Lavalink is a separate service. It isn't bundled in this repo's `docker-compose` files. Run it on its own (same host or elsewhere) and point a `[[lavalink]]` table at it. On the same host, put it on the `edge` network and use its container name as `host`.
 
 > [!WARNING]
 > It's best to host Lavalink on a **different VPS** than the one running the bot itself. Most big-name cloud providers (AWS, GCP, Azure, DigitalOcean, etc.) have their IP ranges rate-limited or blocked by YouTube, so playback breaks even though the node itself is perfectly healthy. A smaller, less popular host tends to dodge this.

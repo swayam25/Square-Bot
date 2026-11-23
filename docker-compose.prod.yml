@@ -13,7 +13,7 @@ services:
       dockerfile: apps/web/Dockerfile
       target: proxy
     image: square/caddy:latest
-    container_name: square
+    container_name: square-caddy
     restart: unless-stopped
     depends_on:
       web:
@@ -33,6 +33,7 @@ services:
       dockerfile: apps/web/Dockerfile
       target: web
     image: square/web:latest
+    container_name: square-web
     restart: unless-stopped
     env_file: apps/web/.env.production
     environment:
@@ -55,7 +56,9 @@ services:
     build:
       context: apps/bot
     image: square/bot:latest
+    container_name: square-bot
     restart: unless-stopped
+    networks: [default, edge]
     environment:
       API_HOST: 0.0.0.0
     depends_on:
@@ -70,6 +73,7 @@ services:
 
   db:
     image: postgres:16-alpine@sha256:f377d590e5474681d4d7838635031a2b50647923b7abfa803ce9b5ff35d5c663
+    container_name: square-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -86,6 +90,7 @@ services:
 
   redis:
     image: redis:8-alpine@sha256:7958cfbb9d152f87dadfbc89f1b0b15938f0b81ff8982feb327476f4911935c3
+    container_name: square-redis
     restart: unless-stopped
     # Sessions live here, so writes go to an append-only file and survive a restart
     command: ["redis-server", "--appendonly", "yes", "--save", ""]
