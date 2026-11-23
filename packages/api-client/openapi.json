@@ -15339,6 +15339,26 @@
               }
             ]
           },
+          "iconUrl": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "emoji": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "position": {
             "type": "integer"
           },
@@ -15349,6 +15369,8 @@
         "type": "object",
         "required": [
           "color",
+          "emoji",
+          "iconUrl",
           "id",
           "managed",
           "name",

@@ -3,7 +3,16 @@
     import type { Component } from "svelte";
 
     // `disabled` is the reason it can't be picked, shown in place of the hint
-    export type Option = { value: string; label: string; icon?: Component; color?: string; hint?: string; disabled?: string };
+    export type Option = {
+        value: string;
+        label: string;
+        icon?: Component;
+        image?: string;
+        emoji?: string;
+        color?: string;
+        hint?: string;
+        disabled?: string;
+    };
 </script>
 
 <script lang="ts">
@@ -90,6 +99,10 @@
 {#snippet marker(option: Option)}
     {#if option.icon}
         <option.icon class="size-5 shrink-0 text-gray-400" />
+    {:else if option.image}
+        <img src={option.image} alt="" loading="lazy" class="size-5 shrink-0 object-contain" />
+    {:else if option.emoji}
+        <span class="grid size-5 shrink-0 place-items-center font-emoji text-base/none">{option.emoji}</span>
     {:else if option.color}
         <span class="size-5 shrink-0 p-1"><span class="block size-full rounded-full" style:background-color={option.color}></span></span>
     {/if}

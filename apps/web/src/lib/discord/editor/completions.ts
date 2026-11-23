@@ -2,7 +2,7 @@ import { emojiData, guildEmojis } from "#lib/emoji/emoji.remote.ts";
 import { customToken, customUrl, emojiScore, loadTone, shortcodeOf, toned, type GuildEmoji, type UnicodeEmoji } from "#lib/emoji/emoji.ts";
 import { guildChannels, guildRoles, searchMembers } from "#lib/settings/settings.remote.ts";
 import type { Completion, CompletionContext, CompletionResult } from "@codemirror/autocomplete";
-import type { Channel } from "@square/api-client";
+import type { Channel, Role } from "@square/api-client";
 import { mount, unmount, type Component } from "svelte";
 import MaterialSymbolsCampaignRounded from "~icons/material-symbols/campaign-rounded";
 import MaterialSymbolsFolderRounded from "~icons/material-symbols/folder-rounded";
@@ -23,6 +23,9 @@ type Visual =
     | { kind: "image"; src: string };
 
 export type Suggestion = Completion & { visual: Visual };
+
+const roleVisual = (role: Role): Visual =>
+    role.iconUrl ? { kind: "image", src: role.iconUrl } : role.emoji ? { kind: "glyph", text: role.emoji } : { kind: "at", color: role.color };
 
 const CHANNEL_ICONS: Record<Channel["type"], Component> = {
     text: MaterialSymbolsTagRounded,
@@ -134,7 +137,7 @@ export function mentionSource(guild: () => string) {
                 label: role.name,
                 apply: `<@&${role.id}> `,
                 section: SECTIONS.roles,
-                visual: { kind: "at", color: role.color } as const,
+                visual: roleVisual(role),
             }));
         const options = ranked([...people, ...named, ...everyone]);
         return options.length ? { from: typed.from, options, filter: false } : null;

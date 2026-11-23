@@ -983,6 +983,8 @@ export const zRole = z.object({
     id: z.string().regex(/^\d{17,20}$/),
     name: z.string(),
     color: z.string().nullable(),
+    iconUrl: z.string().nullable(),
+    emoji: z.string().nullable(),
     position: z.int(),
     managed: z.boolean(),
 });

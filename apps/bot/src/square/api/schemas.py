@@ -119,6 +119,8 @@ class Role(Schema):
     id: Snowflake
     name: str
     color: str | None
+    icon_url: str | None
+    emoji: str | None
     position: int
     managed: bool
 
@@ -1194,6 +1196,8 @@ def roles_out(guild: discord.Guild) -> list[Role]:
             id=str(role.id),
             name=role.name,
             color=str(role.color) if role.color.value else None,
+            icon_url=role.icon.replace(size=64, static_format="webp").url if role.icon else None,
+            emoji=role.unicode_emoji,
             position=role.position,
             managed=role.managed,
         )

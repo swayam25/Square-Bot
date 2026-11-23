@@ -1183,6 +1183,8 @@ export type Role = {
     id: string;
     name: string;
     color: string | null;
+    iconUrl: string | null;
+    emoji: string | null;
     position: number;
     managed: boolean;
 };

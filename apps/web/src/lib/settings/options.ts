@@ -52,7 +52,11 @@ const TEXT: Channel["type"][] = ["text", "news"];
 
 export const textChannelOptions = (channels: Channel[]) => channelOptions(channels, TEXT);
 
-const roleOption = (role: Role): Option => ({ value: role.id, label: role.name, color: role.color ?? "var(--color-gray-400)" });
+const roleOption = (role: Role): Option => ({
+    value: role.id,
+    label: role.name,
+    ...(role.iconUrl ? { image: role.iconUrl } : role.emoji ? { emoji: role.emoji } : { color: role.color ?? "var(--color-gray-400)" }),
+});
 
 export function roleOptions(roles: Role[], { keep = [] }: { keep?: string[] } = {}): Option[] {
     return roles.filter((role) => keep.includes(role.id) || !role.managed).map(roleOption);
