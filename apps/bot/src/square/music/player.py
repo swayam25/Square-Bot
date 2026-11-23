@@ -21,6 +21,7 @@ from square.music.queue import QueueListView
 from square.music.utils import delete_quietly, get_source, music_interaction_check, music_log, reply, split_log_text
 from square.utils import config
 from square.utils.emoji import Icon, emoji
+from square.utils.helpers import fmt_count
 
 _render_locks: dict[int, asyncio.Lock] = {}
 # Renders asked for while one was in flight, and whether any of them wanted a new message. The one in flight draws
@@ -489,7 +490,9 @@ class UpNextContainer(ui.Container):
             # duration_until ignores loop mode, unlike total_duration, which reports inf while looping.
             runtime = fmt_time(queue.duration_until(total))
             remaining = total - _UP_NEXT_LIMIT
-            self.add_item(ui.TextDisplay(f"-# {f'+{remaining} more • ' if remaining > 0 else ''}`{runtime}` total"))
+            self.add_item(
+                ui.TextDisplay(f"-# {f'+{fmt_count(remaining)} more • ' if remaining > 0 else ''}`{runtime}` total")
+            )
         elif player.autoplay_on:
             self.add_item(ui.TextDisplay(f"-# {emoji.autoplay} Nothing queued. Autoplay takes over when this ends."))
         else:

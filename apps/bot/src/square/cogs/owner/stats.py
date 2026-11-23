@@ -14,7 +14,7 @@ from square.core import Client
 from square.core.view import DesignerView, show_loading
 from square.music.core import fetch_node_info
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_memory, plural
+from square.utils.helpers import fmt_count, fmt_memory, plural
 from typing import Literal
 
 
@@ -204,12 +204,12 @@ class StatsView(DesignerView):
         rows = [
             ("Latency", f"{round(latency)} ms"),
             ("Uptime", format_timedelta(uptime, locale="en")),
-            ("Shards", f"{self.client.shard_count or 1}"),
-            ("Commands", f"{len(self.client.application_commands):,}"),
-            ("Guilds", f"{len(self.client.guilds):,}"),
-            ("Members", f"{sum(1 for _ in self.client.get_all_members()):,}"),
-            ("Channels", f"{sum(1 for _ in self.client.get_all_channels()):,}"),
-            ("Voice", f"{len(self.client.voice_clients):,}"),
+            ("Shards", fmt_count(self.client.shard_count or 1)),
+            ("Commands", fmt_count(len(self.client.application_commands))),
+            ("Guilds", fmt_count(len(self.client.guilds))),
+            ("Members", fmt_count(sum(1 for _ in self.client.get_all_members()))),
+            ("Channels", fmt_count(sum(1 for _ in self.client.get_all_channels()))),
+            ("Voice", fmt_count(len(self.client.voice_clients))),
         ]
         return ["BOT", *Term.kv(rows), "", *self._chart("Latency (ms)", self._track("latency", latency))]
 
@@ -221,7 +221,7 @@ class StatsView(DesignerView):
             ("Pycord", f"v{discord.__version__}"),
             ("SonoLink", f"v{sonolink.__version__}"),
             ("PID", f"{self.process.pid}"),
-            ("Threads", f"{self.process.num_threads():,}"),
+            ("Threads", fmt_count(self.process.num_threads())),
             ("RSS", fmt_memory(rss)),
             ("CPU", f"{self.process.cpu_percent():.1f}%"),
         ]
@@ -304,8 +304,8 @@ class StatsView(DesignerView):
         stats = node.stats
         rows += [
             ("Uptime", format_timedelta(datetime.timedelta(milliseconds=stats.uptime), locale="en")),
-            ("Players", f"{stats.players:,}"),
-            ("Playing", f"{stats.playing_players:,}"),
+            ("Players", fmt_count(stats.players)),
+            ("Playing", fmt_count(stats.playing_players)),
             ("Memory", f"{fmt_memory(stats.memory.used)} / {fmt_memory(stats.memory.allocated)}"),
         ]
         allocated = stats.memory.allocated or 1

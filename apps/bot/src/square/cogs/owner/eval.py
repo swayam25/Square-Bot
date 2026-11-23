@@ -12,7 +12,7 @@ from square.core.cog import Cog
 from square.core.view import DesignerView, error_view, success_view
 from square.utils import check, config
 from square.utils.emoji import emoji
-from square.utils.helpers import plural
+from square.utils.helpers import fmt_count, plural
 
 # This prevents clearing tasks during cog reloads
 running_tasks = {}
@@ -100,7 +100,7 @@ class TaskManagerView(DesignerView):
     async def _stop_all(self, interaction: discord.Interaction):
         stopped_count = self.eval_cog.stop_all_tasks()
         await interaction.edit(
-            view=success_view(f"Stopped `{stopped_count}` running eval {plural(stopped_count, 'task')}.")
+            view=success_view(f"Stopped `{fmt_count(stopped_count)}` running eval {plural(stopped_count, 'task')}.")
         )
         await interaction.delete_original_response(delay=5)
 
@@ -257,7 +257,7 @@ class Eval(Cog):
                 return await ctx.reply(view=view, mention_author=False)
 
             stopped_count = self.stop_all_tasks()
-            view = success_view(f"Stopped `{stopped_count}` running eval {plural(stopped_count, 'task')}.")
+            view = success_view(f"Stopped `{fmt_count(stopped_count)}` running eval {plural(stopped_count, 'task')}.")
             return await ctx.reply(view=view, mention_author=False)
 
         elif code_lower in ["list", "tasks", "running"]:

@@ -13,7 +13,7 @@ from square.core.cog import Cog
 from square.core.view import DesignerView, error_view
 from square.utils import bans, config, mod_dm
 from square.utils.emoji import emoji
-from square.utils.helpers import parse_duration, plural
+from square.utils.helpers import fmt_count, parse_duration, plural
 
 
 class MassModeration(Cog, name="Mass Moderation", description="Moderate your server in bulk.", order=2):
@@ -75,7 +75,7 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
         def icon(name: str) -> str:
             return getattr(emoji, f"{name}{suffix}")
 
-        lines = [f"Successfully {summary} {len(users)} {plural(len(users), 'user')}."]
+        lines = [f"Successfully {summary} {fmt_count(len(users))} {plural(len(users), 'user')}."]
         lines += [f"{icon(name)} **{label}**: {value}" for name, label, value in fields]
         lines.append(f"{icon('user')} **Users**: {', '.join(users)}")
         return DesignerView(
@@ -327,7 +327,7 @@ class MassModeration(Cog, name="Mass Moderation", description="Moderate your ser
             errors,
             action=lambda m: m.add_roles(*_roles) if add else m.remove_roles(*_roles),
             title=f"Mass {past.capitalize()} Roles",
-            summary=f"{past} {len(_roles)} {plural(len(_roles), 'role')} {prep}",
+            summary=f"{past} {fmt_count(len(_roles))} {plural(len(_roles), 'role')} {prep}",
             error_title=f"Can't {verb.capitalize()} Roles",
             fields=[("role", "Roles", ", ".join(role.mention for role in _roles))],
             audit=discord.AuditLogAction.member_role_update,

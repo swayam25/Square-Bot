@@ -6,7 +6,7 @@ import unicodedata
 from collections import deque
 from square.core import Client
 from square.db.schema import AutomodRuleTable
-from square.utils.helpers import plural
+from square.utils.helpers import fmt_count, plural
 from typing import Literal, NamedTuple, get_args
 from urllib.parse import urlsplit
 
@@ -287,16 +287,16 @@ def window_hit(rule: AutomodRuleTable, sent: deque[Sent]) -> str | None:
     match rule.kind:
         case "flood":
             if len(counted) > amount:
-                return f"Over {amount} {plural(amount, 'message')} in {seconds}s"
+                return f"Over {fmt_count(amount)} {plural(amount, 'message')} in {seconds}s"
         case "duplicates":
             if last.text and sum(entry.text == last.text for entry in counted) > amount:
-                return f"Same message over {amount} {plural(amount, 'time')} in {seconds}s"
+                return f"Same message over {fmt_count(amount)} {plural(amount, 'time')} in {seconds}s"
         case "mention_flood":
             if last.mentions and (total := sum(entry.mentions for entry in counted)) > amount:
-                return f"{total} {plural(total, 'mention')} in {seconds}s"
+                return f"{fmt_count(total)} {plural(total, 'mention')} in {seconds}s"
         case "file_flood":
             if last.files and (total := sum(entry.files for entry in counted)) > amount:
-                return f"{total} {plural(total, 'file')} in {seconds}s"
+                return f"{fmt_count(total)} {plural(total, 'file')} in {seconds}s"
     return None
 
 
@@ -319,7 +319,7 @@ async def content_hit(client: Client, guild: discord.Guild, rule: AutomodRuleTab
                 return f"{percent}% capitals"
         case "emojis":
             if (count := emoji_count(content)) > (rule.amount or 0):
-                return f"{count} {plural(count, 'emoji')}"
+                return f"{fmt_count(count)} {plural(count, 'emoji')}"
         case "masked_links":
             if found := masked_link(content):
                 return f"Shows {found[0]}, opens {found[1]}"

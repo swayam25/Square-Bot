@@ -195,7 +195,7 @@
                     {#each people as p (p.id)}
                         <FilterChip checked={person === p.id} onclick={() => (who = person === p.id ? null : p.id)} class="pl-1">
                             <Avatar src={p.avatarUrl} name={p.name} class="size-6 text-2xs" />{p.name}
-                            <span class="font-mono opacity-60">{p.count}</span>
+                            <span class="font-mono opacity-60">{formatCount(p.count)}</span>
                         </FilterChip>
                     {/each}
                 </ScrollRow>
@@ -313,7 +313,7 @@
         <div class="mt-4 flex items-center gap-2 px-2">
             <MaterialSymbolsAutoplayRounded class="size-5 text-accent" />
             <h3 class="font-display text-lg font-semibold">Autoplay</h3>
-            {#if queue.autoplay.length}<span class="font-mono text-sm text-gray-400">{queue.autoplay.length}</span>{/if}
+            {#if queue.autoplay.length}<span class="font-mono text-sm text-gray-400">{formatCount(queue.autoplay.length)}</span>{/if}
         </div>
         {#if queue.autoplay.length}
             <p class="px-2 text-xs text-gray-400">Similar songs that play once the queue runs out.</p>

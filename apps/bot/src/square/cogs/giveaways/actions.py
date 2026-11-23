@@ -13,6 +13,7 @@ from square.db.funcs import invites as invites_db
 from square.db.schema import GiveawayTable
 from square.modules import Module
 from square.utils import storage
+from square.utils.helpers import fmt_count
 
 log = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ def refusal(giveaway: GiveawayTable, member: discord.Member, invites: int = 0) -
     ):
         return f"You need to be in this server for at least {cards.days(giveaway.min_member_days)} to enter."
     if cards.needs_invites(giveaway, guild_id) and invites < giveaway.min_invites:
-        return f"You need at least {cards.invites(giveaway.min_invites)} to enter. You have `{invites}`."
+        return f"You need at least {cards.invites(giveaway.min_invites)} to enter. You have `{fmt_count(invites)}`."
     return None
 
 

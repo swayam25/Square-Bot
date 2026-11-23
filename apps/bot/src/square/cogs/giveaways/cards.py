@@ -26,15 +26,15 @@ def role_mention(guild_id: int, role_id: int) -> str:
 def mentions(user_ids: list[int]) -> str:
     shown = ", ".join(f"<@{user_id}>" for user_id in user_ids[:_WINNERS_SHOWN])
     more = len(user_ids) - _WINNERS_SHOWN
-    return f"{shown} and `{more}` more" if more > 0 else shown
+    return f"{shown} and `{fmt_count(more)}` more" if more > 0 else shown
 
 
 def days(count: int) -> str:
-    return f"`{count} {plural(count, 'day')}`"
+    return f"`{fmt_count(count)} {plural(count, 'day')}`"
 
 
 def invites(count: int) -> str:
-    return f"`{count}` {plural(count, 'invite')}"
+    return f"`{fmt_count(count)}` {plural(count, 'invite')}"
 
 
 def needs_invites(giveaway: GiveawayTable, guild_id: int) -> bool:
@@ -74,7 +74,7 @@ def _rules(giveaway: GiveawayTable, guild_id: int) -> list[str]:
     if needs_invites(giveaway, guild_id):
         lines.append(f"{emoji.invite} **Invites**: at least {invites(giveaway.min_invites)}")
     if bonus := giveaway.bonus_roles:
-        extra = ", ".join(f"{role_mention(guild_id, role_id)} `+{entries}`" for role_id, entries in bonus)
+        extra = ", ".join(f"{role_mention(guild_id, role_id)} `+{fmt_count(entries)}`" for role_id, entries in bonus)
         lines.append(f"{emoji.add} **Bonus Entries**: {extra}")
     return lines
 
@@ -99,7 +99,7 @@ def giveaway_card(giveaway: GiveawayTable, guild_id: int) -> DesignerView:
     else:
         lines = [
             f"{emoji.date} **Ends**: {discord.utils.format_dt(giveaway.ends_at, 'R')}",
-            f"{emoji.crown} **Winners**: `{giveaway.winner_count}`",
+            f"{emoji.crown} **Winners**: `{fmt_count(giveaway.winner_count)}`",
             f"{emoji.user} **Hosted By**: <@{giveaway.host_id}>",
             *_rules(giveaway, guild_id),
         ]

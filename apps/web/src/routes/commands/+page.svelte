@@ -12,6 +12,7 @@
     import Shape from "#lib/components/ui/Shape.svelte";
     import { focusRing } from "#lib/components/ui/styles.ts";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
+    import { formatCount } from "#lib/format.ts";
     import { permissionNames } from "#lib/permissions.ts";
     import { scrollToElement } from "#lib/scroll.ts";
     import { toast } from "#lib/toast.svelte.ts";
@@ -344,9 +345,9 @@
         <p class="max-w-2xl text-gray-400 md:text-lg">Everything Square does in Discord, with every option and the permission it needs.</p>
         {#if data.categories}
             <p class="flex flex-wrap items-center gap-2 font-mono text-xs text-gray-400">
-                <span aria-live="polite">{terms.length ? `${found} of ${total}` : total} commands</span>
+                <span aria-live="polite">{terms.length ? `${formatCount(found)} of ${formatCount(total)}` : formatCount(total)} commands</span>
                 <span aria-hidden="true">·</span>
-                <span>{categories.length} categories</span>
+                <span>{formatCount(categories.length)} categories</span>
                 <span aria-hidden="true">·</span>
                 <span class="flex items-center gap-2">{@render token("name", true)} required</span>
                 <span class="flex items-center gap-2">{@render token("name", false)} optional</span>
@@ -418,7 +419,7 @@
                         >
                             <category.look.icon class={current ? category.look.ink : undefined} />
                             <span class="min-w-0 flex-1 truncate">{category.name}</span>
-                            <span class="font-mono text-xs text-gray-400">{category.entries.length}</span>
+                            <span class="font-mono text-xs text-gray-400">{formatCount(category.entries.length)}</span>
                         </a>
                     {/each}
                 </nav>
@@ -439,7 +440,9 @@
                                 </span>
                                 <div class="flex min-w-0 flex-1 flex-col">
                                     <h2 id="{category.id}-title" class="flex items-baseline gap-2 font-display text-2xl font-semibold">
-                                        {category.name}<span class="font-mono text-sm font-normal text-gray-400">{category.entries.length}</span>
+                                        {category.name}<span class="font-mono text-sm font-normal text-gray-400"
+                                            >{formatCount(category.entries.length)}</span
+                                        >
                                     </h2>
                                     <p class="text-sm text-gray-400">{category.description}</p>
                                 </div>

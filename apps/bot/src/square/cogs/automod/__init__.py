@@ -11,7 +11,7 @@ from square.core.cog import Cog
 from square.core.view import error_view
 from square.db.funcs import automod as automod_db
 from square.db.schema import AutomodRuleTable
-from square.utils.helpers import plural
+from square.utils.helpers import fmt_count, plural
 
 _CHECKED = (discord.MessageType.default, discord.MessageType.reply)
 _TEXT_KINDS = (
@@ -226,7 +226,9 @@ class AutoMod(Cog):
         if seconds > (rule.seconds or 60) or await self._removed_by_someone(message):
             self._removed.pop(message.id, None)
             return
-        shown = pinged[:_SHOWN_PINGS] + ([f"{len(pinged) - _SHOWN_PINGS} more"] if len(pinged) > _SHOWN_PINGS else [])
+        shown = pinged[:_SHOWN_PINGS] + (
+            [f"{fmt_count(len(pinged) - _SHOWN_PINGS)} more"] if len(pinged) > _SHOWN_PINGS else []
+        )
         await self._act(message, rule, f"Deleted {max(1, round(seconds))}s after sending", shown)
 
     @commands.Cog.listener()

@@ -1,7 +1,7 @@
 <script lang="ts">
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
-    import { time } from "#lib/format.ts";
+    import { formatCount, time } from "#lib/format.ts";
     import * as music from "#lib/music/music.remote.ts";
     import { SvelteSet } from "svelte/reactivity";
     import MaterialSymbolsAddRounded from "~icons/material-symbols/add-rounded";
@@ -26,7 +26,7 @@
 
 <section aria-labelledby="played" class="flex flex-col gap-2">
     <h2 id="played" class="px-2 font-display text-lg font-semibold">
-        Played {#if played}<span class="font-mono text-sm font-normal text-gray-400">{played.length}</span>{/if}
+        Played {#if played}<span class="font-mono text-sm font-normal text-gray-400">{formatCount(played.length)}</span>{/if}
     </h2>
     {#if played?.length}
         <ol class="flex flex-col gap-1">

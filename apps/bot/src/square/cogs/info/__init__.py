@@ -18,7 +18,7 @@ start_time = time.time()
 
 def _mentions(mentions: list[str], limit: int = 40) -> str:
     more = len(mentions) - limit
-    return ", ".join(mentions[:limit]) + (f" and `{more}` more" if more > 0 else "")
+    return ", ".join(mentions[:limit]) + (f" and `{fmt_count(more)}` more" if more > 0 else "")
 
 
 class UserInfo:
@@ -56,7 +56,7 @@ class UserInfo:
             ]
             roles_str = _mentions([role.mention for role in other_roles])
             if roles_str:
-                info_lines.append(f"{emoji.role} **Other Roles (`{len(other_roles)}`)**: {roles_str}")
+                info_lines.append(f"{emoji.role} **Other Roles (`{fmt_count(len(other_roles))}`)**: {roles_str}")
 
             key_perms: list[str] = [
                 "administrator",
@@ -453,16 +453,16 @@ class Info(Cog, name="Info", description="Look up users, servers, emojis and the
                 f"{emoji.id} **ID**: `{ctx.guild.id}`\n"
                 f"{emoji.crown} **Owner**: <@{ctx.guild.owner_id}> (`{ctx.guild.owner.name if ctx.guild.owner else ctx.guild.owner_id}`)\n"
                 f"{emoji.verification} **Verification Level**: {ctx.guild.verification_level.name.title()}\n"
-                f"{emoji.channel} **Total Channels**: `{len(ctx.guild.text_channels) + len(ctx.guild.voice_channels)}`"
-                f" `({len(ctx.guild.categories)} {plural(len(ctx.guild.categories), 'Category', 'Categories')} | {len(ctx.guild.text_channels)} Text | {len(ctx.guild.voice_channels)} Voice | {len(ctx.guild.stage_channels)} Stage)`\n"
+                f"{emoji.channel} **Total Channels**: `{fmt_count(len(ctx.guild.text_channels) + len(ctx.guild.voice_channels))}`"
+                f" `({fmt_count(len(ctx.guild.categories))} {plural(len(ctx.guild.categories), 'Category', 'Categories')} | {fmt_count(len(ctx.guild.text_channels))} Text | {fmt_count(len(ctx.guild.voice_channels))} Voice | {fmt_count(len(ctx.guild.stage_channels))} Stage)`\n"
                 f"{emoji.members} **Total Members**: `{fmt_count(total)}`"
                 f" `({fmt_count(humans)} {plural(humans, 'Human')} | {fmt_count(bots)} {plural(bots, 'Bot')})`\n"
-                f"{emoji.role} **Roles**: `{len(ctx.guild.roles)}`"
-                f" `({user_roles} User | {bot_roles} Bot)`\n"
+                f"{emoji.role} **Roles**: `{fmt_count(len(ctx.guild.roles))}`"
+                f" `({fmt_count(user_roles)} User | {fmt_count(bot_roles)} Bot)`\n"
                 f"{emoji.boost} **Boosts**: `{fmt_count(ctx.guild.premium_subscription_count)}`"
                 f" `(Level {ctx.guild.premium_tier})`\n"
-                f"{emoji.img} **Emojis**: `{len(ctx.guild.emojis)}`"
-                f" `({animated_emojis} Animated | {static_emojis} Static)`\n"
+                f"{emoji.img} **Emojis**: `{fmt_count(len(ctx.guild.emojis))}`"
+                f" `({fmt_count(animated_emojis)} Animated | {fmt_count(static_emojis)} Static)`\n"
                 f"{emoji.date} **Server Created**: {discord.utils.format_dt(ctx.guild.created_at, 'R')}"
             ),
         ]

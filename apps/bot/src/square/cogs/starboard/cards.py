@@ -319,8 +319,8 @@ def post_card(
 
 
 def board_status(board: StarboardTable, tally: Tally, posted: bool) -> str:
-    state = "On the board" if posted else f"Needs `{board.threshold}`"
-    return f"<#{board.channel_id}>\n{tally.emoji} `{tally.points}` · {state}"
+    state = "On the board" if posted else f"Needs `{fmt_count(board.threshold)}`"
+    return f"<#{board.channel_id}>\n{tally.emoji} `{fmt_count(tally.points)}` · {state}"
 
 
 def dashboard_url(guild_id: int) -> str:

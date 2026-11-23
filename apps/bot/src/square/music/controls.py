@@ -14,7 +14,7 @@ from square.music.history import history_tracks
 from square.music.utils import music_log, split_log_text
 from square.utils import config
 from square.utils.emoji import Icon, emoji
-from square.utils.helpers import plural
+from square.utils.helpers import fmt_count, plural
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -236,7 +236,7 @@ async def dedupe_queue(guild: discord.Guild, member: discord.Member) -> str:
     if (removed := player.queue.dedupe()) == 0:
         raise MusicError("No duplicate tracks found in the queue.")
     queue_view.nudge_card(player, guild.id)
-    return await _done(player, member, emoji.remove, f"removed `{removed}` duplicate tracks", render=False)
+    return await _done(player, member, emoji.remove, f"removed `{fmt_count(removed)}` duplicate tracks", render=False)
 
 
 async def remove_requested_by(guild: discord.Guild, member: discord.Member, user_id: int) -> str:

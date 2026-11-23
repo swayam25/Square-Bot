@@ -7,7 +7,7 @@ from discord.commands import SlashCommandGroup, message_command, option
 from square import logs
 from square.core import Client
 from square.core.view import error_view, success_view
-from square.utils.helpers import fmt_user, plural
+from square.utils.helpers import fmt_count, fmt_user, plural
 
 PurgeableChannel = discord.TextChannel | discord.VoiceChannel | discord.StageChannel | discord.Thread
 # Discord's bulk delete refuses messages older than 14 days, a minute of margin covers clock drift
@@ -83,9 +83,13 @@ class Purge:
         await ctx.defer(ephemeral=True)
         logs.acting(ctx.guild.id, discord.AuditLogAction.message_bulk_delete, channel.id, ctx.author)
         deleted, skipped = await purge_messages(channel, reason=f"Purged by {fmt_user(ctx.author)}", **kwargs)
-        note = f"\n-# Skipped `{skipped}` older than 14 days, Discord can't bulk delete those." if skipped else ""
+        note = (
+            f"\n-# Skipped `{fmt_count(skipped)}` older than 14 days, Discord can't bulk delete those."
+            if skipped
+            else ""
+        )
         await ctx.respond(
-            view=success_view(f"Successfully purged `{deleted}` {plural(deleted, 'message')}{which}.{note}"),
+            view=success_view(f"Successfully purged `{fmt_count(deleted)}` {plural(deleted, 'message')}{which}.{note}"),
             ephemeral=True,
         )
 

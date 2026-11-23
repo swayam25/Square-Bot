@@ -10,7 +10,7 @@
     import DiscordWindow from "#lib/components/discord/DiscordWindow.svelte";
     import { setGuildDiscord } from "#lib/discord/guild.svelte.ts";
     import { EMOJI } from "#lib/discord/markdown.ts";
-    import { formatCount } from "#lib/format.ts";
+    import { formatCount, plural } from "#lib/format.ts";
     import type { Channel, Person } from "@square/api-client";
     import type { Component } from "svelte";
     import MaterialSymbolsAddBoxRounded from "~icons/material-symbols/add-box-rounded";
@@ -64,7 +64,7 @@
 
     const role = (id: string) => (id === guild ? "@everyone" : `<@&${id}>`);
     const roleList = (ids: string[]) => ids.map(role).join(", ");
-    const days = (count: number) => `\`${count} day${count === 1 ? "" : "s"}\``;
+    const days = (count: number) => `\`${plural(count, "day")}\``;
     const seconds = (ms: number) => Math.floor(ms / 1000);
 
     type Line = { icon: Component; text: string; color?: string };
@@ -80,7 +80,7 @@
         const ends = seconds(draft.endsAt ?? Date.now());
         const result: Line[] = [
             { icon: MaterialSymbolsCalendarTodayRounded, text: `**Ends**: <t:${ends}:R>` },
-            { icon: MaterialSymbolsCrownRounded, text: `**Winners**: \`${draft.winnerCount ?? 1}\``, color: "text-embed-orange" },
+            { icon: MaterialSymbolsCrownRounded, text: `**Winners**: \`${formatCount(draft.winnerCount ?? 1)}\``, color: "text-embed-orange" },
             { icon: MaterialSymbolsPersonRounded, text: `**Hosted By**: <@${host.id}>` },
         ];
         const required = draft.requiredRoleIds;
@@ -101,11 +101,11 @@
         if (invites && draft.minInvites)
             result.push({
                 icon: MaterialSymbolsLinkRounded,
-                text: `**Invites**: at least \`${draft.minInvites}\` invite${draft.minInvites === 1 ? "" : "s"}`,
+                text: `**Invites**: at least \`${formatCount(draft.minInvites)}\` invite${draft.minInvites === 1 ? "" : "s"}`,
             });
         const bonus = draft.bonusRoles.filter((entry) => entry.roleId && entry.entries);
         if (bonus.length) {
-            const text = bonus.map((entry) => `${role(entry.roleId!)} \`+${entry.entries}\``).join(", ");
+            const text = bonus.map((entry) => `${role(entry.roleId!)} \`+${formatCount(entry.entries!)}\``).join(", ");
             result.push({ icon: MaterialSymbolsAddBoxRounded, text: `**Bonus Entries**: ${text}` });
         }
         return result;

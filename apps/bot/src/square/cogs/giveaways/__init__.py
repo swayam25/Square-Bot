@@ -128,7 +128,7 @@ class Giveaways(
             return
         actions.recount(self.client, giveaway.id)
         entries = actions.weight(giveaway, member, 0)
-        extra = f" You have `{entries}` entries." if entries > 1 else ""
+        extra = f" You have `{fmt_count(entries)}` entries." if entries > 1 else ""
         await self._reply(interaction, success_view(f"You entered **{giveaway.prize}**.{extra} Good luck!"))
 
     async def _leave(self, interaction: discord.Interaction, member: discord.Member, raw_id: str) -> None:

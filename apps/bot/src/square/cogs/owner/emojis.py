@@ -20,7 +20,7 @@ from square.utils.emoji import (
     reload_emoji,
     update_emoji,
 )
-from square.utils.helpers import plural
+from square.utils.helpers import fmt_count, plural
 
 # Discord re-encodes emojis, so its copy can't show whether a file changed. The hash of the uploaded file can.
 UPLOADS = Path(".cache/emoji_uploads.json")
@@ -36,7 +36,7 @@ def _markdown(app_emoji: discord.AppEmoji) -> str:
 def _names(names: Iterable[str]) -> str:
     names = sorted(names)
     shown = ", ".join(f"`{name}`" for name in names[:_NAMES_SHOWN])
-    return shown + (f" +{len(names) - _NAMES_SHOWN} more" if len(names) > _NAMES_SHOWN else "")
+    return shown + (f" +{fmt_count(len(names) - _NAMES_SHOWN)} more" if len(names) > _NAMES_SHOWN else "")
 
 
 @dataclass(slots=True)
@@ -181,7 +181,7 @@ class EmojiPanel(DesignerView):
             items.append(ui.TextDisplay("### Issues\n" + "\n".join(problems)))
         items.append(
             ui.TextDisplay(
-                f"-# `{len(snap.files)}` {plural(len(snap.files), 'file')} · `{len(snap.remote)}` app {plural(len(snap.remote), 'emoji')}"
+                f"-# `{fmt_count(len(snap.files))}` {plural(len(snap.files), 'file')} · `{fmt_count(len(snap.remote))}` app {plural(len(snap.remote), 'emoji')}"
             )
         )
         self.add_item(ui.Container(*items))
@@ -236,7 +236,9 @@ class EmojiPanel(DesignerView):
             await asyncio.wait({syncing}, timeout=1.5)
         failed = await syncing if syncing else {}
 
-        summary = ", ".join(f"{count} {label}" for label, count in counts.items() if count) or "nothing to change"
+        summary = (
+            ", ".join(f"{fmt_count(count)} {label}" for label, count in counts.items() if count) or "nothing to change"
+        )
         self.report = f"{emoji.error if failed else emoji.success} Synced: {summary}."
         if failed:
             self.report += "\n" + "\n".join(

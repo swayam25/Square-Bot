@@ -22,7 +22,7 @@ def _files(names: tuple[str, ...]) -> str | None:
     if not names:
         return None
     shown = ", ".join(f"`{name}`" for name in names[:_SHOWN_FILES])
-    return shown + (f" and {len(names) - _SHOWN_FILES} more" if len(names) > _SHOWN_FILES else "")
+    return shown + (f" and {fmt_count(len(names) - _SHOWN_FILES)} more" if len(names) > _SHOWN_FILES else "")
 
 
 def _author(guild: discord.Guild, saved: memory.Saved) -> tuple[str, discord.Member | None]:

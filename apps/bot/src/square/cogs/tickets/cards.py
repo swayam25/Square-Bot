@@ -13,6 +13,7 @@ from square.db import cache
 from square.db.schema import TicketTable
 from square.utils import config
 from square.utils.emoji import Icon, emoji
+from square.utils.helpers import fmt_count
 
 
 def label(ticket: TicketTable) -> str:
@@ -125,11 +126,13 @@ def log_card(ticket: TicketTable, guild_id: int) -> DesignerView:
         open_for = format_timedelta(ticket.closed_at - ticket.created_at, locale="en")
         lines.append(f"{emoji.duration_red} **Open For**: {open_for}")
     if ticket.message_count is not None:
-        lines.append(f"{emoji.messages_red} **Messages**: `{ticket.message_count}`")
+        lines.append(f"{emoji.messages_red} **Messages**: `{fmt_count(ticket.message_count)}`")
     if participants := ticket.participant_ids:
         shown = ", ".join(f"<@{user_id}>" for user_id in participants[:_PARTICIPANTS_SHOWN])
         more = len(participants) - _PARTICIPANTS_SHOWN
-        lines.append(f"{emoji.members_red} **Participants**: {shown}{f' and `{more}` more' if more > 0 else ''}")
+        lines.append(
+            f"{emoji.members_red} **Participants**: {shown}{f' and `{fmt_count(more)}` more' if more > 0 else ''}"
+        )
     state = "Deleted" if ticket.status == "deleted" else "Closed"
     items: list[ui.ViewItem] = [
         ui.Container(

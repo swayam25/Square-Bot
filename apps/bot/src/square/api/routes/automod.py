@@ -26,7 +26,7 @@ from square.cogs.automod.rules import DEFAULTS, KINDS, LABELS
 from square.core import Client
 from square.db.funcs import automod as automod_db
 from square.db.schema import AutomodRuleTable
-from square.utils.helpers import plural
+from square.utils.helpers import fmt_count, plural
 from typing import Annotated, Any
 
 RuleId = Annotated[str, Parameter(pattern=r"^\d{17,20}$", description="A Discord AutoMod rule ID")]
@@ -407,7 +407,9 @@ async def test_automod(client: Client, guild: discord.Guild, data: AutomodTest) 
             elif rule.trigger == "mention_spam":
                 if (count := rules.mention_count(content)) > (rule.mention_limit or _MENTION_LIMIT):
                     hits.append(
-                        AutomodHit(source="discord", rule=rule.name, detail=f"{count} {plural(count, 'mention')}")
+                        AutomodHit(
+                            source="discord", rule=rule.name, detail=f"{fmt_count(count)} {plural(count, 'mention')}"
+                        )
                     )
             elif rule.trigger == "member_profile":
                 skipped.append(f"{rule.name} checks member profiles, not messages.")

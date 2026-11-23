@@ -142,7 +142,7 @@ class LeaderboardView(DesignerView):
         file = await imaging.render(
             leaderboard.build, data, filename="leaderboard.png", height=await self._page_height()
         )
-        alt = ", ".join(f"{inviter.rank}. {inviter.name}: {inviter.total}" for inviter in data.inviters)
+        alt = ", ".join(f"{inviter.rank}. {inviter.name}: {fmt_count(inviter.total)}" for inviter in data.inviters)
         self._image = discord.MediaGalleryItem("attachment://leaderboard.png", description=alt[:1024])
         self.clear_items()
         self.add_item(ui.Container(ui.MediaGallery(self._image)))
@@ -234,8 +234,8 @@ class Invites(
         )
         file = await imaging.render(invite_card.build, data, filename="invites.png")
         alt = (
-            f"{target.display_name}: {data.total} {plural(data.total, 'invite')} ({counts.regular} regular, {counts.bonus} bonus, "
-            f"{counts.left} left, {counts.fake} fake)"
+            f"{target.display_name}: {fmt_count(data.total)} {plural(data.total, 'invite')} ({fmt_count(counts.regular)} regular, {fmt_count(counts.bonus)} bonus, "
+            f"{fmt_count(counts.left)} left, {fmt_count(counts.fake)} fake)"
         )
         view = DesignerView(
             ui.Container(ui.MediaGallery(discord.MediaGalleryItem("attachment://invites.png", description=alt)))

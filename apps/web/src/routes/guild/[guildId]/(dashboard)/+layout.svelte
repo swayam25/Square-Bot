@@ -145,6 +145,7 @@
     const closeSwitcher = () => (switcherOpen = mobileSwitcherOpen = false);
     let scroller = $state<HTMLElement | null>(null);
     let detailsScroller = $state<HTMLElement | null>(null);
+    const serverLists = $state<Record<"sidebar" | "nav", HTMLElement | null>>({ sidebar: null, nav: null });
 
     afterNavigate(({ from, to }) => {
         switcherOpen = mobileSwitcherOpen = accountOpen = mobileAccountOpen = false;
@@ -174,22 +175,32 @@
     const stacked = "h-14 flex-col justify-center gap-0.5 rounded-3xl text-2xs";
 </script>
 
-{#snippet servers()}
-    <nav aria-label="Servers" class="-m-1 flex max-h-96 flex-col gap-1 overflow-y-auto overscroll-contain p-1">
-        {#each data.guilds as guild (guild.id)}
-            <a
-                href={switchHref(guild)}
-                aria-current={guild.id === data.guild.id ? "page" : undefined}
-                class="ripple flex h-12 shrink-0 items-center gap-4 rounded-control-lg px-2 text-sm font-medium hover:bg-white/10 aria-[current=page]:text-accent"
-                {@attach ripple}
-                onclick={closeSwitcher}
-            >
-                <GuildIcon src={guild.iconUrl} name={guild.name} class="size-8 rounded-xl text-gray-100" />
-                <span class="min-w-0 flex-1 truncate">{guild.name}</span>
-                {#if guild.id === data.guild.id}<MaterialSymbolsCheckRounded class="size-5 shrink-0" />{/if}
-            </a>
-        {/each}
-    </nav>
+{#snippet servers(spot: "sidebar" | "nav")}
+    <div class="relative">
+        <nav
+            bind:this={serverLists[spot]}
+            aria-label="Servers"
+            class={[
+                "flex flex-col gap-1",
+                mobile.current ? "-m-1 p-1" : "-my-1 -mr-2 -ml-1 max-h-96 overflow-y-auto overscroll-contain py-1 pr-2 pl-1",
+            ]}
+        >
+            {#each data.guilds as guild (guild.id)}
+                <a
+                    href={switchHref(guild)}
+                    aria-current={guild.id === data.guild.id ? "page" : undefined}
+                    class="ripple flex h-12 shrink-0 items-center gap-4 rounded-control-lg px-2 text-sm font-medium hover:bg-white/10 aria-[current=page]:text-accent"
+                    {@attach ripple}
+                    onclick={closeSwitcher}
+                >
+                    <GuildIcon src={guild.iconUrl} name={guild.name} class="size-8 rounded-xl text-gray-100" />
+                    <span class="min-w-0 flex-1 truncate">{guild.name}</span>
+                    {#if guild.id === data.guild.id}<MaterialSymbolsCheckRounded class="size-5 shrink-0" />{/if}
+                </a>
+            {/each}
+        </nav>
+        <OverlayScrollbar viewport={serverLists[spot]} />
+    </div>
     <hr class="my-2 border-white/10" />
     <a
         href="/guild"
@@ -285,7 +296,7 @@
                         <MaterialSymbolsUnfoldMoreRounded class="size-5 shrink-0 text-gray-400" />
                     {/if}
                 {/snippet}
-                {@render servers()}
+                {@render servers("sidebar")}
             </Popup>
         </div>
 
@@ -437,7 +448,7 @@
                         <GuildIcon src={data.guild.iconUrl} name={data.guild.name} class="size-6 rounded-lg" />
                         <span class="max-w-full truncate font-medium text-gray-400">Server</span>
                     {/snippet}
-                    {@render servers()}
+                    {@render servers("nav")}
                 </Popup>
                 {#each groups as group, index (index)}
                     <span class="h-8 w-px shrink-0 bg-white/10"></span>

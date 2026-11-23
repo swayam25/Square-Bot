@@ -9,7 +9,7 @@ from square.core import Client
 from square.core.view import DesignerView, error_view, not_in_server, success_view
 from square.utils import config
 from square.utils.emoji import emoji
-from square.utils.helpers import fmt_user, plural
+from square.utils.helpers import fmt_count, fmt_user, plural
 
 
 class Roles:
@@ -76,13 +76,13 @@ class Roles:
         if updated > 0:
             await msg.edit(
                 view=success_view(
-                    f"Successfully {past} {role.mention} {prep} `{updated}` {plural(updated, target[:-1], target)}."
+                    f"Successfully {past} {role.mention} {prep} `{fmt_count(updated)}` {plural(updated, target[:-1], target)}."
                 )
             )
         if errors:
             lines = [f"{emoji.bullet_red} {member}: {err}" for member, err in errors[:15]]
             if len(errors) > 15:
-                lines.append(f"{emoji.bullet_red} *...and `{len(errors) - 15}` more.*")
+                lines.append(f"{emoji.bullet_red} *...and `{fmt_count(len(errors) - 15)}` more.*")
             view = DesignerView(
                 ui.Container(
                     ui.TextDisplay(f"## Can't {verb.capitalize()} Role"),
