@@ -4,7 +4,7 @@ import os
 import sys
 import time
 from discord import ui
-from discord.commands import option, slash_command
+from discord.commands import slash_command
 from discord.ext import commands
 from importlib.metadata import version
 from square.cogs import extensions
@@ -15,7 +15,7 @@ from square.cogs.owner.guilds import Guilds
 from square.cogs.owner.stats import StatsView
 from square.core import Client
 from square.core.cog import Cog
-from square.core.view import DesignerView, success_view
+from square.core.view import DesignerView
 from square.utils import check, config, temp
 from square.utils.emoji import emoji
 from square.utils.helpers import fmt_count
@@ -81,10 +81,6 @@ class Owner(
     @check.is_owner()
     async def restart(self, ctx: discord.ApplicationContext):
         """Restarts the bot."""
-        await self.client.change_presence(
-            status=discord.Status.idle,
-            activity=discord.CustomActivity(name="Restarting..."),
-        )
         view = DesignerView(ui.Container(ui.TextDisplay(f"{emoji.loading} Restarting...")))
         msg = await ctx.respond(view=view)
         temp.set("restart_msg", {"channel_id": msg.channel.id, "id": (await msg.original_message()).id})
@@ -111,10 +107,6 @@ class Owner(
     @check.is_owner()
     async def shutdown(self, ctx: discord.ApplicationContext):
         """Shuts down the bot."""
-        await self.client.change_presence(
-            status=discord.Status.dnd,
-            activity=None,
-        )
         view = DesignerView(
             ui.Container(
                 ui.TextDisplay(f"{emoji.shutdown} Bot is now shutdown."),
@@ -124,20 +116,6 @@ class Owner(
         await ctx.respond(view=view)
         await self.client.wait_until_ready()
         await self.client.close()
-
-    @slash_command(guild_ids=config.owner_guild_ids, name="status")
-    @check.is_owner()
-    @option("status", description="The status to set.", choices=["Online", "Idle", "DND", "Invisible"])
-    @option("activity", description="The activity to show. Leave empty to keep the current one.", max_length=128)
-    async def set_status(self, ctx: discord.ApplicationContext, status: str, activity: str = None):
-        """Sets the bot status."""
-        await self.client.change_presence(
-            status=discord.Status[status.lower()],
-            activity=discord.CustomActivity(name=activity) if activity else self.client.activity,
-        )
-        await ctx.respond(
-            view=success_view(f"Status updated to `{status}`" + (f"\n```\n{activity}\n```" if activity else ""))
-        )
 
     @slash_command(guild_ids=config.owner_guild_ids, name="stats")
     @check.is_owner()

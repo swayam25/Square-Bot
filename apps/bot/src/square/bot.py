@@ -20,7 +20,6 @@ intents.presences = False
 
 client = Client(
     status=discord.Status.online,
-    activity=discord.CustomActivity(name=f"/help | Square v{version('square')}"),
     intents=intents,
     description=metadata("square")["Summary"],
     command_prefix="",
