@@ -44,7 +44,7 @@ def _transcript(saved: list[memory.Saved]) -> discord.File:
 class Logs(Cog):
     def __init__(self, client: Client):
         self.client = client
-        self._automod: dict[tuple, tuple[Entry, list[str]]] = {}
+        self._automod: dict[tuple, list[str]] = {}
         self._rule_names: dict[int, str] = {}
         log_sender.bind(client)
 
@@ -220,8 +220,9 @@ class Logs(Cog):
         key = (guild.id, payload.user_id, payload.rule_id, payload.content)
         action = payload.action.type.name.replace("_", " ").capitalize()
         if key in self._automod:
-            self._automod[key][1].append(action)
+            self._automod[key].append(action)
             return
+        self._automod[key] = actions = [action]
         user = payload.member or self.client.get_user(payload.user_id)
         rule = await self._rule_name(guild, payload.rule_id)
         entry = Entry("discord_rules", "Discord Rule Triggered", "red", channel_id=payload.channel_id)
@@ -229,9 +230,8 @@ class Logs(Cog):
         entry.add("id", "ID", f"`{payload.user_id}`").add("mod", "Rule", rule)
         entry.add("channel", "Channel", f"<#{payload.channel_id}>" if payload.channel_id else None)
         entry.add("keyboard", "Matched", f"`{payload.matched_keyword}`" if payload.matched_keyword else None)
-        self._automod[key] = (entry, [action])
         await asyncio.sleep(1)
-        entry, actions = self._automod.pop(key)
+        self._automod.pop(key)
         entry.add("bin", "Action", ", ".join(dict.fromkeys(actions)))
         entry.add("note", "Content", f"\n{clip(payload.content, 512)}" if payload.content else None)
         emit(guild, entry)
