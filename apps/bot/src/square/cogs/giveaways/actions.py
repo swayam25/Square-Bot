@@ -13,6 +13,7 @@ from square.db.funcs import invites as invites_db
 from square.db.schema import GiveawayTable
 from square.modules import Module
 from square.utils import storage
+from square.utils.guard import Guard
 from square.utils.helpers import fmt_count
 
 log = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ MENTIONS = discord.AllowedMentions(everyone=True, roles=True, users=False)
 _random = secrets.SystemRandom()
 _wake = asyncio.Event()
 _counting: dict[int, asyncio.Task] = {}
+rerolling = Guard()
 
 
 def now() -> datetime:

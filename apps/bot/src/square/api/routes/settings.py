@@ -45,9 +45,12 @@ from square.music import request, stay
 from square.music.core import can_play_in, get_player
 from square.music.player import release_guild, render_player, stop_player
 from square.music.utils import delete_quietly
+from square.utils.guard import Guard
 from square.utils.helpers import fmt_user
 from square.utils.invites import refresh as refresh_invites
 from typing import Any
+
+_creating = Guard()
 
 
 def _notes(guild: discord.Guild, *notes: str | None) -> Notes:
@@ -152,30 +155,37 @@ _SETUP_NAMES = {
 )
 async def set_up_logs(client: Client, guild: discord.Guild, member: discord.Member) -> LogSettings:
     """Creates a Logs category hidden from @everyone, with one channel per log, and sends each log to its channel."""
-    perms = guild.me.guild_permissions
-    if not (perms.manage_channels and perms.manage_webhooks):
-        raise SettingError("Square needs the `Manage Channels` and `Manage Webhooks` permissions to set up the logs.")
-    reason = f"Dashboard: {fmt_user(member)}"
-    overwrites = {
-        guild.default_role: discord.PermissionOverwrite(view_channel=False),
-        guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_webhooks=True),
-    }
-    made: list[discord.abc.GuildChannel] = []
-    try:
-        category = await guild.create_category("Logs", overwrites=overwrites, reason=reason)
-        made.append(category)
-        channels: dict[Log, discord.TextChannel | None] = {}
-        for log in Log:
-            channels[log] = await category.create_text_channel(_SETUP_NAMES[log], overwrites=overwrites, reason=reason)
-            made.append(channels[log])
-    except discord.HTTPException as exc:
-        for channel in reversed(made):
-            with suppress(discord.HTTPException):
-                await channel.delete(reason=reason)
-        raise SettingError(f"Square couldn't create the log channels: {exc.text or exc}") from exc
-    await _set_log_channels(guild, channels)
-    client.dispatch("log_channels_update", guild.id)
-    return _logs(guild)
+    with _creating.hold((guild.id, "logs")) as free:
+        if not free:
+            raise SettingError("Square is already setting up the logs.")
+        perms = guild.me.guild_permissions
+        if not (perms.manage_channels and perms.manage_webhooks):
+            raise SettingError(
+                "Square needs the `Manage Channels` and `Manage Webhooks` permissions to set up the logs."
+            )
+        reason = f"Dashboard: {fmt_user(member)}"
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(view_channel=False),
+            guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_webhooks=True),
+        }
+        made: list[discord.abc.GuildChannel] = []
+        try:
+            category = await guild.create_category("Logs", overwrites=overwrites, reason=reason)
+            made.append(category)
+            channels: dict[Log, discord.TextChannel | None] = {}
+            for log in Log:
+                channels[log] = await category.create_text_channel(
+                    _SETUP_NAMES[log], overwrites=overwrites, reason=reason
+                )
+                made.append(channels[log])
+        except discord.HTTPException as exc:
+            for channel in reversed(made):
+                with suppress(discord.HTTPException):
+                    await channel.delete(reason=reason)
+            raise SettingError(f"Square couldn't create the log channels: {exc.text or exc}") from exc
+        await _set_log_channels(guild, channels)
+        client.dispatch("log_channels_update", guild.id)
+        return _logs(guild)
 
 
 @delete("/logs", summary="Turn every log off and clear the log settings", status_code=200, opt={"module": Module.LOGS})
@@ -313,42 +323,45 @@ async def reset_music_settings(client: Client, guild: discord.Guild, member: dis
 @post("/music/request-channel", summary="Create the music request channel", responses=REFUSED)
 async def create_request_channel(client: Client, guild: discord.Guild) -> MusicSettings:
     """Creates a channel where anything typed is queued, with the player pinned."""
-    if channel := _channel(guild, request.channel_id(guild.id)):
-        raise SettingError(f"{channel.mention} is already the music request channel.")
-    if not guild.me.guild_permissions.manage_channels:
-        raise SettingError("Square needs the `Manage Channels` permission to create the channel.")
-    overwrites = {
-        guild.default_role: discord.PermissionOverwrite(
-            view_channel=True,
-            send_messages=True,
-            read_message_history=True,
-            add_reactions=False,
-            attach_files=False,
-            embed_links=False,
-            create_public_threads=False,
-            create_private_threads=False,
-            send_messages_in_threads=False,
-        ),
-        guild.me: discord.PermissionOverwrite(
-            view_channel=True,
-            send_messages=True,
-            manage_messages=True,
-            read_message_history=True,
-            embed_links=True,
-            attach_files=True,
-            add_reactions=True,
-        ),
-    }
-    try:
-        channel = await guild.create_text_channel(
-            "music-requests", overwrites=overwrites, topic="Send a track name or a link here to queue it."
-        )
-    except discord.HTTPException as exc:
-        raise SettingError(f"Square couldn't create the music channel: {exc.text or exc}") from exc
-    await request.bind(guild.id, channel.id)
-    request.prime(client, guild.id)
-    await render_player(client, guild.id, wait=True)
-    return _music(guild)
+    with _creating.hold((guild.id, "music")) as free:
+        if not free:
+            raise SettingError("Square is already creating the music request channel.")
+        if channel := _channel(guild, request.channel_id(guild.id)):
+            raise SettingError(f"{channel.mention} is already the music request channel.")
+        if not guild.me.guild_permissions.manage_channels:
+            raise SettingError("Square needs the `Manage Channels` permission to create the channel.")
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                read_message_history=True,
+                add_reactions=False,
+                attach_files=False,
+                embed_links=False,
+                create_public_threads=False,
+                create_private_threads=False,
+                send_messages_in_threads=False,
+            ),
+            guild.me: discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                manage_messages=True,
+                read_message_history=True,
+                embed_links=True,
+                attach_files=True,
+                add_reactions=True,
+            ),
+        }
+        try:
+            channel = await guild.create_text_channel(
+                "music-requests", overwrites=overwrites, topic="Send a track name or a link here to queue it."
+            )
+        except discord.HTTPException as exc:
+            raise SettingError(f"Square couldn't create the music channel: {exc.text or exc}") from exc
+        await request.bind(guild.id, channel.id)
+        request.prime(client, guild.id)
+        await render_player(client, guild.id, wait=True)
+        return _music(guild)
 
 
 @delete("/music/request-channel", summary="Delete the music request channel", status_code=200)
@@ -448,35 +461,38 @@ async def reset_ticket_settings(guild: discord.Guild, member: discord.Member) ->
 @post("/tickets/panel", summary="Create the ticket panel channel", responses=REFUSED, opt={"module": Module.TICKETS})
 async def create_ticket_panel(guild: discord.Guild) -> TicketSettings:
     """Creates a read-only channel holding the "Open a ticket" panel, kept up to date like the music card."""
-    if channel := _ticket_panel_channel(guild):
-        raise SettingError(f"{channel.mention} already holds the ticket panel.")
-    if not guild.me.guild_permissions.manage_channels:
-        raise SettingError("Square needs the `Manage Channels` permission to create the channel.")
-    overwrites = {
-        guild.default_role: discord.PermissionOverwrite(
-            view_channel=True,
-            read_message_history=True,
-            send_messages=False,
-            add_reactions=False,
-            create_public_threads=False,
-            create_private_threads=False,
-        ),
-        guild.me: discord.PermissionOverwrite(
-            view_channel=True,
-            read_message_history=True,
-            send_messages=True,
-            manage_messages=True,
-            embed_links=True,
-        ),
-    }
-    try:
-        channel = await guild.create_text_channel(
-            "tickets", overwrites=overwrites, topic="Press the button to open a private ticket with staff."
-        )
-        await post_panel(channel)
-    except discord.HTTPException as exc:
-        raise SettingError(f"Square couldn't create the ticket channel: {exc.text or exc}") from exc
-    return _tickets(guild)
+    with _creating.hold((guild.id, "tickets")) as free:
+        if not free:
+            raise SettingError("Square is already creating the ticket panel.")
+        if channel := _ticket_panel_channel(guild):
+            raise SettingError(f"{channel.mention} already holds the ticket panel.")
+        if not guild.me.guild_permissions.manage_channels:
+            raise SettingError("Square needs the `Manage Channels` permission to create the channel.")
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(
+                view_channel=True,
+                read_message_history=True,
+                send_messages=False,
+                add_reactions=False,
+                create_public_threads=False,
+                create_private_threads=False,
+            ),
+            guild.me: discord.PermissionOverwrite(
+                view_channel=True,
+                read_message_history=True,
+                send_messages=True,
+                manage_messages=True,
+                embed_links=True,
+            ),
+        }
+        try:
+            channel = await guild.create_text_channel(
+                "tickets", overwrites=overwrites, topic="Press the button to open a private ticket with staff."
+            )
+            await post_panel(channel)
+        except discord.HTTPException as exc:
+            raise SettingError(f"Square couldn't create the ticket channel: {exc.text or exc}") from exc
+        return _tickets(guild)
 
 
 @delete("/tickets/panel", summary="Remove the ticket panel", status_code=200, opt={"module": Module.TICKETS})

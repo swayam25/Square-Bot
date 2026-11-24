@@ -1,4 +1,6 @@
 import discord
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from itertools import islice
 from litestar import Router, delete, get, post
 from litestar.di import Provide
@@ -90,6 +92,16 @@ async def _ticket(guild: discord.Guild, number: int) -> TicketTable:
     return ticket
 
 
+@asynccontextmanager
+async def _held(guild: discord.Guild, number: int) -> AsyncGenerator[TicketTable]:
+    ticket = await _ticket(guild, number)
+    with actions.busy.hold(ticket.channel_id) as free:
+        if not free:
+            raise SettingError("Someone is already working on that ticket. Try again in a moment.")
+        await ticket.refresh_from_db()
+        yield ticket
+
+
 def _live_channel(guild: discord.Guild, ticket: TicketTable) -> discord.TextChannel:
     if (channel := _channel(guild, ticket)) is None:
         raise SettingError("That ticket's channel is gone.")
@@ -136,19 +148,19 @@ async def get_ticket(client: Client, guild: discord.Guild, number: Number) -> Ti
 
 @post("/{number:int}/close", summary="Close a ticket and save its transcript", status_code=200, responses=REFUSED)
 async def close_ticket(client: Client, guild: discord.Guild, member: discord.Member, number: Number) -> TicketDetail:
-    ticket = await _ticket(guild, number)
-    if ticket.status != "open":
-        raise SettingError("That ticket is already closed.")
-    await actions.close(client, guild, ticket, _live_channel(guild, ticket), member)
+    async with _held(guild, number) as ticket:
+        if ticket.status != "open":
+            raise SettingError("That ticket is already closed.")
+        await actions.close(client, guild, ticket, _live_channel(guild, ticket), member)
     return await _detail(client, guild, ticket)
 
 
 @post("/{number:int}/reopen", summary="Reopen a closed ticket", status_code=200, responses=REFUSED)
 async def reopen_ticket(client: Client, guild: discord.Guild, number: Number) -> TicketDetail:
-    ticket = await _ticket(guild, number)
-    if ticket.status != "closed":
-        raise SettingError("Only a closed ticket can be reopened.")
-    await actions.reopen(client, guild, ticket, _live_channel(guild, ticket))
+    async with _held(guild, number) as ticket:
+        if ticket.status != "closed":
+            raise SettingError("Only a closed ticket can be reopened.")
+        await actions.reopen(client, guild, ticket, _live_channel(guild, ticket))
     return await _detail(client, guild, ticket)
 
 
@@ -156,10 +168,10 @@ async def reopen_ticket(client: Client, guild: discord.Guild, number: Number) ->
     "/{number:int}", summary="Delete a ticket's channel, keeping its transcript", status_code=200, responses=REFUSED
 )
 async def delete_ticket(client: Client, guild: discord.Guild, member: discord.Member, number: Number) -> TicketDetail:
-    ticket = await _ticket(guild, number)
-    if ticket.status == "deleted":
-        raise SettingError("That ticket is already deleted.")
-    await actions.delete(client, guild, ticket, _live_channel(guild, ticket), member)
+    async with _held(guild, number) as ticket:
+        if ticket.status == "deleted":
+            raise SettingError("That ticket is already deleted.")
+        await actions.delete(client, guild, ticket, _live_channel(guild, ticket), member)
     return await _detail(client, guild, ticket)
 
 

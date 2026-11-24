@@ -18,9 +18,11 @@ from square.db.funcs import starboard as starboard_db
 from square.db.funcs.starboard import emoji_key
 from square.db.schema import StarboardTable
 from square.modules import Module
+from square.utils.guard import Guard
 from typing import Annotated, Any
 
 BoardId = Annotated[int, Parameter(ge=1, le=2**31 - 1)]
+_creating = Guard()
 _SOURCES = (
     discord.TextChannel,
     discord.ForumChannel,
@@ -107,15 +109,18 @@ async def list_starboards(guild: discord.Guild) -> list[Starboard]:
 
 @post("/", summary="Make a channel a starboard", status_code=200, responses=REFUSED)
 async def create_starboard(client: Client, guild: discord.Guild, data: StarboardCreate) -> Starboard:
-    if len(starboard_db.boards(guild.id)) >= MAX_STARBOARDS:
-        raise SettingError(f"A server can have up to {MAX_STARBOARDS} starboards.")
-    values = {
-        "channel_id": _board_channel(guild, data.channel_id),
-        "emojis": _emojis(client, data.emojis),
-        "threshold": data.threshold,
-    }
-    _check(values["emojis"], [], data.threshold, None)
-    board = await starboard_db.create_board(guild.id, **values)
+    with _creating.hold(guild.id) as free:
+        if not free:
+            raise SettingError("Square is already adding a starboard. Try again in a moment.")
+        if len(starboard_db.boards(guild.id)) >= MAX_STARBOARDS:
+            raise SettingError(f"A server can have up to {MAX_STARBOARDS} starboards.")
+        values = {
+            "channel_id": _board_channel(guild, data.channel_id),
+            "emojis": _emojis(client, data.emojis),
+            "threshold": data.threshold,
+        }
+        _check(values["emojis"], [], data.threshold, None)
+        board = await starboard_db.create_board(guild.id, **values)
     return _out(board, 0)
 
 

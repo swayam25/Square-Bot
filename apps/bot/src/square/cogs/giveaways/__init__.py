@@ -270,16 +270,21 @@ class Giveaways(
         """Picks new winners for an ended giveaway."""
         if not (found := await self._pick(ctx, giveaway)):
             return
-        if found.status != "ended":
-            await ctx.respond(view=error_view(f"**{found.prize}** hasn't ended yet."), ephemeral=True)
-            return
-        if winner and winner.id not in found.winner_ids:
-            await ctx.respond(
-                view=error_view(f"{winner.mention} (`{winner.name}`) didn't win **{found.prize}**."), ephemeral=True
-            )
-            return
-        await ctx.defer(ephemeral=True)
-        new = await actions.reroll(self.client, found, [winner.id] if winner else None)
+        with actions.rerolling.hold(found.id) as free:
+            if not free:
+                await ctx.respond(view=error_view(f"I'm already rerolling **{found.prize}**."), ephemeral=True)
+                return
+            await found.refresh_from_db()
+            if found.status != "ended":
+                await ctx.respond(view=error_view(f"**{found.prize}** hasn't ended yet."), ephemeral=True)
+                return
+            if winner and winner.id not in found.winner_ids:
+                await ctx.respond(
+                    view=error_view(f"{winner.mention} (`{winner.name}`) didn't win **{found.prize}**."), ephemeral=True
+                )
+                return
+            await ctx.defer(ephemeral=True)
+            new = await actions.reroll(self.client, found, [winner.id] if winner else None)
         if new:
             await ctx.respond(view=success_view(f"Rerolled **{found.prize}**: {cards.mentions(new)}."), ephemeral=True)
         else:

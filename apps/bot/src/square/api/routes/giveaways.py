@@ -489,17 +489,21 @@ async def end_giveaway(client: Client, guild: discord.Guild, giveaway_id: Giveaw
 @post("/{giveaway_id:int}/reroll", summary="Pick new winners for an ended giveaway", status_code=200, responses=REFUSED)
 async def reroll_giveaway(client: Client, guild: discord.Guild, giveaway_id: GiveawayId, data: Reroll) -> Giveaway:
     giveaway = await _found(guild, giveaway_id)
-    if giveaway.status != "ended":
-        raise SettingError("A giveaway can only be rerolled once it has ended.")
-    replace = None
-    if data.user_ids is not None:
-        replace = [int(user_id) for user_id in dict.fromkeys(data.user_ids)]
-        if not replace or not set(replace) <= set(giveaway.winner_ids):
-            raise SettingError("Pick winners of this giveaway to replace.")
-    elif not giveaway.winner_ids and not giveaway.entry_count:
-        raise SettingError("Nobody entered this giveaway.")
-    if not await actions.reroll(client, giveaway, replace):
-        raise SettingError("There's nobody left who can win. Everyone else was drawn before or can't enter.")
+    with actions.rerolling.hold(giveaway.id) as free:
+        if not free:
+            raise SettingError("This giveaway is already being rerolled. Try again in a moment.")
+        await giveaway.refresh_from_db()
+        if giveaway.status != "ended":
+            raise SettingError("A giveaway can only be rerolled once it has ended.")
+        replace = None
+        if data.user_ids is not None:
+            replace = [int(user_id) for user_id in dict.fromkeys(data.user_ids)]
+            if not replace or not set(replace) <= set(giveaway.winner_ids):
+                raise SettingError("Pick winners of this giveaway to replace.")
+        elif not giveaway.winner_ids and not giveaway.entry_count:
+            raise SettingError("Nobody entered this giveaway.")
+        if not await actions.reroll(client, giveaway, replace):
+            raise SettingError("There's nobody left who can win. Everyone else was drawn before or can't enter.")
     return await _out(client, guild, giveaway)
 
 

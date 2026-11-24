@@ -35,7 +35,6 @@ class Tickets(
     def __init__(self, client: Client):
         self.client = client
         self._adopting: asyncio.Task | None = None
-        self._busy: set[int] = set()
         self.expire.start()
 
     def cog_unload(self):
@@ -89,20 +88,17 @@ class Tickets(
             label (str): The button's status text.
             work (Callable): The action. It leaves the message in its final state.
         """
-        channel_id = interaction.channel_id or 0
-        if channel_id in self._busy:
-            await interaction.response.defer()
-            return
-        self._busy.add(channel_id)
-        try:
-            await show_loading(pressed(), interaction, label)
-            await work()
-        except Exception:
-            with suppress(discord.HTTPException):
-                await interaction.edit_original_response(view=pressed())
-            raise
-        finally:
-            self._busy.discard(channel_id)
+        with actions.busy.hold(interaction.channel_id or 0) as free:
+            if not free:
+                await interaction.response.defer()
+                return
+            try:
+                await show_loading(pressed(), interaction, label)
+                await work()
+            except Exception:
+                with suppress(discord.HTTPException):
+                    await interaction.edit_original_response(view=pressed())
+                raise
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -304,8 +300,14 @@ class Tickets(
         if not (found := await self._ticket_here(ctx, staff=False, still_open="This ticket is already closed.")):
             return
         guild, member, channel, ticket = found
-        await ctx.defer(ephemeral=True)
-        await actions.close(self.client, guild, ticket, channel, member)
+        with actions.busy.hold(channel.id) as free:
+            if not free:
+                await ctx.respond(
+                    view=error_view("Someone is already working on this ticket. Try again in a moment."), ephemeral=True
+                )
+                return
+            await ctx.defer(ephemeral=True)
+            await actions.close(self.client, guild, ticket, channel, member)
         await ctx.respond(view=success_view(f"Closed ticket {cards.label(ticket)}."), ephemeral=True)
 
     @ticket.command(name="reopen")
@@ -314,8 +316,14 @@ class Tickets(
         if not (found := await self._ticket_here(ctx, staff=True, closed="This ticket is already open.")):
             return
         guild, _, channel, ticket = found
-        await ctx.defer(ephemeral=True)
-        await actions.reopen(self.client, guild, ticket, channel)
+        with actions.busy.hold(channel.id) as free:
+            if not free:
+                await ctx.respond(
+                    view=error_view("Someone is already working on this ticket. Try again in a moment."), ephemeral=True
+                )
+                return
+            await ctx.defer(ephemeral=True)
+            await actions.reopen(self.client, guild, ticket, channel)
         await ctx.respond(view=success_view(f"Reopened ticket {cards.label(ticket)}."), ephemeral=True)
 
     @ticket.command(name="delete")

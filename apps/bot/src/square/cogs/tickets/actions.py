@@ -10,6 +10,7 @@ from square.core import Client
 from square.db import cache
 from square.db.funcs import tickets as db
 from square.db.schema import TicketTable
+from square.utils.guard import Guard
 from square.utils.helpers import fmt_user
 
 log = logging.getLogger(__name__)
@@ -28,6 +29,8 @@ STAFF = discord.PermissionOverwrite(**_MEMBER_PERMISSIONS, manage_messages=True)
 BOT = discord.PermissionOverwrite(**_MEMBER_PERMISSIONS, manage_messages=True, manage_channels=True)
 _renames: dict[int, asyncio.Task] = {}
 DELETED_KEEP = timedelta(days=7)
+busy = Guard()
+_opening = Guard()
 
 
 def is_support(member: discord.Member) -> bool:
@@ -76,6 +79,15 @@ async def _category(guild: discord.Guild) -> discord.CategoryChannel | None:
 
 
 async def open_ticket(
+    client: Client, guild: discord.Guild, opener: discord.Member, reason: str
+) -> discord.abc.GuildChannel | str:
+    with _opening.hold((guild.id, opener.id)) as free:
+        if not free:
+            return "I'm still opening your last ticket. Give it a moment."
+        return await _open_ticket(client, guild, opener, reason)
+
+
+async def _open_ticket(
     client: Client, guild: discord.Guild, opener: discord.Member, reason: str
 ) -> discord.abc.GuildChannel | str:
     settings = cache.get(guild.id)
