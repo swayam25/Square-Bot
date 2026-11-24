@@ -2398,6 +2398,55 @@ export type UpdateLogSettingsResponses = {
 
 export type UpdateLogSettingsResponse = UpdateLogSettingsResponses[keyof UpdateLogSettingsResponses];
 
+export type SetUpLogsData = {
+    body?: never;
+    headers: {
+        /**
+         * The signed-in Discord user the dashboard is acting for
+         */
+        "x-actor-id": string;
+    };
+    path: {
+        /**
+         * A Discord ID
+         */
+        guild_id: string;
+    };
+    query?: never;
+    url: "/guilds/{guild_id}/settings/logs/setup";
+};
+
+export type SetUpLogsErrors = {
+    /**
+     * Validation Exception
+     */
+    400: {
+        status_code: number;
+        detail: string;
+        extra?:
+            | null
+            | {
+                  [key: string]: unknown;
+              }
+            | Array<unknown>;
+    };
+    /**
+     * The bot refused the change
+     */
+    422: Problem;
+};
+
+export type SetUpLogsError = SetUpLogsErrors[keyof SetUpLogsErrors];
+
+export type SetUpLogsResponses = {
+    /**
+     * Document created, URL follows
+     */
+    201: LogSettings;
+};
+
+export type SetUpLogsResponse = SetUpLogsResponses[keyof SetUpLogsResponses];
+
 export type ResetInviteSettingsData = {
     body?: never;
     headers: {

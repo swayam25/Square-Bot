@@ -51,6 +51,12 @@ export const updateLogs = command(schema.zLogPatch.extend({ guild: guildId }), a
 
 export const resetLogs = command(guildId, (guild) => read(sdk.resetLogSettings(forGuild(guild))));
 
+export const setUpLogs = command(guildId, async (guild) => {
+    const next = await read(sdk.setUpLogs(forGuild(guild)));
+    await Promise.all([guildChannels(guild).refresh(), botPermissions(guild).refresh()]);
+    return next;
+});
+
 export const inviteSettings = query(guildId, (guild) => read(sdk.getInviteSettings(forGuild(guild))));
 
 export const updateInvites = command(schema.zInvitePatch.extend({ guild: guildId }), async ({ guild, ...body }) => {

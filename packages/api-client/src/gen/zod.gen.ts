@@ -1735,6 +1735,19 @@ export const zUpdateLogSettingsPath = z.object({
  */
 export const zUpdateLogSettingsResponse = zLogSettings;
 
+export const zSetUpLogsHeaders = z.object({
+    "x-actor-id": z.string().regex(/^\d{17,20}$/),
+});
+
+export const zSetUpLogsPath = z.object({
+    guild_id: z.string().regex(/^\d{17,20}$/),
+});
+
+/**
+ * Document created, URL follows
+ */
+export const zSetUpLogsResponse = zLogSettings;
+
 export const zResetInviteSettingsHeaders = z.object({
     "x-actor-id": z.string().regex(/^\d{17,20}$/),
 });

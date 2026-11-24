@@ -262,6 +262,9 @@ import type {
     SetShuffleData,
     SetShuffleErrors,
     SetShuffleResponses,
+    SetUpLogsData,
+    SetUpLogsErrors,
+    SetUpLogsResponses,
     SetVolumeData,
     SetVolumeErrors,
     SetVolumeResponses,
@@ -539,6 +542,18 @@ export const updateLogSettings = <ThrowOnError extends boolean = false>(
             "Content-Type": "application/json",
             ...options.headers,
         },
+    });
+
+/**
+ * Create a Logs category with a channel for each log
+ */
+export const setUpLogs = <ThrowOnError extends boolean = false>(
+    options: Options<SetUpLogsData, ThrowOnError>,
+): RequestResult<SetUpLogsResponses, SetUpLogsErrors, ThrowOnError> =>
+    (options.client ?? client).post<SetUpLogsResponses, SetUpLogsErrors, ThrowOnError>({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/guilds/{guild_id}/settings/logs/setup",
+        ...options,
     });
 
 /**

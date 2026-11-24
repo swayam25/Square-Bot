@@ -1,4 +1,5 @@
 <script lang="ts">
+    import ConfirmDialog from "#lib/components/dashboard/ConfirmDialog.svelte";
     import PageHeading from "#lib/components/dashboard/PageHeading.svelte";
     import PageSkeleton from "#lib/components/dashboard/PageSkeleton.svelte";
     import PermissionNotice from "#lib/components/dashboard/PermissionNotice.svelte";
@@ -7,6 +8,7 @@
     import SaveBar from "#lib/components/dashboard/SaveBar.svelte";
     import SettingGroup from "#lib/components/dashboard/SettingGroup.svelte";
     import SettingRow from "#lib/components/dashboard/SettingRow.svelte";
+    import Button from "#lib/components/ui/Button.svelte";
     import Select from "#lib/components/ui/Select.svelte";
     import Toggle from "#lib/components/ui/Toggle.svelte";
     import Tooltip from "#lib/components/ui/Tooltip.svelte";
@@ -15,6 +17,7 @@
     import * as settings from "#lib/settings/settings.remote.ts";
     import type { LogPatch } from "@square/api-client";
     import { untrack } from "svelte";
+    import MaterialSymbolsBoltRounded from "~icons/material-symbols/bolt-rounded";
     import MaterialSymbolsDescriptionRounded from "~icons/material-symbols/description-rounded";
     import MaterialSymbolsRobot2Rounded from "~icons/material-symbols/robot-2-rounded";
     import MaterialSymbolsShieldPersonRounded from "~icons/material-symbols/shield-person-rounded";
@@ -71,6 +74,10 @@
         return body;
     });
 
+    const dirty = $derived(Object.keys(patch).length > 0);
+    const setupReason = $derived(dirty ? "Save or discard your changes first" : perms.reason("ManageChannels", "ManageWebhooks"));
+    let setupOpen = $state(false);
+
     const logChannels = $derived(usableTextChannels(channels, perms, "webhook", Object.values(saved.channels)));
     const choices = $derived([off(), ...logChannels.options]);
     const ignoreChannels = $derived(channelOptions(channels, ["text", "news", "forum", "media", "voice", "stage_voice", "category"]));
@@ -103,6 +110,11 @@
     <div class="flex flex-col gap-6">
         <PageHeading title="Logs" description="Pick where Square posts what happens in {data.guild.name}.">
             {#snippet actions()}
+                <Tooltip content={setupReason}>
+                    <Button variant="secondary" disabled={Boolean(setupReason)} onclick={() => (setupOpen = true)}>
+                        <MaterialSymbolsBoltRounded />Quick setup
+                    </Button>
+                </Tooltip>
                 <ResetButton
                     title="Reset the logs?"
                     done="Logs reset"
@@ -206,5 +218,16 @@
         </SettingGroup>
     </div>
 
-    <SaveBar dirty={Object.keys(patch).length > 0} onsave={() => settings.updateLogs({ guild, ...patch })} ondiscard={() => (draft = fromSaved())} />
+    <ConfirmDialog
+        bind:open={setupOpen}
+        title="Set up the logs?"
+        description="Square creates a Logs category hidden from everyone but admins, with a channel for each log, and sends every log there. Logs already going somewhere else move to the new channels."
+        label="Set up"
+        busy="Setting up…"
+        done="Logs set up"
+        variant="primary"
+        run={() => settings.setUpLogs(guild)}
+        apply={(next) => savedQuery.set(next)}
+    />
+    <SaveBar {dirty} onsave={() => settings.updateLogs({ guild, ...patch })} ondiscard={() => (draft = fromSaved())} />
 </QueryGate>

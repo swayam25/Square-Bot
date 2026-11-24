@@ -1,6 +1,7 @@
 import discord
 from collections import defaultdict
 from collections.abc import Mapping
+from contextlib import suppress
 from litestar import Router, delete, get, patch, post
 from litestar.di import Provide
 from msgspec import UNSET
@@ -44,6 +45,7 @@ from square.music import request, stay
 from square.music.core import can_play_in, get_player
 from square.music.player import release_guild, render_player, stop_player
 from square.music.utils import delete_quietly
+from square.utils.helpers import fmt_user
 from square.utils.invites import refresh as refresh_invites
 from typing import Any
 
@@ -127,6 +129,51 @@ async def update_log_settings(client: Client, guild: discord.Guild, data: LogPat
     await _set_log_channels(guild, changes)
     if values:
         await logs_db.save_settings(guild.id, **values)
+    client.dispatch("log_channels_update", guild.id)
+    return _logs(guild)
+
+
+_SETUP_NAMES = {
+    Log.MODERATION: "mod-logs",
+    Log.AUTOMOD: "automod-logs",
+    Log.MEMBERS: "member-logs",
+    Log.MESSAGES: "message-logs",
+    Log.VOICE: "voice-logs",
+    Log.SERVER: "server-logs",
+    Log.TICKETS: "ticket-logs",
+}
+
+
+@post(
+    "/logs/setup",
+    summary="Create a Logs category with a channel for each log",
+    responses=REFUSED,
+    opt={"module": Module.LOGS},
+)
+async def set_up_logs(client: Client, guild: discord.Guild, member: discord.Member) -> LogSettings:
+    """Creates a Logs category hidden from @everyone, with one channel per log, and sends each log to its channel."""
+    perms = guild.me.guild_permissions
+    if not (perms.manage_channels and perms.manage_webhooks):
+        raise SettingError("Square needs the `Manage Channels` and `Manage Webhooks` permissions to set up the logs.")
+    reason = f"Dashboard: {fmt_user(member)}"
+    overwrites = {
+        guild.default_role: discord.PermissionOverwrite(view_channel=False),
+        guild.me: discord.PermissionOverwrite(view_channel=True, send_messages=True, manage_webhooks=True),
+    }
+    made: list[discord.abc.GuildChannel] = []
+    try:
+        category = await guild.create_category("Logs", overwrites=overwrites, reason=reason)
+        made.append(category)
+        channels: dict[Log, discord.TextChannel | None] = {}
+        for log in Log:
+            channels[log] = await category.create_text_channel(_SETUP_NAMES[log], overwrites=overwrites, reason=reason)
+            made.append(channels[log])
+    except discord.HTTPException as exc:
+        for channel in reversed(made):
+            with suppress(discord.HTTPException):
+                await channel.delete(reason=reason)
+        raise SettingError(f"Square couldn't create the log channels: {exc.text or exc}") from exc
+    await _set_log_channels(guild, channels)
     client.dispatch("log_channels_update", guild.id)
     return _logs(guild)
 
@@ -495,6 +542,7 @@ router = Router(
     route_handlers=[
         get_log_settings,
         update_log_settings,
+        set_up_logs,
         reset_log_settings,
         get_invite_settings,
         update_invite_settings,

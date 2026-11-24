@@ -13,6 +13,7 @@
         label,
         busy = "Working…",
         done,
+        variant = "danger",
         confirmText,
         run,
         apply,
@@ -23,6 +24,7 @@
         label: string;
         busy?: string;
         done: string;
+        variant?: "primary" | "danger";
         confirmText?: string;
         run: () => Promise<T>;
         apply?: (result: T) => void;
@@ -67,6 +69,6 @@
     </div>
     {#snippet footer()}
         <Button variant="ghost" disabled={working} onclick={() => (open = false)}>Cancel</Button>
-        <Button variant="danger" loading={working} disabled={!unlocked} onclick={confirm}>{working ? busy : label}</Button>
+        <Button {variant} loading={working} disabled={!unlocked} onclick={confirm}>{working ? busy : label}</Button>
     {/snippet}
 </Dialog>
