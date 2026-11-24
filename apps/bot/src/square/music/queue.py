@@ -202,7 +202,17 @@ class QueueContainer(ui.Container):
 
         current = player.current
         current_requester = source.guild.get_member(requester_id(player, current) or 0) if current else None
-        self.add_item(ui.TextDisplay(f"## {source.guild.name}'s Queue"))
+        self.add_item(
+            ui.Section(
+                ui.TextDisplay(f"## {source.guild.name}'s Queue"),
+                accessory=ui.Button(
+                    label="Open player",
+                    emoji=emoji.music_white,
+                    style=discord.ButtonStyle.link,
+                    url=f"{config.dashboard_url}/guild/{source.guild.id}/player",
+                ),
+            )
+        )
         self.add_item(
             ui.TextDisplay(
                 f"`0.` [**{link_text(current.title)}** by **{link_text(current.author)}**]({current.uri}) [`{fmt_time(current.length)}`]\n"

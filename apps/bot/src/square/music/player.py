@@ -521,6 +521,11 @@ class UpNextContainer(ui.Container):
             self.add_item(ui.TextDisplay(f"-# {emoji.autoplay} Nothing queued. Autoplay takes over when this ends."))
         else:
             self.add_item(ui.TextDisplay("-# Nothing up next. Queue something to keep the music going."))
+        self.add_item(
+            ui.TextDisplay(
+                f"-# Drag to reorder and follow live lyrics in the {emoji.music} [web player]({config.dashboard_url}/guild/{player.guild.id}/player)."
+            )
+        )
 
 
 class IdleContainer(ui.Container):
@@ -533,7 +538,17 @@ class IdleContainer(ui.Container):
             hint = "Send a track name or a link in this channel to queue it."
         else:
             hint = "Run `/play` to queue a track."
-        self.add_item(ui.TextDisplay(hint))
+        self.add_item(
+            ui.Section(
+                ui.TextDisplay(hint),
+                accessory=ui.Button(
+                    label="Open player",
+                    emoji=emoji.music_white,
+                    style=discord.ButtonStyle.link,
+                    url=f"{config.dashboard_url}/guild/{guild_id}/player",
+                ),
+            )
+        )
 
 
 class MusicView(DesignerView):
