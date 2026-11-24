@@ -42,9 +42,9 @@
         ]}></textarea>
     <OverlayScrollbar viewport={box} />
     <div class="flex px-4 pt-2 pb-3">
-        <span aria-hidden="true" class={["ml-auto font-mono text-xs", values.length > max ? "text-red-400" : "text-gray-400"]}
-            >{values.length}/{max}</span
-        >
+        <span aria-hidden="true" class={["ml-auto font-mono text-xs", values.length > max ? "text-red-400" : "text-gray-400"]}>
+            {values.length}/{max}
+        </span>
     </div>
     <FieldError id={errorId} {error} />
 </div>

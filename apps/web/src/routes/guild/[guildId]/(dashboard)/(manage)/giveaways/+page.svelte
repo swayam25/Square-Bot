@@ -99,9 +99,7 @@
         <span class="truncate font-medium">{entry.prize}</span>
         <span class="flex min-w-0 items-center gap-2 text-xs text-gray-400">
             <Mention kind="channel" name={channelName(entry.channelId)} />
-            <span class="truncate @3xl:hidden"
-                >{whenText(entry, now.current)} · {formatCount(entry.entries)} {entry.entries === 1 ? "entry" : "entries"}</span
-            >
+            <span class="truncate @3xl:hidden">{whenText(entry, now.current)} · {plural(entry.entries, "entry", "entries")}</span>
         </span>
     </span>
 {/snippet}

@@ -26,7 +26,7 @@
 {:else if id}
     {@render image("align-bottom")}
 {:else}
-    <span class={["@container-size inline-grid shrink-0 place-items-center", className]}
-        ><span class="font-emoji text-[100cqh] leading-none">{name}</span></span
-    >
+    <span class={["@container-size inline-grid shrink-0 place-items-center", className]}>
+        <span class="font-emoji text-[100cqh] leading-none">{name}</span>
+    </span>
 {/if}

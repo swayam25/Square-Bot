@@ -55,8 +55,9 @@
                                 rel={link.popup ? "noopener" : link.external ? "noopener noreferrer" : undefined}
                                 onclick={link.popup ? openInvitePopup : undefined}
                                 class="flex items-center gap-2 text-gray-400 duration-200 hover:text-gray-100"
-                                ><link.icon class="size-4" />{link.label}</a
                             >
+                                <link.icon class="size-4" />{link.label}
+                            </a>
                         {/each}
                     </div>
                 {/each}

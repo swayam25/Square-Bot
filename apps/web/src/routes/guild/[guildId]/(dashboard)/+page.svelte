@@ -161,13 +161,13 @@
                 {#if stats}
                     {#each tiles as tile (tile.label)}
                         <div class="flex min-w-0 flex-col gap-2 rounded-card bg-gray-900 p-4">
-                            <span class="flex items-center gap-2 text-sm text-gray-400"
-                                ><tile.icon class={["size-5 shrink-0", tile.tone]} />{tile.label}</span
-                            >
+                            <span class="flex items-center gap-2 text-sm text-gray-400">
+                                <tile.icon class={["size-5 shrink-0", tile.tone]} />{tile.label}
+                            </span>
                             <span class="truncate font-mono text-2xl font-semibold">{tile.value}</span>
-                            <span class="truncate text-xs text-gray-400"
-                                >{#if typeof tile.detail === "string"}{tile.detail}{:else}{@render tile.detail()}{/if}</span
-                            >
+                            <span class="truncate text-xs text-gray-400">
+                                {#if typeof tile.detail === "string"}{tile.detail}{:else}{@render tile.detail()}{/if}
+                            </span>
                         </div>
                     {/each}
                 {:else if statsQuery.error}
@@ -183,9 +183,9 @@
                 {:else}
                     {#each { length: 6 }, i (i)}
                         <div aria-hidden="true" class="flex flex-col gap-2 rounded-card bg-gray-900 p-4">
-                            <span class="flex h-5 items-center gap-2"
-                                ><span class="size-5 skeleton rounded-md"></span><span class="h-4 w-16 skeleton rounded-md"></span></span
-                            >
+                            <span class="flex h-5 items-center gap-2">
+                                <span class="size-5 skeleton rounded-md"></span><span class="h-4 w-16 skeleton rounded-md"></span>
+                            </span>
                             <span class="flex h-8 items-center"><span class="h-6 w-12 skeleton rounded-xl"></span></span>
                             <span class="flex h-4 items-center"><span class="h-2 w-24 skeleton rounded-sm"></span></span>
                         </div>
@@ -217,9 +217,9 @@
                             <p class="text-sm text-gray-400">{module.description}</p>
                         </div>
                         {#if modules[module.key]}
-                            <Button href="/guild/{data.guild.id}/{module.path}" class="self-start"
-                                >Settings<MaterialSymbolsArrowForwardRounded /></Button
-                            >
+                            <Button href="/guild/{data.guild.id}/{module.path}" class="self-start">
+                                Settings<MaterialSymbolsArrowForwardRounded />
+                            </Button>
                         {:else}
                             <Tooltip content="Turn {module.label} on and save first" class="self-start">
                                 <Button disabled>Settings<MaterialSymbolsArrowForwardRounded /></Button>
