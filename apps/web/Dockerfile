@@ -1,12 +1,11 @@
 FROM node:24-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54 AS base
 ENV PNPM_HOME=/pnpm \
     PATH=/pnpm:$PATH \
-    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     CI=true
 WORKDIR /app
 COPY package.json ./
 # Pins pnpm to the root `packageManager` in this layer, so later stages never download it again
-RUN corepack enable && corepack install
+RUN npm install -g --allow-scripts=pnpm "$(node -p 'require("./package.json").packageManager')"
 
 FROM base AS manifests
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
