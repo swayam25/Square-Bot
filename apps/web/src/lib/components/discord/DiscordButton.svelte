@@ -28,7 +28,7 @@
 {#if href && URL.canParse(href) && /^https?:$/.test(new URL(href).protocol)}
     <a {href} target="_blank" rel="noopener noreferrer" class={classes}>{@render children()}{@render external()}</a>
 {:else}
-    <span class={classes}
-        >{@render children()}{#if href !== undefined}{@render external()}{/if}</span
-    >
+    <span class={classes}>
+        {@render children()}{#if href !== undefined}{@render external()}{/if}
+    </span>
 {/if}

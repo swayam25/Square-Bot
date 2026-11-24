@@ -44,9 +44,9 @@
                 <DiscordMarkdown text={footer} />
             </DiscordContainer>
             <DiscordActionRow>
-                <DiscordButton href="https://discord.com/channels/{guild}"
-                    ><MaterialSymbolsForumRounded class="size-[1.375em]" />Jump to message</DiscordButton
-                >
+                <DiscordButton href="https://discord.com/channels/{guild}">
+                    <MaterialSymbolsForumRounded class="size-[1.375em]" />Jump to message
+                </DiscordButton>
             </DiscordActionRow>
         </DiscordAccessories>
     </DiscordMessage>

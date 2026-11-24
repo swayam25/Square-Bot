@@ -213,9 +213,9 @@
             {#if block.kind === "container"}
                 <div class="flex flex-wrap items-center gap-2">
                     <ColorField label="Accent color" bind:value={block.color} />
-                    <span class="ml-auto"
-                        ><OptionChip icon={MaterialSymbolsVisibilityOffRounded} bind:pressed={block.spoiler}>Spoiler</OptionChip></span
-                    >
+                    <span class="ml-auto">
+                        <OptionChip icon={MaterialSymbolsVisibilityOffRounded} bind:pressed={block.spoiler}>Spoiler</OptionChip>
+                    </span>
                 </div>
                 <ol class="flex flex-col gap-2" {@attach sortable({ onmove: reorder(block.children) })}>
                     {#each block.children as child, at (child.id)}

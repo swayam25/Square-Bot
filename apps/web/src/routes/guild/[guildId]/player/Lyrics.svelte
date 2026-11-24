@@ -200,14 +200,14 @@
         {#each glyphsOf(part) as g, k (k)}
             {@const wordMs = part.timed ? g.end - g.start : 0}
             {#if g.letters}
-                <span class="word"
-                    >{#each g.letters as c, j (j)}
+                <span class="word">
+                    {#each g.letters as c, j (j)}
                         {@const lit = progress(c.start, c.end)}
-                        <span class="glyph" style:--l={lit} style:--g={glow(lit, c.start, wordMs)} style:--y={lit > 0 ? lift(lit, c.end) : 0}
-                            >{c.text}</span
-                        >
-                    {/each}</span
-                >{g.tail}
+                        <span class="glyph" style:--l={lit} style:--g={glow(lit, c.start, wordMs)} style:--y={lit > 0 ? lift(lit, c.end) : 0}>
+                            {c.text}
+                        </span>
+                    {/each}
+                </span>{g.tail}
             {:else}
                 {@const lit = progress(g.start, g.end)}
                 <span class="sweep" style:--p={lit} style:--g={glow(lit, g.start, wordMs)}>{g.text}</span>{g.tail}
@@ -308,8 +308,10 @@
                                 "h-8 min-w-14 rounded-xl px-2 font-mono text-xs tabular-nums transition-colors enabled:hover:bg-gray-800",
                                 offset === 0 ? "text-gray-400" : "text-accent",
                             ]}
-                            onclick={() => (lyricsSync.offset = 0)}>{syncLabel(offset)}</button
+                            onclick={() => (lyricsSync.offset = 0)}
                         >
+                            {syncLabel(offset)}
+                        </button>
                     </Tooltip>
                     <Tooltip content="Show lyrics {SYNC_STEP_MS / 1000}s later">
                         <button

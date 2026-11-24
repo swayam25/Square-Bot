@@ -351,9 +351,9 @@
     </div>
     {#snippet footer()}
         <Button variant="ghost" disabled={creating} onclick={() => (adding = false)}>Cancel</Button>
-        <Button variant="primary" loading={creating} disabled={!newTrigger || !newName.trim()} onclick={create}
-            >{creating ? "Adding…" : "Add rule"}</Button
-        >
+        <Button variant="primary" loading={creating} disabled={!newTrigger || !newName.trim()} onclick={create}>
+            {creating ? "Adding…" : "Add rule"}
+        </Button>
     {/snippet}
 </Dialog>
 

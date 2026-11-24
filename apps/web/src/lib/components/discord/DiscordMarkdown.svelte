@@ -33,18 +33,19 @@
 
 {#snippet nodes(children: Inline[])}
     {#each children as node, index (index)}
-        {#if node.type === "text"}{node.text}{:else if node.type === "break"}<br />{:else if node.type === "bold"}<strong class="font-bold"
-                >{@render nodes(node.children)}</strong
-            >{:else if node.type === "italic"}<em>{@render nodes(node.children)}</em>{:else if node.type === "underline"}<u
-                >{@render nodes(node.children)}</u
-            >{:else if node.type === "strike"}<s>{@render nodes(node.children)}</s>{:else if node.type === "spoiler"}<DiscordSpoiler
-                >{@render nodes(node.children)}</DiscordSpoiler
-            >{:else if node.type === "code"}<code
+        {#if node.type === "text"}{node.text}{:else if node.type === "break"}<br />{:else if node.type === "bold"}<strong class="font-bold">
+                {@render nodes(node.children)}
+            </strong>{:else if node.type === "italic"}<em>{@render nodes(node.children)}</em>{:else if node.type === "underline"}<u>
+                {@render nodes(node.children)}
+            </u>{:else if node.type === "strike"}<s>{@render nodes(node.children)}</s>{:else if node.type === "spoiler"}<DiscordSpoiler>
+                {@render nodes(node.children)}
+            </DiscordSpoiler>{:else if node.type === "code"}<code
                 class="rounded-sm border border-dc-code-border bg-dc-code p-[0.2em] font-mono text-[85%] leading-4.5 whitespace-pre-wrap [font-variant-ligatures:none]"
-                >{node.text}</code
-            >{:else if node.type === "link"}<a href={node.href} target="_blank" rel="noopener noreferrer" class="text-dc-link hover:underline"
-                >{@render nodes(node.children)}</a
-            >{:else if node.type === "emoji"}<DiscordEmoji
+            >
+                {node.text}
+            </code>{:else if node.type === "link"}<a href={node.href} target="_blank" rel="noopener noreferrer" class="text-dc-link hover:underline">
+                {@render nodes(node.children)}
+            </a>{:else if node.type === "emoji"}<DiscordEmoji
                 name={node.name}
                 id={node.id}
                 animated={node.animated}
@@ -64,9 +65,9 @@
             />{:else if node.type === "command"}<Mention kind="command" name={node.name} />{:else if node.type === "time"}<DiscordTooltip
                 lazy
                 content={fullTime(node.at)}
-                ><time datetime={new Date(node.at).toISOString()} class="rounded-[3px] bg-white/6 px-0.5">{timestamp(node.at, node.style)}</time
-                ></DiscordTooltip
-            >{/if}
+            >
+                <time datetime={new Date(node.at).toISOString()} class="rounded-[3px] bg-white/6 px-0.5">{timestamp(node.at, node.style)}</time>
+            </DiscordTooltip>{/if}
     {/each}
 {/snippet}
 

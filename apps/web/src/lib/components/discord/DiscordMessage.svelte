@@ -118,9 +118,9 @@
                     {#if reply.bot}
                         <span class="shrink-0 rounded bg-dc-blurple px-1 text-2xs leading-3.75 font-semibold text-white">APP</span>
                     {/if}
-                    <span style:color={reply.color || undefined} class="shrink-0 font-medium text-dc-strong opacity-80"
-                        >{reply.ping ? "@" : ""}{reply.name}</span
-                    >
+                    <span style:color={reply.color || undefined} class="shrink-0 font-medium text-dc-strong opacity-80">
+                        {reply.ping ? "@" : ""}{reply.name}
+                    </span>
                     <button
                         type="button"
                         class="flex min-w-0 cursor-pointer items-center gap-1 text-dc-reply hover:text-dc-strong"
@@ -148,8 +148,9 @@
             {#if bot}
                 <span
                     class="relative -top-px ml-1 inline-block rounded bg-dc-blurple px-1 align-middle text-2xs leading-3.75 font-semibold text-white"
-                    >APP</span
                 >
+                    APP
+                </span>
             {/if}
             <DiscordTooltip lazy content={shownTitle} class="ml-1"><time class="text-xs font-medium text-dc-muted">{shownTime}</time></DiscordTooltip>
         </div>

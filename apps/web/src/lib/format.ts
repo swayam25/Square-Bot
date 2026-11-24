@@ -5,7 +5,7 @@ export function formatCount(value: number) {
     return Math.abs(value) < 10_000 ? full.format(value) : compact.format(value);
 }
 
-export const plural = (count: number, word: string) => `${formatCount(count)} ${word}${count === 1 ? "" : "s"}`;
+export const plural = (count: number, word: string, words = `${word}s`) => `${formatCount(count)} ${count === 1 ? word : words}`;
 
 export function time(ms: number) {
     const seconds = Math.max(0, Math.floor(ms / 1000));
