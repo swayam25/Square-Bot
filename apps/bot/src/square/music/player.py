@@ -4,6 +4,7 @@ import discord
 import sonolink
 from collections.abc import Awaitable
 from discord import ui
+from itertools import islice
 from pathlib import Path
 from square.core import Client
 from square.core.view import DesignerView
@@ -22,7 +23,7 @@ from square.music.queue import QueueListView
 from square.music.utils import delete_quietly, get_source, music_interaction_check, music_log, reply, split_log_text
 from square.utils import config
 from square.utils.emoji import Icon, emoji
-from square.utils.helpers import fmt_count
+from square.utils.helpers import fmt_count, plural
 
 _render_locks: dict[int, asyncio.Lock] = {}
 # Renders asked for while one was in flight, and whether any of them wanted a new message. The one in flight draws
@@ -494,6 +495,23 @@ class UpNextContainer(ui.Container):
             self.add_item(
                 ui.TextDisplay(f"-# {f'+{fmt_count(remaining)} more • ' if remaining > 0 else ''}`{runtime}` total")
             )
+        elif player.autoplay_on and (picks := queue.autoplay_tracks):
+            self.add_item(
+                ui.TextDisplay(
+                    "\n".join(
+                        f"`{index + 1}.` [**{link_text(track.title)}** by **{link_text(track.author)}**]({track.uri}) "
+                        f"[`{fmt_time(track.length)}`]"
+                        for index, track in enumerate(islice(picks, _UP_NEXT_LIMIT))
+                    )
+                )
+            )
+            remaining = len(picks) - _UP_NEXT_LIMIT
+            footer = (
+                f"{fmt_count(remaining)} more {plural(remaining, 'autoplay pick')}"
+                if remaining > 0
+                else "Autoplay picks"
+            )
+            self.add_item(ui.TextDisplay(f"-# {emoji.autoplay} {footer}"))
         elif player.autoplay_on:
             self.add_item(ui.TextDisplay(f"-# {emoji.autoplay} Nothing queued. Autoplay takes over when this ends."))
         else:

@@ -177,6 +177,8 @@ class Listeners:
             render_player(self.client, guild_id, force_new=relocate), set_track_status(player), return_exceptions=True
         )
         start_progress(self.client, guild_id)
+        if player.autoplay_on and await player._autoplay_handler.stage():
+            await render_player(self.client, guild_id)
 
     @commands.Cog.listener()
     async def on_sonolink_track_end(self, player: SquarePlayer, event: sonolink.TrackEndEvent):

@@ -18,17 +18,18 @@ class SquareAutoPlay(AutoPlayHandler):
     _twin: str | None = None
     _staging = False
 
-    async def stage(self) -> None:
-        """Queues picks without playing one, so the Autoplay list fills the moment autoplay turns on."""
+    async def stage(self) -> bool:
+        """Queues picks without playing one, so the Autoplay list is never empty while autoplay is on. Returns whether it did."""
         queue = self._player.queue
         if self._player.current is None or len(queue) or queue.autoplay_tracks or self._lock.locked():
-            return
+            return False
         async with self._lock:
             self._staging = True
             try:
                 await self._fill_auto_queue()
             finally:
                 self._staging = False
+        return bool(queue.autoplay_tracks)
 
     async def _fill_auto_queue(self) -> Playable | None:
         history = self._player.queue.history
@@ -97,8 +98,11 @@ class SquarePlayer(sonolink.Player):
         if self.autoplay_on:
             await self._autoplay_handler.stage()
         else:
-            # Sonolink plays staged picks even with autoplay off, and has no public call to drop them
-            self.queue._autoplay_items.clear()
+            # Sonolink plays staged picks even with autoplay off, and has no public call to drop them.
+            # Its seeds still count them as recommended, so they go too or turning autoplay back on finds nothing new.
+            dropped = self.queue._autoplay_items
+            self._autoplay_handler._seeds.difference_update(track.identifier for track in dropped)
+            dropped.clear()
         return self.autoplay_on
 
     async def settle(self, started: Playable, began: float) -> bool:
