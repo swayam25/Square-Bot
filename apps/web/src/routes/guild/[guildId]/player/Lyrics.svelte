@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { holdStep, wheelStep } from "#lib/attachments/stepper.ts";
     import Button from "#lib/components/ui/Button.svelte";
     import EmptyState from "#lib/components/ui/EmptyState.svelte";
     import OverlayScrollbar from "#lib/components/ui/OverlayScrollbar.svelte";
@@ -287,14 +288,19 @@
         {#if !zen}
             <div class="flex items-center justify-between gap-4 px-4 pt-2 pb-4 text-xs text-gray-400 md:px-6">
                 <p>Lyrics from {lyrics.source}</p>
-                <div role="group" aria-label="Lyrics sync" class="flex items-center gap-1">
+                <div
+                    role="group"
+                    aria-label="Lyrics sync"
+                    class="flex items-center gap-1"
+                    {@attach wheelStep((direction) => nudgeSync(direction * SYNC_STEP_MS))}
+                >
                     <span class="mr-1 font-medium">Sync</span>
                     <Tooltip content="Show lyrics {SYNC_STEP_MS / 1000}s earlier">
                         <button
                             type="button"
                             disabled={offset <= -SYNC_LIMIT_MS}
                             class="flex size-8 items-center justify-center rounded-xl text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-50 disabled:opacity-40"
-                            onclick={() => nudgeSync(-SYNC_STEP_MS)}
+                            {@attach holdStep(() => nudgeSync(-SYNC_STEP_MS))}
                         >
                             <MaterialSymbolsRemoveRounded class="size-4" />
                         </button>
@@ -318,7 +324,7 @@
                             type="button"
                             disabled={offset >= SYNC_LIMIT_MS}
                             class="flex size-8 items-center justify-center rounded-xl text-gray-300 transition-colors hover:bg-gray-800 hover:text-gray-50 disabled:opacity-40"
-                            onclick={() => nudgeSync(SYNC_STEP_MS)}
+                            {@attach holdStep(() => nudgeSync(SYNC_STEP_MS))}
                         >
                             <MaterialSymbolsAddRounded class="size-4" />
                         </button>
