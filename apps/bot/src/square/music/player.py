@@ -160,6 +160,11 @@ async def _render_card(client: Client, guild_id: int, force_new: bool) -> None:
         await request.bind_message(guild_id, new_msg.id)
 
 
+async def stage_autoplay(player: SquarePlayer) -> None:
+    if player.autoplay_on and await player._autoplay_handler.stage():
+        await render_player(player.client, player.guild.id)
+
+
 def schedule_render(
     client: Client,
     guild_id: int,

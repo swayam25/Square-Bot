@@ -31,6 +31,17 @@ class SquareAutoPlay(AutoPlayHandler):
                 self._staging = False
         return bool(queue.autoplay_tracks)
 
+    async def auto_play(self) -> Playable | None:
+        # Sonolink gives up while the lock is held, which would stop the player if a track ends mid-staging
+        if self._staging:
+            async with self._lock:
+                pass
+            if self._player.queue.autoplay_tracks:
+                track = self._player.queue.get()
+                await self._player.play(track)
+                return track
+        return await super().auto_play()
+
     async def _fill_auto_queue(self) -> Playable | None:
         history = self._player.queue.history
         seed = self._player.current or (history[-1] if history else None)

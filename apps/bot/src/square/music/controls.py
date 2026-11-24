@@ -90,6 +90,14 @@ def _painted(painting: asyncio.Future) -> None:
         log.error("Card repaint failed after its control had answered", exc_info=error)
 
 
+def _stage_soon(player: SquarePlayer) -> None:
+    if not player.autoplay_on or len(player.queue):
+        return
+    staging = asyncio.create_task(playback.stage_autoplay(player))
+    _painting.add(staging)
+    staging.add_done_callback(_painted)
+
+
 async def set_paused(guild: discord.Guild, member: discord.Member, paused: bool | None = None) -> str:
     player = require_player(guild, member)
     await require_dj(member, player)
@@ -197,6 +205,7 @@ async def remove(guild: discord.Guild, member: discord.Member, index: int, ident
     await require_dj(member, player, track=track)
     player.queue.remove_at(index)
     queue_view.nudge_card(player, guild.id)
+    _stage_soon(player)
     return await _done(player, member, emoji.remove, f"removed **{track.title}**", color=config.color.red, render=False)
 
 
@@ -215,6 +224,7 @@ async def clear_queue(guild: discord.Guild, member: discord.Member) -> str:
     player = require_player(guild, member, need_queue=True)
     await require_dj(member, player)
     player.queue.clear()
+    _stage_soon(player)
     return await _done(player, member, emoji.success, "cleared the queue", color=config.color.green)
 
 
@@ -250,6 +260,7 @@ async def remove_requested_by(guild: discord.Guild, member: discord.Member, user
     if removed == 0:
         raise MusicError(f"No tracks found requested by <@{user_id}> in the queue.")
     queue_view.nudge_card(player, guild.id)
+    _stage_soon(player)
     return await _done(
         player,
         member,
