@@ -10,6 +10,10 @@ updates:
     cooldown:
       default-days: 3
       semver-major-days: 7
+    ignore:
+      # TypeScript 7 drops the JS API that svelte-check, typescript-eslint and SvelteKit still need
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
     groups:
       npm:
         update-types: [minor, patch]
