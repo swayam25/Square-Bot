@@ -24,6 +24,8 @@
     import SkipVote from "./SkipVote.svelte";
     import ZenView, { enterFullscreen } from "./ZenView.svelte";
 
+    const LYRICS_WAIT_MS = 1_500;
+
     let { data }: PageProps = $props();
 
     const guild = $derived(data.guild.id);
@@ -93,9 +95,18 @@
 
     // Picked once per server, then only by the user. Plain state because a writable $derived re-ran on track changes
     let picked = $state<{ guild: string; tab: Tab } | null>(null);
+    let waitingForLyrics = $state(true);
+    $effect(() => {
+        void guild;
+        waitingForLyrics = true;
+        const timer = setTimeout(() => (waitingForLyrics = false), LYRICS_WAIT_MS);
+        return () => clearTimeout(timer);
+    });
     $effect(() => {
         if (picked?.guild === guild || !player || !queue) return;
-        picked = { guild, tab: !player.track ? "search" : queue.total ? "queue" : "lyrics" };
+        if (player.track && lyricsQuery && !lyricsQuery.ready && !lyricsQuery.error && waitingForLyrics) return;
+        const hasLyrics = lyricsQuery?.ready && !lyricsOff;
+        picked = { guild, tab: !player.track ? "search" : hasLyrics ? "lyrics" : "queue" };
     });
     const tab = $derived(picked?.guild === guild ? picked.tab : "search");
     const setTab = (next: Tab) => (picked = { guild, tab: next });
