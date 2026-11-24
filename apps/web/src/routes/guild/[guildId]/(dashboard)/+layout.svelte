@@ -182,8 +182,9 @@
             aria-label="Servers"
             class={[
                 "flex flex-col gap-1",
-                mobile.current ? "-m-1 p-1" : "-my-1 -mr-2 -ml-1 max-h-96 overflow-y-auto overscroll-contain py-1 pr-2 pl-1",
+                mobile.current ? "-m-1 p-1" : "edge-fade-y -my-1 -mr-2 -ml-1 max-h-96 overflow-y-auto overscroll-contain py-1 pr-2 pl-1",
             ]}
+            {@attach edgeFade("y")}
         >
             {#each data.guilds as guild (guild.id)}
                 <a
