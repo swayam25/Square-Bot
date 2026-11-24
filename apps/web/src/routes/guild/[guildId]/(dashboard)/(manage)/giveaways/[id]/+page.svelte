@@ -152,9 +152,9 @@
             {#snippet actions()}
                 {#if saved.messageUrl}
                     <Tooltip content="Open in Discord">
-                        <Button variant="ghost" icon href={saved.messageUrl} target="_blank" rel="noopener"
-                            ><MaterialSymbolsOpenInNewRounded /></Button
-                        >
+                        <Button variant="ghost" icon href={saved.messageUrl} target="_blank" rel="noopener">
+                            <MaterialSymbolsOpenInNewRounded />
+                        </Button>
                     </Tooltip>
                 {/if}
                 <Tooltip content="Delete giveaway">
@@ -182,9 +182,9 @@
             {/if}
             <Mention kind="channel" name={channelName} />
             <span class="flex items-center gap-2">
-                · Hosted by <Avatar src={saved.host.avatarUrl} name={saved.host.name} class="size-5" /><span class="text-gray-100"
-                    >{saved.host.name}</span
-                >
+                · Hosted by <Avatar src={saved.host.avatarUrl} name={saved.host.name} class="size-5" /><span class="text-gray-100">
+                    {saved.host.name}
+                </span>
             </span>
         </div>
 

@@ -98,13 +98,13 @@
 
 <svelte:head>
     <!-- Without JavaScript this bar never draws, so keep the native one -->
-    <noscript
-        ><style>
+    <noscript>
+        <style>
             html {
                 scrollbar-width: auto;
             }
-        </style></noscript
-    >
+        </style>
+    </noscript>
 </svelte:head>
 
 {#if enabled && scrollable}

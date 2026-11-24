@@ -130,12 +130,12 @@
             </div>
             <h1 class="max-w-xl font-display text-3xl font-semibold tracking-tight text-balance md:text-4xl">The one Discord bot you need</h1>
             <div class="grid w-full max-w-md grid-cols-1 gap-2 sm:grid-cols-2">
-                <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}
-                    ><ThesvgDiscord />Add to server</Button
-                >
-                <Button size="lg" href={data.installUrl} target="_blank" rel="noopener" onclick={openInvitePopup}
-                    ><MaterialSymbolsAccountCircleRounded />Add to account</Button
-                >
+                <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}>
+                    <ThesvgDiscord />Add to server
+                </Button>
+                <Button size="lg" href={data.installUrl} target="_blank" rel="noopener" onclick={openInvitePopup}>
+                    <MaterialSymbolsAccountCircleRounded />Add to account
+                </Button>
                 {#if data.user}
                     <Button size="lg" href="/guild" class="sm:col-span-2"><MaterialSymbolsDashboardRounded />Open dashboard</Button>
                 {:else}
@@ -425,15 +425,15 @@
         <h2 id="join" class="max-w-2xl font-display text-4xl font-semibold tracking-tight text-balance md:text-6xl">Ready to bring Square in?</h2>
         <p class="max-w-md text-gray-400 md:text-lg">Add it in a few clicks, then set it up from Discord or the dashboard.</p>
         <div class="grid w-full max-w-md grid-cols-1 gap-2 sm:grid-cols-2">
-            <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}
-                ><ThesvgDiscord />Add to server</Button
-            >
-            <Button size="lg" href={data.installUrl} target="_blank" rel="noopener" onclick={openInvitePopup}
-                ><MaterialSymbolsAccountCircleRounded />Add to account</Button
-            >
-            <Button size="lg" href="https://github.com/swayam25/Square-Bot" target="_blank" rel="noopener noreferrer" class="sm:col-span-2"
-                ><ThesvgGithub />View on GitHub</Button
-            >
+            <Button variant="primary" size="lg" href={data.inviteUrl} target="_blank" rel="noopener" onclick={openInvitePopup}>
+                <ThesvgDiscord />Add to server
+            </Button>
+            <Button size="lg" href={data.installUrl} target="_blank" rel="noopener" onclick={openInvitePopup}>
+                <MaterialSymbolsAccountCircleRounded />Add to account
+            </Button>
+            <Button size="lg" href="https://github.com/swayam25/Square-Bot" target="_blank" rel="noopener noreferrer" class="sm:col-span-2">
+                <ThesvgGithub />View on GitHub
+            </Button>
         </div>
     </section>
 

@@ -29,12 +29,12 @@
             </span>
         </div>
         {#if href}
-            <DiscordTooltip content="Download"
-                ><a {href} target="_blank" rel="noopener noreferrer" class="text-dc-icon hover:text-dc-strong">
+            <DiscordTooltip content="Download">
+                <a {href} target="_blank" rel="noopener noreferrer" class="text-dc-icon hover:text-dc-strong">
                     <MaterialSymbolsDownloadRounded aria-hidden="true" class="size-6" />
                     <span class="sr-only">Download {file.name}</span>
-                </a></DiscordTooltip
-            >
+                </a>
+            </DiscordTooltip>
         {/if}
     </div>
     {#if playable}

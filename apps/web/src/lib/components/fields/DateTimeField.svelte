@@ -172,9 +172,9 @@
                                             <DatePicker.TableHead>
                                                 <DatePicker.TableRow>
                                                     {#each picker().weekDays as weekDay (weekDay.long)}
-                                                        <DatePicker.TableHeader class="h-8 text-xs font-medium text-gray-400"
-                                                            >{weekDay.narrow}</DatePicker.TableHeader
-                                                        >
+                                                        <DatePicker.TableHeader class="h-8 text-xs font-medium text-gray-400">
+                                                            {weekDay.narrow}
+                                                        </DatePicker.TableHeader>
                                                     {/each}
                                                 </DatePicker.TableRow>
                                             </DatePicker.TableHead>
@@ -185,8 +185,9 @@
                                                             <DatePicker.TableCell value={date}>
                                                                 <DatePicker.TableCellTrigger
                                                                     class={[cell, "h-12 w-full rounded-control-lg md:h-10 md:rounded-2xl"]}
-                                                                    >{date.day}</DatePicker.TableCellTrigger
                                                                 >
+                                                                    {date.day}
+                                                                </DatePicker.TableCellTrigger>
                                                             </DatePicker.TableCell>
                                                         {/each}
                                                     </DatePicker.TableRow>
@@ -217,9 +218,9 @@
                                                     <DatePicker.TableRow>
                                                         {#each months as month (month.value)}
                                                             <DatePicker.TableCell value={month.value}>
-                                                                <DatePicker.TableCellTrigger class={[cell, "h-12 w-full rounded-control-lg"]}
-                                                                    >{month.label}</DatePicker.TableCellTrigger
-                                                                >
+                                                                <DatePicker.TableCellTrigger class={[cell, "h-12 w-full rounded-control-lg"]}>
+                                                                    {month.label}
+                                                                </DatePicker.TableCellTrigger>
                                                             </DatePicker.TableCell>
                                                         {/each}
                                                     </DatePicker.TableRow>
@@ -250,9 +251,9 @@
                                                     <DatePicker.TableRow>
                                                         {#each years as year (year.value)}
                                                             <DatePicker.TableCell value={year.value}>
-                                                                <DatePicker.TableCellTrigger class={[cell, "h-12 w-full rounded-control-lg"]}
-                                                                    >{year.label}</DatePicker.TableCellTrigger
-                                                                >
+                                                                <DatePicker.TableCellTrigger class={[cell, "h-12 w-full rounded-control-lg"]}>
+                                                                    {year.label}
+                                                                </DatePicker.TableCellTrigger>
                                                             </DatePicker.TableCell>
                                                         {/each}
                                                     </DatePicker.TableRow>

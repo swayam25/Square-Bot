@@ -13,6 +13,8 @@
         type="button"
         aria-label="Show spoiler"
         class="cursor-pointer rounded-sm bg-dc-spoiler text-transparent select-none *:invisible hover:bg-dc-spoiler-hover"
-        onclick={() => (shown = true)}>{@render children()}</button
+        onclick={() => (shown = true)}
     >
+        {@render children()}
+    </button>
 {/if}

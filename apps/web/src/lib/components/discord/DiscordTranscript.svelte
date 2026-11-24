@@ -141,9 +141,9 @@
                         {#each message.embeds ?? [] as embed, index (index)}<DiscordEmbed {embed} />{/each}
                         {#if message.components?.length}<DiscordComponents components={message.components} />{/if}
                         {#each message.stickers ?? [] as sticker, index (index)}
-                            <DiscordTooltip lazy content={sticker.name}
-                                ><img src={sticker.url} alt={sticker.name} loading="lazy" class="size-40 object-contain" /></DiscordTooltip
-                            >
+                            <DiscordTooltip lazy content={sticker.name}>
+                                <img src={sticker.url} alt={sticker.name} loading="lazy" class="size-40 object-contain" />
+                            </DiscordTooltip>
                         {/each}
                         {#if message.reactions?.length}<DiscordReactions reactions={message.reactions} />{/if}
                     </DiscordAccessories>

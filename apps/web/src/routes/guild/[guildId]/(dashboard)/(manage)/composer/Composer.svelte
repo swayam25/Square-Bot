@@ -375,12 +375,13 @@
                         </div>
                         <div class="flex shrink-0 gap-4 font-mono text-xs text-gray-400">
                             <span class={[count > LIMITS.components && "text-red-400"]}>{count}/{LIMITS.components} parts</span>
-                            <span class={[textLength > LIMITS.text && "text-red-400"]}
-                                >{formatCount(textLength)}/{formatCount(LIMITS.text)} chars</span
-                            >
+                            <span class={[textLength > LIMITS.text && "text-red-400"]}>
+                                {formatCount(textLength)}/{formatCount(LIMITS.text)} chars
+                            </span>
                             {#if mediaCount}<span class={[mediaCount > LIMITS.media && "text-red-400"]}>{mediaCount}/{LIMITS.media} media</span>{/if}
-                            {#if used.length}<span class={[used.length > LIMITS.files && "text-red-400"]}>{used.length}/{LIMITS.files} files</span
-                                >{/if}
+                            {#if used.length}<span class={[used.length > LIMITS.files && "text-red-400"]}>
+                                    {used.length}/{LIMITS.files} files
+                                </span>{/if}
                         </div>
                     </div>
                     {#if draft.blocks.length}

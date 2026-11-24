@@ -85,9 +85,9 @@
                 />
             {/if}
             <Tooltip content="Remove step" class="ml-auto">
-                <Button variant="ghost-danger" icon onclick={() => (steps = steps.filter((_, at) => at !== index))}
-                    ><MaterialSymbolsCloseRounded /></Button
-                >
+                <Button variant="ghost-danger" icon onclick={() => (steps = steps.filter((_, at) => at !== index))}>
+                    <MaterialSymbolsCloseRounded />
+                </Button>
             </Tooltip>
         </div>
     {:else}

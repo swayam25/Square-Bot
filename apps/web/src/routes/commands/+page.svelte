@@ -279,8 +279,10 @@
 <Seo title="Commands" description="Every Square command, with its options and the permissions it needs." />
 
 {#snippet marked(text: string)}{#each pattern ? text.split(pattern) : [text] as part, index (index)}{#if index % 2}<mark
-                class="bg-transparent text-accent">{part}</mark
-            >{:else}{part}{/if}{/each}{/snippet}
+                class="bg-transparent text-accent"
+            >
+                {part}
+            </mark>{:else}{part}{/if}{/each}{/snippet}
 
 {#snippet token(name: string, required: boolean)}
     <code
@@ -288,8 +290,9 @@
             "inline-flex h-6 items-center rounded-lg px-2 font-mono text-xs",
             required ? "bg-white/10 text-gray-100" : "bg-white/5 text-gray-400",
         ]}
-        >{name}{#if !required}?{/if}</code
     >
+        {name}{#if !required}?{/if}
+    </code>
 {/snippet}
 
 <!-- Spans only: a row that opens renders this inside a button, which takes phrasing content -->
@@ -302,8 +305,9 @@
         <span class="flex min-w-0 flex-1 flex-col gap-2">
             <span class="flex flex-wrap items-center gap-2">
                 {#if command.kind === "slash"}
-                    <code class="font-mono text-sm font-semibold text-gray-100"><span class="text-accent">/</span>{@render marked(command.name)}</code
-                    >
+                    <code class="font-mono text-sm font-semibold text-gray-100">
+                        <span class="text-accent">/</span>{@render marked(command.name)}
+                    </code>
                     {#each command.options as option (option.name)}{@render token(option.name, option.required)}{/each}
                 {:else}
                     <code class="flex items-center gap-2 font-mono text-sm font-semibold text-gray-100">
@@ -358,10 +362,11 @@
                     rel="noopener"
                     onclick={openInvitePopup}
                     class="flex flex-wrap items-center gap-2 text-gray-400 transition-colors hover:text-gray-100"
-                    ><Chip size="sm" tone="muted"><MaterialSymbolsPublicRounded />{INSTALLS.both}</Chip>
-                    <Chip size="sm" tone="muted"><MaterialSymbolsAccountCircleRounded />{INSTALLS.account}</Chip>
-                    <span>work everywhere after you add Square to your account</span></a
                 >
+                    <Chip size="sm" tone="muted"><MaterialSymbolsPublicRounded />{INSTALLS.both}</Chip>
+                    <Chip size="sm" tone="muted"><MaterialSymbolsAccountCircleRounded />{INSTALLS.account}</Chip>
+                    <span>work everywhere after you add Square to your account</span>
+                </a>
             </p>
         {/if}
     </header>
@@ -390,8 +395,9 @@
                         <kbd
                             aria-hidden="true"
                             class="pointer-events-none absolute top-1/2 right-3 flex size-6 -translate-y-1/2 items-center justify-center rounded-lg bg-white/10 font-mono text-xs text-gray-400 pointer-coarse:hidden"
-                            >/</kbd
                         >
+                            /
+                        </kbd>
                     {/if}
                 </div>
                 <ScrollRow class="lg:hidden">
@@ -440,9 +446,9 @@
                                 </span>
                                 <div class="flex min-w-0 flex-1 flex-col">
                                     <h2 id="{category.id}-title" class="flex items-baseline gap-2 font-display text-2xl font-semibold">
-                                        {category.name}<span class="font-mono text-sm font-normal text-gray-400"
-                                            >{formatCount(category.entries.length)}</span
-                                        >
+                                        {category.name}<span class="font-mono text-sm font-normal text-gray-400">
+                                            {formatCount(category.entries.length)}
+                                        </span>
                                     </h2>
                                     <p class="text-sm text-gray-400">{category.description}</p>
                                 </div>
@@ -501,9 +507,9 @@
                                                                 {#if option.choices.length}
                                                                     <span class="flex flex-wrap gap-2">
                                                                         {#each option.choices as choice (choice)}
-                                                                            <Chip size="sm"
-                                                                                ><code class="font-mono">{@render marked(choice)}</code></Chip
-                                                                            >
+                                                                            <Chip size="sm">
+                                                                                <code class="font-mono">{@render marked(choice)}</code>
+                                                                            </Chip>
                                                                         {/each}
                                                                     </span>
                                                                 {/if}

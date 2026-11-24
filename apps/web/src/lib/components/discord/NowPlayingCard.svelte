@@ -69,9 +69,9 @@
     {#if src}
         <img {src} alt="" class={["shrink-0 object-cover", className]} />
     {:else}
-        <span class={["flex shrink-0 items-center justify-center bg-gray-900 text-accent", className]}
-            ><MaterialSymbolsMusicNoteRounded class="size-2/5" /></span
-        >
+        <span class={["flex shrink-0 items-center justify-center bg-gray-900 text-accent", className]}>
+            <MaterialSymbolsMusicNoteRounded class="size-2/5" />
+        </span>
     {/if}
 {/snippet}
 

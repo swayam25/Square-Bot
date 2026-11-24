@@ -33,13 +33,13 @@
 </script>
 
 <svelte:head>
-    <noscript
-        ><style>
+    <noscript>
+        <style>
             [data-loader] {
                 display: none;
             }
-        </style></noscript
-    >
+        </style>
+    </noscript>
 </svelte:head>
 
 {#if booting || navigatingSlowly}

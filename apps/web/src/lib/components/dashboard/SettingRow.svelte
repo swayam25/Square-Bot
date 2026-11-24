@@ -32,8 +32,10 @@
                 class={[
                     "flex size-10 shrink-0 items-center justify-center rounded-xl",
                     tone === "danger" ? "bg-red-400/10 text-red-400" : "bg-gray-800 text-accent",
-                ]}><Icon class="size-5" /></span
+                ]}
             >
+                <Icon class="size-5" />
+            </span>
         {/if}
         <div class="flex min-w-0 flex-col">
             <span class="text-sm font-medium">{label}</span>
