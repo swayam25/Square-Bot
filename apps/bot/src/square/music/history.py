@@ -4,7 +4,7 @@ from discord import ui
 from sonolink.models import Playable
 from square.core import Client
 from square.core.view import DesignerView
-from square.music.core import SquarePlayer, fmt_time, get_player, requester_id
+from square.music.core import SquarePlayer, fmt_time, get_player, link_text, requester_id
 from square.music.utils import music_interaction_check, reply
 from square.utils import config
 from square.utils.emoji import emoji
@@ -45,7 +45,7 @@ class HistoryContainer(ui.Container):
             self.add_item(
                 ui.Section(
                     ui.TextDisplay(
-                        f"`{index + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) [`{fmt_time(track.length)}`]\n"
+                        f"`{index + 1}.` [**{link_text(track.title)}** by **{link_text(track.author)}**]({track.uri}) [`{fmt_time(track.length)}`]\n"
                         f"-# {emoji.bottom_right} {requester.mention if requester else 'Unknown'}"
                     ),
                     accessory=btn,

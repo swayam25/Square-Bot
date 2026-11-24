@@ -13,6 +13,7 @@ from square.music.core import (
     drop_session_lock,
     fmt_time,
     get_player,
+    link_text,
     loop_emoji,
     requester_id,
 )
@@ -442,7 +443,7 @@ class MusicContainer(ui.Container):
             f"{emoji.user} **Requested By**: {f'<@{rid}>' if rid else 'Unknown'}\n"
             f"{emoji.mic} **Artist**: {get_source(player.current.source_name)['emoji']} {player.current.author}"
         )
-        texts = [ui.TextDisplay(f"## [{player.current.title}]({player.current.uri})"), ui.TextDisplay(info)]
+        texts = [ui.TextDisplay(f"## [{link_text(player.current.title)}]({player.current.uri})"), ui.TextDisplay(info)]
         artwork = player.current.artwork
         self.items = [ui.Section(*texts, accessory=ui.Thumbnail(url=artwork))] if artwork else texts
         self.items.append(ui.TextDisplay(self.progress_bar(player)))
@@ -481,7 +482,7 @@ class UpNextContainer(ui.Container):
                 self.add_item(
                     ui.Section(
                         ui.TextDisplay(
-                            f"`{index + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) "
+                            f"`{index + 1}.` [**{link_text(track.title)}** by **{link_text(track.author)}**]({track.uri}) "
                             f"[`{fmt_time(track.length)}`]"
                         ),
                         accessory=btn,
@@ -680,7 +681,7 @@ class VoteSkipView(DesignerView):
                 ui.Section(
                     ui.TextDisplay("## Vote Skip"),
                     ui.TextDisplay(
-                        f"[**{self.track.title}**]({self.track.uri})\n"
+                        f"[**{link_text(self.track.title)}**]({self.track.uri})\n"
                         f"-# Skip requested by {self.starter.mention} [ends {discord.utils.format_dt(self.expires_at, 'R')}]"
                     ),
                     accessory=btn,

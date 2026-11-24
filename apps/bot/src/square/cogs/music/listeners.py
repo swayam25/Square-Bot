@@ -11,6 +11,7 @@ from square.music.core import (
     SquarePlayer,
     fetch_node_info,
     get_player,
+    link_text,
     session_lock,
 )
 from square.music.play import (
@@ -197,7 +198,7 @@ class Listeners:
         self._report_failure(player.guild.id, track, reason)
         await music_log(
             player.guild.id,
-            f"{emoji.error} Couldn't play [**{track.title}**]({track.uri}).{f'\n-# {reason}' if reason else ''}",
+            f"{emoji.error} Couldn't play [**{link_text(track.title)}**]({track.uri}).{f'\n-# {reason}' if reason else ''}",
             color=config.color.red,
         )
 
@@ -210,7 +211,7 @@ class Listeners:
         self._report_failure(player.guild.id, track, "It stopped sending audio, so it was skipped.")
         await music_log(
             player.guild.id,
-            f"{emoji.error} [**{track.title}**]({track.uri}) got stuck, skipping it.",
+            f"{emoji.error} [**{link_text(track.title)}**]({track.uri}) got stuck, skipping it.",
             color=config.color.red,
         )
         await skip_or_stop(player, player.guild)

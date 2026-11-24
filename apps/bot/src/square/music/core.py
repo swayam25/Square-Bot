@@ -284,3 +284,26 @@ def fmt_time(ms: int | float) -> str:
         return f"{hours}:{minutes:02d}:{seconds:02d}"
     else:
         return f"{minutes:02d}:{seconds:02d}"
+
+
+def link_text(text: str) -> str:
+    """
+    Escapes a title or author for a masked link's text.
+
+    Discord drops the whole link on an unclosed or nested bracket, even an escaped one, so those are closed or dropped.
+    """
+    chars: list[str] = []
+    inside = False
+    for char in discord.utils.escape_markdown(text):
+        if char == "[":
+            if inside:
+                continue
+            inside = True
+        elif char == "]":
+            if not inside:
+                continue
+            inside = False
+        chars.append(char)
+    if inside:
+        chars.append("]")
+    return "".join(chars)

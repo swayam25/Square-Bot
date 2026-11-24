@@ -6,7 +6,7 @@ from itertools import islice
 from square.core import Client
 from square.core.view import DesignerView
 from square.music import controls, request
-from square.music.core import SquarePlayer, fmt_time, get_player, requester_id
+from square.music.core import SquarePlayer, fmt_time, get_player, link_text, requester_id
 from square.music.errors import MusicError
 from square.music.utils import music_interaction_check, reply
 from square.utils import config
@@ -165,7 +165,7 @@ class QueueContainer(ui.Container):
             queue_list.append(
                 ui.Section(
                     ui.TextDisplay(
-                        f"`{index + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) [`{fmt_time(track.length)}`]\n"
+                        f"`{index + 1}.` [**{link_text(track.title)}** by **{link_text(track.author)}**]({track.uri}) [`{fmt_time(track.length)}`]\n"
                         f"-# {emoji.bottom_right} {requester.mention if requester else 'Unknown'}"
                     ),
                     accessory=btn,
@@ -205,7 +205,7 @@ class QueueContainer(ui.Container):
         self.add_item(ui.TextDisplay(f"## {source.guild.name}'s Queue"))
         self.add_item(
             ui.TextDisplay(
-                f"`0.` [**{current.title}** by **{current.author}**]({current.uri}) [`{fmt_time(current.length)}`]\n"
+                f"`0.` [**{link_text(current.title)}** by **{link_text(current.author)}**]({current.uri}) [`{fmt_time(current.length)}`]\n"
                 f"-# {emoji.bottom_right} {current_requester.mention if current_requester else 'Unknown'}"
                 if current
                 else "No track playing."
@@ -226,7 +226,7 @@ class QueueContainer(ui.Container):
                 self.add_item(
                     ui.TextDisplay(
                         "\n".join(
-                            f"`{idx + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) "
+                            f"`{idx + 1}.` [**{link_text(track.title)}** by **{link_text(track.author)}**]({track.uri}) "
                             f"[`{fmt_time(track.length)}`]"
                             for idx, track in enumerate(islice(autoplay_tracks, _AUTOPLAY_SHOWN))
                         )

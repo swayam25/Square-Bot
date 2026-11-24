@@ -7,7 +7,7 @@ from square.core import Client
 from square.music import dj, request, store
 from square.music import player as playback
 from square.music import queue as queue_view
-from square.music.core import SquarePlayer, fmt_time, loop_action, loop_emoji, requester_id, tag_requester
+from square.music.core import SquarePlayer, fmt_time, link_text, loop_action, loop_emoji, requester_id, tag_requester
 from square.music.errors import MusicError, QueueChanged
 from square.music.filters import EQ_PRESETS
 from square.music.history import history_tracks
@@ -144,7 +144,9 @@ async def previous(guild: discord.Guild, member: discord.Member) -> str:
         track = await player.previous()
     except sonolink.HistoryEmpty:
         raise MusicError("Nothing has been played yet.") from None
-    return await _done(player, member, emoji.back, f"went back to [**{track.title}**]({track.uri})", render=False)
+    return await _done(
+        player, member, emoji.back, f"went back to [**{link_text(track.title)}**]({track.uri})", render=False
+    )
 
 
 async def skip(guild: discord.Guild, member: discord.Member, *, channel: discord.abc.Messageable | None = None) -> str:
@@ -184,7 +186,9 @@ async def jump(guild: discord.Guild, member: discord.Member, index: int, identif
     track = _queued(player, index, identifier)
     await require_dj(member, player)
     await player.skip_to(index)
-    return await _done(player, member, emoji.play, f"skipped to [**{track.title}**]({track.uri})", render=False)
+    return await _done(
+        player, member, emoji.play, f"skipped to [**{link_text(track.title)}**]({track.uri})", render=False
+    )
 
 
 async def remove(guild: discord.Guild, member: discord.Member, index: int, identifier: str | None = None) -> str:
@@ -377,4 +381,6 @@ async def replay(guild: discord.Guild, member: discord.Member, index: int, ident
         raise QueueChanged("The history changed. Have another look and try again.")
     player.queue.put(tag_requester(player.client, track, member.id))
     queue_view.nudge_card(player, guild.id)
-    return await _done(player, member, emoji.reload, f"queued [**{track.title}**]({track.uri}) again", render=False)
+    return await _done(
+        player, member, emoji.reload, f"queued [**{link_text(track.title)}**]({track.uri}) again", render=False
+    )

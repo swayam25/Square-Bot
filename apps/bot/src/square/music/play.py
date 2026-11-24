@@ -13,7 +13,7 @@ from sonolink.models.responses import SearchResult
 from square.core import Client
 from square.core.view import DesignerView, show_loading
 from square.music import stay
-from square.music.core import SquarePlayer, can_play_in, fmt_time, get_player, session_lock, tag_requester
+from square.music.core import SquarePlayer, can_play_in, fmt_time, get_player, link_text, session_lock, tag_requester
 from square.music.player import discard_stale, schedule_render, stop_player
 from square.music.utils import get_source, reply, split_log_text
 from square.utils import config
@@ -178,7 +178,7 @@ async def enqueue(client: Client, player: SquarePlayer, data: object, requester_
             dur = f"{emoji.live} LIVE"
         else:
             dur = format_timedelta(datetime.timedelta(milliseconds=queued.length), locale="en")
-        content = f"{src_info['emoji']} Added [**{queued.title}** by **{queued.author}**]({queued.uri}) [{dur}]."
+        content = f"{src_info['emoji']} Added [**{link_text(queued.title)}** by **{link_text(queued.author)}**]({queued.uri}) [{dur}]."
     async with session_lock(player.guild.id):
         started = not player.current
         note = None if started else _queue_note(player)
@@ -239,7 +239,7 @@ class TrackPickerView(DesignerView):
             container.add_item(
                 ui.Section(
                     ui.TextDisplay(
-                        f"`{index + 1}.` [**{track.title}** by **{track.author}**]({track.uri}) "
+                        f"`{index + 1}.` [**{link_text(track.title)}** by **{link_text(track.author)}**]({track.uri}) "
                         f"[`{fmt_time(track.length)}`]"
                     ),
                     accessory=btn,
