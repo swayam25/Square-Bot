@@ -5,7 +5,7 @@ Thanks for wanting to help out! Whether it's a bug fix, a new feature, or a docs
 ## 📦 Prerequisites
 
 [![Python](https://shieldcn.dev/badge/Python-v3.14.svg?brand=python)](https://www.python.org/downloads/)
-[![uv](https://shieldcn.dev/badge/uv-v0.13.5.svg?brand=uv)](https://docs.astral.sh/uv/getting-started/installation/)
+[![uv](https://shieldcn.dev/badge/uv-v0.13.9.svg?brand=uv)](https://docs.astral.sh/uv/getting-started/installation/)
 [![Node.js](https://shieldcn.dev/badge/Node.js-v24.svg?color=5fa04e&logo=nodedotjs)](https://nodejs.org/en/download)
 [![pnpm](https://shieldcn.dev/badge/pnpm-v12.16.1.svg?brand=pnpm)](https://pnpm.io/installation)
 
@@ -36,7 +36,7 @@ Thanks for wanting to help out! Whether it's a bug fix, a new feature, or a docs
     ```
 
 > [!TIP]
-> Drizzle Gateway starts with the other services, at http://localhost:4983. So does RustFS, with its console at http://localhost:9001/rustfs/console/ (`square` / `youcannotpass`).
+> Drizzle Gateway starts with the other services, at http://localhost:4983. So does RustFS, with its console at http://localhost:9001/rustfs/console (`square` / `youcannotpass`).
 
 4. Stop it when done
 

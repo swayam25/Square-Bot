@@ -5,7 +5,7 @@
 [![Pycord](https://shieldcn.dev/badge/Pycord-v2.8.1.svg?color=5865f2&logo=python)](https://pycord.dev)
 [![SonoLink](https://shieldcn.dev/badge/SonoLink-v1.4.1.svg?color=275c96&logo=lu:AudioWaveform)](https://github.com/sonolink/sonolink)
 [![Litestar](https://shieldcn.dev/badge/Litestar-v2.25.0.svg?color=edb641&logo=lu:Star&logoColor=202235&labelTextColor=202235&valueColor=202235)](https://litestar.dev)
-[![SvelteKit](https://shieldcn.dev/badge/SvelteKit-v3.2.0.svg?brand=svelte)](https://svelte.dev/docs/kit)
+[![SvelteKit](https://shieldcn.dev/badge/SvelteKit-v3.4.0.svg?brand=svelte)](https://svelte.dev/docs/kit)
 
 [![Runs on Linux](https://shieldcn.dev/badge/Runs%20on-Linux-FCC624.svg?logo=linux&logoColor=000)](https://kernel.org)
 [![Release](https://shieldcn.dev/github/release/swayam25/Square-Bot.svg)](https://github.com/swayam25/Square-Bot/releases/latest)
@@ -59,7 +59,7 @@ Route nothing else. Postgres and Redis stay on the stack's private network, and 
 Any proxy that can put a login in front of a hostname works, for example:
 
 - [Pangolin](https://docs.pangolin.net/manage/resources/understanding-resources), a tunneled reverse proxy with sign-in built into each resource.
-- [Traefik](https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/forwardauth/) or [Caddy](https://caddyserver.com/docs/caddyfile/directives/forward_auth) with forward auth, backed by an identity provider such as [Authelia](https://www.authelia.com/integration/proxies/introduction/) or [authentik](https://docs.goauthentik.io/docs/add-secure-apps/providers/proxy/).
+- [Traefik](https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/forwardauth/) or [Caddy](https://caddyserver.com/docs/caddyfile/directives/forward_auth) with forward auth, backed by an identity provider such as [Authelia](https://www.authelia.com/integration/proxies/introduction/) or [authentik](https://docs.goauthentik.io/add-secure-apps/providers/proxy).
 
 ## 🧭 How it fits together
 
