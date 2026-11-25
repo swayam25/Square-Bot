@@ -1,3 +1,4 @@
+import aiohttp
 import asyncio
 import datetime
 import discord
@@ -7,22 +8,45 @@ from square.cogs.logs import audit
 from square.core import Client
 from square.core.cog import Cog
 from square.db import cache
-from square.logs import Entry, Log, clip, emit, memory, person, person_id, when
+from square.logs import Entry, Log, clip, emit, memory, person, person_id, wanted, when
 from square.logs import sender as log_sender
+from square.logs.card import Upload
 from square.modules import Module
-from square.utils import invites, webhook
+from square.utils import fetch, invites, webhook
 from square.utils.helpers import fmt_count, plural
 
-# Time for Discord's audit log entry to arrive, so the log can say who deleted or moved something
+# Longest wait for Discord's audit log entry, so the log can say who deleted or moved something
 AUDIT_WAIT = 1.5
 _SHOWN_FILES = 10
 
 
-def _files(names: tuple[str, ...]) -> str | None:
+def _files(names: list[str]) -> str | None:
     if not names:
         return None
     shown = ", ".join(f"`{name}`" for name in names[:_SHOWN_FILES])
     return shown + (f" and {fmt_count(len(names) - _SHOWN_FILES)} more" if len(names) > _SHOWN_FILES else "")
+
+
+async def _recover(guild: discord.Guild, files: tuple[memory.SavedFile, ...]) -> tuple[list[Upload], list[str]]:
+    """Discord drops a deleted file at once unless its proxy still caches it, so only files fetched before come back."""
+    budget = guild.filesize_limit
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as session:
+
+        async def one(file: memory.SavedFile) -> bytes | None:
+            if file.size > budget:
+                return None
+            return await fetch.read(session, file.proxy_url, budget) or await fetch.read(session, file.url, budget)
+
+        found = await asyncio.gather(*(one(file) for file in files))
+    uploads, lost = [], []
+    for file, raw in zip(files, found, strict=True):
+        if raw is None or len(raw) > budget:
+            lost.append(file.name)
+            continue
+        budget -= len(raw)
+        upload = discord.File(io.BytesIO(raw), filename=file.name.removeprefix("SPOILER_"))
+        uploads.append(Upload(upload, len(raw), file.spoiler, file.media))
+    return uploads, lost
 
 
 def _author(guild: discord.Guild, saved: memory.Saved) -> tuple[str, discord.Member | None]:
@@ -34,8 +58,9 @@ def _transcript(saved: list[memory.Saved]) -> discord.File:
     lines = []
     for message in saved:
         stamp = message.sent_at.strftime("%Y-%m-%d %H:%M:%S UTC")
-        extras = [f"files: {', '.join(message.files)}"] if message.files else []
-        extras += [f"stickers: {', '.join(message.stickers)}"] if message.stickers else []
+        extras = [f"files: {', '.join(file.name for file in message.files)}"] if message.files else []
+        extras += [f"sticker: {message.sticker.name}"] if message.sticker else []
+        extras += [f"forwarded from: {message.forwarded}"] if message.forwarded else []
         tail = f" [{'; '.join(extras)}]" if extras else ""
         lines.append(f"[{stamp}] {message.author_name} ({message.author_id}): {message.content}{tail}")
     return discord.File(io.BytesIO("\n".join(lines).encode()), filename="messages.txt")
@@ -51,8 +76,7 @@ class Logs(Cog):
     async def _waited_actor(self, guild: discord.Guild, key: tuple) -> str | None:
         if not guild.me.guild_permissions.view_audit_log:
             return None
-        await asyncio.sleep(AUDIT_WAIT)
-        return audit.recent(key)
+        return await audit.wait_for(key, AUDIT_WAIT)
 
     @commands.Cog.listener()
     async def on_raw_audit_log_entry(self, payload: discord.RawAuditLogEntryEvent):
@@ -154,12 +178,23 @@ class Logs(Cog):
                 emit(guild, entry.add("note", "Message", "Not remembered, it's older than what Square keeps"))
             return
         saved = snipe.message
-        snipe.deleted_by = await self._waited_actor(guild, ("delete", guild.id, payload.channel_id, saved.author_id))
         shown, member = _author(guild, saved)
+        recovering = None
+        if saved.files and wanted(guild, "deletes", payload.channel_id, member, saved.bot):
+            # Before the audit wait, the cached copy may not last
+            recovering = asyncio.create_task(_recover(guild, saved.files))
+        snipe.deleted_by = await self._waited_actor(guild, ("delete", guild.id, payload.channel_id, saved.author_id))
+        uploads, lost = await recovering if recovering else ([], [file.name for file in saved.files])
         entry = Entry("deletes", "Message Deleted", "red", channel_id=payload.channel_id, member=member, bot=saved.bot)
         entry.add("owner", "Author", shown).add("channel", "Channel", f"<#{payload.channel_id}>")
         entry.add("date", "Sent", when(saved.sent_at)).add("user", "Deleted By", snipe.deleted_by)
-        entry.add("img", "Files", _files(saved.files)).add("star", "Stickers", _files(saved.stickers))
+        entry.add("forwarded", "Forwarded From", saved.forwarded)
+        entry.add("img", "Not Saved" if uploads else "Files", _files(lost))
+        entry.uploads = uploads
+        if saved.sticker and saved.sticker.url:
+            entry.thumbnail = saved.sticker.url
+        elif saved.sticker:
+            entry.add("star", "Sticker", f"`{saved.sticker.name}`")
         entry.add("note", "Message", f"\n{clip(saved.content)}" if saved.content else None)
         emit(guild, entry)
 

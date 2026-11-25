@@ -8,7 +8,7 @@ from square.cogs.starboard import cards
 from square.cogs.starboard.source import File, Source
 from square.core import Client
 from square.db.schema import StarboardPostTable, StarboardTable
-from square.utils import webhook
+from square.utils import fetch, webhook
 from urllib.parse import urlsplit
 
 log = logging.getLogger(__name__)
@@ -40,21 +40,6 @@ def stored(uploads: cards.Uploads) -> dict[str, str]:
     return {str(file_id): name for file_id, name in uploads.items()}
 
 
-async def _read(session: aiohttp.ClientSession, url: str, limit: int) -> bytes | None:
-    try:
-        async with session.get(url) as response:
-            if response.status != 200 or (response.content_length or 0) > limit:
-                return None
-            data = bytearray()
-            async for chunk in response.content.iter_chunked(64 * 1024):
-                data += chunk
-                if len(data) > limit:
-                    return None
-    except aiohttp.ClientError, TimeoutError:
-        return None
-    return bytes(data)
-
-
 async def download(message: discord.Message) -> list[Download]:
     """Discord's file links expire, so files small enough are posted again with the card."""
     assert message.guild is not None
@@ -66,7 +51,7 @@ async def download(message: discord.Message) -> list[Download]:
     async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
         for index, file in enumerate(targets):
             limit = min(REUPLOAD_MAX, budget)
-            if (file.size or 0) > limit or (raw := await _read(session, file.url, limit)) is None:
+            if (file.size or 0) > limit or (raw := await fetch.read(session, file.url, limit)) is None:
                 continue
             budget -= len(raw)
             found.append(Download(file.id, f"{index}_{file.name.removeprefix('SPOILER_')}", raw, file.spoiler))

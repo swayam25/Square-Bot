@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import discord
 import time
@@ -14,9 +15,15 @@ A = discord.AuditLogAction
 RECENT_SECONDS = 10
 
 _recent: dict[tuple, tuple[str, float]] = {}
+_waiting: dict[tuple, list[asyncio.Future[str]]] = {}
 
 
 def note(key: tuple, actor: str) -> None:
+    waiters = _waiting.get(key, [])
+    while waiters:
+        if not (waiter := waiters.pop(0)).done():
+            waiter.set_result(actor)
+            return
     now = time.monotonic()
     _recent[key] = (actor, now)
     if len(_recent) > 1000:
@@ -27,6 +34,24 @@ def note(key: tuple, actor: str) -> None:
 def recent(key: tuple) -> str | None:
     found = _recent.pop(key, None)
     return found[0] if found and time.monotonic() - found[1] <= RECENT_SECONDS else None
+
+
+async def wait_for(key: tuple, timeout: float) -> str | None:
+    """None after `timeout`, which is always the case for a self-delete since it has no audit entry."""
+    if found := recent(key):
+        return found
+    waiter = asyncio.get_running_loop().create_future()
+    _waiting.setdefault(key, []).append(waiter)
+    try:
+        return await asyncio.wait_for(waiter, timeout)
+    except TimeoutError:
+        return None
+    finally:
+        if (waiters := _waiting.get(key)) is not None:
+            if waiter in waiters:
+                waiters.remove(waiter)
+            if not waiters:
+                del _waiting[key]
 
 
 def _actor(client: Client, payload: discord.RawAuditLogEntryEvent) -> str:

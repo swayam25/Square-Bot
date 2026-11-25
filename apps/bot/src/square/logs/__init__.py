@@ -8,7 +8,7 @@ settings, queues it per log channel and posts a few cards per message through a 
 from square.logs.acting import acted_for, acting
 from square.logs.card import Entry, clip, person, person_id, when
 from square.logs.catalog import EVENTS, Event, Log
-from square.logs.sender import bind, edit, emit, ignored, post
+from square.logs.sender import bind, edit, emit, ignored, post, wanted
 
 __all__ = [
     "EVENTS",
@@ -25,5 +25,6 @@ __all__ = [
     "person",
     "person_id",
     "post",
+    "wanted",
     "when",
 ]

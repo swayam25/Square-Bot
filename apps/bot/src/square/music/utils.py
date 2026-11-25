@@ -12,14 +12,14 @@ from typing import Any
 
 def get_source(source_name: str | None) -> dict:
     _sources = {
-        "spotify": {"emoji": emoji.spotify, "color": config.color.green},
-        "youtube": {"emoji": emoji.youtube, "color": config.color.red},
-        "soundcloud": {"emoji": emoji.soundcloud, "color": config.color.orange},
-        "applemusic": {"emoji": emoji.applemusic, "color": config.color.red},
-        "deezer": {"emoji": emoji.deezer, "color": config.color.theme},
-        "bandcamp": {"emoji": emoji.bandcamp, "color": config.color.theme},
-        "twitch": {"emoji": emoji.twitch, "color": config.color.theme},
-        "vimeo": {"emoji": emoji.vimeo, "color": config.color.theme},
+        "spotify": {"emoji": emoji.spotify, "color": 0x1ED760},
+        "youtube": {"emoji": emoji.youtube, "color": 0xFF0000},
+        "soundcloud": {"emoji": emoji.soundcloud, "color": 0xFF5500},
+        "applemusic": {"emoji": emoji.applemusic, "color": 0xFA233B},
+        "deezer": {"emoji": emoji.deezer, "color": 0xA238FF},
+        "bandcamp": {"emoji": emoji.bandcamp, "color": 0x408294},
+        "twitch": {"emoji": emoji.twitch, "color": 0x9146FF},
+        "vimeo": {"emoji": emoji.vimeo, "color": 0x1AB7EA},
         "_": {"emoji": emoji.music, "color": config.color.theme},
     }
 

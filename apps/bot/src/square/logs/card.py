@@ -33,6 +33,14 @@ def when(at: datetime.datetime) -> str:
 
 
 @dataclass(slots=True)
+class Upload:
+    file: discord.File
+    size: int
+    spoiler: bool = False
+    media: bool = False  # Pictures and clips go in a gallery, anything else shows as a file
+
+
+@dataclass(slots=True)
 class Entry:
     """
     One thing that happened. Listeners only describe it, `logs.emit` decides whether and where it's posted.
@@ -47,6 +55,7 @@ class Entry:
     thumbnail: str | None = None
     jump: str | None = None  # A message URL, shown as a "Jump to message" button
     file: discord.File | None = None
+    uploads: list[Upload] = field(default_factory=list)
     swatch: int | None = None  # A color shown as the thumbnail, like a role's
     channel_id: int | None = None
     member: discord.Member | None = None
@@ -92,6 +101,20 @@ def render(entry: Entry, swatch: str | None = None) -> list[ui.Item]:
     items: list[ui.Item] = [ui.Section(*header, accessory=ui.Thumbnail(thumbnail))] if thumbnail else header
     if entry.file:
         items.append(ui.File(f"attachment://{entry.file.filename}"))
+    if gallery := [upload for upload in entry.uploads if upload.media]:
+        items.append(
+            ui.MediaGallery(
+                *(
+                    discord.MediaGalleryItem(f"attachment://{upload.file.filename}", spoiler=upload.spoiler)
+                    for upload in gallery
+                )
+            )
+        )
+    items += [
+        ui.File(f"attachment://{upload.file.filename}", spoiler=upload.spoiler)
+        for upload in entry.uploads
+        if not upload.media
+    ]
     card: list[ui.Item] = [
         ui.Container(*items, color=None if entry.tone == "theme" else getattr(config.color, entry.tone))
     ]
@@ -110,11 +133,16 @@ def render(entry: Entry, swatch: str | None = None) -> list[ui.Item]:
 
 
 def file_count(entry: Entry) -> int:
-    return (entry.file is not None) + (entry.swatch is not None)
+    return (entry.file is not None) + (entry.swatch is not None) + len(entry.uploads)
+
+
+def upload_size(entry: Entry) -> int:
+    return sum(upload.size for upload in entry.uploads)
 
 
 def cost(entry: Entry) -> tuple[int, int]:
     """(components, characters) the card takes up, for packing several into one message."""
     thumbnail = entry.thumbnail or entry.swatch is not None
     components = 3 + (2 if thumbnail else 0) + (1 if entry.file else 0) + (2 if entry.jump else 0)
+    components += any(upload.media for upload in entry.uploads) + sum(not upload.media for upload in entry.uploads)
     return components, len(entry.title) + len(body(entry)) + 4

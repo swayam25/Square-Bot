@@ -101,6 +101,8 @@ class Emoji:
     img_red = Icon("🖼️")
     img_green = Icon("🖼️")
     img_white = Icon("🖼️")
+    forwarded = Icon("↪️")
+    forwarded_red = Icon("↪️")
     palette_white = Icon("🎨")
     flip_white = Icon("↔️")
     date = Icon("📅")

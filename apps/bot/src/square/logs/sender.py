@@ -6,10 +6,12 @@ from square.core import Client
 from square.core.view import DesignerView
 from square.db import cache
 from square.db.funcs.logs import remove_log_channel
-from square.logs.card import Entry, cost, file_count, render, swatch_file
-from square.logs.catalog import EVENTS, UNFILTERED, Log
+from square.logs.card import Entry, cost, file_count, render, swatch_file, upload_size
+from square.logs.catalog import EVENTS, UNFILTERED, Event, Log
 from square.utils import webhook
 
+# The first event waits briefly for others from the same moment, the rest of a burst is batched every FLUSH_DELAY
+GATHER_DELAY = 0.25
 FLUSH_DELAY = 1.5
 MAX_QUEUE = 300
 MAX_COMPONENTS = 40
@@ -57,13 +59,24 @@ def ignored(
     return False
 
 
+def wanted(
+    guild: discord.Guild,
+    event: Event,
+    channel_id: int | None = None,
+    member: discord.Member | None = None,
+    bot: bool = False,
+) -> bool:
+    log = EVENTS[event]
+    if cache.log_channel(guild.id, log) is None or event in cache.get(guild.id).log_disabled_events:
+        return False
+    return log in UNFILTERED or not ignored(guild, channel_id, member, bot)
+
+
 def emit(guild: discord.Guild, entry: Entry) -> None:
     """Queues `entry` for its log channel. Never waits on Discord, so listeners stay fast."""
     log = EVENTS[entry.event]
     channel_id = cache.log_channel(guild.id, log)
-    if channel_id is None or entry.event in cache.get(guild.id).log_disabled_events:
-        return
-    if log not in UNFILTERED and ignored(guild, entry.channel_id, entry.member, entry.bot):
+    if channel_id is None or not wanted(guild, entry.event, entry.channel_id, entry.member, entry.bot):
         return
     box = _outboxes.setdefault((channel_id, log), _Outbox(guild.id, log))
     if len(box.queue) >= MAX_QUEUE:
@@ -74,41 +87,65 @@ def emit(guild: discord.Guild, entry: Entry) -> None:
         box.task = asyncio.create_task(_flush(channel_id, box))
 
 
-def _take(box: _Outbox) -> list[Entry]:
+def _take(box: _Outbox, max_bytes: int) -> list[Entry]:
     batch: list[Entry] = []
-    components = text = files = 0
+    components = text = files = size = 0
     while box.queue:
         parts, chars = cost(box.queue[0])
-        has_file = file_count(box.queue[0])
-        if batch and (components + parts > MAX_COMPONENTS or text + chars > MAX_TEXT or files + has_file > MAX_FILES):
+        count, bytes_ = file_count(box.queue[0]), upload_size(box.queue[0])
+        if batch and (
+            components + parts > MAX_COMPONENTS
+            or text + chars > MAX_TEXT
+            or files + count > MAX_FILES
+            or size + bytes_ > max_bytes
+        ):
             break
         batch.append(box.queue.popleft())
-        components, text, files = components + parts, text + chars, files + has_file
+        components, text, files, size = components + parts, text + chars, files + count, size + bytes_
     return batch
 
 
+def _unique(file: discord.File, taken: set[str]) -> None:
+    """Cards batched into one message can carry files with the same name, which `attachment://` can't tell apart."""
+    name, number = file.filename, 1
+    while name in taken:
+        name, number = f"{number}_{file.filename}", number + 1
+    file.filename = name
+    taken.add(name)
+
+
+async def _send_batch(guild: discord.Guild, box: _Outbox) -> None:
+    batch = _take(box, guild.filesize_limit)
+    dropped, box.dropped = box.dropped, 0
+    items: list[discord.ui.Item] = []
+    files: list[discord.File] = []
+    taken: set[str] = set()
+    for index, entry in enumerate(batch):
+        swatch = None
+        if entry.swatch is not None:
+            swatch = f"swatch-{index}.png"
+            files.append(swatch_file(entry.swatch, swatch))
+            taken.add(swatch)
+        for file in [entry.file, *(upload.file for upload in entry.uploads)]:
+            if file:
+                _unique(file, taken)
+                files.append(file)
+        items.extend(render(entry, swatch))
+    if dropped:
+        items.append(discord.ui.TextDisplay(f"-# {dropped} more events skipped, too many at once."))
+    await _deliver(guild, box.log, DesignerView(*items), files)
+
+
 async def _flush(channel_id: int, box: _Outbox) -> None:
-    await asyncio.sleep(FLUSH_DELAY)
+    await asyncio.sleep(GATHER_DELAY)
     while box.queue:
-        batch = _take(box)
-        dropped, box.dropped = box.dropped, 0
         guild = _client.get_guild(box.guild_id) if _client else None
         if guild is None:
             box.queue.clear()
             break
-        items: list[discord.ui.Item] = []
-        files: list[discord.File] = []
-        for index, entry in enumerate(batch):
-            swatch = None
-            if entry.swatch is not None:
-                swatch = f"swatch-{index}.png"
-                files.append(swatch_file(entry.swatch, swatch))
-            items.extend(render(entry, swatch))
-            if entry.file:
-                files.append(entry.file)
-        if dropped:
-            items.append(discord.ui.TextDisplay(f"-# {dropped} more events skipped, too many at once."))
-        await _deliver(guild, box.log, DesignerView(*items), files)
+        while box.queue:
+            await _send_batch(guild, box)
+        await asyncio.sleep(FLUSH_DELAY)
     _outboxes.pop((channel_id, box.log), None)
 
 
